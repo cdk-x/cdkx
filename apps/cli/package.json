@@ -1,0 +1,9 @@
+{
+  "name": "@cdkx/cli",
+  "version": "0.0.1",
+  "private": true,
+  "bin": {
+    "cdkx": "./bin/cdkx.js"
+  },
+  "dependencies": {}
+}
