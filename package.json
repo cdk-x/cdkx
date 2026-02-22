@@ -4,7 +4,9 @@
   "license": "MIT",
   "scripts": {},
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "constructs": "10.5.1"
+  },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
     "@nx/docker": "22.5.2",
