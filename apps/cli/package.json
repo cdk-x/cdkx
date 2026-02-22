@@ -1,5 +1,5 @@
 {
-  "name": "@cdkx/cli",
+  "name": "@cdk-x/cli",
   "version": "0.1.0",
   "bin": {
     "cdkx": "./bin/cdkx.js"
