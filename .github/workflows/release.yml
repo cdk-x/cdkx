@@ -40,9 +40,9 @@ jobs:
         id: build-command
         run: |
           if [ "${{ github.event.inputs.prerelease }}" = "stable" ]; then
-            COMMAND="nx release"
+            COMMAND="yarn nx release"
           else
-            COMMAND="nx release --specifier=prerelease --preid=${{ github.event.inputs.prerelease }}"
+            COMMAND="yarn nx release --specifier=prerelease --preid=${{ github.event.inputs.prerelease }}"
           fi
           
           if [ "${{ github.event.inputs.dryRun }}" = "true" ]; then
