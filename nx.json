@@ -58,6 +58,11 @@
     "version": {
       "conventionalCommits": true,
       "adjustSemverBumpsForZeroMajorVersion": true      
+    },
+    "changelog": {
+      "workspaceChangelog": {
+        "createRelease": "github"
+      }
     }
   },
   "targetDefaults": {
