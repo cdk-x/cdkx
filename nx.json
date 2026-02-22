@@ -54,9 +54,10 @@
     }
   ],
   "release": {
-    "projects": ["*"],
+    "projects": ["cli"],
     "version": {
-      "conventionalCommits": true
+      "conventionalCommits": true,
+      "adjustSemverBumpsForZeroMajorVersion": true      
     }
   },
   "targetDefaults": {

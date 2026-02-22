@@ -9,6 +9,30 @@
         "config": ".verdaccio/config.yml",
         "storage": "tmp/local-registry/storage"
       }
+    },
+    "release-alpha": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx release --specifier=prerelease --preid=alpha {args}"
+      }
+    },
+    "release-beta": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx release --specifier=prerelease --preid=beta {args}"
+      }
+    },
+    "release-rc": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx release --specifier=prerelease --preid=rc {args}"
+      }
+    },
+    "release-stable": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx release {args}"
+      }
     }
   }
 }
