@@ -1,0 +1,20 @@
+{
+  "name": "@cdk-x/logger",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/logger/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/logger/dist",
+        "main": "packages/logger/src/index.ts",
+        "tsConfig": "packages/logger/tsconfig.lib.json",
+        "format": ["esm"],
+        "declarationRootDir": "packages/logger/src"
+      }
+    }
+  }
+}
