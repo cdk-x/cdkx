@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: 'Release type'
+        required: true
+        type: choice
+        default: 'alpha'
+        options:
+          - alpha
+          - beta
+          - rc
+          - stable
+      dryRun:
+        description: 'Dry run'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build release command
+        id: build-command
+        run: |
+          if [ "${{ github.event.inputs.prerelease }}" = "stable" ]; then
+            COMMAND="nx release"
+          else
+            COMMAND="nx release --specifier=prerelease --preid=${{ github.event.inputs.prerelease }}"
+          fi
+          
+          if [ "${{ github.event.inputs.dryRun }}" = "true" ]; then
+            COMMAND="$COMMAND --dry-run"
+          fi
+          
+          echo "command=$COMMAND" >> $GITHUB_OUTPUT
+
+      - name: Run release
+        run: ${{ steps.build-command.outputs.command }}
