@@ -31,6 +31,7 @@ Hetzner Cloud JSON file, a GitHub Actions workflow, etc. — depending on which
 | Language        | TypeScript 5.9, strict mode, ESM (`"type": "module"`)     |
 | Test runner     | Jest 30 + SWC (`@swc/jest`)                               |
 | Linter          | ESLint with `@typescript-eslint`                          |
+| Formatter       | Prettier ~3.6 (`.prettierrc` at workspace root)           |
 | Node            | ESM — all local imports use `.js` extension               |
 | Output dir      | `cdkx.out/` (flat) — one JSON per stack + `manifest.json` |
 
@@ -40,6 +41,8 @@ Run tasks via Nx:
 yarn nx lint core
 yarn nx test core
 yarn nx build core
+yarn nx run @cdk-x/core:format        # format src/ with prettier
+yarn nx run @cdk-x/core:format:check  # check formatting without writing
 ```
 
 ---
@@ -302,6 +305,7 @@ Used by L2 resources to express cross-resource references.
 | No `any`                        | Use `unknown` everywhere. The one exception is `Lazy.any()` return type — intentional escape hatch, gets `eslint-disable` comment.                                                                                                                                                                                 |
 | ESM imports                     | All local imports use `.js` extension even though source is `.ts`.                                                                                                                                                                                                                                                 |
 | Unused params in class methods  | ESLint's `argsIgnorePattern: "^_"` does NOT suppress warnings for class method params. Fix: **omit the parameter entirely** from the method signature. TypeScript allows implementing an interface method with fewer params than declared. When a param is dropped, also remove its import if it's no longer used. |
+| Prettier                        | Run `yarn nx run @cdk-x/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 120`, `tabWidth: 2`, `semi: true`.                                                                                                                                       |
 | Specs co-located                | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                                                                                                                                                                                                                                      |
 | Test helpers                    | `src/test/helpers/` — not exported from the public barrel (`src/index.ts`).                                                                                                                                                                                                                                        |
 | Integration tests               | `src/test/integration/synth.spec.ts`.                                                                                                                                                                                                                                                                              |

@@ -7,6 +7,7 @@ export class ResourceAttribute implements IResolvable {
     private readonly attribute: string,
   ) {}
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   resolve(_context: ResolveContext) {
     return {
       ref: this.resource.logicalId,
