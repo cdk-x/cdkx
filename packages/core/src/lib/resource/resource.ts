@@ -27,6 +27,7 @@ export abstract class Resource extends Construct implements IResource {
    */
   public readonly logicalId: string;
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(scope: Construct, id: string, _props: ResourceProps) {
     super(scope, id);
     this.logicalId = this.node.path;
