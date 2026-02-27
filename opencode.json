@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "instructions": ["packages/core/CONTEXT.md"],
   "mcp": {
     "nx-mcp": {
       "type": "local",
