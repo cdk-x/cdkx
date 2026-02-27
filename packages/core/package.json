@@ -17,5 +17,7 @@
     "dist",
     "!**/*.tsbuildinfo"
   ],
-  "dependencies": {}
+  "dependencies": {
+    "constructs": "^10.5.1"
+  }
 }
