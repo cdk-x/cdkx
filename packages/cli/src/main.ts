@@ -1,5 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { synthCommand } from './commands/synth/index.js';
+
 const { version } = require('../package.json') as { version: string };
 
 const inner = `  cdkx v${version}  —  multi-provider IaC CLI  `;
@@ -25,5 +27,7 @@ program
   .description('CDK-X — multi-provider infrastructure as code')
   .version(version, '-V, --version', 'output the version number')
   .addHelpText('beforeAll', `\n${banner}\n`);
+
+program.addCommand(synthCommand);
 
 program.parse(process.argv);
