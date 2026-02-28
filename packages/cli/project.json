@@ -95,6 +95,14 @@
         "cwd": "{workspaceRoot}"
       }
     },
+    "run": {
+      "dependsOn": ["build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node packages/cli/dist/main.js",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "test": {
       "options": {
         "passWithNoTests": true
