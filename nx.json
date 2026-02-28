@@ -117,6 +117,11 @@
         "commands": ["npm publish --registry http://localhost:4873"],
         "cwd": "{projectRoot}/dist"
       }
+    },
+    "@nx/js:swc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     }
   }
 }

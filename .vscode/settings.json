@@ -2,5 +2,6 @@
   "conventionalCommits.scopes": ["core", "cli", "engine", "testing", "hetzner"],
   "editor.formatOnSave": true,
   "editor.indentSize": 2,
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "eslint.validate": ["json"]
 }
