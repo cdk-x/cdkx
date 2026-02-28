@@ -70,4 +70,32 @@ export abstract class Provider {
   public getSynthesizer(): IStackSynthesizer {
     return new JsonSynthesizer();
   }
+
+  /**
+   * Returns provider-specific environment metadata written into `manifest.json`.
+   *
+   * This is the information the runtime engine needs to know WHERE and HOW to
+   * deploy the stack — e.g. the Hetzner project, the Kubernetes cluster API
+   * server, the GitHub org, etc.
+   *
+   * Override in provider subclasses to expose deployment target metadata.
+   * The returned object must be JSON-serializable; do NOT include credentials.
+   *
+   * @example
+   * // In @cdkx/hetzner:
+   * public override getEnvironment() {
+   *   return { project: this.config.project, datacenter: this.config.datacenter };
+   * }
+   *
+   * @example
+   * // In @cdkx/kubernetes:
+   * public override getEnvironment() {
+   *   return { cluster: this.config.clusterName, apiServer: this.config.apiServer };
+   * }
+   *
+   * @returns A plain JSON-serializable object. Default: `{}`.
+   */
+  public getEnvironment(): Record<string, unknown> {
+    return {};
+  }
 }

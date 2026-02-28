@@ -101,16 +101,17 @@ Pipeline composition order (per provider):
 
 Deployment unit (extends `constructs.Construct`, implements `IStackRef`).
 
-| Member                           | Description                                                 |
-| -------------------------------- | ----------------------------------------------------------- |
-| `static isStack(x)`              | Type guard                                                  |
-| `static of(construct)`           | Walk tree upward to find nearest Stack; throws if not found |
-| `provider: Provider`             | The provider this stack targets                             |
-| `artifactId: string`             | Derived from node path (`/` → `-`, strip leading `-`)       |
-| `synthesizer: IStackSynthesizer` | The synthesizer bound to this stack                         |
-| `providerIdentifier: string`     | Delegates to `provider.identifier` (for `IStackRef`)        |
-| `displayName: string`            | The full construct node path                                |
-| `getProviderResources()`         | Returns all `ProviderResource` descendants                  |
+| Member                                 | Description                                                 |
+| -------------------------------------- | ----------------------------------------------------------- |
+| `static isStack(x)`                    | Type guard                                                  |
+| `static of(construct)`                 | Walk tree upward to find nearest Stack; throws if not found |
+| `provider: Provider`                   | The provider this stack targets                             |
+| `artifactId: string`                   | Derived from node path (`/` → `-`, strip leading `-`)       |
+| `synthesizer: IStackSynthesizer`       | The synthesizer bound to this stack                         |
+| `providerIdentifier: string`           | Delegates to `provider.identifier` (for `IStackRef`)        |
+| `environment: Record<string, unknown>` | Delegates to `provider.getEnvironment()` (for `IStackRef`)  |
+| `displayName: string`                  | The full construct node path                                |
+| `getProviderResources()`               | Returns all `ProviderResource` descendants                  |
 
 **`StackProps.provider`** is required. The synthesizer defaults to
 `provider.getSynthesizer()` but can be overridden via `StackProps.synthesizer`.
@@ -121,14 +122,17 @@ Deployment unit (extends `constructs.Construct`, implements `IStackRef`).
 
 Abstract base class. Provider packages extend this.
 
-| Member                                | Description                                                    |
-| ------------------------------------- | -------------------------------------------------------------- |
-| `abstract identifier: string`         | Unique ID (e.g. `'kubernetes'`, `'hetzner'`) used in manifests |
-| `getResolvers(): IResolver[]`         | Provider-specific resolvers. Default: `[]`                     |
-| `getSynthesizer(): IStackSynthesizer` | Default synthesizer. Default: `new JsonSynthesizer()`          |
+| Member                                      | Description                                                                                                     |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `abstract identifier: string`               | Unique ID (e.g. `'kubernetes'`, `'hetzner'`) used in manifests                                                  |
+| `getResolvers(): IResolver[]`               | Provider-specific resolvers. Default: `[]`                                                                      |
+| `getSynthesizer(): IStackSynthesizer`       | Default synthesizer. Default: `new JsonSynthesizer()`                                                           |
+| `getEnvironment(): Record<string, unknown>` | Deployment target metadata written to `manifest.json`. Default: `{}`. Override to expose cluster, project, etc. |
 
-Provider config (credentials, cluster name, etc.) is runtime-only — it is NOT
-written to synthesis output. Providers accept config in their constructor.
+Provider config (credentials, cluster name, datacenter, etc.) is stored in the
+provider constructor. Non-sensitive parts (project, cluster name, API server URL)
+should be returned by `getEnvironment()` so the runtime engine knows where to deploy.
+Credentials must **never** appear in `getEnvironment()` output.
 
 ---
 
@@ -218,20 +222,14 @@ typed property without casting at the call site. The `// eslint-disable-next-lin
 
 ### `JsonSynthesizer` (`src/lib/synthesizer/synthesizer.ts`)
 
-Default synthesizer. Produces a JSON array file:
-
-```json
-[
-  { "type": "server", "properties": { ... } },
-  { "type": "firewall", "properties": { ... } }
-]
-```
+Default synthesizer. Produces a JSON file keyed by logical ID (one key per resource).
 
 Output file name: `<stack.artifactId>.json`
 
 `IStackRef` interface (not the concrete `Stack` class) is used as the
 synthesizer's stack reference to avoid a circular dependency between
-`synthesizer.ts` and `stack.ts`.
+`synthesizer.ts` and `stack.ts`. `IStackRef` exposes `environment` (from
+`provider.getEnvironment()`) which the synthesizer passes to `addArtifact()`.
 
 Custom synthesizers (e.g. `YamlSynthesizer` for Kubernetes) override
 `Provider.getSynthesizer()` and can extend `JsonSynthesizer` or implement
@@ -242,7 +240,7 @@ Custom synthesizers (e.g. `YamlSynthesizer` for Kubernetes) override
 ### `CloudAssembly` / `CloudAssemblyBuilder` (`src/lib/assembly/cloud-assembly.ts`)
 
 `CloudAssemblyBuilder` is the mutable builder. Synthesizers call
-`builder.addArtifact(artifact)` after writing their output file.
+`builder.addArtifact(options)` after writing their output file.
 
 `App.synth()` calls `builder.buildAssembly()` at the end, which writes
 `manifest.json` and returns the immutable `CloudAssembly`.
@@ -252,18 +250,46 @@ Custom synthesizers (e.g. `YamlSynthesizer` for Kubernetes) override
 ```json
 {
   "version": "1.0.0",
-  "stacks": [
-    {
-      "id": "MyStack",
-      "file": "MyStack.json",
+  "artifacts": {
+    "HetznerStack": {
+      "type": "cdkx:stack",
       "provider": "hetzner",
-      "displayName": "MyStack"
+      "environment": { "project": "my-project", "datacenter": "nbg1" },
+      "properties": { "templateFile": "HetznerStack.json" },
+      "displayName": "HetznerStack"
+    },
+    "KubernetesStack": {
+      "type": "cdkx:stack",
+      "provider": "kubernetes",
+      "environment": { "cluster": "my-cluster", "apiServer": "https://k8s.example.com" },
+      "properties": { "templateFile": "KubernetesStack.json" },
+      "displayName": "KubernetesStack"
     }
-  ]
+  }
+}
+```
+
+- `artifacts` is a **keyed object** (not an array) — key is the stack `artifactId`.
+- `environment` comes from `Provider.getEnvironment()` — non-sensitive deployment target metadata.
+- `properties.templateFile` is the output file name for the stack template.
+- `type: 'cdkx:stack'` is the artifact type discriminator. Future types: `'cdkx:asset-manifest'`, `'cdkx:tree'`.
+
+**`AddArtifactOptions`** — input to `addArtifact()`:
+
+```ts
+interface AddArtifactOptions {
+  id: string; // artifact key in manifest
+  provider: string;
+  environment: Record<string, unknown>; // from Provider.getEnvironment()
+  templateFile: string; // output file name
+  displayName?: string;
 }
 ```
 
 `MANIFEST_VERSION = '1.0.0'` — increment on breaking schema changes.
+
+`CloudAssembly.stacks` is a convenience getter that returns `Object.values(manifest.artifacts)`.
+`CloudAssembly.getStack(id)` looks up `manifest.artifacts[id]`.
 
 ---
 

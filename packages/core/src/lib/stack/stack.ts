@@ -99,6 +99,14 @@ export class Stack extends Construct implements IStackRef {
   }
 
   /**
+   * Provider-specific deployment target metadata — delegates to `provider.getEnvironment()`.
+   * Written into `manifest.json` so the runtime engine knows where to deploy.
+   */
+  public get environment(): Record<string, unknown> {
+    return this.provider.getEnvironment();
+  }
+
+  /**
    * Human-readable display name — the full construct node path.
    */
   public get displayName(): string {

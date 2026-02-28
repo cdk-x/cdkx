@@ -143,7 +143,7 @@ describe('App', () => {
       makeStack(app, 'StackA');
       makeStack(app, 'StackB');
       const assembly = app.synth();
-      const ids = assembly.stacks.map((s) => s.id);
+      const ids = Object.keys(assembly.manifest.artifacts);
       expect(ids).toContain('StackA');
       expect(ids).toContain('StackB');
     });

@@ -100,15 +100,25 @@ describe('Single stack — basic synthesis', () => {
 
     const manifest = readJson(path.join(outdir, 'manifest.json')) as {
       version: string;
-      stacks: Array<{ id: string; file: string; provider: string; displayName: string }>;
+      artifacts: Record<
+        string,
+        {
+          type: string;
+          provider: string;
+          environment: Record<string, unknown>;
+          properties: { templateFile: string };
+          displayName?: string;
+        }
+      >;
     };
 
     expect(manifest.version).toBe(MANIFEST_VERSION);
-    expect(manifest.stacks).toHaveLength(1);
-    expect(manifest.stacks[0]).toEqual({
-      id: 'MyStack',
-      file: 'MyStack.json',
+    expect(Object.keys(manifest.artifacts)).toHaveLength(1);
+    expect(manifest.artifacts['MyStack']).toEqual({
+      type: 'cdkx:stack',
       provider: 'hetzner',
+      environment: {},
+      properties: { templateFile: 'MyStack.json' },
       displayName: 'MyStack',
     });
   });
@@ -152,8 +162,8 @@ describe('Multiple stacks', () => {
     new Stack(app, 'StackB', { provider: new TestProvider() });
     app.synth();
 
-    const manifest = readJson(path.join(outdir, 'manifest.json')) as { stacks: Array<{ id: string }> };
-    const ids = manifest.stacks.map((s) => s.id).sort();
+    const manifest = readJson(path.join(outdir, 'manifest.json')) as { artifacts: Record<string, unknown> };
+    const ids = Object.keys(manifest.artifacts).sort();
     expect(ids).toEqual(['StackA', 'StackB']);
   });
 
@@ -588,9 +598,9 @@ describe('Visual synth output', () => {
 
     // Manifest lists both stacks
     const manifest = JSON.parse(fs.readFileSync(path.join(outdir, 'manifest.json'), 'utf-8')) as {
-      stacks: Array<{ id: string }>;
+      artifacts: Record<string, unknown>;
     };
-    expect(manifest.stacks.map((s) => s.id).sort()).toEqual(['HetznerStack', 'KubernetesStack']);
+    expect(Object.keys(manifest.artifacts).sort()).toEqual(['HetznerStack', 'KubernetesStack']);
 
     // Hetzner stack — keyed object
     type ResourceEntry = { type: string; properties: Record<string, unknown>; metadata: Record<string, unknown> };

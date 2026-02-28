@@ -5,18 +5,46 @@ import * as path from 'node:path';
 export const MANIFEST_VERSION = '1.0.0';
 
 /**
+ * Artifact type discriminator. Currently only `'cdkx:stack'` is defined.
+ * Future types may include `'cdkx:asset-manifest'`, `'cdkx:tree'`, etc.
+ */
+export type ArtifactType = 'cdkx:stack';
+
+/**
  * Describes a single stack artifact in the synthesis output.
  * Written into `manifest.json` — contains only non-sensitive metadata.
+ *
+ * Shape (per artifact entry in `artifacts`):
+ * ```json
+ * {
+ *   "type": "cdkx:stack",
+ *   "provider": "hetzner",
+ *   "environment": { "project": "my-project", "datacenter": "nbg1" },
+ *   "properties": { "templateFile": "HetznerStack.json" },
+ *   "displayName": "HetznerStack"
+ * }
+ * ```
  */
 export interface StackArtifact {
-  /** Unique artifact ID within the assembly. Also used as the output file name stem. */
-  readonly id: string;
-
-  /** Output file name (e.g. `'k8s-stack.yaml'`, `'hetzner-stack.json'`). */
-  readonly file: string;
+  /** Artifact type discriminator — always `'cdkx:stack'` for stack artifacts. */
+  readonly type: ArtifactType;
 
   /** Provider identifier (e.g. `'kubernetes'`, `'hetzner'`). From `Provider.identifier`. */
   readonly provider: string;
+
+  /**
+   * Provider-specific deployment target metadata.
+   * Populated from `Provider.getEnvironment()`. Contains non-sensitive information
+   * that the runtime engine needs to know WHERE to deploy (e.g. cluster name,
+   * datacenter, project ID). Never contains credentials.
+   */
+  readonly environment: Record<string, unknown>;
+
+  /** Stack-level properties used by the runtime engine. */
+  readonly properties: {
+    /** Output file name (e.g. `'HetznerStack.json'`, `'KubernetesStack.json'`). */
+    readonly templateFile: string;
+  };
 
   /** Human-readable display name. Typically the construct node path. */
   readonly displayName?: string;
@@ -29,8 +57,32 @@ export interface CloudAssemblyManifest {
   /** Schema version — used by the CLI to detect incompatible manifests. */
   readonly version: string;
 
-  /** All stack artifacts in this assembly. */
-  readonly stacks: StackArtifact[];
+  /**
+   * All artifacts in this assembly, keyed by their artifact ID.
+   * The artifact ID is the stack's `artifactId` (derived from the construct node path).
+   */
+  readonly artifacts: Record<string, StackArtifact>;
+}
+
+/**
+ * Input shape for `CloudAssemblyBuilder.addArtifact()`.
+ * Carries the artifact ID alongside the artifact data.
+ */
+export interface AddArtifactOptions {
+  /** Unique artifact ID within the assembly. Used as the key in `artifacts`. */
+  readonly id: string;
+
+  /** Provider identifier. */
+  readonly provider: string;
+
+  /** Provider environment metadata from `Provider.getEnvironment()`. */
+  readonly environment: Record<string, unknown>;
+
+  /** Output file name. */
+  readonly templateFile: string;
+
+  /** Human-readable display name. */
+  readonly displayName?: string;
 }
 
 /**
@@ -44,7 +96,7 @@ export interface CloudAssemblyManifest {
  * writes `manifest.json` and returns the immutable `CloudAssembly`.
  */
 export class CloudAssemblyBuilder {
-  private readonly artifacts: StackArtifact[] = [];
+  private readonly artifacts: Record<string, StackArtifact> = {};
 
   constructor(
     /** Absolute path to the output directory (e.g. `/project/cdkx.out`). */
@@ -66,11 +118,18 @@ export class CloudAssemblyBuilder {
    * Registers a stack artifact.
    * Called by each `IStackSynthesizer` after writing its output file.
    */
-  public addArtifact(artifact: StackArtifact): void {
-    if (this.artifacts.some((a) => a.id === artifact.id)) {
-      throw new Error(`Duplicate artifact ID '${artifact.id}'. Each stack must have a unique artifact ID.`);
+  public addArtifact(options: AddArtifactOptions): void {
+    if (this.artifacts[options.id] !== undefined) {
+      throw new Error(`Duplicate artifact ID '${options.id}'. Each stack must have a unique artifact ID.`);
     }
-    this.artifacts.push(artifact);
+    const artifact: StackArtifact = {
+      type: 'cdkx:stack',
+      provider: options.provider,
+      environment: options.environment,
+      properties: { templateFile: options.templateFile },
+      ...(options.displayName !== undefined ? { displayName: options.displayName } : {}),
+    };
+    this.artifacts[options.id] = artifact;
   }
 
   /**
@@ -80,7 +139,7 @@ export class CloudAssemblyBuilder {
   public buildAssembly(): CloudAssembly {
     const manifest: CloudAssemblyManifest = {
       version: MANIFEST_VERSION,
-      stacks: [...this.artifacts],
+      artifacts: { ...this.artifacts },
     };
 
     this.writeFile('manifest.json', JSON.stringify(manifest, null, 2));
@@ -108,13 +167,13 @@ export class CloudAssembly {
    * Returns the artifact for a given stack ID, or `undefined` if not found.
    */
   public getStack(id: string): StackArtifact | undefined {
-    return this.manifest.stacks.find((s) => s.id === id);
+    return this.manifest.artifacts[id];
   }
 
   /**
-   * Returns all stack artifacts in this assembly.
+   * Returns all stack artifacts in this assembly as an array (convenience getter).
    */
   public get stacks(): StackArtifact[] {
-    return this.manifest.stacks;
+    return Object.values(this.manifest.artifacts);
   }
 }
