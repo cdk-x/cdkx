@@ -60,14 +60,20 @@ export interface IStackRef {
 /**
  * Synthesizer that produces a JSON file.
  *
- * Output format:
+ * Output format — a keyed object where each key is the resource's logical ID:
  * ```json
- * [
- *   {
- *     "type": "server",
- *     "properties": { ... }
+ * {
+ *   "MyStackWebServer3A1B2C3D": {
+ *     "type": "hetzner::Server",
+ *     "properties": { ... },
+ *     "metadata": { "cdkx:path": "MyStack/WebServer/Resource" }
+ *   },
+ *   "MyStackFirewallE5F6A7B8": {
+ *     "type": "hetzner::Firewall",
+ *     "properties": { ... },
+ *     "metadata": { "cdkx:path": "MyStack/Firewall" }
  *   }
- * ]
+ * }
  * ```
  */
 export class JsonSynthesizer implements IStackSynthesizer {
@@ -78,9 +84,10 @@ export class JsonSynthesizer implements IStackSynthesizer {
   }
 
   public synthesize(session: ISynthesisSession): void {
-    const resources = this.stack.getProviderResources().map((r) => r.toJson());
+    // Merge all per-resource keyed objects into a single map
+    const resourceMap = Object.assign({}, ...this.stack.getProviderResources().map((r) => r.toJson()));
     const fileName = `${this.stack.artifactId}.json`;
-    const content = JSON.stringify(resources, null, 2);
+    const content = JSON.stringify(resourceMap, null, 2);
 
     this.writeFile(session.outdir, fileName, content);
 

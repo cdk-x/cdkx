@@ -11,9 +11,11 @@ class TestProvider extends Provider {
 }
 
 class TestResource extends Resource {
+  public readonly l1: ProviderResource;
   constructor(scope: Construct, id: string) {
-    super(scope, id, {});
-    new ProviderResource(this, 'Default', { type: 'test::Resource' });
+    super(scope, id);
+    this.l1 = new ProviderResource(this, 'Default', { type: 'test::Resource' });
+    this.node.defaultChild = this.l1;
   }
 }
 
@@ -26,7 +28,7 @@ describe('Resource', () => {
     stack = new Stack(app, 'TestStack', { provider: new TestProvider() });
   });
 
-  it('sets logicalId from node path', () => {
+  it('sets logicalId from node path (L2 path, not L1)', () => {
     const resource = new TestResource(stack, 'MyResource');
     expect(resource.logicalId).toBe('TestStack/MyResource');
   });
@@ -39,7 +41,7 @@ describe('Resource', () => {
   it('throws when applyRemovalPolicy called without a ProviderResource defaultChild', () => {
     class BareResource extends Resource {
       constructor(scope: Construct, id: string) {
-        super(scope, id, {});
+        super(scope, id);
       }
     }
     const resource = new BareResource(stack, 'BareResource');

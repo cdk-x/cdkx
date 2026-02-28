@@ -1,5 +1,6 @@
 import { Construct } from 'constructs';
 import { RESOURCE_SYMBOL, PropertyValue } from '../constants.js';
+import { makeUniqueId } from '../private/unique-id.js';
 import { RemovalPolicy, RemovalPolicyOptions } from '../removal-policy.js';
 import { ProviderCreatePolicy, ProviderDeletionPolicy, ProviderUpdatePolicy } from './provider-resource-policy.js';
 import { ProviderResourceCondition } from './provider-condition.js';
@@ -75,6 +76,18 @@ export class ProviderResource extends Construct {
    */
   public readonly resourceOptions: IProviderResourceOptions = {};
 
+  /**
+   * Stable logical ID for this resource, derived from its construct node path.
+   * Combines a human-readable prefix with an 8-character SHA-256 hash suffix,
+   * guaranteeing uniqueness across renames/refactors.
+   *
+   * Format: `<PathSegments><HASH8>` — e.g. `MyStackWebServer3A1B2C3D`
+   *
+   * Used as the key in the synthesized stack JSON and as the target of
+   * cross-resource `{ ref, attr }` references.
+   */
+  public readonly logicalId: string;
+
   /** The resource type identifier. */
   public readonly type: string;
 
@@ -86,6 +99,7 @@ export class ProviderResource extends Construct {
   constructor(scope: Construct, id: string, props: ProviderResourceProps) {
     super(scope, id);
     Object.defineProperty(this, RESOURCE_SYMBOL, { value: true });
+    this.logicalId = makeUniqueId(this.node.path.split('/'));
     this.type = props.type;
     this.properties = props.properties;
   }
@@ -137,11 +151,14 @@ export class ProviderResource extends Construct {
    * `IResolvable` tokens within the properties tree. The resolved properties are then
    * sanitized (null/undefined removed, unresolved tokens detected and thrown).
    *
-   * Output shape:
+   * Output shape — a single-key object keyed by the resource's `logicalId`:
    * ```json
    * {
-   *   "type": "Deployment",
-   *   "properties": { ... resolved properties ... }
+   *   "MyStackWebServer3A1B2C3D": {
+   *     "type": "hetzner::Server",
+   *     "properties": { ... resolved properties ... },
+   *     "metadata": { "cdkx:path": "MyStack/WebServer/Resource" }
+   *   }
    * }
    * ```
    */
@@ -162,8 +179,13 @@ export class ProviderResource extends Construct {
     const sanitizedProperties = pipeline.sanitize(resolvedProperties);
 
     return {
-      type: this.type,
-      properties: sanitizedProperties,
+      [this.logicalId]: {
+        type: this.type,
+        properties: sanitizedProperties,
+        metadata: {
+          'cdkx:path': this.node.path,
+        },
+      },
     };
   }
 }
