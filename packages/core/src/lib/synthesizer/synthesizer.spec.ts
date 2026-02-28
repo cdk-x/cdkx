@@ -15,10 +15,16 @@ function makeSession(outdir: string): ISynthesisSession {
 }
 
 /** Builds a minimal IStackRef mock. */
-function makeStackRef(artifactId: string, resources: ProviderResource[] = [], providerIdentifier = 'test'): IStackRef {
+function makeStackRef(
+  artifactId: string,
+  resources: ProviderResource[] = [],
+  providerIdentifier = 'test',
+  environment: Record<string, unknown> = {},
+): IStackRef {
   return {
     artifactId,
     providerIdentifier,
+    environment,
     displayName: `App/${artifactId}`,
     getProviderResources: () => resources,
   };
@@ -93,7 +99,7 @@ describe('JsonSynthesizer', () => {
       const assembly = session.assembly.buildAssembly();
       const artifact = assembly.getStack('RegStack');
       expect(artifact).toBeDefined();
-      expect(artifact?.file).toBe('RegStack.json');
+      expect(artifact?.properties.templateFile).toBe('RegStack.json');
       expect(artifact?.provider).toBe('test');
       fs.rmSync(outdir, { recursive: true });
     });
