@@ -15,6 +15,10 @@ module.exports = {
   transform: {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },
+  // chalk v5 and its deps are ESM-only; SWC must transform them for Jest (CJS)
+  transformIgnorePatterns: [
+    'node_modules/(?!(chalk|#ansi-styles|ansi-styles)/)',
+  ],
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: 'test-output/jest/coverage',
 };

@@ -95,6 +95,14 @@
         "cwd": "{workspaceRoot}"
       }
     },
+    "build:fixtures": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/packages/cli/dist-fixtures"],
+      "options": {
+        "command": "node -e \"require('esbuild').buildSync({ entryPoints: ['packages/cli/src/test/fixtures/simple-app/src/main.ts'], outfile: 'packages/cli/dist-fixtures/simple-app/main.js', bundle: true, platform: 'node', format: 'cjs' })\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "run": {
       "dependsOn": ["build"],
       "executor": "nx:run-commands",
@@ -104,6 +112,7 @@
       }
     },
     "test": {
+      "dependsOn": ["build"],
       "options": {
         "passWithNoTests": true
       }
