@@ -33,6 +33,25 @@ describe('ProviderResource', () => {
     });
   });
 
+  describe('logicalId', () => {
+    it('is computed from the node path using makeUniqueId', () => {
+      const resource = new ProviderResource(stack, 'Res', { type: 'test::Type' });
+      // node.path = 'TestStack/Res' → makeUniqueId(['TestStack', 'Res'])
+      expect(resource.logicalId).toBe('TestStackRes4FFF4668');
+    });
+
+    it('is stable — same path always produces the same logical ID', () => {
+      const r1 = new ProviderResource(stack, 'Stable', { type: 'test::Type' });
+      expect(r1.logicalId).toBe(r1.logicalId);
+    });
+
+    it('produces different logical IDs for different construct paths', () => {
+      const r1 = new ProviderResource(stack, 'ResA', { type: 'test::Type' });
+      const r2 = new ProviderResource(stack, 'ResB', { type: 'test::Type' });
+      expect(r1.logicalId).not.toBe(r2.logicalId);
+    });
+  });
+
   describe('applyRemovalPolicy()', () => {
     it('sets DELETE policy for RemovalPolicy.DESTROY', () => {
       const resource = new ProviderResource(stack, 'Res', { type: 'test::Type' });
@@ -55,16 +74,26 @@ describe('ProviderResource', () => {
   });
 
   describe('toJson()', () => {
-    it('returns type and properties shape', () => {
+    it('returns a keyed object with logicalId as the key', () => {
       const resource = new ProviderResource(stack, 'Res', {
         type: 'test::Type',
         properties: { name: 'hello', count: 3 },
       });
       const json = resource.toJson();
-      expect(json).toEqual({
+      // key must be the logical ID
+      expect(Object.keys(json)).toEqual([resource.logicalId]);
+    });
+
+    it('contains type, properties and metadata inside the keyed entry', () => {
+      const resource = new ProviderResource(stack, 'Res', {
         type: 'test::Type',
         properties: { name: 'hello', count: 3 },
       });
+      const json = resource.toJson();
+      const entry = json[resource.logicalId] as Record<string, unknown>;
+      expect(entry.type).toBe('test::Type');
+      expect(entry.properties).toEqual({ name: 'hello', count: 3 });
+      expect(entry.metadata).toEqual({ 'cdkx:path': 'TestStack/Res' });
     });
 
     it('resolves Lazy values at synthesis time', () => {
@@ -82,7 +111,8 @@ describe('ProviderResource', () => {
       });
       const json = resource.toJson();
       expect(resolved).toBe(true);
-      expect(json).toEqual({ type: 'test::Type', properties: { replicas: 5 } });
+      const entry = json[resource.logicalId] as Record<string, unknown>;
+      expect((entry.properties as Record<string, unknown>).replicas).toBe(5);
     });
 
     it('resolves IResolvable tokens via ImplicitTokenResolver', () => {
@@ -98,10 +128,8 @@ describe('ProviderResource', () => {
         properties: { id: new MyToken() as any },
       });
       const json = resource.toJson();
-      expect(json).toEqual({
-        type: 'test::Type',
-        properties: { id: { ref: 'some-resource', attr: 'id' } },
-      });
+      const entry = json[resource.logicalId] as Record<string, unknown>;
+      expect((entry.properties as Record<string, unknown>).id).toEqual({ ref: 'some-resource', attr: 'id' });
     });
 
     it('strips null values from properties', () => {
@@ -110,13 +138,15 @@ describe('ProviderResource', () => {
         properties: { name: 'hello', optional: null },
       });
       const json = resource.toJson();
-      expect(json).toEqual({ type: 'test::Type', properties: { name: 'hello' } });
+      const entry = json[resource.logicalId] as Record<string, unknown>;
+      expect(entry.properties).toEqual({ name: 'hello' });
     });
 
     it('produces empty properties object when no properties given', () => {
       const resource = new ProviderResource(stack, 'Res', { type: 'test::Type' });
       const json = resource.toJson();
-      expect(json).toEqual({ type: 'test::Type', properties: {} });
+      const entry = json[resource.logicalId] as Record<string, unknown>;
+      expect(entry.properties).toEqual({});
     });
   });
 });

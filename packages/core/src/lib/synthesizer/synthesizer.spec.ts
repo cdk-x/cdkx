@@ -48,24 +48,30 @@ describe('JsonSynthesizer', () => {
       fs.rmSync(outdir, { recursive: true });
     });
 
-    it('produces a JSON array with one entry per resource', () => {
+    it('produces a JSON object keyed by logical ID, one entry per resource', () => {
       const outdir = tmpDir();
       const app = makeApp(outdir);
       const stack = makeStack(app, 'MyStack', new TestProvider());
-      new ProviderResource(stack, 'Res1', { type: 'test::TypeA', properties: { name: 'a' } });
-      new ProviderResource(stack, 'Res2', { type: 'test::TypeB', properties: { count: 2 } });
+      const r1 = new ProviderResource(stack, 'Res1', { type: 'test::TypeA', properties: { name: 'a' } });
+      const r2 = new ProviderResource(stack, 'Res2', { type: 'test::TypeB', properties: { count: 2 } });
 
       const session = makeSession(outdir);
       stack.synthesizer.synthesize(session);
 
-      const content = JSON.parse(fs.readFileSync(path.join(outdir, 'MyStack.json'), 'utf-8'));
-      expect(content).toHaveLength(2);
-      expect(content[0]).toEqual({ type: 'test::TypeA', properties: { name: 'a' } });
-      expect(content[1]).toEqual({ type: 'test::TypeB', properties: { count: 2 } });
+      const content = JSON.parse(fs.readFileSync(path.join(outdir, 'MyStack.json'), 'utf-8')) as Record<
+        string,
+        { type: string; properties: Record<string, unknown>; metadata: Record<string, unknown> }
+      >;
+      expect(Object.keys(content)).toHaveLength(2);
+      // Each entry is keyed by its logical ID
+      expect(content[r1.logicalId].type).toBe('test::TypeA');
+      expect(content[r1.logicalId].properties).toEqual({ name: 'a' });
+      expect(content[r2.logicalId].type).toBe('test::TypeB');
+      expect(content[r2.logicalId].properties).toEqual({ count: 2 });
       fs.rmSync(outdir, { recursive: true });
     });
 
-    it('produces an empty array when the stack has no resources', () => {
+    it('produces an empty object when the stack has no resources', () => {
       const outdir = tmpDir();
       const app = makeApp(outdir);
       const stack = makeStack(app, 'EmptyStack', new TestProvider());
@@ -73,7 +79,7 @@ describe('JsonSynthesizer', () => {
       stack.synthesizer.synthesize(session);
 
       const content = JSON.parse(fs.readFileSync(path.join(outdir, 'EmptyStack.json'), 'utf-8'));
-      expect(content).toEqual([]);
+      expect(content).toEqual({});
       fs.rmSync(outdir, { recursive: true });
     });
 

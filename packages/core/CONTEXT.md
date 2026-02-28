@@ -24,16 +24,16 @@ Hetzner Cloud JSON file, a GitHub Actions workflow, etc. — depending on which
 
 ## Workspace setup
 
-| Property        | Value                                                     |
-| --------------- | --------------------------------------------------------- |
-| Monorepo tool   | Nx 22                                                     |
-| Package manager | Yarn (yarn.lock at root)                                  |
-| Language        | TypeScript 5.9, strict mode, ESM (`"type": "module"`)     |
-| Test runner     | Jest 30 + SWC (`@swc/jest`)                               |
-| Linter          | ESLint with `@typescript-eslint`                          |
-| Formatter       | Prettier ~3.6 (`.prettierrc` at workspace root)           |
-| Node            | ESM — all local imports use `.js` extension               |
-| Output dir      | `cdkx.out/` (flat) — one JSON per stack + `manifest.json` |
+| Property        | Value                                                                                                                         |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo tool   | Nx 22                                                                                                                         |
+| Package manager | Yarn (yarn.lock at root)                                                                                                      |
+| Language        | TypeScript 5.9, strict mode, ESM (`"type": "module"`)                                                                         |
+| Test runner     | Jest 30 + SWC (`@swc/jest`)                                                                                                   |
+| Linter          | ESLint with `@typescript-eslint`                                                                                              |
+| Formatter       | Prettier ~3.6 (`.prettierrc` at workspace root)                                                                               |
+| Node            | ESM — all local imports use `.js` extension                                                                                   |
+| Output dir      | `cdkx.out/` (flat) — one JSON per stack + `manifest.json`. Visual test writes to `.cdkx.out/` at workspace root (gitignored). |
 
 Run tasks via Nx:
 
@@ -299,17 +299,17 @@ Used by L2 resources to express cross-resource references.
 
 ## Coding conventions
 
-| Rule                            | Detail                                                                                                                                                                                                                                                                                                             |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Everything OOP                  | No standalone `export function`. All utilities are static methods on classes.                                                                                                                                                                                                                                      |
-| No `any`                        | Use `unknown` everywhere. The one exception is `Lazy.any()` return type — intentional escape hatch, gets `eslint-disable` comment.                                                                                                                                                                                 |
-| ESM imports                     | All local imports use `.js` extension even though source is `.ts`.                                                                                                                                                                                                                                                 |
-| Unused params in class methods  | ESLint's `argsIgnorePattern: "^_"` does NOT suppress warnings for class method params. Fix: **omit the parameter entirely** from the method signature. TypeScript allows implementing an interface method with fewer params than declared. When a param is dropped, also remove its import if it's no longer used. |
-| Prettier                        | Run `yarn nx run @cdk-x/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 120`, `tabWidth: 2`, `semi: true`.                                                                                                                                       |
-| Specs co-located                | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                                                                                                                                                                                                                                      |
-| Test helpers                    | `src/test/helpers/` — not exported from the public barrel (`src/index.ts`).                                                                                                                                                                                                                                        |
-| Integration tests               | `src/test/integration/synth.spec.ts`.                                                                                                                                                                                                                                                                              |
-| `_`-prefixed params (non-class) | `argsIgnorePattern: "^_"` works for standalone functions and interface implementations. Prefer omitting when possible.                                                                                                                                                                                             |
+| Rule                            | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Everything OOP                  | No standalone `export function`. All utilities are static methods on classes.                                                                                                                                                                                                                                                                                                                                                                                              |
+| No `any`                        | Use `unknown` everywhere. The one exception is `Lazy.any()` return type — intentional escape hatch, gets `eslint-disable` comment.                                                                                                                                                                                                                                                                                                                                         |
+| ESM imports                     | All local imports use `.js` extension even though source is `.ts`.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Unused params in class methods  | ESLint's `argsIgnorePattern: "^_"` does NOT suppress warnings for class method params. Fix: **omit the parameter entirely** from the method signature. TypeScript allows implementing an interface method with fewer params than declared. When a param is dropped, also remove its import if it's no longer used.                                                                                                                                                         |
+| Prettier                        | Run `yarn nx run @cdk-x/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 120`, `tabWidth: 2`, `semi: true`.                                                                                                                                                                                                                                                                                               |
+| Specs co-located                | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Test helpers                    | `src/test/helpers/` — not exported from the public barrel (`src/index.ts`).                                                                                                                                                                                                                                                                                                                                                                                                |
+| Integration tests               | `src/test/integration/synth.spec.ts`. Suite 8 ("Visual synth output") writes permanent files to `.cdkx.out/` at the workspace root for manual inspection (not cleaned up after the test). It uses minimal in-test L2 subclasses (`HetznerServer`, `HetznerFloatingIp`, `KubernetesDeployment`, `KubernetesService`) to exercise `ResourceAttribute` cross-references, `Lazy` tokens, a custom `IResolver`, and null stripping — all in one realistic multi-stack scenario. |
+| `_`-prefixed params (non-class) | `argsIgnorePattern: "^_"` works for standalone functions and interface implementations. Prefer omitting when possible.                                                                                                                                                                                                                                                                                                                                                     |
 
 ---
 
@@ -424,5 +424,5 @@ packages/core/
         │   ├── test-provider.ts         TestProvider, SpyProvider, CustomSynthesizerProvider
         │   └── make-app.ts              makeApp(), makeStack()
         └── integration/
-            └── synth.spec.ts            full end-to-end synthesis test (7 suites)
+            └── synth.spec.ts            full end-to-end synthesis test (8 suites; suite 8 writes to .cdkx.out/)
 ```
