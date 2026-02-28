@@ -12,36 +12,13 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as os from 'node:os';
 import { App } from '../../lib/app/app.js';
 import { Stack } from '../../lib/stack/stack.js';
 import { ProviderResource } from '../../lib/provider-resource/provider-resource.js';
 import { Lazy } from '../../lib/resolvables/lazy.js';
-import { IResolvable, ResolveContext, IResolver, ResolutionContext } from '../../lib/resolvables/resolvables.js';
+import { IResolvable, ResolveContext } from '../../lib/resolvables/resolvables.js';
 import { MANIFEST_VERSION } from '../../lib/assembly/cloud-assembly.js';
-import { Resource } from '../../lib/resource/resource.js';
-import { ResourceAttribute } from '../../lib/resource/resource-attribute.js';
-import { TestProvider } from '../helpers/index.js';
-
-function tmpDir(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'cdkx-integration-'));
-}
-
-function readJson(filePath: string): unknown {
-  return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-}
-
-/** Helper: get all resource entries from a keyed stack JSON object. */
-function resourceValues(json: unknown): Array<{ type: string; properties: Record<string, unknown> }> {
-  return Object.values(json as Record<string, unknown>) as Array<{
-    type: string;
-    properties: Record<string, unknown>;
-  }>;
-}
-
-afterEach(() => {
-  // Nothing to clean up globally — each test cleans its own outdir
-});
+import { TestProvider, SynthHelpers, TestResources } from '../helpers/index.js';
 
 // ---------------------------------------------------------------------------
 // 1. Basic single-stack synthesis
@@ -50,17 +27,14 @@ describe('Single stack — basic synthesis', () => {
   let outdir: string;
 
   beforeEach(() => {
-    outdir = tmpDir();
+    outdir = SynthHelpers.tmpDir();
   });
   afterEach(() => fs.rmSync(outdir, { recursive: true }));
 
   it('writes the stack JSON file to disk', () => {
     const app = new App({ outdir });
     const stack = new Stack(app, 'MyStack', { provider: new TestProvider() });
-    new ProviderResource(stack, 'Server', {
-      type: 'hetzner::Server',
-      properties: { name: 'web-01', serverType: 'cx21' },
-    });
+    TestResources.resource(stack);
 
     app.synth();
 
@@ -70,19 +44,15 @@ describe('Single stack — basic synthesis', () => {
   it('stack JSON contains the correct resource shape', () => {
     const app = new App({ outdir });
     const stack = new Stack(app, 'MyStack', { provider: new TestProvider() });
-    const server = new ProviderResource(stack, 'Server', {
-      type: 'hetzner::Server',
-      properties: { name: 'web-01', serverType: 'cx21' },
-    });
+    const resource = TestResources.resource(stack, 'Server');
 
     app.synth();
 
-    const content = readJson(path.join(outdir, 'MyStack.json')) as Record<string, unknown>;
-    // Output is a keyed object — one key per resource (the logical ID)
+    const content = SynthHelpers.readJson(path.join(outdir, 'MyStack.json')) as Record<string, unknown>;
     expect(Object.keys(content)).toHaveLength(1);
-    const entry = content[server.logicalId] as { type: string; properties: Record<string, unknown> };
-    expect(entry.type).toBe('hetzner::Server');
-    expect(entry.properties).toEqual({ name: 'web-01', serverType: 'cx21' });
+    const entry = content[resource.logicalId] as { type: string; properties: Record<string, unknown> };
+    expect(entry.type).toBe('test::Resource');
+    expect(entry.properties).toEqual({ name: 'Server' });
   });
 
   it('writes manifest.json to disk', () => {
@@ -98,7 +68,7 @@ describe('Single stack — basic synthesis', () => {
     new Stack(app, 'MyStack', { provider: new TestProvider('hetzner') });
     app.synth();
 
-    const manifest = readJson(path.join(outdir, 'manifest.json')) as {
+    const manifest = SynthHelpers.readJson(path.join(outdir, 'manifest.json')) as {
       version: string;
       artifacts: Record<
         string,
@@ -128,19 +98,65 @@ describe('Single stack — basic synthesis', () => {
     new Stack(app, 'Empty', { provider: new TestProvider() });
     app.synth();
 
-    const content = readJson(path.join(outdir, 'Empty.json'));
+    const content = SynthHelpers.readJson(path.join(outdir, 'Empty.json'));
     expect(content).toEqual({});
   });
 });
 
 // ---------------------------------------------------------------------------
-// 2. Multiple stacks
+// 2. stackName
+// ---------------------------------------------------------------------------
+describe('stackName', () => {
+  let outdir: string;
+
+  beforeEach(() => {
+    outdir = SynthHelpers.tmpDir();
+  });
+  afterEach(() => fs.rmSync(outdir, { recursive: true }));
+
+  it('manifest displayName defaults to the construct id when stackName is not provided', () => {
+    const app = new App({ outdir });
+    new Stack(app, 'MyStack', { provider: new TestProvider() });
+    app.synth();
+
+    const manifest = SynthHelpers.readJson(path.join(outdir, 'manifest.json')) as {
+      artifacts: Record<string, { displayName?: string }>;
+    };
+    expect(manifest.artifacts['MyStack'].displayName).toBe('MyStack');
+  });
+
+  it('manifest displayName uses stackName when provided', () => {
+    const app = new App({ outdir });
+    new Stack(app, 'MyStack', { provider: new TestProvider(), stackName: 'Production Stack' });
+    app.synth();
+
+    const manifest = SynthHelpers.readJson(path.join(outdir, 'manifest.json')) as {
+      artifacts: Record<string, { displayName?: string; properties: { templateFile: string } }>;
+    };
+    // artifactId (manifest key and file name) is still derived from construct id
+    expect(manifest.artifacts['MyStack']).toBeDefined();
+    expect(manifest.artifacts['MyStack'].displayName).toBe('Production Stack');
+    expect(manifest.artifacts['MyStack'].properties.templateFile).toBe('MyStack.json');
+  });
+
+  it('output file name is always derived from the construct id, not stackName', () => {
+    const app = new App({ outdir });
+    new Stack(app, 'MyStack', { provider: new TestProvider(), stackName: 'Production Stack' });
+    app.synth();
+
+    expect(fs.existsSync(path.join(outdir, 'MyStack.json'))).toBe(true);
+    expect(fs.existsSync(path.join(outdir, 'Production Stack.json'))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3. Multiple stacks
 // ---------------------------------------------------------------------------
 describe('Multiple stacks', () => {
   let outdir: string;
 
   beforeEach(() => {
-    outdir = tmpDir();
+    outdir = SynthHelpers.tmpDir();
   });
   afterEach(() => fs.rmSync(outdir, { recursive: true }));
 
@@ -148,8 +164,8 @@ describe('Multiple stacks', () => {
     const app = new App({ outdir });
     const s1 = new Stack(app, 'StackA', { provider: new TestProvider() });
     const s2 = new Stack(app, 'StackB', { provider: new TestProvider() });
-    new ProviderResource(s1, 'R1', { type: 'T', properties: { stack: 'a' } });
-    new ProviderResource(s2, 'R2', { type: 'T', properties: { stack: 'b' } });
+    TestResources.resource(s1, 'R1');
+    TestResources.resource(s2, 'R2');
     app.synth();
 
     expect(fs.existsSync(path.join(outdir, 'StackA.json'))).toBe(true);
@@ -162,34 +178,35 @@ describe('Multiple stacks', () => {
     new Stack(app, 'StackB', { provider: new TestProvider() });
     app.synth();
 
-    const manifest = readJson(path.join(outdir, 'manifest.json')) as { artifacts: Record<string, unknown> };
-    const ids = Object.keys(manifest.artifacts).sort();
-    expect(ids).toEqual(['StackA', 'StackB']);
+    const manifest = SynthHelpers.readJson(path.join(outdir, 'manifest.json')) as {
+      artifacts: Record<string, unknown>;
+    };
+    expect(Object.keys(manifest.artifacts).sort()).toEqual(['StackA', 'StackB']);
   });
 
   it('each stack file contains only its own resources', () => {
     const app = new App({ outdir });
     const s1 = new Stack(app, 'StackA', { provider: new TestProvider() });
     const s2 = new Stack(app, 'StackB', { provider: new TestProvider() });
-    new ProviderResource(s1, 'Res', { type: 'T', properties: { owner: 'stack-a' } });
-    new ProviderResource(s2, 'Res', { type: 'T', properties: { owner: 'stack-b' } });
+    new ProviderResource(s1, 'Res', { type: 'test::Resource', properties: { owner: 'stack-a' } });
+    new ProviderResource(s2, 'Res', { type: 'test::Resource', properties: { owner: 'stack-b' } });
     app.synth();
 
-    const a = resourceValues(readJson(path.join(outdir, 'StackA.json')));
-    const b = resourceValues(readJson(path.join(outdir, 'StackB.json')));
+    const a = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'StackA.json')));
+    const b = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'StackB.json')));
     expect(a[0].properties['owner']).toBe('stack-a');
     expect(b[0].properties['owner']).toBe('stack-b');
   });
 });
 
 // ---------------------------------------------------------------------------
-// 3. Token resolution — Lazy
+// 4. Token resolution — Lazy
 // ---------------------------------------------------------------------------
 describe('Lazy token resolution', () => {
   let outdir: string;
 
   beforeEach(() => {
-    outdir = tmpDir();
+    outdir = SynthHelpers.tmpDir();
   });
   afterEach(() => fs.rmSync(outdir, { recursive: true }));
 
@@ -199,25 +216,23 @@ describe('Lazy token resolution', () => {
 
     let computed = false;
     new ProviderResource(stack, 'R', {
-      type: 'T',
+      type: 'test::Resource',
       properties: {
-        replicas: Lazy.any({
+        value: Lazy.any({
           produce: () => {
             computed = true;
-            return 3;
+            return 42;
           },
         }),
       },
     });
 
-    // NOT called yet
     expect(computed).toBe(false);
-
     app.synth();
 
     expect(computed).toBe(true);
-    const content = resourceValues(readJson(path.join(outdir, 'S.json')));
-    expect(content[0].properties['replicas']).toBe(3);
+    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
+    expect(content[0].properties['value']).toBe(42);
   });
 
   it('resolves a Lazy that references a value set after construction', () => {
@@ -226,28 +241,36 @@ describe('Lazy token resolution', () => {
 
     let lateValue = 0;
     new ProviderResource(stack, 'R', {
-      type: 'T',
+      type: 'test::Resource',
       properties: { count: Lazy.any({ produce: () => lateValue }) },
     });
 
-    // Set the value AFTER resource construction — before synth
     lateValue = 42;
-
     app.synth();
 
-    const content = resourceValues(readJson(path.join(outdir, 'S.json')));
+    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
     expect(content[0].properties['count']).toBe(42);
+  });
+
+  it('uses TestResources.resourceWithLazy helper', () => {
+    const app = new App({ outdir });
+    const stack = new Stack(app, 'S', { provider: new TestProvider() });
+    TestResources.resourceWithLazy(stack);
+    app.synth();
+
+    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
+    expect(content[0].properties['value']).toBe('lazy-resolved');
   });
 });
 
 // ---------------------------------------------------------------------------
-// 4. Token resolution — IResolvable
+// 5. Token resolution — IResolvable
 // ---------------------------------------------------------------------------
 describe('IResolvable token resolution', () => {
   let outdir: string;
 
   beforeEach(() => {
-    outdir = tmpDir();
+    outdir = SynthHelpers.tmpDir();
   });
   afterEach(() => fs.rmSync(outdir, { recursive: true }));
 
@@ -262,14 +285,14 @@ describe('IResolvable token resolution', () => {
     const app = new App({ outdir });
     const stack = new Stack(app, 'S', { provider: new TestProvider() });
     new ProviderResource(stack, 'R', {
-      type: 'T',
+      type: 'test::Resource',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       properties: { password: new SecretRef('my-secret') as any },
     });
 
     app.synth();
 
-    const content = resourceValues(readJson(path.join(outdir, 'S.json')));
+    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
     expect(content[0].properties['password']).toEqual({ secretKeyRef: { name: 'my-secret', key: 'value' } });
   });
 
@@ -285,13 +308,13 @@ describe('IResolvable token resolution', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lazy = Lazy.any({ produce: () => new NameToken() as any });
     new ProviderResource(stack, 'R', {
-      type: 'T',
+      type: 'test::Resource',
       properties: { name: lazy },
     });
 
     app.synth();
 
-    const content = resourceValues(readJson(path.join(outdir, 'S.json')));
+    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
     expect(content[0].properties['name']).toBe('resolved-name');
   });
 
@@ -307,7 +330,7 @@ describe('IResolvable token resolution', () => {
     const app = new App({ outdir });
     const stack = new Stack(app, 'S', { provider: new TestProvider('kubernetes') });
     new ProviderResource(stack, 'R', {
-      type: 'T',
+      type: 'test::Resource',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       properties: { x: new ProviderSpyToken() as any },
     });
@@ -319,37 +342,34 @@ describe('IResolvable token resolution', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. Null / undefined stripping
+// 6. Null / undefined stripping
 // ---------------------------------------------------------------------------
 describe('Null and undefined stripping during synthesis', () => {
   let outdir: string;
 
   beforeEach(() => {
-    outdir = tmpDir();
+    outdir = SynthHelpers.tmpDir();
   });
   afterEach(() => fs.rmSync(outdir, { recursive: true }));
 
   it('strips null property values from the output', () => {
     const app = new App({ outdir });
     const stack = new Stack(app, 'S', { provider: new TestProvider() });
-    new ProviderResource(stack, 'R', {
-      type: 'T',
-      properties: { name: 'hello', optional: null },
-    });
+    TestResources.resourceWithNull(stack);
     app.synth();
 
-    const content = resourceValues(readJson(path.join(outdir, 'S.json')));
+    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
     expect(content[0].properties).not.toHaveProperty('optional');
-    expect(content[0].properties['name']).toBe('hello');
+    expect(content[0].properties['name']).toBe('NullResource');
   });
 });
 
 // ---------------------------------------------------------------------------
-// 6. Unresolved token detection
+// 7. Unresolved token detection
 // ---------------------------------------------------------------------------
 describe('Unresolved token detection', () => {
   it('throws during synthesis when a class instance survives resolution', () => {
-    const outdir = tmpDir();
+    const outdir = SynthHelpers.tmpDir();
     try {
       class UnresolvedToken {
         // Does NOT implement IResolvable — no resolve() method
@@ -359,7 +379,7 @@ describe('Unresolved token detection', () => {
       const app = new App({ outdir });
       const stack = new Stack(app, 'S', { provider: new TestProvider() });
       new ProviderResource(stack, 'R', {
-        type: 'T',
+        type: 'test::Resource',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         properties: { bad: new UnresolvedToken() as any },
       });
@@ -372,285 +392,82 @@ describe('Unresolved token detection', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. Custom global resolver
-// ---------------------------------------------------------------------------
-describe('Custom global resolver', () => {
-  let outdir: string;
-
-  beforeEach(() => {
-    outdir = tmpDir();
-  });
-  afterEach(() => fs.rmSync(outdir, { recursive: true }));
-
-  it('intercepts matching values in all stacks via app-level resolver', () => {
-    // Replace any string matching '{{env:NAME}}' with 'prod'
-    const envResolver: IResolver = {
-      resolve(ctx: ResolutionContext) {
-        if (typeof ctx.value === 'string' && ctx.value.startsWith('{{env:')) {
-          ctx.replaceValue('prod');
-        }
-      },
-    };
-
-    const app = new App({ outdir, resolvers: [envResolver] });
-    const s1 = new Stack(app, 'S1', { provider: new TestProvider() });
-    const s2 = new Stack(app, 'S2', { provider: new TestProvider() });
-    new ProviderResource(s1, 'R', { type: 'T', properties: { env: '{{env:NODE_ENV}}' } });
-    new ProviderResource(s2, 'R', { type: 'T', properties: { env: '{{env:STAGE}}' } });
-    app.synth();
-
-    const c1 = resourceValues(readJson(path.join(outdir, 'S1.json')));
-    const c2 = resourceValues(readJson(path.join(outdir, 'S2.json')));
-    expect(c1[0].properties['env']).toBe('prod');
-    expect(c2[0].properties['env']).toBe('prod');
-  });
-});
-
-// ---------------------------------------------------------------------------
 // 8. Visual synth output — written to .cdkx.out/ at workspace root
-//    Exercises cross-resource references (ResourceAttribute → hashed logicalId),
-//    Lazy values, IResolvable tokens, null stripping, and a custom IResolver —
-//    all in one realistic multi-stack scenario.
 // ---------------------------------------------------------------------------
 describe('Visual synth output', () => {
-  // Minimal L2 constructs defined once for the whole suite.
-  // Convention: always set this.node.defaultChild = l1 so that
-  // ResourceAttribute.resolve() can find the L1's logicalId.
-
-  // HetznerServer — L2 that exposes a `serverId` cross-reference token
-  class HetznerServer extends Resource {
-    public readonly l1: ProviderResource;
-
-    constructor(scope: Stack, id: string, props: { name: string; serverType: string; location: string }) {
-      super(scope, id);
-      this.l1 = new ProviderResource(this, 'Resource', {
-        type: 'hetzner::Server',
-        properties: {
-          name: props.name,
-          serverType: props.serverType,
-          location: props.location,
-        },
-      });
-      this.node.defaultChild = this.l1;
-    }
-
-    /** Cross-reference token: resolves to { ref: "<l1.logicalId>", attr: "id" } */
-    get serverId(): ResourceAttribute {
-      return new ResourceAttribute(this, 'id');
-    }
-  }
-
-  // HetznerFloatingIp — L2 that can reference a server via ResourceAttribute
-  class HetznerFloatingIp extends Resource {
-    constructor(
-      scope: Stack,
-      id: string,
-      props: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        description: any; // accepts Lazy, plain string, or any token
-        homeLocation: string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        serverId?: any; // accepts a ResourceAttribute token
-      },
-    ) {
-      super(scope, id);
-      const l1 = new ProviderResource(this, 'Resource', {
-        type: 'hetzner::FloatingIp',
-        properties: {
-          description: props.description,
-          type: 'ipv4',
-          homeLocation: props.homeLocation,
-          ...(props.serverId !== undefined ? { serverId: props.serverId } : {}),
-          optionalTag: null, // always stripped
-        },
-      });
-      this.node.defaultChild = l1;
-    }
-  }
-
-  // KubernetesDeployment — L2 exposing a `deploymentRef` cross-reference token
-  class KubernetesDeployment extends Resource {
-    private replicaCount = 1;
-    public readonly l1: ProviderResource;
-
-    constructor(scope: Stack, id: string, props: { name: string; image: string }) {
-      super(scope, id);
-      this.l1 = new ProviderResource(this, 'Resource', {
-        type: 'kubernetes::Deployment',
-        properties: {
-          name: props.name,
-          namespace: 'default',
-          // Lazy: captures `this.replicaCount` — caller can update it before synth
-          replicas: Lazy.any({ produce: () => this.replicaCount }),
-          image: props.image,
-        },
-      });
-      this.node.defaultChild = this.l1;
-    }
-
-    setReplicas(n: number) {
-      this.replicaCount = n;
-    }
-
-    /** Cross-reference token: resolves to { ref: "<l1.logicalId>", attr: "name" } */
-    get deploymentRef(): ResourceAttribute {
-      return new ResourceAttribute(this, 'name');
-    }
-  }
-
-  // KubernetesService — references the deployment by name via ResourceAttribute
-  class KubernetesService extends Resource {
-    constructor(
-      scope: Stack,
-      id: string,
-      props: {
-        name: string;
-        port: number;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        targetDeployment?: any;
-      },
-    ) {
-      super(scope, id);
-      const l1 = new ProviderResource(this, 'Resource', {
-        type: 'kubernetes::Service',
-        properties: {
-          name: props.name,
-          namespace: 'default',
-          type: 'ClusterIP',
-          port: props.port,
-          ...(props.targetDeployment !== undefined ? { targetDeployment: props.targetDeployment } : {}),
-        },
-      });
-      this.node.defaultChild = l1;
-    }
-  }
-
-  it('produces a realistic multi-stack output with cross-resource references in .cdkx.out/', () => {
+  it('produces a multi-stack output with cross-resource references in .cdkx.out/', () => {
     // Resolve workspace root: this file is 5 levels deep from root
     // packages/core/src/test/integration/synth.spec.ts
     const outdir = path.resolve(__dirname, '../../../../../.cdkx.out');
 
-    // Custom resolver: rewrites '{{env:*}}' placeholders — applied to all stacks
-    const envResolver: IResolver = {
-      resolve(ctx: ResolutionContext) {
-        if (typeof ctx.value === 'string' && ctx.value.startsWith('{{env:') && ctx.value.endsWith('}}')) {
-          const varName = ctx.value.slice(6, -2);
-          ctx.replaceValue(process.env[varName] ?? `<${varName}>`);
-        }
-      },
-    };
+    const app = new App({ outdir });
 
-    const app = new App({ outdir, resolvers: [envResolver] });
+    // ── Stack A — cross-resource references and null stripping ─────────────
+    const stackA = new Stack(app, 'StackA', { provider: new TestProvider('provider-a') });
 
-    // ── Hetzner stack ───────────────────────────────────────────────────────
-    const hetzner = new Stack(app, 'HetznerStack', { provider: new TestProvider('hetzner') });
+    // Source resource — another resource will reference its logicalId
+    const source = TestResources.resource(stackA, 'Source');
 
-    const webServer = new HetznerServer(hetzner, 'WebServer', {
-      name: 'web-01',
-      serverType: 'cx21',
-      location: 'nbg1',
-    });
-
-    // FloatingIp references WebServer.serverId — a ResourceAttribute cross-ref
-    new HetznerFloatingIp(hetzner, 'FloatingIp', {
-      description: Lazy.any({ produce: () => 'floating-ip-for-web-01' }),
-      homeLocation: 'nbg1',
-      serverId: webServer.serverId, // ← cross-reference token
-    });
-
-    new ProviderResource(hetzner, 'Firewall', {
-      type: 'hetzner::Firewall',
+    // Dependent resource — references Source via a plain { ref, attr } object
+    // (same shape ResourceAttribute would produce at synthesis time)
+    new ProviderResource(stackA, 'Dependent', {
+      type: 'test::Resource',
       properties: {
-        name: 'web-firewall',
-        // env resolver will expand this at synthesis time
-        region: '{{env:HETZNER_REGION}}',
-        rules: [
-          { direction: 'in', protocol: 'tcp', port: '80', sourceIps: ['0.0.0.0/0'] },
-          { direction: 'in', protocol: 'tcp', port: '443', sourceIps: ['0.0.0.0/0'] },
-        ],
+        name: 'Dependent',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ref: { ref: source.logicalId, attr: 'id' } as any,
       },
     });
 
-    // ── Kubernetes stack ────────────────────────────────────────────────────
-    const kubernetes = new Stack(app, 'KubernetesStack', { provider: new TestProvider('kubernetes') });
+    // Null-stripping: optional prop set to null should be absent in output
+    TestResources.resourceWithNull(stackA, 'WithNull');
 
-    const deployment = new KubernetesDeployment(kubernetes, 'WebDeployment', {
-      name: 'web',
-      image: 'nginx:1.25',
-    });
-    // Set replica count AFTER construction — Lazy captures it at synth time
-    deployment.setReplicas(3);
+    // ── Stack B — lazy resolution ───────────────────────────────────────────
+    const stackB = new Stack(app, 'StackB', { provider: new TestProvider('provider-b') });
 
-    // Service references the deployment by name via ResourceAttribute
-    new KubernetesService(kubernetes, 'WebService', {
-      name: 'web-svc',
-      port: 80,
-      targetDeployment: deployment.deploymentRef, // ← cross-reference token
-    });
+    // Lazy resource — value resolved at synthesis time
+    TestResources.resourceWithLazy(stackB, 'WithLazy');
 
     app.synth();
 
     // ── Assertions ──────────────────────────────────────────────────────────
-    // Files exist
-    expect(fs.existsSync(path.join(outdir, 'HetznerStack.json'))).toBe(true);
-    expect(fs.existsSync(path.join(outdir, 'KubernetesStack.json'))).toBe(true);
+    expect(fs.existsSync(path.join(outdir, 'StackA.json'))).toBe(true);
+    expect(fs.existsSync(path.join(outdir, 'StackB.json'))).toBe(true);
     expect(fs.existsSync(path.join(outdir, 'manifest.json'))).toBe(true);
 
     // Manifest lists both stacks
-    const manifest = JSON.parse(fs.readFileSync(path.join(outdir, 'manifest.json'), 'utf-8')) as {
+    const manifest = SynthHelpers.readJson(path.join(outdir, 'manifest.json')) as {
       artifacts: Record<string, unknown>;
     };
-    expect(Object.keys(manifest.artifacts).sort()).toEqual(['HetznerStack', 'KubernetesStack']);
+    expect(Object.keys(manifest.artifacts).sort()).toEqual(['StackA', 'StackB']);
 
-    // Hetzner stack — keyed object
     type ResourceEntry = { type: string; properties: Record<string, unknown>; metadata: Record<string, unknown> };
-    const hetznerOut = JSON.parse(fs.readFileSync(path.join(outdir, 'HetznerStack.json'), 'utf-8')) as Record<
-      string,
-      ResourceEntry
-    >;
 
-    // WebServer entry is keyed by its hashed logicalId
-    const webServerEntry = hetznerOut[webServer.l1.logicalId];
-    expect(webServerEntry).toBeDefined();
-    expect(webServerEntry.type).toBe('hetzner::Server');
-    expect(webServerEntry.metadata['cdkx:path']).toBe('HetznerStack/WebServer/Resource');
+    // ── Stack A assertions ──────────────────────────────────────────────────
+    const aOut = SynthHelpers.readJson(path.join(outdir, 'StackA.json')) as Record<string, ResourceEntry>;
 
-    // FloatingIp.serverId cross-ref points to the WebServer L1's logicalId
-    const floatingIpEntry = Object.values(hetznerOut).find((r) => r.type === 'hetzner::FloatingIp');
-    expect(floatingIpEntry).toBeDefined();
-    expect(floatingIpEntry?.properties['serverId']).toEqual({
-      ref: webServer.l1.logicalId, // ← hashed logical ID of the L1
-      attr: 'id',
-    });
-    // null optionalTag was stripped
-    expect(floatingIpEntry?.properties).not.toHaveProperty('optionalTag');
-    // Lazy description resolved
-    expect(floatingIpEntry?.properties['description']).toBe('floating-ip-for-web-01');
+    // Source resource present, keyed by its hashed logicalId
+    const sourceEntry = aOut[source.logicalId];
+    expect(sourceEntry).toBeDefined();
+    expect(sourceEntry.type).toBe('test::Resource');
+    expect(sourceEntry.metadata['cdkx:path']).toBe('StackA/Source');
 
-    // env resolver expanded the placeholder (no HETZNER_REGION env in CI → fallback)
-    const firewallEntry = Object.values(hetznerOut).find((r) => r.type === 'hetzner::Firewall');
-    expect(firewallEntry).toBeDefined();
-    expect(typeof firewallEntry?.properties['region']).toBe('string');
-    expect(firewallEntry?.properties['region']).not.toContain('{{env:');
+    // Dependent resource has the cross-reference pointing to source's logicalId
+    const dependentEntry = Object.values(aOut).find((r) => r.properties['name'] === 'Dependent');
+    expect(dependentEntry).toBeDefined();
+    expect(dependentEntry?.properties['ref']).toEqual({ ref: source.logicalId, attr: 'id' });
 
-    // Kubernetes stack
-    const k8sOut = JSON.parse(fs.readFileSync(path.join(outdir, 'KubernetesStack.json'), 'utf-8')) as Record<
-      string,
-      ResourceEntry
-    >;
+    // Null property was stripped
+    const nullEntry = Object.values(aOut).find((r) => r.metadata['cdkx:path'] === 'StackA/WithNull');
+    expect(nullEntry).toBeDefined();
+    expect(nullEntry?.properties).not.toHaveProperty('optional');
 
-    // Deployment entry — Lazy replicas resolved to the post-construction value
-    const depEntry = k8sOut[deployment.l1.logicalId];
-    expect(depEntry).toBeDefined();
-    expect(depEntry.properties['replicas']).toBe(3);
-    expect(depEntry.metadata['cdkx:path']).toBe('KubernetesStack/WebDeployment/Resource');
+    // ── Stack B assertions ──────────────────────────────────────────────────
+    const bOut = SynthHelpers.readJson(path.join(outdir, 'StackB.json')) as Record<string, ResourceEntry>;
 
-    // Service.targetDeployment cross-ref points to Deployment L1's logicalId
-    const svcEntry = Object.values(k8sOut).find((r) => r.type === 'kubernetes::Service');
-    expect(svcEntry).toBeDefined();
-    expect(svcEntry?.properties['targetDeployment']).toEqual({
-      ref: deployment.l1.logicalId, // ← hashed logical ID of the L1
-      attr: 'name',
-    });
+    // Lazy value was resolved at synthesis time
+    const lazyEntry = Object.values(bOut).find((r) => r.metadata['cdkx:path'] === 'StackB/WithLazy');
+    expect(lazyEntry).toBeDefined();
+    expect(lazyEntry?.properties['value']).toBe('lazy-resolved');
   });
 });

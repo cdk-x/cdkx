@@ -101,20 +101,25 @@ Pipeline composition order (per provider):
 
 Deployment unit (extends `constructs.Construct`, implements `IStackRef`).
 
-| Member                                 | Description                                                 |
-| -------------------------------------- | ----------------------------------------------------------- |
-| `static isStack(x)`                    | Type guard                                                  |
-| `static of(construct)`                 | Walk tree upward to find nearest Stack; throws if not found |
-| `provider: Provider`                   | The provider this stack targets                             |
-| `artifactId: string`                   | Derived from node path (`/` → `-`, strip leading `-`)       |
-| `synthesizer: IStackSynthesizer`       | The synthesizer bound to this stack                         |
-| `providerIdentifier: string`           | Delegates to `provider.identifier` (for `IStackRef`)        |
-| `environment: Record<string, unknown>` | Delegates to `provider.getEnvironment()` (for `IStackRef`)  |
-| `displayName: string`                  | The full construct node path                                |
-| `getProviderResources()`               | Returns all `ProviderResource` descendants                  |
+| Member                                 | Description                                                                               |
+| -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `static isStack(x)`                    | Type guard                                                                                |
+| `static of(construct)`                 | Walk tree upward to find nearest Stack; throws if not found                               |
+| `provider: Provider`                   | The provider this stack targets                                                           |
+| `artifactId: string`                   | Derived from node path (`/` → `-`, strip leading `-`)                                     |
+| `stackName: string`                    | Human-readable name; defaults to the construct `id` if not set via `StackProps.stackName` |
+| `synthesizer: IStackSynthesizer`       | The synthesizer bound to this stack                                                       |
+| `providerIdentifier: string`           | Delegates to `provider.identifier` (for `IStackRef`)                                      |
+| `environment: Record<string, unknown>` | Delegates to `provider.getEnvironment()` (for `IStackRef`)                                |
+| `displayName: string`                  | Returns `stackName` — used as `displayName` in `manifest.json`                            |
+| `getProviderResources()`               | Returns all `ProviderResource` descendants                                                |
 
 **`StackProps.provider`** is required. The synthesizer defaults to
 `provider.getSynthesizer()` but can be overridden via `StackProps.synthesizer`.
+
+**`StackProps.stackName`** is optional. When set it overrides the human-readable
+`displayName` in the manifest. It does **not** affect `artifactId` — the output
+file name and manifest key are always derived from the construct node path.
 
 ---
 
@@ -295,12 +300,21 @@ interface AddArtifactOptions {
 
 ### `Resource` (`src/lib/resource/resource.ts`) — L2 base
 
-Abstract base for higher-level (L2) resource constructs. Extends `Construct`,
-implements `IResource`.
+Abstract base for higher-level constructs. Extends `Construct`, implements `IResource`.
 
-`applyRemovalPolicy()` delegates to `node.defaultChild` (must be a
-`ProviderResource`). Provider packages extend `Resource` to add typed props
-and convenience methods on top of the underlying `ProviderResource`.
+`applyRemovalPolicy()` delegates to `node.defaultChild` (must be a `ProviderResource`).
+
+**Construct layers:**
+
+- **L1 (Native / `NtvXxx`)** — thin typed wrapper over `ProviderResource`. Equivalent to
+  `CfnXxx` in AWS CDK. The `Ntv` prefix signals "native" — the raw provider resource level.
+  Always sets `this.node.defaultChild = this.l1`. Exposes cross-reference attributes via
+  `ResourceAttribute`. Example: `NtvHetznerServer`, `NtvKubernetesDeployment` (future provider packages).
+- **L2** — future layer. Adds higher-level abstractions on top of L1: typed props,
+  convenience methods, grants, metrics, events, connections, etc. Not yet implemented.
+
+Provider packages will implement their own `NtvXxx` L1 classes. Test helpers use plain
+`ProviderResource` directly — no `NtvXxx` wrappers needed in tests.
 
 ---
 
@@ -325,17 +339,17 @@ Used by L2 resources to express cross-resource references.
 
 ## Coding conventions
 
-| Rule                            | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Everything OOP                  | No standalone `export function`. All utilities are static methods on classes.                                                                                                                                                                                                                                                                                                                                                                                              |
-| No `any`                        | Use `unknown` everywhere. The one exception is `Lazy.any()` return type — intentional escape hatch, gets `eslint-disable` comment.                                                                                                                                                                                                                                                                                                                                         |
-| ESM imports                     | All local imports use `.js` extension even though source is `.ts`.                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Unused params in class methods  | ESLint's `argsIgnorePattern: "^_"` does NOT suppress warnings for class method params. Fix: **omit the parameter entirely** from the method signature. TypeScript allows implementing an interface method with fewer params than declared. When a param is dropped, also remove its import if it's no longer used.                                                                                                                                                         |
-| Prettier                        | Run `yarn nx run @cdk-x/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 120`, `tabWidth: 2`, `semi: true`.                                                                                                                                                                                                                                                                                               |
-| Specs co-located                | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| Test helpers                    | `src/test/helpers/` — not exported from the public barrel (`src/index.ts`).                                                                                                                                                                                                                                                                                                                                                                                                |
-| Integration tests               | `src/test/integration/synth.spec.ts`. Suite 8 ("Visual synth output") writes permanent files to `.cdkx.out/` at the workspace root for manual inspection (not cleaned up after the test). It uses minimal in-test L2 subclasses (`HetznerServer`, `HetznerFloatingIp`, `KubernetesDeployment`, `KubernetesService`) to exercise `ResourceAttribute` cross-references, `Lazy` tokens, a custom `IResolver`, and null stripping — all in one realistic multi-stack scenario. |
-| `_`-prefixed params (non-class) | `argsIgnorePattern: "^_"` works for standalone functions and interface implementations. Prefer omitting when possible.                                                                                                                                                                                                                                                                                                                                                     |
+| Rule                            | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Everything OOP                  | No standalone `export function`. All utilities are static methods on classes.                                                                                                                                                                                                                                                                                                                                                                              |
+| No `any`                        | Use `unknown` everywhere. The one exception is `Lazy.any()` return type — intentional escape hatch, gets `eslint-disable` comment.                                                                                                                                                                                                                                                                                                                         |
+| ESM imports                     | All local imports use `.js` extension even though source is `.ts`.                                                                                                                                                                                                                                                                                                                                                                                         |
+| Unused params in class methods  | ESLint's `argsIgnorePattern: "^_"` does NOT suppress warnings for class method params. Fix: **omit the parameter entirely** from the method signature. TypeScript allows implementing an interface method with fewer params than declared. When a param is dropped, also remove its import if it's no longer used.                                                                                                                                         |
+| Prettier                        | Run `yarn nx run @cdk-x/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 120`, `tabWidth: 2`, `semi: true`.                                                                                                                                                                                                                                                                               |
+| Specs co-located                | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Test helpers                    | `src/test/helpers/` — not exported from the public barrel (`src/index.ts`).                                                                                                                                                                                                                                                                                                                                                                                |
+| Integration tests               | `src/test/integration/synth.spec.ts`. Suite 8 ("Visual synth output") writes permanent files to `.cdkx.out/` at the workspace root for manual inspection (not cleaned up after the test). Uses `TestProvider` and `TestResources` with generic `test::Resource` L1s to exercise cross-resource references (built directly with `{ ref: source.logicalId, attr }` ), `Lazy` tokens, a custom `IResolver`, and null stripping — all in a two-stack scenario. |
+| `_`-prefixed params (non-class) | `argsIgnorePattern: "^_"` works for standalone functions and interface implementations. Prefer omitting when possible.                                                                                                                                                                                                                                                                                                                                     |
 
 ---
 
@@ -422,8 +436,8 @@ packages/core/
         │   ├── provider-resource.spec.ts    unit tests
         │   └── index.ts
         ├── resource/
-        │   ├── resource.ts              Resource L2 abstract base
-        │   ├── resource-attribute.ts    ResourceAttribute IResolvable
+        │   ├── resource.ts              Resource abstract base (L2 base class)
+        │   ├── resource-attribute.ts    ResourceAttribute IResolvable — cross-resource refs
         │   ├── resource.spec.ts         unit tests
         │   └── index.ts
         ├── resolvables/
@@ -448,7 +462,9 @@ packages/core/
         ├── helpers/
         │   ├── index.ts                 barrel (NOT re-exported from src/index.ts)
         │   ├── test-provider.ts         TestProvider, SpyProvider, CustomSynthesizerProvider
-        │   └── make-app.ts              makeApp(), makeStack()
+        │   ├── make-app.ts              makeApp(), makeStack()
+        │   ├── synth-helpers.ts         SynthHelpers — tmpDir(), readJson(), resourceValues()
+        │   └── test-resources.ts        TestResources — resource(), resourceWithNull(), resourceWithLazy(), resourceWithEnvPlaceholder()
         └── integration/
             └── synth.spec.ts            full end-to-end synthesis test (8 suites; suite 8 writes to .cdkx.out/)
 ```

@@ -21,6 +21,13 @@ export interface StackProps {
    * An optional human-readable description for this stack.
    */
   readonly description?: string;
+
+  /**
+   * An optional human-readable name for this stack.
+   * Used as `displayName` in the manifest and overrides the default (construct `id`).
+   * Does not affect `artifactId` (which is always derived from the construct node path).
+   */
+  readonly stackName?: string;
 }
 
 /**
@@ -78,10 +85,17 @@ export class Stack extends Construct implements IStackRef {
   /** Optional description. */
   public readonly description?: string;
 
+  /**
+   * Human-readable name for this stack.
+   * Defaults to the construct `id` when not explicitly set via `StackProps.stackName`.
+   */
+  public readonly stackName: string;
+
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id);
     this.provider = props.provider;
     this.description = props.description;
+    this.stackName = props.stackName ?? id;
 
     // Build artifact ID from the node path, replacing '/' with '-' and stripping leading '-'
     this.artifactId = this.node.path.replace(/\//g, '-').replace(/^-+/, '');
@@ -107,10 +121,12 @@ export class Stack extends Construct implements IStackRef {
   }
 
   /**
-   * Human-readable display name — the full construct node path.
+   * Human-readable display name.
+   * Returns `stackName` if explicitly set via `StackProps.stackName`,
+   * otherwise falls back to the construct node path.
    */
   public get displayName(): string {
-    return this.node.path;
+    return this.stackName;
   }
 
   /**
