@@ -11,6 +11,9 @@
     },
     {
       "path": "./packages/testing"
+    },
+    {
+      "path": "./packages/providers/hetzner"
     }
   ]
 }
