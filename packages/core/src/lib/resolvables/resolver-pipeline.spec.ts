@@ -1,6 +1,11 @@
 import { ResolverPipeline } from './resolver-pipeline.js';
 import { Lazy } from './lazy.js';
-import { IResolvable, ResolveContext, ResolutionContext, IResolver } from './resolvables.js';
+import {
+  IResolvable,
+  ResolveContext,
+  ResolutionContext,
+  IResolver,
+} from './resolvables.js';
 
 const RESOURCE = {};
 const PROVIDER = 'test';
@@ -32,7 +37,9 @@ describe('ResolverPipeline.resolve()', () => {
   });
 
   it('returns undefined as-is', () => {
-    expect(pipeline().resolve([], undefined, RESOURCE, PROVIDER)).toBeUndefined();
+    expect(
+      pipeline().resolve([], undefined, RESOURCE, PROVIDER),
+    ).toBeUndefined();
   });
 
   it('recurses into a plain object', () => {
@@ -41,7 +48,12 @@ describe('ResolverPipeline.resolve()', () => {
   });
 
   it('recurses into nested objects', () => {
-    const result = pipeline().resolve([], { outer: { inner: 99 } }, RESOURCE, PROVIDER);
+    const result = pipeline().resolve(
+      [],
+      { outer: { inner: 99 } },
+      RESOURCE,
+      PROVIDER,
+    );
     expect(result).toEqual({ outer: { inner: 99 } });
   });
 
@@ -51,7 +63,12 @@ describe('ResolverPipeline.resolve()', () => {
   });
 
   it('recurses into arrays of objects', () => {
-    const result = pipeline().resolve([], [{ name: 'a' }, { name: 'b' }], RESOURCE, PROVIDER);
+    const result = pipeline().resolve(
+      [],
+      [{ name: 'a' }, { name: 'b' }],
+      RESOURCE,
+      PROVIDER,
+    );
     expect(result).toEqual([{ name: 'a' }, { name: 'b' }]);
   });
 
@@ -62,12 +79,19 @@ describe('ResolverPipeline.resolve()', () => {
 
   it('resolves a Lazy nested inside an object', () => {
     const lazy = Lazy.any({ produce: () => 7 });
-    const result = pipeline().resolve([], { replicas: lazy }, RESOURCE, PROVIDER);
+    const result = pipeline().resolve(
+      [],
+      { replicas: lazy },
+      RESOURCE,
+      PROVIDER,
+    );
     expect(result).toEqual({ replicas: 7 });
   });
 
   it('resolves an IResolvable token', () => {
-    const token: IResolvable = { resolve: (_ctx: ResolveContext) => ({ ref: 'res-a' }) };
+    const token: IResolvable = {
+      resolve: (_ctx: ResolveContext) => ({ ref: 'res-a' }),
+    };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = pipeline().resolve([], token as any, RESOURCE, PROVIDER);
     expect(result).toEqual({ ref: 'res-a' });
@@ -89,7 +113,9 @@ describe('ResolverPipeline.resolve()', () => {
       },
     };
     const p = new ResolverPipeline([customResolver]);
-    expect(p.resolve([], '{{secret}}', RESOURCE, PROVIDER)).toBe('my-secret-value');
+    expect(p.resolve([], '{{secret}}', RESOURCE, PROVIDER)).toBe(
+      'my-secret-value',
+    );
   });
 
   it('passes the provider identifier to IResolvable.resolve()', () => {
@@ -145,7 +171,9 @@ describe('ResolverPipeline.sanitize()', () => {
   });
 
   it('recursively removes nulls from nested objects', () => {
-    expect(pipeline().sanitize({ outer: { a: 1, b: null } })).toEqual({ outer: { a: 1 } });
+    expect(pipeline().sanitize({ outer: { a: 1, b: null } })).toEqual({
+      outer: { a: 1 },
+    });
   });
 
   it('removes null items from arrays', () => {
@@ -160,12 +188,18 @@ describe('ResolverPipeline.sanitize()', () => {
   });
 
   it('sorts object keys when sortKeys: true', () => {
-    const result = pipeline().sanitize({ z: 1, a: 2, m: 3 }, { sortKeys: true }) as Record<string, unknown>;
+    const result = pipeline().sanitize(
+      { z: 1, a: 2, m: 3 },
+      { sortKeys: true },
+    ) as Record<string, unknown>;
     expect(Object.keys(result)).toEqual(['a', 'm', 'z']);
   });
 
   it('does not sort keys by default', () => {
-    const result = pipeline().sanitize({ z: 1, a: 2, m: 3 }) as Record<string, unknown>;
+    const result = pipeline().sanitize({ z: 1, a: 2, m: 3 }) as Record<
+      string,
+      unknown
+    >;
     // Keys should be in insertion order, not sorted
     expect(Object.keys(result)).toEqual(['z', 'a', 'm']);
   });

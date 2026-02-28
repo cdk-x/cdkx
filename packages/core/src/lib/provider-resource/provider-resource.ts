@@ -2,7 +2,11 @@ import { Construct } from 'constructs';
 import { RESOURCE_SYMBOL, PropertyValue } from '../constants.js';
 import { makeUniqueId } from '../private/unique-id.js';
 import { RemovalPolicy, RemovalPolicyOptions } from '../removal-policy.js';
-import { ProviderCreatePolicy, ProviderDeletionPolicy, ProviderUpdatePolicy } from './provider-resource-policy.js';
+import {
+  ProviderCreatePolicy,
+  ProviderDeletionPolicy,
+  ProviderUpdatePolicy,
+} from './provider-resource-policy.js';
 import { ProviderResourceCondition } from './provider-condition.js';
 
 export interface ProviderResourceProps {
@@ -67,8 +71,13 @@ export class ProviderResource extends Construct {
   /**
    * Returns true if the given object is a `ProviderResource` instance.
    */
-  public static isProviderResource(this: void, x: unknown): x is ProviderResource {
-    return x !== null && typeof x === 'object' && RESOURCE_SYMBOL in (x as object);
+  public static isProviderResource(
+    this: void,
+    x: unknown,
+  ): x is ProviderResource {
+    return (
+      x !== null && typeof x === 'object' && RESOURCE_SYMBOL in (x as object)
+    );
   }
 
   /**
@@ -117,7 +126,10 @@ export class ProviderResource extends Construct {
    * Applies a removal policy to this resource.
    * Maps the high-level `RemovalPolicy` enum to provider-level deletion/replace policies.
    */
-  public applyRemovalPolicy(policy: RemovalPolicy | undefined, options: RemovalPolicyOptions = {}): void {
+  public applyRemovalPolicy(
+    policy: RemovalPolicy | undefined,
+    options: RemovalPolicyOptions = {},
+  ): void {
     policy = policy ?? options.default ?? RemovalPolicy.RETAIN;
 
     let deletionPolicy: ProviderDeletionPolicy;
@@ -134,7 +146,9 @@ export class ProviderResource extends Construct {
         break;
       case RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE:
         deletionPolicy = ProviderDeletionPolicy.RETAIN_EXCEPT_ON_CREATE;
-        updateReplacePolicy = options.applyToUpdateReplacePolicy ? ProviderDeletionPolicy.RETAIN : undefined;
+        updateReplacePolicy = options.applyToUpdateReplacePolicy
+          ? ProviderDeletionPolicy.RETAIN
+          : undefined;
         break;
     }
 
@@ -174,7 +188,12 @@ export class ProviderResource extends Construct {
 
     const pipeline = app.getResolverPipeline(stack.provider);
 
-    const resolvedProperties = pipeline.resolve([], this.properties ?? {}, this, stack.provider.identifier);
+    const resolvedProperties = pipeline.resolve(
+      [],
+      this.properties ?? {},
+      this,
+      stack.provider.identifier,
+    );
 
     const sanitizedProperties = pipeline.sanitize(resolvedProperties);
 

@@ -88,12 +88,18 @@ describe('ImplicitTokenResolver', () => {
     const resolver = new ImplicitTokenResolver(pipelineResolve);
 
     const token = {
-      resolve: (ctx: { resolve: (v: unknown) => unknown }) => ctx.resolve('inner'),
+      resolve: (ctx: { resolve: (v: unknown) => unknown }) =>
+        ctx.resolve('inner'),
     };
     const ctx = new ResolutionContext(RESOURCE, KEY, token, PROVIDER);
     resolver.resolve(ctx);
 
-    expect(pipelineResolve).toHaveBeenCalledWith(KEY, 'inner', RESOURCE, PROVIDER);
+    expect(pipelineResolve).toHaveBeenCalledWith(
+      KEY,
+      'inner',
+      RESOURCE,
+      PROVIDER,
+    );
     expect(ctx.replacedValue).toBe('resolved:inner');
   });
 

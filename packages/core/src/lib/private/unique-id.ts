@@ -44,7 +44,9 @@ export function makeUniqueId(components: string[]): string {
   components = components.filter((x) => x !== HIDDEN_ID);
 
   if (components.length === 0) {
-    throw new Error('Unable to calculate a unique id for an empty set of components');
+    throw new Error(
+      'Unable to calculate a unique id for an empty set of components',
+    );
   }
 
   // 2. Single-component fast path (no hash needed)
@@ -78,7 +80,10 @@ export function makeUniqueId(components: string[]): string {
  * joined path, uppercased.
  */
 function pathHash(components: string[]): string {
-  const digest = crypto.createHash('sha256').update(components.join(PATH_SEP)).digest('hex');
+  const digest = crypto
+    .createHash('sha256')
+    .update(components.join(PATH_SEP))
+    .digest('hex');
   return digest.slice(0, HASH_LEN).toUpperCase();
 }
 

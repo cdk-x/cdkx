@@ -26,7 +26,9 @@ export class SynthHelpers {
    * Extracts all resource entries from a keyed stack JSON object.
    * Stack JSON is a `{ [logicalId]: { type, properties, metadata } }` object.
    */
-  static resourceValues(json: unknown): Array<{ type: string; properties: Record<string, unknown> }> {
+  static resourceValues(
+    json: unknown,
+  ): Array<{ type: string; properties: Record<string, unknown> }> {
     return Object.values(json as Record<string, unknown>) as Array<{
       type: string;
       properties: Record<string, unknown>;

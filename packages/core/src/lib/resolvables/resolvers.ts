@@ -1,5 +1,11 @@
 import { Lazy } from './lazy.js';
-import { IResolver, IResolvable, ResolveContext, ResolutionContext, Resolvables } from './resolvables.js';
+import {
+  IResolver,
+  IResolvable,
+  ResolveContext,
+  ResolutionContext,
+  Resolvables,
+} from './resolvables.js';
 
 /**
  * Built-in resolver that handles `Lazy` instances.
@@ -52,7 +58,13 @@ export class ImplicitTokenResolver implements IResolver {
     if (Resolvables.isResolvable(context.value)) {
       const resolveCtx: ResolveContext = {
         provider: context.provider,
-        resolve: (v: unknown) => this.pipelineResolve(context.key, v, context.providerResource, context.provider),
+        resolve: (v: unknown) =>
+          this.pipelineResolve(
+            context.key,
+            v,
+            context.providerResource,
+            context.provider,
+          ),
       };
       context.replaceValue((context.value as IResolvable).resolve(resolveCtx));
     }

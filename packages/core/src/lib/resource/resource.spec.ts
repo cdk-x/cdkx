@@ -35,7 +35,9 @@ describe('Resource', () => {
 
   it('applyRemovalPolicy delegates to defaultChild ProviderResource', () => {
     const resource = new TestResource(stack, 'MyResource');
-    expect(() => resource.applyRemovalPolicy(RemovalPolicy.DESTROY)).not.toThrow();
+    expect(() =>
+      resource.applyRemovalPolicy(RemovalPolicy.DESTROY),
+    ).not.toThrow();
   });
 
   it('throws when applyRemovalPolicy called without a ProviderResource defaultChild', () => {

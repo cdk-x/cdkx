@@ -29,28 +29,38 @@ describe('Lazy', () => {
     });
 
     it('returns a string value', () => {
-      const lazy = Lazy.any({ produce: () => 'hello' }) as unknown as { produce(): unknown };
+      const lazy = Lazy.any({ produce: () => 'hello' }) as unknown as {
+        produce(): unknown;
+      };
       expect(lazy.produce()).toBe('hello');
     });
 
     it('returns a nested object', () => {
-      const lazy = Lazy.any({ produce: () => ({ key: 'val' }) }) as unknown as { produce(): unknown };
+      const lazy = Lazy.any({ produce: () => ({ key: 'val' }) }) as unknown as {
+        produce(): unknown;
+      };
       expect(lazy.produce()).toEqual({ key: 'val' });
     });
 
     it('returns null', () => {
-      const lazy = Lazy.any({ produce: () => null }) as unknown as { produce(): unknown };
+      const lazy = Lazy.any({ produce: () => null }) as unknown as {
+        produce(): unknown;
+      };
       expect(lazy.produce()).toBeNull();
     });
 
     it('returns undefined', () => {
-      const lazy = Lazy.any({ produce: () => undefined }) as unknown as { produce(): unknown };
+      const lazy = Lazy.any({ produce: () => undefined }) as unknown as {
+        produce(): unknown;
+      };
       expect(lazy.produce()).toBeUndefined();
     });
 
     it('calls the producer fresh each time (no caching)', () => {
       let counter = 0;
-      const lazy = Lazy.any({ produce: () => ++counter }) as unknown as { produce(): unknown };
+      const lazy = Lazy.any({ produce: () => ++counter }) as unknown as {
+        produce(): unknown;
+      };
       expect(lazy.produce()).toBe(1);
       expect(lazy.produce()).toBe(2);
     });

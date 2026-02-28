@@ -1,5 +1,8 @@
 import { Provider } from './provider.js';
-import { IStackSynthesizer, JsonSynthesizer } from '../synthesizer/synthesizer.js';
+import {
+  IStackSynthesizer,
+  JsonSynthesizer,
+} from '../synthesizer/synthesizer.js';
 import { IResolver } from '../resolvables/resolvables.js';
 
 class MinimalProvider extends Provider {
@@ -64,7 +67,10 @@ describe('Provider', () => {
     });
 
     it('returns the overridden synthesizer when getSynthesizer() is overridden', () => {
-      const mockSynth: IStackSynthesizer = { bind: jest.fn(), synthesize: jest.fn() };
+      const mockSynth: IStackSynthesizer = {
+        bind: jest.fn(),
+        synthesize: jest.fn(),
+      };
       const provider = new ProviderWithCustomSynth(mockSynth);
       expect(provider.getSynthesizer()).toBe(mockSynth);
     });

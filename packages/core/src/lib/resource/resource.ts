@@ -35,7 +35,9 @@ export abstract class Resource extends Construct implements IResource {
   applyRemovalPolicy(policy: RemovalPolicy) {
     const child = this.node.defaultChild;
     if (!child || !ProviderResource.isProviderResource(child)) {
-      throw new Error('Cannot apply removal policy to a resource without a provider resource');
+      throw new Error(
+        'Cannot apply removal policy to a resource without a provider resource',
+      );
     }
     child.applyRemovalPolicy(policy);
   }
