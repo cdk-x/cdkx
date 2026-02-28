@@ -29,6 +29,7 @@ Hetzner Cloud JSON file, a GitHub Actions workflow, etc. — depending on which
 | Monorepo tool   | Nx 22                                                                                                                         |
 | Package manager | Yarn (yarn.lock at root)                                                                                                      |
 | Language        | TypeScript 5.9, strict mode, ESM (`"type": "module"`)                                                                         |
+| Build tool      | `@nx/js:tsc` — emits JS + `.d.ts` + `.d.ts.map`                                                                               |
 | Test runner     | Jest 30 + SWC (`@swc/jest`)                                                                                                   |
 | Linter          | ESLint with `@typescript-eslint`                                                                                              |
 | Formatter       | Prettier ~3.6 (`.prettierrc` at workspace root)                                                                               |

@@ -20,14 +20,13 @@
       }
     },
     "build": {
-      "executor": "@nx/esbuild:esbuild",
+      "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "packages/testing/dist",
         "main": "packages/testing/src/index.ts",
         "tsConfig": "packages/testing/tsconfig.lib.json",
-        "format": ["esm"],
-        "declarationRootDir": "packages/testing/src"
+        "rootDir": "packages/testing/src"
       }
     }
   }
