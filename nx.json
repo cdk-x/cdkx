@@ -65,7 +65,7 @@
     },
     "groups": {
       "core": {
-        "projects": ["@cdk-x/core"],
+        "projects": ["@cdk-x/core", "@cdk-x/testing"],
         "projectsRelationship": "fixed",
         "releaseTag": {
           "pattern": "core-v{version}"

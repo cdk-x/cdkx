@@ -1,5 +1,5 @@
 {
-  "conventionalCommits.scopes": ["core", "cli", "engine"],
+  "conventionalCommits.scopes": ["core", "cli", "engine", "testing"],
   "editor.formatOnSave": true,
   "editor.indentSize": 2,
   "editor.defaultFormatter": "esbenp.prettier-vscode"

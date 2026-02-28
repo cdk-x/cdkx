@@ -1,0 +1,30 @@
+{
+  "name": "@cdk-x/testing",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "peerDependencies": {
+    "@cdk-x/core": "*"
+  },
+  "devDependencies": {
+    "@cdk-x/core": "*"
+  },
+  "dependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}
