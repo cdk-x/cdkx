@@ -343,17 +343,17 @@ Used by L2 resources to express cross-resource references.
 
 ## Coding conventions
 
-| Rule                            | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Everything OOP                  | No standalone `export function`. All utilities are static methods on classes.                                                                                                                                                                                                                                                                                                                                                                              |
-| No `any`                        | Use `unknown` everywhere. The one exception is `Lazy.any()` return type — intentional escape hatch, gets `eslint-disable` comment.                                                                                                                                                                                                                                                                                                                         |
-| ESM imports                     | All local imports use `.js` extension even though source is `.ts`.                                                                                                                                                                                                                                                                                                                                                                                         |
-| Unused params in class methods  | ESLint's `argsIgnorePattern: "^_"` does NOT suppress warnings for class method params. Fix: **omit the parameter entirely** from the method signature. TypeScript allows implementing an interface method with fewer params than declared. When a param is dropped, also remove its import if it's no longer used.                                                                                                                                         |
-| Prettier                        | Run `yarn nx run @cdk-x/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 80`, `tabWidth: 2`, `semi: true`.                                                                                                                                                                                                                                                                                |
-| Specs co-located                | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                                                                                                                                                                                                                                                                                                                                                                              |
-| Test helpers                    | `src/test/helpers/` — not exported from the public barrel (`src/index.ts`).                                                                                                                                                                                                                                                                                                                                                                                |
-| Integration tests               | `src/test/integration/synth.spec.ts`. Suite 8 ("Visual synth output") writes permanent files to `.cdkx.out/` at the workspace root for manual inspection (not cleaned up after the test). Uses `TestProvider` and `TestResources` with generic `test::Resource` L1s to exercise cross-resource references (built directly with `{ ref: source.logicalId, attr }` ), `Lazy` tokens, a custom `IResolver`, and null stripping — all in a two-stack scenario. |
-| `_`-prefixed params (non-class) | `argsIgnorePattern: "^_"` works for standalone functions and interface implementations. Prefer omitting when possible.                                                                                                                                                                                                                                                                                                                                     |
+| Rule                            | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Everything OOP                  | No standalone `export function`. All utilities are static methods on classes.                                                                                                                                                                                                                                                                                                                                                                          |
+| No `any`                        | Use `unknown` everywhere. The one exception is `Lazy.any()` return type — intentional escape hatch, gets `eslint-disable` comment.                                                                                                                                                                                                                                                                                                                     |
+| ESM imports                     | All local imports use `.js` extension even though source is `.ts`.                                                                                                                                                                                                                                                                                                                                                                                     |
+| Unused params in class methods  | ESLint's `argsIgnorePattern: "^_"` does NOT suppress warnings for class method params. Fix: **omit the parameter entirely** from the method signature. TypeScript allows implementing an interface method with fewer params than declared. When a param is dropped, also remove its import if it's no longer used.                                                                                                                                     |
+| Prettier                        | Run `yarn nx run @cdk-x/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 80`, `tabWidth: 2`, `semi: true`.                                                                                                                                                                                                                                                                            |
+| Specs co-located                | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Test helpers                    | `test/helpers/` — not exported from the public barrel (`src/index.ts`).                                                                                                                                                                                                                                                                                                                                                                                |
+| Integration tests               | `test/integration/synth.spec.ts`. Suite 8 ("Visual synth output") writes permanent files to `.cdkx.out/` at the workspace root for manual inspection (not cleaned up after the test). Uses `TestProvider` and `TestResources` with generic `test::Resource` L1s to exercise cross-resource references (built directly with `{ ref: source.logicalId, attr }` ), `Lazy` tokens, a custom `IResolver`, and null stripping — all in a two-stack scenario. |
+| `_`-prefixed params (non-class) | `argsIgnorePattern: "^_"` works for standalone functions and interface implementations. Prefer omitting when possible.                                                                                                                                                                                                                                                                                                                                 |
 
 ---
 
@@ -416,61 +416,61 @@ only in `devDependencies`, lint fails.
 packages/core/
 ├── package.json                         name: @cdk-x/core, type: module
 ├── CONTEXT.md                           ← this file
-└── src/
-    ├── index.ts                         public barrel — exports everything
-    └── lib/
-        ├── constants.ts                 RESOURCE_SYMBOL, PropertyValue
-        ├── removal-policy.ts            RemovalPolicy enum + RemovalPolicyOptions
-        ├── app/
-        │   ├── app.ts                   App class
-        │   ├── app.spec.ts              unit tests
-        │   └── index.ts                 re-export barrel
-        ├── stack/
-        │   ├── stack.ts                 Stack class
-        │   ├── stack.spec.ts            unit tests
-        │   └── index.ts
-        ├── provider/
-        │   ├── provider.ts              Provider abstract class
-        │   ├── provider.spec.ts         unit tests
-        │   └── index.ts
-        ├── provider-resource/
-        │   ├── provider-resource.ts     ProviderResource class
-        │   ├── provider-resource-policy.ts  ProviderDeletionPolicy, ProviderCreatePolicy, ProviderUpdatePolicy
-        │   ├── provider-condition.ts    ProviderResourceCondition
-        │   ├── provider-resource.spec.ts    unit tests
-        │   └── index.ts
-        ├── resource/
-        │   ├── resource.ts              Resource abstract base (L2 base class)
-        │   ├── resource-attribute.ts    ResourceAttribute IResolvable — cross-resource refs
-        │   ├── resource.spec.ts         unit tests
-        │   └── index.ts
-        ├── resolvables/
-        │   ├── resolvables.ts           IResolvable, ResolveContext, ResolutionContext, IResolver, Resolvables
-        │   ├── lazy.ts                  Lazy, IAnyProducer
-        │   ├── resolvers.ts             LazyResolver, ImplicitTokenResolver
-        │   ├── resolver-pipeline.ts     ResolverPipeline, SanitizeOptions
-        │   ├── lazy.spec.ts
-        │   ├── resolvables.spec.ts
-        │   ├── resolvers.spec.ts
-        │   ├── resolver-pipeline.spec.ts
-        │   └── index.ts
-        ├── assembly/
-        │   ├── cloud-assembly.ts        CloudAssembly, CloudAssemblyBuilder, StackArtifact, CloudAssemblyManifest
-        │   ├── cloud-assembly.spec.ts
-        │   └── index.ts
-        └── synthesizer/
-            ├── synthesizer.ts           IStackSynthesizer, IStackRef, ISynthesisSession, JsonSynthesizer
-            ├── synthesizer.spec.ts
-            └── index.ts
-    └── test/
-        ├── helpers/
-        │   ├── index.ts                 barrel (NOT re-exported from src/index.ts)
-        │   ├── test-provider.ts         TestProvider, SpyProvider, CustomSynthesizerProvider
-        │   ├── make-app.ts              makeApp(), makeStack()
-        │   ├── synth-helpers.ts         SynthHelpers — tmpDir(), readJson(), resourceValues()
-        │   └── test-resources.ts        TestResources — resource(), resourceWithNull(), resourceWithLazy(), resourceWithEnvPlaceholder()
-        └── integration/
-            └── synth.spec.ts            full end-to-end synthesis test (8 suites; suite 8 writes to .cdkx.out/)
+├── src/
+│   ├── index.ts                         public barrel — exports everything
+│   └── lib/
+│       ├── constants.ts                 RESOURCE_SYMBOL, PropertyValue
+│       ├── removal-policy.ts            RemovalPolicy enum + RemovalPolicyOptions
+│       ├── app/
+│       │   ├── app.ts                   App class
+│       │   ├── app.spec.ts              unit tests
+│       │   └── index.ts                 re-export barrel
+│       ├── stack/
+│       │   ├── stack.ts                 Stack class
+│       │   ├── stack.spec.ts            unit tests
+│       │   └── index.ts
+│       ├── provider/
+│       │   ├── provider.ts              Provider abstract class
+│       │   ├── provider.spec.ts         unit tests
+│       │   └── index.ts
+│       ├── provider-resource/
+│       │   ├── provider-resource.ts     ProviderResource class
+│       │   ├── provider-resource-policy.ts  ProviderDeletionPolicy, ProviderCreatePolicy, ProviderUpdatePolicy
+│       │   ├── provider-condition.ts    ProviderResourceCondition
+│       │   ├── provider-resource.spec.ts    unit tests
+│       │   └── index.ts
+│       ├── resource/
+│       │   ├── resource.ts              Resource abstract base (L2 base class)
+│       │   ├── resource-attribute.ts    ResourceAttribute IResolvable — cross-resource refs
+│       │   ├── resource.spec.ts         unit tests
+│       │   └── index.ts
+│       ├── resolvables/
+│       │   ├── resolvables.ts           IResolvable, ResolveContext, ResolutionContext, IResolver, Resolvables
+│       │   ├── lazy.ts                  Lazy, IAnyProducer
+│       │   ├── resolvers.ts             LazyResolver, ImplicitTokenResolver
+│       │   ├── resolver-pipeline.ts     ResolverPipeline, SanitizeOptions
+│       │   ├── lazy.spec.ts
+│       │   ├── resolvables.spec.ts
+│       │   ├── resolvers.spec.ts
+│       │   ├── resolver-pipeline.spec.ts
+│       │   └── index.ts
+│       ├── assembly/
+│       │   ├── cloud-assembly.ts        CloudAssembly, CloudAssemblyBuilder, StackArtifact, CloudAssemblyManifest
+│       │   ├── cloud-assembly.spec.ts
+│       │   └── index.ts
+│       └── synthesizer/
+│           ├── synthesizer.ts           IStackSynthesizer, IStackRef, ISynthesisSession, JsonSynthesizer
+│           ├── synthesizer.spec.ts
+│           └── index.ts
+└── test/                                outside src/ — not compiled into dist/
+    ├── helpers/
+    │   ├── index.ts                     barrel (NOT re-exported from src/index.ts)
+    │   ├── test-provider.ts             TestProvider, SpyProvider, CustomSynthesizerProvider
+    │   ├── make-app.ts                  makeApp(), makeStack()
+    │   ├── synth-helpers.ts             SynthHelpers — tmpDir(), readJson(), resourceValues()
+    │   └── test-resources.ts            TestResources — resource(), resourceWithNull(), resourceWithLazy(), resourceWithEnvPlaceholder()
+    └── integration/
+        └── synth.spec.ts                full end-to-end synthesis test (8 suites; suite 8 writes to .cdkx.out/)
 ```
 
 ---

@@ -1,7 +1,7 @@
 import { Construct } from 'constructs';
 import { Stack } from './stack.js';
 import { ProviderResource } from '../provider-resource/provider-resource.js';
-import { makeApp, TestProvider } from '../../test/helpers/index.js';
+import { makeApp, TestProvider } from '../../../test/helpers/index.js';
 import { IStackSynthesizer } from '../synthesizer/synthesizer.js';
 
 describe('Stack', () => {

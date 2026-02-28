@@ -1,7 +1,7 @@
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { App } from '../../lib/app/app.js';
-import { Stack } from '../../lib/stack/stack.js';
+import { App } from '../../src/lib/app/app.js';
+import { Stack } from '../../src/lib/stack/stack.js';
 import { TestProvider } from './test-provider.js';
 
 /**

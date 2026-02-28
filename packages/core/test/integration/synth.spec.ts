@@ -12,15 +12,15 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { App } from '../../lib/app/app.js';
-import { Stack } from '../../lib/stack/stack.js';
-import { ProviderResource } from '../../lib/provider-resource/provider-resource.js';
-import { Lazy } from '../../lib/resolvables/lazy.js';
+import { App } from '../../src/lib/app/app.js';
+import { Stack } from '../../src/lib/stack/stack.js';
+import { ProviderResource } from '../../src/lib/provider-resource/provider-resource.js';
+import { Lazy } from '../../src/lib/resolvables/lazy.js';
 import {
   IResolvable,
   ResolveContext,
-} from '../../lib/resolvables/resolvables.js';
-import { MANIFEST_VERSION } from '../../lib/assembly/cloud-assembly.js';
+} from '../../src/lib/resolvables/resolvables.js';
+import { MANIFEST_VERSION } from '../../src/lib/assembly/cloud-assembly.js';
 import { TestProvider, SynthHelpers, TestResources } from '../helpers/index.js';
 
 // ---------------------------------------------------------------------------
@@ -457,7 +457,7 @@ describe('Unresolved token detection', () => {
 describe('Visual synth output', () => {
   it('produces a multi-stack output with cross-resource references in .cdkx.out/', () => {
     // Resolve workspace root: this file is 5 levels deep from root
-    // packages/core/src/test/integration/synth.spec.ts
+    // packages/core/test/integration/synth.spec.ts
     const outdir = path.resolve(__dirname, '../../../../../.cdkx.out');
 
     const app = new App({ outdir });

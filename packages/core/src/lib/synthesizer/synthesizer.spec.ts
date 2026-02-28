@@ -7,7 +7,7 @@ import {
   ISynthesisSession,
 } from './synthesizer.js';
 import { CloudAssemblyBuilder } from '../assembly/cloud-assembly.js';
-import { makeApp, makeStack, TestProvider } from '../../test/helpers/index.js';
+import { makeApp, makeStack, TestProvider } from '../../../test/helpers/index.js';
 import { ProviderResource } from '../provider-resource/provider-resource.js';
 
 function tmpDir(): string {
