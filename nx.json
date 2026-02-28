@@ -54,15 +54,37 @@
     }
   ],
   "release": {
-    "projects": ["cli", "@cdk-x/core"],
+    "projectsRelationship": "independent",
     "version": {
-      "preVersionCommand": "npx nx run-many -t build",
       "conventionalCommits": true,
-      "adjustSemverBumpsForZeroMajorVersion": true
+      "adjustSemverBumpsForZeroMajorVersion": true,
+      "preVersionCommand": "yarn nx run-many -t build --projects={projectName}"
     },
     "changelog": {
-      "workspaceChangelog": {
-        "createRelease": "github"
+      "workspaceChangelog": false
+    },
+    "groups": {
+      "core": {
+        "projects": ["@cdk-x/core"],
+        "projectsRelationship": "fixed",
+        "releaseTag": { "pattern": "core-v{version}" },
+        "version": {
+          "updateDependents": "never"
+        },
+        "changelog": {
+          "projectChangelogs": { "createRelease": "github" }
+        }
+      },
+      "cli": {
+        "projects": ["cli"],
+        "projectsRelationship": "fixed",
+        "releaseTag": { "pattern": "cli-v{version}" },
+        "version": {
+          "updateDependents": "never"
+        },
+        "changelog": {
+          "projectChangelogs": { "createRelease": "github" }
+        }
       }
     }
   },

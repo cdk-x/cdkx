@@ -3,16 +3,11 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      prerelease:
-        description: 'Release type'
-        required: true
-        type: choice
-        default: 'alpha'
-        options:
-          - alpha
-          - beta
-          - rc
-          - stable
+      group:
+        description: 'Release group (core, cli, or leave empty for all)'
+        required: false
+        type: string
+        default: ''
       dryRun:
         description: 'Dry run'
         required: false
@@ -43,16 +38,16 @@ jobs:
       - name: Build release command
         id: build-command
         run: |
-          if [ "${{ github.event.inputs.prerelease }}" = "stable" ]; then
-            COMMAND="yarn nx release"
-          else
-            COMMAND="yarn nx release --specifier=prerelease --preid=${{ github.event.inputs.prerelease }}"
+          COMMAND="yarn nx release"
+
+          if [ -n "${{ github.event.inputs.group }}" ]; then
+            COMMAND="$COMMAND --groups=${{ github.event.inputs.group }}"
           fi
-          
+
           if [ "${{ github.event.inputs.dryRun }}" = "true" ]; then
             COMMAND="$COMMAND --dry-run"
           fi
-          
+
           echo "command=$COMMAND" >> $GITHUB_OUTPUT
 
       - name: Run release
@@ -60,3 +55,4 @@ jobs:
         env:
           NPM_CONFIG_PROVENANCE: true
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -471,3 +471,71 @@ packages/core/
         └── integration/
             └── synth.spec.ts            full end-to-end synthesis test (8 suites; suite 8 writes to .cdkx.out/)
 ```
+
+---
+
+## Release configuration
+
+Releases are managed via `nx release` (configured in `nx.json`).
+
+### Groups
+
+| Group  | Projects                                | Tag pattern       | Versioning                    |
+| ------ | --------------------------------------- | ----------------- | ----------------------------- |
+| `core` | `@cdk-x/core` (+ `engine` when created) | `core-v{version}` | Fixed (lock-step)             |
+| `cli`  | `cli` (`@cdk-x/cli`)                    | `cli-v{version}`  | Fixed (independent from core) |
+
+### Key decisions
+
+- `projectsRelationship: "independent"` at the top level — groups version independently of each other.
+- Within the `core` group: `projectsRelationship: "fixed"` — `core` and `engine` always share the same version.
+- `updateDependents: "never"` on both groups — releasing `core` does NOT auto-bump `cli`, because CLI bundles core via esbuild (`bundle: true`) with no runtime dependency.
+- `workspaceChangelog: false` — no monorepo-level CHANGELOG. Each group gets its own `CHANGELOG.md` via `projectChangelogs`.
+- GitHub Releases are created automatically per group (`createRelease: "github"`).
+- Version bumps are driven by conventional commits (`conventionalCommits: true`).
+- `adjustSemverBumpsForZeroMajorVersion: true` — while on `0.x`, a `feat:` commit bumps minor (not major), and `fix:` bumps patch.
+- `preVersionCommand` builds only the affected group's projects before versioning.
+
+### Running releases
+
+```bash
+# Release only the core group (dry run by default in CI)
+yarn nx release --groups=core
+
+# Release only the CLI group
+yarn nx release --groups=cli
+
+# Release all groups
+yarn nx release
+
+# First real release (no git tags exist yet)
+yarn nx release --first-release
+
+# Preview without making changes
+yarn nx release --dry-run
+```
+
+### GitHub Actions workflow
+
+`.github/workflows/release.yml` — triggered via `workflow_dispatch` with:
+
+- `group` input (optional): `core`, `cli`, or empty for all groups
+- `dryRun` input (boolean, default `true`): set to `false` to publish
+
+Required secrets:
+
+- `PAT_TOKEN` — GitHub personal access token with `repo` scope (for creating GitHub Releases and pushing tags)
+- `NPM_TOKEN` — npm publish token (passed as `NODE_AUTH_TOKEN`)
+
+### Adding `engine` to the `core` group
+
+When the `engine` package is created, add it to `nx.json`:
+
+```jsonc
+"core": {
+  "projects": ["@cdk-x/core", "@cdk-x/engine"],
+  ...
+}
+```
+
+Both packages will then share the same version and be released together.
