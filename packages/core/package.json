@@ -1,6 +1,6 @@
 {
   "name": "@cdk-x/core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -19,5 +19,8 @@
   ],
   "dependencies": {
     "constructs": "^10.5.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
