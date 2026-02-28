@@ -22,7 +22,9 @@ describe('ProviderResource', () => {
 
   describe('isProviderResource()', () => {
     it('returns true for ProviderResource instances', () => {
-      const resource = new ProviderResource(stack, 'Res', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+      });
       expect(ProviderResource.isProviderResource(resource)).toBe(true);
     });
 
@@ -35,7 +37,9 @@ describe('ProviderResource', () => {
 
   describe('logicalId', () => {
     it('is computed from the node path using makeUniqueId', () => {
-      const resource = new ProviderResource(stack, 'Res', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+      });
       // node.path = 'TestStack/Res' → makeUniqueId(['TestStack', 'Res'])
       expect(resource.logicalId).toBe('TestStackRes4FFF4668');
     });
@@ -54,22 +58,36 @@ describe('ProviderResource', () => {
 
   describe('applyRemovalPolicy()', () => {
     it('sets DELETE policy for RemovalPolicy.DESTROY', () => {
-      const resource = new ProviderResource(stack, 'Res', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+      });
       resource.applyRemovalPolicy(RemovalPolicy.DESTROY);
-      expect(resource.resourceOptions.deletionPolicy).toBe(ProviderDeletionPolicy.DELETE);
-      expect(resource.resourceOptions.updateReplacePolicy).toBe(ProviderDeletionPolicy.DELETE);
+      expect(resource.resourceOptions.deletionPolicy).toBe(
+        ProviderDeletionPolicy.DELETE,
+      );
+      expect(resource.resourceOptions.updateReplacePolicy).toBe(
+        ProviderDeletionPolicy.DELETE,
+      );
     });
 
     it('sets RETAIN policy for RemovalPolicy.RETAIN', () => {
-      const resource = new ProviderResource(stack, 'Res', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+      });
       resource.applyRemovalPolicy(RemovalPolicy.RETAIN);
-      expect(resource.resourceOptions.deletionPolicy).toBe(ProviderDeletionPolicy.RETAIN);
+      expect(resource.resourceOptions.deletionPolicy).toBe(
+        ProviderDeletionPolicy.RETAIN,
+      );
     });
 
     it('defaults to RETAIN when no policy is given', () => {
-      const resource = new ProviderResource(stack, 'Res', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+      });
       resource.applyRemovalPolicy(undefined);
-      expect(resource.resourceOptions.deletionPolicy).toBe(ProviderDeletionPolicy.RETAIN);
+      expect(resource.resourceOptions.deletionPolicy).toBe(
+        ProviderDeletionPolicy.RETAIN,
+      );
     });
   });
 
@@ -129,7 +147,10 @@ describe('ProviderResource', () => {
       });
       const json = resource.toJson();
       const entry = json[resource.logicalId] as Record<string, unknown>;
-      expect((entry.properties as Record<string, unknown>).id).toEqual({ ref: 'some-resource', attr: 'id' });
+      expect((entry.properties as Record<string, unknown>).id).toEqual({
+        ref: 'some-resource',
+        attr: 'id',
+      });
     });
 
     it('strips null values from properties', () => {
@@ -143,7 +164,9 @@ describe('ProviderResource', () => {
     });
 
     it('produces empty properties object when no properties given', () => {
-      const resource = new ProviderResource(stack, 'Res', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+      });
       const json = resource.toJson();
       const entry = json[resource.logicalId] as Record<string, unknown>;
       expect(entry.properties).toEqual({});

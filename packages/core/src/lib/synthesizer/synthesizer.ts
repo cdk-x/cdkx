@@ -91,7 +91,10 @@ export class JsonSynthesizer implements IStackSynthesizer {
 
   public synthesize(session: ISynthesisSession): void {
     // Merge all per-resource keyed objects into a single map
-    const resourceMap = Object.assign({}, ...this.stack.getProviderResources().map((r) => r.toJson()));
+    const resourceMap = Object.assign(
+      {},
+      ...this.stack.getProviderResources().map((r) => r.toJson()),
+    );
     const fileName = `${this.stack.artifactId}.json`;
     const content = JSON.stringify(resourceMap, null, 2);
 

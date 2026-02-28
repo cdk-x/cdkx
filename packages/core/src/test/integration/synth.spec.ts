@@ -16,7 +16,10 @@ import { App } from '../../lib/app/app.js';
 import { Stack } from '../../lib/stack/stack.js';
 import { ProviderResource } from '../../lib/provider-resource/provider-resource.js';
 import { Lazy } from '../../lib/resolvables/lazy.js';
-import { IResolvable, ResolveContext } from '../../lib/resolvables/resolvables.js';
+import {
+  IResolvable,
+  ResolveContext,
+} from '../../lib/resolvables/resolvables.js';
 import { MANIFEST_VERSION } from '../../lib/assembly/cloud-assembly.js';
 import { TestProvider, SynthHelpers, TestResources } from '../helpers/index.js';
 
@@ -48,9 +51,14 @@ describe('Single stack — basic synthesis', () => {
 
     app.synth();
 
-    const content = SynthHelpers.readJson(path.join(outdir, 'MyStack.json')) as Record<string, unknown>;
+    const content = SynthHelpers.readJson(
+      path.join(outdir, 'MyStack.json'),
+    ) as Record<string, unknown>;
     expect(Object.keys(content)).toHaveLength(1);
-    const entry = content[resource.logicalId] as { type: string; properties: Record<string, unknown> };
+    const entry = content[resource.logicalId] as {
+      type: string;
+      properties: Record<string, unknown>;
+    };
     expect(entry.type).toBe('test::Resource');
     expect(entry.properties).toEqual({ name: 'Server' });
   });
@@ -68,7 +76,9 @@ describe('Single stack — basic synthesis', () => {
     new Stack(app, 'MyStack', { provider: new TestProvider('hetzner') });
     app.synth();
 
-    const manifest = SynthHelpers.readJson(path.join(outdir, 'manifest.json')) as {
+    const manifest = SynthHelpers.readJson(
+      path.join(outdir, 'manifest.json'),
+    ) as {
       version: string;
       artifacts: Record<
         string,
@@ -119,7 +129,9 @@ describe('stackName', () => {
     new Stack(app, 'MyStack', { provider: new TestProvider() });
     app.synth();
 
-    const manifest = SynthHelpers.readJson(path.join(outdir, 'manifest.json')) as {
+    const manifest = SynthHelpers.readJson(
+      path.join(outdir, 'manifest.json'),
+    ) as {
       artifacts: Record<string, { displayName?: string }>;
     };
     expect(manifest.artifacts['MyStack'].displayName).toBe('MyStack');
@@ -127,25 +139,40 @@ describe('stackName', () => {
 
   it('manifest displayName uses stackName when provided', () => {
     const app = new App({ outdir });
-    new Stack(app, 'MyStack', { provider: new TestProvider(), stackName: 'Production Stack' });
+    new Stack(app, 'MyStack', {
+      provider: new TestProvider(),
+      stackName: 'Production Stack',
+    });
     app.synth();
 
-    const manifest = SynthHelpers.readJson(path.join(outdir, 'manifest.json')) as {
-      artifacts: Record<string, { displayName?: string; properties: { templateFile: string } }>;
+    const manifest = SynthHelpers.readJson(
+      path.join(outdir, 'manifest.json'),
+    ) as {
+      artifacts: Record<
+        string,
+        { displayName?: string; properties: { templateFile: string } }
+      >;
     };
     // artifactId (manifest key and file name) is still derived from construct id
     expect(manifest.artifacts['MyStack']).toBeDefined();
     expect(manifest.artifacts['MyStack'].displayName).toBe('Production Stack');
-    expect(manifest.artifacts['MyStack'].properties.templateFile).toBe('MyStack.json');
+    expect(manifest.artifacts['MyStack'].properties.templateFile).toBe(
+      'MyStack.json',
+    );
   });
 
   it('output file name is always derived from the construct id, not stackName', () => {
     const app = new App({ outdir });
-    new Stack(app, 'MyStack', { provider: new TestProvider(), stackName: 'Production Stack' });
+    new Stack(app, 'MyStack', {
+      provider: new TestProvider(),
+      stackName: 'Production Stack',
+    });
     app.synth();
 
     expect(fs.existsSync(path.join(outdir, 'MyStack.json'))).toBe(true);
-    expect(fs.existsSync(path.join(outdir, 'Production Stack.json'))).toBe(false);
+    expect(fs.existsSync(path.join(outdir, 'Production Stack.json'))).toBe(
+      false,
+    );
   });
 });
 
@@ -178,22 +205,37 @@ describe('Multiple stacks', () => {
     new Stack(app, 'StackB', { provider: new TestProvider() });
     app.synth();
 
-    const manifest = SynthHelpers.readJson(path.join(outdir, 'manifest.json')) as {
+    const manifest = SynthHelpers.readJson(
+      path.join(outdir, 'manifest.json'),
+    ) as {
       artifacts: Record<string, unknown>;
     };
-    expect(Object.keys(manifest.artifacts).sort()).toEqual(['StackA', 'StackB']);
+    expect(Object.keys(manifest.artifacts).sort()).toEqual([
+      'StackA',
+      'StackB',
+    ]);
   });
 
   it('each stack file contains only its own resources', () => {
     const app = new App({ outdir });
     const s1 = new Stack(app, 'StackA', { provider: new TestProvider() });
     const s2 = new Stack(app, 'StackB', { provider: new TestProvider() });
-    new ProviderResource(s1, 'Res', { type: 'test::Resource', properties: { owner: 'stack-a' } });
-    new ProviderResource(s2, 'Res', { type: 'test::Resource', properties: { owner: 'stack-b' } });
+    new ProviderResource(s1, 'Res', {
+      type: 'test::Resource',
+      properties: { owner: 'stack-a' },
+    });
+    new ProviderResource(s2, 'Res', {
+      type: 'test::Resource',
+      properties: { owner: 'stack-b' },
+    });
     app.synth();
 
-    const a = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'StackA.json')));
-    const b = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'StackB.json')));
+    const a = SynthHelpers.resourceValues(
+      SynthHelpers.readJson(path.join(outdir, 'StackA.json')),
+    );
+    const b = SynthHelpers.resourceValues(
+      SynthHelpers.readJson(path.join(outdir, 'StackB.json')),
+    );
     expect(a[0].properties['owner']).toBe('stack-a');
     expect(b[0].properties['owner']).toBe('stack-b');
   });
@@ -231,7 +273,9 @@ describe('Lazy token resolution', () => {
     app.synth();
 
     expect(computed).toBe(true);
-    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
+    const content = SynthHelpers.resourceValues(
+      SynthHelpers.readJson(path.join(outdir, 'S.json')),
+    );
     expect(content[0].properties['value']).toBe(42);
   });
 
@@ -248,7 +292,9 @@ describe('Lazy token resolution', () => {
     lateValue = 42;
     app.synth();
 
-    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
+    const content = SynthHelpers.resourceValues(
+      SynthHelpers.readJson(path.join(outdir, 'S.json')),
+    );
     expect(content[0].properties['count']).toBe(42);
   });
 
@@ -258,7 +304,9 @@ describe('Lazy token resolution', () => {
     TestResources.resourceWithLazy(stack);
     app.synth();
 
-    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
+    const content = SynthHelpers.resourceValues(
+      SynthHelpers.readJson(path.join(outdir, 'S.json')),
+    );
     expect(content[0].properties['value']).toBe('lazy-resolved');
   });
 });
@@ -292,8 +340,12 @@ describe('IResolvable token resolution', () => {
 
     app.synth();
 
-    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
-    expect(content[0].properties['password']).toEqual({ secretKeyRef: { name: 'my-secret', key: 'value' } });
+    const content = SynthHelpers.resourceValues(
+      SynthHelpers.readJson(path.join(outdir, 'S.json')),
+    );
+    expect(content[0].properties['password']).toEqual({
+      secretKeyRef: { name: 'my-secret', key: 'value' },
+    });
   });
 
   it('resolves a Lazy → IResolvable chain', () => {
@@ -314,7 +366,9 @@ describe('IResolvable token resolution', () => {
 
     app.synth();
 
-    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
+    const content = SynthHelpers.resourceValues(
+      SynthHelpers.readJson(path.join(outdir, 'S.json')),
+    );
     expect(content[0].properties['name']).toBe('resolved-name');
   });
 
@@ -328,7 +382,9 @@ describe('IResolvable token resolution', () => {
     }
 
     const app = new App({ outdir });
-    const stack = new Stack(app, 'S', { provider: new TestProvider('kubernetes') });
+    const stack = new Stack(app, 'S', {
+      provider: new TestProvider('kubernetes'),
+    });
     new ProviderResource(stack, 'R', {
       type: 'test::Resource',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -358,7 +414,9 @@ describe('Null and undefined stripping during synthesis', () => {
     TestResources.resourceWithNull(stack);
     app.synth();
 
-    const content = SynthHelpers.resourceValues(SynthHelpers.readJson(path.join(outdir, 'S.json')));
+    const content = SynthHelpers.resourceValues(
+      SynthHelpers.readJson(path.join(outdir, 'S.json')),
+    );
     expect(content[0].properties).not.toHaveProperty('optional');
     expect(content[0].properties['name']).toBe('NullResource');
   });
@@ -384,7 +442,9 @@ describe('Unresolved token detection', () => {
         properties: { bad: new UnresolvedToken() as any },
       });
 
-      expect(() => app.synth()).toThrow("Unresolved token of type 'UnresolvedToken' found during synthesis");
+      expect(() => app.synth()).toThrow(
+        "Unresolved token of type 'UnresolvedToken' found during synthesis",
+      );
     } finally {
       if (fs.existsSync(outdir)) fs.rmSync(outdir, { recursive: true });
     }
@@ -403,7 +463,9 @@ describe('Visual synth output', () => {
     const app = new App({ outdir });
 
     // ── Stack A — cross-resource references and null stripping ─────────────
-    const stackA = new Stack(app, 'StackA', { provider: new TestProvider('provider-a') });
+    const stackA = new Stack(app, 'StackA', {
+      provider: new TestProvider('provider-a'),
+    });
 
     // Source resource — another resource will reference its logicalId
     const source = TestResources.resource(stackA, 'Source');
@@ -423,7 +485,9 @@ describe('Visual synth output', () => {
     TestResources.resourceWithNull(stackA, 'WithNull');
 
     // ── Stack B — lazy resolution ───────────────────────────────────────────
-    const stackB = new Stack(app, 'StackB', { provider: new TestProvider('provider-b') });
+    const stackB = new Stack(app, 'StackB', {
+      provider: new TestProvider('provider-b'),
+    });
 
     // Lazy resource — value resolved at synthesis time
     TestResources.resourceWithLazy(stackB, 'WithLazy');
@@ -436,15 +500,26 @@ describe('Visual synth output', () => {
     expect(fs.existsSync(path.join(outdir, 'manifest.json'))).toBe(true);
 
     // Manifest lists both stacks
-    const manifest = SynthHelpers.readJson(path.join(outdir, 'manifest.json')) as {
+    const manifest = SynthHelpers.readJson(
+      path.join(outdir, 'manifest.json'),
+    ) as {
       artifacts: Record<string, unknown>;
     };
-    expect(Object.keys(manifest.artifacts).sort()).toEqual(['StackA', 'StackB']);
+    expect(Object.keys(manifest.artifacts).sort()).toEqual([
+      'StackA',
+      'StackB',
+    ]);
 
-    type ResourceEntry = { type: string; properties: Record<string, unknown>; metadata: Record<string, unknown> };
+    type ResourceEntry = {
+      type: string;
+      properties: Record<string, unknown>;
+      metadata: Record<string, unknown>;
+    };
 
     // ── Stack A assertions ──────────────────────────────────────────────────
-    const aOut = SynthHelpers.readJson(path.join(outdir, 'StackA.json')) as Record<string, ResourceEntry>;
+    const aOut = SynthHelpers.readJson(
+      path.join(outdir, 'StackA.json'),
+    ) as Record<string, ResourceEntry>;
 
     // Source resource present, keyed by its hashed logicalId
     const sourceEntry = aOut[source.logicalId];
@@ -453,20 +528,31 @@ describe('Visual synth output', () => {
     expect(sourceEntry.metadata['cdkx:path']).toBe('StackA/Source');
 
     // Dependent resource has the cross-reference pointing to source's logicalId
-    const dependentEntry = Object.values(aOut).find((r) => r.properties['name'] === 'Dependent');
+    const dependentEntry = Object.values(aOut).find(
+      (r) => r.properties['name'] === 'Dependent',
+    );
     expect(dependentEntry).toBeDefined();
-    expect(dependentEntry?.properties['ref']).toEqual({ ref: source.logicalId, attr: 'id' });
+    expect(dependentEntry?.properties['ref']).toEqual({
+      ref: source.logicalId,
+      attr: 'id',
+    });
 
     // Null property was stripped
-    const nullEntry = Object.values(aOut).find((r) => r.metadata['cdkx:path'] === 'StackA/WithNull');
+    const nullEntry = Object.values(aOut).find(
+      (r) => r.metadata['cdkx:path'] === 'StackA/WithNull',
+    );
     expect(nullEntry).toBeDefined();
     expect(nullEntry?.properties).not.toHaveProperty('optional');
 
     // ── Stack B assertions ──────────────────────────────────────────────────
-    const bOut = SynthHelpers.readJson(path.join(outdir, 'StackB.json')) as Record<string, ResourceEntry>;
+    const bOut = SynthHelpers.readJson(
+      path.join(outdir, 'StackB.json'),
+    ) as Record<string, ResourceEntry>;
 
     // Lazy value was resolved at synthesis time
-    const lazyEntry = Object.values(bOut).find((r) => r.metadata['cdkx:path'] === 'StackB/WithLazy');
+    const lazyEntry = Object.values(bOut).find(
+      (r) => r.metadata['cdkx:path'] === 'StackB/WithLazy',
+    );
     expect(lazyEntry).toBeDefined();
     expect(lazyEntry?.properties['value']).toBe('lazy-resolved');
   });

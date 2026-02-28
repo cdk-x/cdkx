@@ -36,8 +36,9 @@ export class ResolverPipeline {
     // ImplicitTokenResolver needs a reference to `this.resolve` to support recursive
     // resolution of nested values within IResolvable.resolve() calls.
     // We inject it as a callback at construction time to avoid circular dependencies.
-    const implicitTokenResolver = new ImplicitTokenResolver((key, value, providerResource, provider) =>
-      this.resolve(key, value, providerResource, provider),
+    const implicitTokenResolver = new ImplicitTokenResolver(
+      (key, value, providerResource, provider) =>
+        this.resolve(key, value, providerResource, provider),
     );
 
     this.resolvers = [...resolvers, new LazyResolver(), implicitTokenResolver];
@@ -58,24 +59,41 @@ export class ResolverPipeline {
    * @param providerResource - The ProviderResource being synthesized (for context)
    * @param provider - The provider identifier (e.g. `'kubernetes'`, `'hetzner'`)
    */
-  public resolve(key: string[], value: unknown, providerResource: object, provider: string): unknown {
+  public resolve(
+    key: string[],
+    value: unknown,
+    providerResource: object,
+    provider: string,
+  ): unknown {
     if (value == null) return value;
 
     // 1. Run the resolver pipeline (first resolver to call replaceValue wins)
-    const context = new ResolutionContext(providerResource, key, value, provider);
+    const context = new ResolutionContext(
+      providerResource,
+      key,
+      value,
+      provider,
+    );
 
     for (const resolver of this.resolvers) {
       resolver.resolve(context);
       if (context.replaced) {
         // Recursively resolve the replacement — supports Lazy → IResolvable chains
-        return this.resolve(key, context.replacedValue, providerResource, provider);
+        return this.resolve(
+          key,
+          context.replacedValue,
+          providerResource,
+          provider,
+        );
       }
     }
 
     // 2. No resolver fired — recurse structurally
 
     if (Array.isArray(value)) {
-      return value.map((item, i) => this.resolve([...key, String(i)], item, providerResource, provider));
+      return value.map((item, i) =>
+        this.resolve([...key, String(i)], item, providerResource, provider),
+      );
     }
 
     if (typeof value === 'object' && value.constructor === Object) {
@@ -107,7 +125,9 @@ export class ResolverPipeline {
     if (typeof obj !== 'object') return obj;
 
     if (Array.isArray(obj)) {
-      return obj.map((item) => this.sanitize(item, options)).filter((item) => item !== undefined);
+      return obj
+        .map((item) => this.sanitize(item, options))
+        .filter((item) => item !== undefined);
     }
 
     // Throw if a class instance survived resolution (unresolved token)

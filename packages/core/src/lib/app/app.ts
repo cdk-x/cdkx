@@ -3,7 +3,10 @@ import { IResolver } from '../resolvables/resolvables.js';
 import { ResolverPipeline } from '../resolvables/resolver-pipeline.js';
 import { Provider } from '../provider/provider.js';
 import { Stack } from '../stack/stack.js';
-import { CloudAssembly, CloudAssemblyBuilder } from '../assembly/cloud-assembly.js';
+import {
+  CloudAssembly,
+  CloudAssemblyBuilder,
+} from '../assembly/cloud-assembly.js';
 import { ISynthesisSession } from '../synthesizer/synthesizer.js';
 
 export interface AppProps {
@@ -101,7 +104,10 @@ export class App extends Construct {
     const cached = this.pipelineCache.get(provider.identifier);
     if (cached) return cached;
 
-    const pipeline = new ResolverPipeline([...this.globalResolvers, ...provider.getResolvers()]);
+    const pipeline = new ResolverPipeline([
+      ...this.globalResolvers,
+      ...provider.getResolvers(),
+    ]);
 
     this.pipelineCache.set(provider.identifier, pipeline);
     return pipeline;

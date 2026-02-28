@@ -1,7 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { JsonSynthesizer, IStackRef, ISynthesisSession } from './synthesizer.js';
+import {
+  JsonSynthesizer,
+  IStackRef,
+  ISynthesisSession,
+} from './synthesizer.js';
 import { CloudAssemblyBuilder } from '../assembly/cloud-assembly.js';
 import { makeApp, makeStack, TestProvider } from '../../test/helpers/index.js';
 import { ProviderResource } from '../provider-resource/provider-resource.js';
@@ -58,15 +62,27 @@ describe('JsonSynthesizer', () => {
       const outdir = tmpDir();
       const app = makeApp(outdir);
       const stack = makeStack(app, 'MyStack', new TestProvider());
-      const r1 = new ProviderResource(stack, 'Res1', { type: 'test::TypeA', properties: { name: 'a' } });
-      const r2 = new ProviderResource(stack, 'Res2', { type: 'test::TypeB', properties: { count: 2 } });
+      const r1 = new ProviderResource(stack, 'Res1', {
+        type: 'test::TypeA',
+        properties: { name: 'a' },
+      });
+      const r2 = new ProviderResource(stack, 'Res2', {
+        type: 'test::TypeB',
+        properties: { count: 2 },
+      });
 
       const session = makeSession(outdir);
       stack.synthesizer.synthesize(session);
 
-      const content = JSON.parse(fs.readFileSync(path.join(outdir, 'MyStack.json'), 'utf-8')) as Record<
+      const content = JSON.parse(
+        fs.readFileSync(path.join(outdir, 'MyStack.json'), 'utf-8'),
+      ) as Record<
         string,
-        { type: string; properties: Record<string, unknown>; metadata: Record<string, unknown> }
+        {
+          type: string;
+          properties: Record<string, unknown>;
+          metadata: Record<string, unknown>;
+        }
       >;
       expect(Object.keys(content)).toHaveLength(2);
       // Each entry is keyed by its logical ID
@@ -84,7 +100,9 @@ describe('JsonSynthesizer', () => {
       const session = makeSession(outdir);
       stack.synthesizer.synthesize(session);
 
-      const content = JSON.parse(fs.readFileSync(path.join(outdir, 'EmptyStack.json'), 'utf-8'));
+      const content = JSON.parse(
+        fs.readFileSync(path.join(outdir, 'EmptyStack.json'), 'utf-8'),
+      );
       expect(content).toEqual({});
       fs.rmSync(outdir, { recursive: true });
     });
@@ -105,7 +123,10 @@ describe('JsonSynthesizer', () => {
     });
 
     it('creates the outdir if it does not exist', () => {
-      const outdir = path.join(os.tmpdir(), `cdkx-new-${Math.random().toString(36).slice(2)}`);
+      const outdir = path.join(
+        os.tmpdir(),
+        `cdkx-new-${Math.random().toString(36).slice(2)}`,
+      );
       const app = makeApp(outdir);
       const stack = makeStack(app, 'S', new TestProvider());
       const session = makeSession(outdir);

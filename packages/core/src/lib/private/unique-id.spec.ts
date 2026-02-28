@@ -25,21 +25,27 @@ describe('makeUniqueId', () => {
     });
 
     it('produces a stable ID for a bare resource (no Resource segment)', () => {
-      expect(makeUniqueId(['HetznerStack', 'Firewall'])).toBe('HetznerStackFirewall0C0F9636');
-    });
-
-    it('produces a stable ID for FloatingIp', () => {
-      expect(makeUniqueId(['HetznerStack', 'FloatingIp', 'Resource'])).toBe('HetznerStackFloatingIpA9D942A1');
-    });
-
-    it('produces a stable ID for KubernetesDeployment', () => {
-      expect(makeUniqueId(['KubernetesStack', 'WebDeployment', 'Resource'])).toBe(
-        'KubernetesStackWebDeployment26E91316',
+      expect(makeUniqueId(['HetznerStack', 'Firewall'])).toBe(
+        'HetznerStackFirewall0C0F9636',
       );
     });
 
+    it('produces a stable ID for FloatingIp', () => {
+      expect(makeUniqueId(['HetznerStack', 'FloatingIp', 'Resource'])).toBe(
+        'HetznerStackFloatingIpA9D942A1',
+      );
+    });
+
+    it('produces a stable ID for KubernetesDeployment', () => {
+      expect(
+        makeUniqueId(['KubernetesStack', 'WebDeployment', 'Resource']),
+      ).toBe('KubernetesStackWebDeployment26E91316');
+    });
+
     it('produces a stable ID for KubernetesService', () => {
-      expect(makeUniqueId(['KubernetesStack', 'WebService', 'Resource'])).toBe('KubernetesStackWebServiceD2644869');
+      expect(makeUniqueId(['KubernetesStack', 'WebService', 'Resource'])).toBe(
+        'KubernetesStackWebServiceD2644869',
+      );
     });
 
     it('is deterministic — same input always produces same output', () => {
@@ -64,7 +70,9 @@ describe('makeUniqueId', () => {
     });
 
     it("strips multiple 'Default' segments", () => {
-      expect(makeUniqueId(['A', 'Default', 'Default', 'B'])).toBe(makeUniqueId(['A', 'B']));
+      expect(makeUniqueId(['A', 'Default', 'Default', 'B'])).toBe(
+        makeUniqueId(['A', 'B']),
+      );
     });
   });
 
@@ -99,11 +107,15 @@ describe('makeUniqueId', () => {
   // ── Error cases ────────────────────────────────────────────────────────────
   describe('error cases', () => {
     it('throws when all components reduce to empty after Default filtering', () => {
-      expect(() => makeUniqueId(['Default'])).toThrow('Unable to calculate a unique id for an empty set of components');
+      expect(() => makeUniqueId(['Default'])).toThrow(
+        'Unable to calculate a unique id for an empty set of components',
+      );
     });
 
     it('throws for an empty components array', () => {
-      expect(() => makeUniqueId([])).toThrow('Unable to calculate a unique id for an empty set of components');
+      expect(() => makeUniqueId([])).toThrow(
+        'Unable to calculate a unique id for an empty set of components',
+      );
     });
   });
 });

@@ -1,7 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { CloudAssemblyBuilder, CloudAssembly, MANIFEST_VERSION } from './cloud-assembly.js';
+import {
+  CloudAssemblyBuilder,
+  CloudAssembly,
+  MANIFEST_VERSION,
+} from './cloud-assembly.js';
 
 function tmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'cdkx-assembly-test-'));
@@ -10,7 +14,10 @@ function tmpDir(): string {
 describe('CloudAssemblyBuilder', () => {
   describe('writeFile()', () => {
     it('creates the outdir if it does not exist', () => {
-      const outdir = path.join(os.tmpdir(), `cdkx-new-dir-${Math.random().toString(36).slice(2)}`);
+      const outdir = path.join(
+        os.tmpdir(),
+        `cdkx-new-dir-${Math.random().toString(36).slice(2)}`,
+      );
       const builder = new CloudAssemblyBuilder(outdir);
       builder.writeFile('test.json', '{}');
       expect(fs.existsSync(path.join(outdir, 'test.json'))).toBe(true);
@@ -21,7 +28,9 @@ describe('CloudAssemblyBuilder', () => {
       const outdir = tmpDir();
       const builder = new CloudAssemblyBuilder(outdir);
       builder.writeFile('hello.txt', 'world');
-      expect(fs.readFileSync(path.join(outdir, 'hello.txt'), 'utf-8')).toBe('world');
+      expect(fs.readFileSync(path.join(outdir, 'hello.txt'), 'utf-8')).toBe(
+        'world',
+      );
       fs.rmSync(outdir, { recursive: true });
     });
 
@@ -30,7 +39,9 @@ describe('CloudAssemblyBuilder', () => {
       const builder = new CloudAssemblyBuilder(outdir);
       builder.writeFile('file.json', 'first');
       builder.writeFile('file.json', 'second');
-      expect(fs.readFileSync(path.join(outdir, 'file.json'), 'utf-8')).toBe('second');
+      expect(fs.readFileSync(path.join(outdir, 'file.json'), 'utf-8')).toBe(
+        'second',
+      );
       fs.rmSync(outdir, { recursive: true });
     });
   });
@@ -39,15 +50,30 @@ describe('CloudAssemblyBuilder', () => {
     it('registers an artifact without error', () => {
       const builder = new CloudAssemblyBuilder(tmpDir());
       expect(() =>
-        builder.addArtifact({ id: 'stack-a', templateFile: 'stack-a.json', provider: 'test', environment: {} }),
+        builder.addArtifact({
+          id: 'stack-a',
+          templateFile: 'stack-a.json',
+          provider: 'test',
+          environment: {},
+        }),
       ).not.toThrow();
     });
 
     it('throws on duplicate artifact ID', () => {
       const builder = new CloudAssemblyBuilder(tmpDir());
-      builder.addArtifact({ id: 'stack-a', templateFile: 'stack-a.json', provider: 'test', environment: {} });
+      builder.addArtifact({
+        id: 'stack-a',
+        templateFile: 'stack-a.json',
+        provider: 'test',
+        environment: {},
+      });
       expect(() =>
-        builder.addArtifact({ id: 'stack-a', templateFile: 'stack-a-2.json', provider: 'test', environment: {} }),
+        builder.addArtifact({
+          id: 'stack-a',
+          templateFile: 'stack-a-2.json',
+          provider: 'test',
+          environment: {},
+        }),
       ).toThrow("Duplicate artifact ID 'stack-a'");
     });
   });
@@ -56,7 +82,12 @@ describe('CloudAssemblyBuilder', () => {
     it('writes manifest.json to disk', () => {
       const outdir = tmpDir();
       const builder = new CloudAssemblyBuilder(outdir);
-      builder.addArtifact({ id: 'my-stack', templateFile: 'my-stack.json', provider: 'test', environment: {} });
+      builder.addArtifact({
+        id: 'my-stack',
+        templateFile: 'my-stack.json',
+        provider: 'test',
+        environment: {},
+      });
       builder.buildAssembly();
 
       const manifestPath = path.join(outdir, 'manifest.json');
@@ -76,7 +107,9 @@ describe('CloudAssemblyBuilder', () => {
       });
       builder.buildAssembly();
 
-      const manifest = JSON.parse(fs.readFileSync(path.join(outdir, 'manifest.json'), 'utf-8'));
+      const manifest = JSON.parse(
+        fs.readFileSync(path.join(outdir, 'manifest.json'), 'utf-8'),
+      );
       expect(manifest.version).toBe(MANIFEST_VERSION);
       expect(manifest.artifacts).toBeDefined();
       expect(Object.keys(manifest.artifacts)).toHaveLength(1);
@@ -93,10 +126,17 @@ describe('CloudAssemblyBuilder', () => {
     it('artifact without displayName omits the field', () => {
       const outdir = tmpDir();
       const builder = new CloudAssemblyBuilder(outdir);
-      builder.addArtifact({ id: 'stack-y', templateFile: 'stack-y.json', provider: 'test', environment: {} });
+      builder.addArtifact({
+        id: 'stack-y',
+        templateFile: 'stack-y.json',
+        provider: 'test',
+        environment: {},
+      });
       builder.buildAssembly();
 
-      const manifest = JSON.parse(fs.readFileSync(path.join(outdir, 'manifest.json'), 'utf-8'));
+      const manifest = JSON.parse(
+        fs.readFileSync(path.join(outdir, 'manifest.json'), 'utf-8'),
+      );
       expect(manifest.artifacts['stack-y']).not.toHaveProperty('displayName');
       fs.rmSync(outdir, { recursive: true });
     });
@@ -104,8 +144,18 @@ describe('CloudAssemblyBuilder', () => {
     it('returns a CloudAssembly with the registered artifacts', () => {
       const outdir = tmpDir();
       const builder = new CloudAssemblyBuilder(outdir);
-      builder.addArtifact({ id: 'a', templateFile: 'a.json', provider: 'test', environment: {} });
-      builder.addArtifact({ id: 'b', templateFile: 'b.json', provider: 'test', environment: {} });
+      builder.addArtifact({
+        id: 'a',
+        templateFile: 'a.json',
+        provider: 'test',
+        environment: {},
+      });
+      builder.addArtifact({
+        id: 'b',
+        templateFile: 'b.json',
+        provider: 'test',
+        environment: {},
+      });
       const assembly = builder.buildAssembly();
 
       expect(assembly).toBeInstanceOf(CloudAssembly);
@@ -133,7 +183,12 @@ describe('CloudAssembly', () => {
       environment: {},
       displayName: 'Stack A',
     });
-    builder.addArtifact({ id: 'stack-b', templateFile: 'stack-b.yaml', provider: 'k8s', environment: {} });
+    builder.addArtifact({
+      id: 'stack-b',
+      templateFile: 'stack-b.yaml',
+      provider: 'k8s',
+      environment: {},
+    });
     return { assembly: builder.buildAssembly(), outdir };
   }
 

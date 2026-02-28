@@ -134,6 +134,10 @@ export class Stack extends Construct implements IStackRef {
    * Used by synthesizers to collect the resources to serialize.
    */
   public getProviderResources(): ProviderResource[] {
-    return this.node.findAll().filter((c): c is ProviderResource => ProviderResource.isProviderResource(c));
+    return this.node
+      .findAll()
+      .filter((c): c is ProviderResource =>
+        ProviderResource.isProviderResource(c),
+      );
   }
 }

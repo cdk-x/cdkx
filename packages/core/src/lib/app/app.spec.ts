@@ -1,9 +1,17 @@
 import { Construct } from 'constructs';
 import { App } from './app.js';
 import { Stack } from '../stack/stack.js';
-import { IStackSynthesizer, ISynthesisSession } from '../synthesizer/synthesizer.js';
+import {
+  IStackSynthesizer,
+  ISynthesisSession,
+} from '../synthesizer/synthesizer.js';
 import { IResolver, ResolutionContext } from '../resolvables/resolvables.js';
-import { makeApp, makeStack, TestProvider, SpyProvider } from '../../test/helpers/index.js';
+import {
+  makeApp,
+  makeStack,
+  TestProvider,
+  SpyProvider,
+} from '../../test/helpers/index.js';
 
 describe('App', () => {
   describe('App.isApp()', () => {
@@ -49,7 +57,9 @@ describe('App', () => {
     it('throws if the construct is not rooted in an App', () => {
       // A construct with no App ancestor
       const orphan = new Construct(undefined as never, 'orphan');
-      expect(() => App.of(orphan)).toThrow('No App found in the construct tree');
+      expect(() => App.of(orphan)).toThrow(
+        'No App found in the construct tree',
+      );
     });
   });
 
@@ -131,9 +141,18 @@ describe('App', () => {
 
     it('calls synthesize() on each Stack', () => {
       const app = makeApp();
-      const mockSynth: IStackSynthesizer = { bind: jest.fn(), synthesize: jest.fn() };
-      new Stack(app, 'S1', { provider: new TestProvider(), synthesizer: mockSynth });
-      new Stack(app, 'S2', { provider: new TestProvider(), synthesizer: mockSynth });
+      const mockSynth: IStackSynthesizer = {
+        bind: jest.fn(),
+        synthesize: jest.fn(),
+      };
+      new Stack(app, 'S1', {
+        provider: new TestProvider(),
+        synthesizer: mockSynth,
+      });
+      new Stack(app, 'S2', {
+        provider: new TestProvider(),
+        synthesizer: mockSynth,
+      });
       app.synth();
       expect(mockSynth.synthesize).toHaveBeenCalledTimes(2);
     });
@@ -150,11 +169,17 @@ describe('App', () => {
 
     it('does NOT call synthesize() on non-Stack constructs', () => {
       const app = makeApp();
-      const mockSynth: IStackSynthesizer = { bind: jest.fn(), synthesize: jest.fn() };
+      const mockSynth: IStackSynthesizer = {
+        bind: jest.fn(),
+        synthesize: jest.fn(),
+      };
       // Add a plain Construct — not a Stack
       new Construct(app, 'PlainNode');
       // Also add a real Stack to confirm synth IS called for stacks
-      new Stack(app, 'S', { provider: new TestProvider(), synthesizer: mockSynth });
+      new Stack(app, 'S', {
+        provider: new TestProvider(),
+        synthesizer: mockSynth,
+      });
       app.synth();
       expect(mockSynth.synthesize).toHaveBeenCalledTimes(1);
     });
@@ -166,7 +191,10 @@ describe('App', () => {
         bind: jest.fn(),
         synthesize: (session) => capturedSessions.push(session),
       };
-      new Stack(app, 'S', { provider: new TestProvider(), synthesizer: captureSynth });
+      new Stack(app, 'S', {
+        provider: new TestProvider(),
+        synthesizer: captureSynth,
+      });
       app.synth();
       expect(capturedSessions[0].outdir).toBe('/tmp/test-outdir-app');
     });

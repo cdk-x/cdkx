@@ -1,4 +1,10 @@
-import { IResolvable, ResolveContext, ResolutionContext, Resolvables, isResolvable } from './resolvables.js';
+import {
+  IResolvable,
+  ResolveContext,
+  ResolutionContext,
+  Resolvables,
+  isResolvable,
+} from './resolvables.js';
 
 const DUMMY_RESOURCE = {};
 const DUMMY_PROVIDER = 'test';
@@ -47,7 +53,12 @@ describe('isResolvable() (deprecated alias)', () => {
 
 describe('ResolutionContext', () => {
   it('stores constructor arguments', () => {
-    const ctx = new ResolutionContext(DUMMY_RESOURCE, ['key', '0'], 'hello', DUMMY_PROVIDER);
+    const ctx = new ResolutionContext(
+      DUMMY_RESOURCE,
+      ['key', '0'],
+      'hello',
+      DUMMY_PROVIDER,
+    );
     expect(ctx.providerResource).toBe(DUMMY_RESOURCE);
     expect(ctx.key).toEqual(['key', '0']);
     expect(ctx.value).toBe('hello');
@@ -55,26 +66,46 @@ describe('ResolutionContext', () => {
   });
 
   it('starts with replaced = false', () => {
-    const ctx = new ResolutionContext(DUMMY_RESOURCE, [], 'val', DUMMY_PROVIDER);
+    const ctx = new ResolutionContext(
+      DUMMY_RESOURCE,
+      [],
+      'val',
+      DUMMY_PROVIDER,
+    );
     expect(ctx.replaced).toBe(false);
   });
 
   it('replaceValue() sets replaced = true and stores the new value', () => {
-    const ctx = new ResolutionContext(DUMMY_RESOURCE, [], 'original', DUMMY_PROVIDER);
+    const ctx = new ResolutionContext(
+      DUMMY_RESOURCE,
+      [],
+      'original',
+      DUMMY_PROVIDER,
+    );
     ctx.replaceValue('replaced');
     expect(ctx.replaced).toBe(true);
     expect(ctx.replacedValue).toBe('replaced');
   });
 
   it('replaceValue() accepts null', () => {
-    const ctx = new ResolutionContext(DUMMY_RESOURCE, [], 'original', DUMMY_PROVIDER);
+    const ctx = new ResolutionContext(
+      DUMMY_RESOURCE,
+      [],
+      'original',
+      DUMMY_PROVIDER,
+    );
     ctx.replaceValue(null);
     expect(ctx.replaced).toBe(true);
     expect(ctx.replacedValue).toBeNull();
   });
 
   it('replaceValue() accepts objects', () => {
-    const ctx = new ResolutionContext(DUMMY_RESOURCE, [], 'original', DUMMY_PROVIDER);
+    const ctx = new ResolutionContext(
+      DUMMY_RESOURCE,
+      [],
+      'original',
+      DUMMY_PROVIDER,
+    );
     const obj = { nested: true };
     ctx.replaceValue(obj);
     expect(ctx.replacedValue).toBe(obj);

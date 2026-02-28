@@ -120,14 +120,18 @@ export class CloudAssemblyBuilder {
    */
   public addArtifact(options: AddArtifactOptions): void {
     if (this.artifacts[options.id] !== undefined) {
-      throw new Error(`Duplicate artifact ID '${options.id}'. Each stack must have a unique artifact ID.`);
+      throw new Error(
+        `Duplicate artifact ID '${options.id}'. Each stack must have a unique artifact ID.`,
+      );
     }
     const artifact: StackArtifact = {
       type: 'cdkx:stack',
       provider: options.provider,
       environment: options.environment,
       properties: { templateFile: options.templateFile },
-      ...(options.displayName !== undefined ? { displayName: options.displayName } : {}),
+      ...(options.displayName !== undefined
+        ? { displayName: options.displayName }
+        : {}),
     };
     this.artifacts[options.id] = artifact;
   }
