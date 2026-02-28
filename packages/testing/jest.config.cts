@@ -12,6 +12,7 @@ module.exports = {
   displayName: '@cdk-x/testing',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
+  passWithNoTests: true,
   transform: {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },
