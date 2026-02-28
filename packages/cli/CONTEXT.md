@@ -283,7 +283,7 @@ the `synth` subcommand directly, tests call `cmd.parseAsync(['node', 'cdkx'])`.
 ## Test structure
 
 ```
-src/test/
+test/
 ├── fixtures/
 │   └── simple-app/
 │       └── src/
@@ -295,7 +295,7 @@ src/test/
     └── synth.spec.ts            16 E2E integration tests
 ```
 
-### `CliHelpers` (`src/test/helpers/cli-helpers.ts`)
+### `CliHelpers` (`test/helpers/cli-helpers.ts`)
 
 Static utility class for integration tests. **Not** exported from `src/index.ts`.
 
@@ -308,14 +308,14 @@ Static utility class for integration tests. **Not** exported from `src/index.ts`
 | `runCli(args, cwd)`        | Runs `node dist/main.js` via `spawnSync`; returns `RunResult`          |
 
 `CLI_BUNDLE` resolves to `packages/cli/dist/main.js` (3 levels up from
-`src/test/helpers/`). The `test` target has `dependsOn: ["build"]` so the bundle
+`test/helpers/`). The `test` target has `dependsOn: ["build"]` so the bundle
 is always fresh before tests run.
 
-`SIMPLE_APP_FIXTURE` resolves to `src/test/fixtures/simple-app/src/main.ts`.
+`SIMPLE_APP_FIXTURE` resolves to `test/fixtures/simple-app/src/main.ts`.
 `buildFixture()` compiles it with esbuild (`bundle: true`, `platform: node`,
 `format: cjs`) into `<tmpDir>/app.js`.
 
-### Integration tests (`src/test/integration/synth.spec.ts`)
+### Integration tests (`test/integration/synth.spec.ts`)
 
 16 tests across these groups:
 
@@ -330,7 +330,7 @@ is always fresh before tests run.
 
 ## Fixtures
 
-### `simple-app` (`src/test/fixtures/simple-app/src/main.ts`)
+### `simple-app` (`test/fixtures/simple-app/src/main.ts`)
 
 A real cdkx app used by integration tests. Imports from `@cdk-x/core`.
 
@@ -349,7 +349,7 @@ esbuild — no pre-compilation step required for tests.
   "executor": "@nx/esbuild:esbuild",
   "outputs": ["{projectRoot}/dist-fixtures"],
   "options": {
-    "entryPoints": ["packages/cli/src/test/fixtures/simple-app/src/main.ts"],
+    "entryPoints": ["packages/cli/test/fixtures/simple-app/src/main.ts"],
     "outputPath": "packages/cli/dist-fixtures/simple-app",
     "bundle": true,
     "platform": "node",
@@ -368,7 +368,7 @@ the workspace root. `dist-fixtures/` is gitignored.
 Key rules:
 
 - `dist-fixtures/**` is ignored (compiled output, not source).
-- `src/test/**/*` is in `@nx/dependency-checks` `ignoredFiles` — test helpers
+- `test/**/*` is in `@nx/dependency-checks` `ignoredFiles` — test helpers
   use `esbuild` and `@cdk-x/core` as dev deps, which should not be required in
   `dependencies`.
 
@@ -446,15 +446,15 @@ await cmd.parseAsync(['node', 'cdkx']);
 `exitSpy` was NOT called must spy on `console.error` to suppress noise and
 prevent the test output from being polluted.
 
-### 8. `src/test/**` excluded from `tsconfig.lib.json`
+### 8. `test/**` excluded from `tsconfig.lib.json`
 
-The build tsconfig excludes `src/test/**/*` so the esbuild executor doesn't
+The build tsconfig excludes `test/**/*` so the esbuild executor doesn't
 pick up fixture files that import `@cdk-x/core` with ESM types incompatible
 with the CLI's `moduleResolution: nodenext` build config.
 
-### 9. `src/test/**` included in `tsconfig.spec.json`
+### 9. `test/**` included in `tsconfig.spec.json`
 
-The Jest tsconfig explicitly includes `src/test/**/*.ts` so SWC can
+The Jest tsconfig explicitly includes `test/**/*.ts` so SWC can
 type-check helpers and integration tests during test runs.
 
 ### 10. `defaultSpawnApp` splits on spaces
@@ -473,9 +473,9 @@ packages/cli/
 │   └── cdkx.js                                npm bin shim
 ├── package.json                               name: @cdk-x/cli, type: (none — CJS)
 ├── project.json                               Nx project configuration
-├── eslint.config.mjs                          ESLint config (dist-fixtures ignored, src/test in ignoredFiles)
-├── tsconfig.lib.json                          excludes src/test/**/*
-├── tsconfig.spec.json                         includes src/test/**/*.ts
+├── eslint.config.mjs                          ESLint config (dist-fixtures ignored, test in ignoredFiles)
+├── tsconfig.lib.json                          excludes test/**/*
+├── tsconfig.spec.json                         includes test/**/*.ts
 ├── CONTEXT.md                                 ← this file
 └── src/
     ├── index.ts                               public barrel (re-exports lib + commands)

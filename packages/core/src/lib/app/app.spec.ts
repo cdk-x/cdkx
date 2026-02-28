@@ -11,7 +11,7 @@ import {
   makeStack,
   TestProvider,
   SpyProvider,
-} from '../../test/helpers/index.js';
+} from '../../../test/helpers/index.js';
 
 describe('App', () => {
   describe('App.isApp()', () => {
