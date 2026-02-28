@@ -83,10 +83,36 @@ describe('Stack', () => {
   });
 
   describe('displayName', () => {
-    it('returns the full construct node path', () => {
+    it('returns the construct id when no stackName is provided', () => {
       const app = makeApp();
       const stack = new Stack(app, 'MyStack', { provider: new TestProvider() });
       expect(stack.displayName).toBe('MyStack');
+    });
+
+    it('returns the stackName when explicitly provided', () => {
+      const app = makeApp();
+      const stack = new Stack(app, 'MyStack', { provider: new TestProvider(), stackName: 'my-custom-name' });
+      expect(stack.displayName).toBe('my-custom-name');
+    });
+  });
+
+  describe('stackName', () => {
+    it('defaults to the construct id when not provided', () => {
+      const app = makeApp();
+      const stack = new Stack(app, 'MyStack', { provider: new TestProvider() });
+      expect(stack.stackName).toBe('MyStack');
+    });
+
+    it('uses the provided stackName when set', () => {
+      const app = makeApp();
+      const stack = new Stack(app, 'MyStack', { provider: new TestProvider(), stackName: 'Production Stack' });
+      expect(stack.stackName).toBe('Production Stack');
+    });
+
+    it('does not affect artifactId when stackName is provided', () => {
+      const app = makeApp();
+      const stack = new Stack(app, 'MyStack', { provider: new TestProvider(), stackName: 'Production Stack' });
+      expect(stack.artifactId).toBe('MyStack');
     });
   });
 
