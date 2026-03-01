@@ -1,6 +1,4 @@
-import * as os from 'node:os';
-import * as path from 'node:path';
-import { App, AppProps } from '@cdk-x/core';
+import { App } from '@cdk-x/core';
 
 /**
  * A test-friendly App that auto-generates a unique temporary outdir
@@ -15,13 +13,7 @@ import { App, AppProps } from '@cdk-x/core';
  * }
  */
 export class TestApp extends App {
-  constructor(outdir?: string, props?: Omit<AppProps, 'outdir'>) {
-    const dir =
-      outdir ??
-      path.join(
-        os.tmpdir(),
-        `cdkx-test-${Math.random().toString(36).slice(2)}`,
-      );
-    super({ ...props, outdir: dir });
+  public static default(): App {
+    return new App();
   }
 }

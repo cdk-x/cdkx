@@ -1,5 +1,4 @@
 import { App, Stack, StackProps } from '@cdk-x/core';
-import { TestProvider } from './test-provider.js';
 
 /**
  * A test-friendly Stack that defaults to a `TestProvider` when none is provided.
@@ -14,10 +13,7 @@ import { TestProvider } from './test-provider.js';
  * }
  */
 export class TestStack extends Stack {
-  constructor(scope: App, id = 'TestStack', props?: Partial<StackProps>) {
-    super(scope, id, {
-      provider: new TestProvider(),
-      ...props,
-    });
+  public static default(scope: App, props: StackProps): Stack {
+    return new Stack(scope, 'DefaultTestStack', props);
   }
 }

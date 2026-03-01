@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { App } from '@cdk-x/core';
+import { App, ProviderResource } from '@cdk-x/core';
 
 /**
  * Common utilities for synthesis tests.
@@ -21,6 +21,23 @@ export class SynthHelpers {
    */
   static readJson(filePath: string): unknown {
     return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  }
+
+  /**
+   * Extracts the single resource entry from a `ProviderResource`'s `toJson()` output.
+   * `toJson()` returns a keyed object `{ [logicalId]: { type, properties, metadata } }`;
+   * this unwraps it to the inner entry so tests can assert on `type` and `properties` directly.
+   */
+  static resourceEntry(resource: ProviderResource): {
+    type: string;
+    properties: Record<string, unknown>;
+  } {
+    return Object.values(
+      resource.toJson() as Record<
+        string,
+        { type: string; properties: Record<string, unknown> }
+      >,
+    )[0];
   }
 
   /**
