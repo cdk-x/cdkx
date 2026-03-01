@@ -51,7 +51,22 @@ export enum Location {
  */
 export const HetznerResourceType = {
   Networking: {
-    NETWORK: 'Hetzner::Network::Network',
-    SUBNET: 'Hetzner::Network::Subnet',
+    NETWORK: 'Hetzner::Networking::Network',
+    SUBNET: 'Hetzner::Networking::Subnet',
+    FLOATINGIP: 'Hetzner::Networking::FloatingIp',
+    PRIMARYIP: 'Hetzner::Networking::PrimaryIp',
+  },
+  Compute: {
+    SERVER: 'Hetzner::Compute::Server',
+    LOADBALANCER: 'Hetzner::Compute::LoadBalancer',
+    PLACEMENTGROUP: 'Hetzner::Compute::PlacementGroup',
+  },
+  Storage: {
+    VOLUME: 'Hetzner::Storage::Volume',
+  },
+  Security: {
+    CERTIFICATE: 'Hetzner::Security::Certificate',
+    FIREWALL: 'Hetzner::Security::Firewall',
+    SSHKEY: 'Hetzner::Security::SshKey',
   },
 } as const;
