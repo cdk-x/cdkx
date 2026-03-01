@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerFirewall",
+  "description": "Manages a Hetzner Cloud Firewall.",
+  "typeName": "Hetzner::Security::Firewall",
+  "domain": "Security",
+  "additionalProperties": false,
+  "definitions": {
+    "FirewallRule": {
+      "type": "object",
+      "description": "Array of rules. Rules are limited to 50 entries per Firewall and 500 effective rules.",
+      "additionalProperties": false,
+      "required": ["direction", "protocol"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Description of the rule.",
+          "nullable": true
+        },
+        "direction": {
+          "$ref": "#/definitions/FirewallRuleDirection",
+          "description": "Traffic direction in which the rule should be applied to."
+        },
+        "sourceIps": {
+          "type": "array",
+          "description": "List of permitted IPv4/IPv6 addresses for incoming traffic.",
+          "items": { "type": "string" }
+        },
+        "destinationIps": {
+          "type": "array",
+          "description": "List of permitted IPv4/IPv6 addresses for outgoing traffic.",
+          "items": { "type": "string" }
+        },
+        "protocol": {
+          "$ref": "#/definitions/FirewallRuleProtocol",
+          "description": "Network protocol to apply the rule for."
+        },
+        "port": {
+          "type": "string",
+          "description": "Port or port range to apply the rule for."
+        }
+      }
+    },
+    "FirewallApplyToServer": {
+      "type": "object",
+      "description": "Server the Firewall is applied to. Only set for type `server`, otherwise `null`.",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "ID of the Server."
+        }
+      }
+    },
+    "FirewallApplyToLabelSelector": {
+      "type": "object",
+      "description": "Label Selector the Firewall is applied to. Only set for type `label_selector`, otherwise `null`.",
+      "additionalProperties": false,
+      "required": ["selector"],
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "The selector."
+        }
+      }
+    },
+    "FirewallApplyTo": {
+      "type": "object",
+      "description": "Resources to apply the Firewall to. Resources added directly are taking precedence over those added via a Label Selector.",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/FirewallApplyToType",
+          "description": "Type of the resource."
+        },
+        "server": {
+          "$ref": "#/definitions/FirewallApplyToServer",
+          "description": "Server the Firewall is applied to."
+        },
+        "labelSelector": {
+          "$ref": "#/definitions/FirewallApplyToLabelSelector",
+          "description": "Label Selector the Firewall is applied to."
+        }
+      }
+    },
+    "FirewallRuleDirection": {
+      "type": "string",
+      "description": "Traffic direction in which the rule should be applied to. Use `source_ips` for direction `in` and `destination_ips` for direction `out` to specify IPs.",
+      "enum": ["in", "out"]
+    },
+    "FirewallRuleProtocol": {
+      "type": "string",
+      "description": "Network protocol to apply the rule for.",
+      "enum": ["tcp", "udp", "icmp", "esp", "gre"]
+    },
+    "FirewallApplyToType": {
+      "type": "string",
+      "description": "Type of the resource.",
+      "enum": ["server", "label_selector"]
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Firewall."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "rules": {
+      "type": "array",
+      "description": "Array of rules.",
+      "items": { "$ref": "#/definitions/FirewallRule" }
+    },
+    "applyTo": {
+      "type": "array",
+      "description": "Resources to apply the Firewall to.",
+      "items": { "$ref": "#/definitions/FirewallApplyTo" }
+    }
+  },
+  "required": ["name"],
+  "readOnlyProperties": ["/properties/firewallId"],
+  "primaryIdentifier": ["/properties/firewallId"]
+}

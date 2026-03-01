@@ -1,0 +1,282 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerLoadBalancer",
+  "description": "Manages a Hetzner Cloud Load Balancer.",
+  "typeName": "Hetzner::Compute::LoadBalancer",
+  "domain": "Compute",
+  "additionalProperties": false,
+  "definitions": {
+    "LoadBalancerAlgorithm": {
+      "type": "object",
+      "description": "Algorithm of the Load Balancer.",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/LoadBalancerAlgorithmType",
+          "description": "Type of the algorithm."
+        }
+      }
+    },
+    "LoadBalancerServiceHealthCheckHttp": {
+      "type": "object",
+      "description": "Additional configuration for protocol http.",
+      "additionalProperties": false,
+      "required": ["domain", "path"],
+      "properties": {
+        "domain": {
+          "type": "string",
+          "description": "Host header to send in the HTTP request. May not contain spaces, percent or backslash symbols. Can be null, in that case no host header is sent.",
+          "nullable": true
+        },
+        "path": {
+          "type": "string",
+          "description": "HTTP path to use for health checks. May not contain literal spaces, use percent-encoding instead."
+        },
+        "response": {
+          "type": "string",
+          "description": "String that must be contained in HTTP response in order to pass the health check."
+        },
+        "statusCodes": {
+          "type": "array",
+          "description": "List of returned HTTP status codes in order to pass the health check. Supports the wildcards `?` for exactly one character and `*` for multiple ones.",
+          "items": { "type": "string" }
+        },
+        "tls": {
+          "type": "boolean",
+          "description": "Use HTTPS for health check."
+        }
+      }
+    },
+    "LoadBalancerServiceHealthCheck": {
+      "type": "object",
+      "description": "Service health check.",
+      "additionalProperties": false,
+      "required": ["protocol", "port", "interval", "timeout", "retries"],
+      "properties": {
+        "protocol": {
+          "$ref": "#/definitions/LoadBalancerServiceHealthCheckProtocol",
+          "description": "Type of the health check."
+        },
+        "port": {
+          "type": "integer",
+          "description": "Port the health check will be performed on."
+        },
+        "interval": {
+          "type": "integer",
+          "description": "Time interval in seconds health checks are performed."
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Time in seconds after an attempt is considered a timeout."
+        },
+        "retries": {
+          "type": "integer",
+          "description": "Unsuccessful retries needed until a target is considered unhealthy; an unhealthy target needs the same number of successful retries to become healthy again."
+        },
+        "http": {
+          "$ref": "#/definitions/LoadBalancerServiceHealthCheckHttp",
+          "description": "Additional configuration for protocol http."
+        }
+      }
+    },
+    "LoadBalancerServiceHttp": {
+      "type": "object",
+      "description": "Configuration option for protocols http and https.",
+      "additionalProperties": false,
+      "properties": {
+        "cookieName": {
+          "type": "string",
+          "description": "Name of the cookie used for sticky sessions."
+        },
+        "cookieLifetime": {
+          "type": "integer",
+          "description": "Lifetime of the cookie used for sticky sessions (in seconds)."
+        },
+        "certificates": {
+          "type": "array",
+          "description": "IDs of the Certificates to use for TLS/SSL termination by the Load Balancer; empty for TLS/SSL passthrough or if `protocol` is `http`.",
+          "items": { "type": "integer" },
+          "x-cdkx-resolvable-items": "integer"
+        },
+        "redirectHttp": {
+          "type": "boolean",
+          "description": "Redirect HTTP requests to HTTPS. Only available if `protocol` is `https`."
+        },
+        "stickySessions": {
+          "type": "boolean",
+          "description": "Use sticky sessions. Only available if `protocol` is `http` or `https`."
+        }
+      }
+    },
+    "LoadBalancerService": {
+      "type": "object",
+      "description": "Array of services.",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "listenPort",
+        "destinationPort",
+        "proxyprotocol",
+        "healthCheck"
+      ],
+      "properties": {
+        "protocol": {
+          "$ref": "#/definitions/LoadBalancerServiceProtocol",
+          "description": "Protocol of the Load Balancer."
+        },
+        "listenPort": {
+          "type": "integer",
+          "description": "Port the Load Balancer listens on."
+        },
+        "destinationPort": {
+          "type": "integer",
+          "description": "Port the Load Balancer will balance to."
+        },
+        "proxyprotocol": {
+          "type": "boolean",
+          "description": "Is Proxyprotocol enabled or not."
+        },
+        "healthCheck": {
+          "$ref": "#/definitions/LoadBalancerServiceHealthCheck",
+          "description": "Service health check."
+        },
+        "http": {
+          "$ref": "#/definitions/LoadBalancerServiceHttp",
+          "description": "Configuration option for protocols http and https."
+        }
+      }
+    },
+    "LoadBalancerTargetServer": {
+      "type": "object",
+      "description": "Configuration for type Server, only valid and required if type is `server`.",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "ID of the Server."
+        }
+      }
+    },
+    "LoadBalancerTargetLabelSelector": {
+      "type": "object",
+      "description": "Configuration for label selector targets, only valid and required if type is `label_selector`.",
+      "additionalProperties": false,
+      "required": ["selector"],
+      "properties": {
+        "selector": {
+          "type": "string",
+          "description": "Label selector."
+        }
+      }
+    },
+    "LoadBalancerTargetIp": {
+      "type": "object",
+      "description": "Configuration for an IP target. It is only possible to use the (Public or vSwitch) IPs of Hetzner Online Root Servers belonging to the project owner. IPs belonging to other users are blocked. Additionally IPs belonging to services provided by Hetzner Cloud (Servers, Load Balancers, ...) are blocked as well. Only valid and required if type is `ip`.",
+      "additionalProperties": false,
+      "required": ["ip"],
+      "properties": {
+        "ip": {
+          "type": "string",
+          "description": "IP of a server that belongs to the same customer (public IPv4/IPv6) or private IP in a subnet type vswitch."
+        }
+      }
+    },
+    "LoadBalancerTarget": {
+      "type": "object",
+      "description": "Array of targets.",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/LoadBalancerTargetType",
+          "description": "Type of the resource."
+        },
+        "server": {
+          "$ref": "#/definitions/LoadBalancerTargetServer",
+          "description": "Configuration for type Server, only valid and required if type is `server`."
+        },
+        "usePrivateIp": {
+          "type": "boolean",
+          "description": "Use the private network IP instead of the public IP of the Server, requires the Server and Load Balancer to be in the same network. Only valid for target types `server` and `label_selector`."
+        },
+        "labelSelector": {
+          "$ref": "#/definitions/LoadBalancerTargetLabelSelector",
+          "description": "Configuration for label selector targets, only valid and required if type is `label_selector`."
+        },
+        "ip": {
+          "$ref": "#/definitions/LoadBalancerTargetIp",
+          "description": "Configuration for an IP target."
+        }
+      }
+    },
+    "LoadBalancerAlgorithmType": {
+      "type": "string",
+      "description": "Type of the algorithm.",
+      "enum": ["round_robin", "least_connections"]
+    },
+    "LoadBalancerServiceProtocol": {
+      "type": "string",
+      "description": "Protocol of the Load Balancer.",
+      "enum": ["tcp", "http", "https"]
+    },
+    "LoadBalancerServiceHealthCheckProtocol": {
+      "type": "string",
+      "description": "Type of the health check.",
+      "enum": ["tcp", "http"]
+    },
+    "LoadBalancerTargetType": {
+      "type": "string",
+      "description": "Type of the resource.",
+      "enum": ["server", "label_selector", "ip"]
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Load Balancer."
+    },
+    "loadBalancerType": {
+      "type": "string",
+      "description": "ID or name of the Load Balancer type this Load Balancer should be created with."
+    },
+    "algorithm": {
+      "$ref": "#/definitions/LoadBalancerAlgorithm",
+      "description": "Algorithm of the Load Balancer."
+    },
+    "services": {
+      "type": "array",
+      "description": "Array of services.",
+      "items": { "$ref": "#/definitions/LoadBalancerService" }
+    },
+    "targets": {
+      "type": "array",
+      "description": "Array of targets.",
+      "items": { "$ref": "#/definitions/LoadBalancerTarget" }
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "publicInterface": {
+      "type": "boolean",
+      "description": "Enable or disable the public interface of the Load Balancer."
+    },
+    "network": {
+      "type": "integer",
+      "description": "ID of the network the Load Balancer should be attached to on creation.",
+      "x-cdkx-resolvable": true
+    },
+    "networkZone": {
+      "type": "string",
+      "description": "Name of network zone."
+    },
+    "location": {
+      "type": "string",
+      "description": "ID or name of Location to create Load Balancer in."
+    }
+  },
+  "required": ["name", "loadBalancerType"],
+  "readOnlyProperties": ["/properties/loadBalancerId"],
+  "primaryIdentifier": ["/properties/loadBalancerId"]
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerNetwork",
+  "description": "Manages a Hetzner Cloud private Network.",
+  "typeName": "Hetzner::Networking::Network",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "definitions": {
+    "NetworkSubnet": {
+      "type": "object",
+      "description": "Array of subnets to allocate.",
+      "additionalProperties": false,
+      "required": ["type", "networkZone"],
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/NetworkSubnetType",
+          "description": "Type of subnet."
+        },
+        "ipRange": {
+          "type": "string",
+          "description": "IP range of the subnet."
+        },
+        "networkZone": {
+          "type": "string",
+          "description": "Name of the Network Zone."
+        },
+        "vswitchId": {
+          "type": "integer",
+          "description": "ID of the robot vSwitch.",
+          "x-cdkx-resolvable": true
+        }
+      }
+    },
+    "NetworkRoute": {
+      "type": "object",
+      "description": "Array of routes set in this Network.",
+      "additionalProperties": false,
+      "required": ["destination", "gateway"],
+      "properties": {
+        "destination": {
+          "type": "string",
+          "description": "Destination network or host of the route."
+        },
+        "gateway": {
+          "type": "string",
+          "description": "Gateway of the route."
+        }
+      }
+    },
+    "NetworkSubnetType": {
+      "type": "string",
+      "description": "Type of subnet.",
+      "enum": ["cloud", "server", "vswitch"]
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Network."
+    },
+    "ipRange": {
+      "type": "string",
+      "description": "IP range of the Network."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "subnets": {
+      "type": "array",
+      "description": "Array of subnets to allocate.",
+      "items": { "$ref": "#/definitions/NetworkSubnet" }
+    },
+    "routes": {
+      "type": "array",
+      "description": "Array of routes set in this Network.",
+      "items": { "$ref": "#/definitions/NetworkRoute" }
+    },
+    "exposeRoutesToVswitch": {
+      "type": "boolean",
+      "description": "Toggle to expose routes to the Networks vSwitch."
+    }
+  },
+  "required": ["name", "ipRange"],
+  "readOnlyProperties": ["/properties/networkId"],
+  "primaryIdentifier": ["/properties/networkId"]
+}
