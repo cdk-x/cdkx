@@ -14,6 +14,11 @@
       "type": "string",
       "description": "Hetzner Cloud network zone.",
       "enum": ["eu-central", "us-east", "us-west", "ap-southeast"]
+    },
+    "Location": {
+      "type": "string",
+      "description": "Hetzner Cloud physical location.",
+      "enum": ["fsn1", "nbg1", "hel1", "ash", "hil", "sin"]
     }
   }
 }
