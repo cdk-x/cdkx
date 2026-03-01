@@ -29,13 +29,18 @@
       "type": "string",
       "description": "Location to create the Volume in (can be omitted if Server is specified)."
     },
-    "server": {
+    "serverId": {
       "type": "integer",
-      "description": "Server to which to attach the Volume once it's created (Volume will be created in the same Location as the server).",
-      "x-cdkx-resolvable": true
+      "description": "ID of the Server to attach the Volume to once it's created (Volume will be created in the same Location as the server)."
     }
   },
   "required": ["size", "name"],
+  "createOnlyProperties": [
+    "/properties/location",
+    "/properties/format",
+    "/properties/server",
+    "/properties/automount"
+  ],
   "readOnlyProperties": ["/properties/volumeId"],
   "primaryIdentifier": ["/properties/volumeId"]
 }

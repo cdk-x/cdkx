@@ -18,6 +18,10 @@
     }
   },
   "properties": {
+    "id": {
+      "type": "integer",
+      "description": "ID of the Primary IP. Assigned by the API on creation."
+    },
     "name": {
       "type": "string",
       "description": "Name of the Resource. Must be unique per Project."
@@ -29,13 +33,9 @@
       "$ref": "#/definitions/PrimaryIpType",
       "description": "Primary IP type."
     },
-    "datacenter": {
-      "type": "string",
-      "description": "**Deprecated**: This property is deprecated and will be removed after 1 July 2026."
-    },
     "location": {
-      "type": "string",
-      "description": "Location ID or name the Primary IP will be bound to."
+      "$ref": "./common.schema.json#/definitions/Location",
+      "description": "Location the Primary IP will be bound to."
     },
     "assigneeType": {
       "$ref": "#/definitions/PrimaryIpAssigneeType",
@@ -44,8 +44,7 @@
     "assigneeId": {
       "type": "integer",
       "description": "ID of resource to assign the Primary IP to.",
-      "nullable": true,
-      "x-cdkx-resolvable": true
+      "nullable": true
     },
     "autoDelete": {
       "type": "boolean",
@@ -53,6 +52,11 @@
     }
   },
   "required": ["name", "type", "assigneeType"],
-  "readOnlyProperties": ["/properties/primaryIpId"],
-  "primaryIdentifier": ["/properties/primaryIpId"]
+  "createOnlyProperties": [
+    "/properties/type",
+    "/properties/assigneeType",
+    "/properties/location"
+  ],
+  "readOnlyProperties": ["/properties/id"],
+  "primaryIdentifier": ["/properties/id"]
 }

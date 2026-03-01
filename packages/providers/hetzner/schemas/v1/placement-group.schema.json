@@ -13,6 +13,10 @@
     }
   },
   "properties": {
+    "id": {
+      "type": "integer",
+      "description": "ID of the Placement Group. Assigned by the API on creation."
+    },
     "name": {
       "type": "string",
       "description": "Name of the Placement Group."
@@ -23,9 +27,17 @@
     "type": {
       "$ref": "#/definitions/PlacementGroupType",
       "description": "Define the Placement Group Type."
+    },
+    "serverIds": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "description": "IDs of Servers that are part of this Placement Group. Read-only — managed by the engine at deploy time. Maps to the `servers` field in the Hetzner API response."
     }
   },
   "required": ["name", "type"],
-  "readOnlyProperties": ["/properties/placementGroupId"],
-  "primaryIdentifier": ["/properties/placementGroupId"]
+  "createOnlyProperties": ["/properties/type"],
+  "readOnlyProperties": ["/properties/id", "/properties/serverIds"],
+  "primaryIdentifier": ["/properties/id"]
 }
