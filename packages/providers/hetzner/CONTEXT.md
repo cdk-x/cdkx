@@ -145,19 +145,35 @@ L1 construct for `Hetzner::Network::Network`.
 | `labels`                | `Record<string, string>` | no       | Resource labels            |
 | `exposeRoutesToVswitch` | `boolean`                | no       | Expose routes to vSwitch   |
 
+#### Attributes
+
+| Getter      | Type          | Resolves to                                  |
+| ----------- | ------------- | -------------------------------------------- |
+| `networkId` | `IResolvable` | `{ ref: this.logicalId, attr: 'networkId' }` |
+
+Use `network.networkId` to pass the network reference to a subnet without knowing the concrete ID at construction time (the engine resolves it at deploy time).
+
 ---
 
 ### `NtvHetznerSubnet` (`src/lib/networking/ntv-hetzner-subnet.ts`)
 
 L1 construct for `Hetzner::Network::Subnet`.
 
-| Prop          | Type             | Required | Description                          |
-| ------------- | ---------------- | -------- | ------------------------------------ |
-| `networkId`   | `string\|number` | yes      | ID of the parent network             |
-| `type`        | `SubnetType`     | yes      | Subnet type (cloud, server, vswitch) |
-| `networkZone` | `NetworkZone`    | yes      | Network zone for the subnet          |
-| `ipRange`     | `string`         | yes      | CIDR block for the subnet            |
-| `vswitchId`   | `number`         | no       | vSwitch ID (only for `VSWITCH` type) |
+| Prop          | Type                              | Required | Description                          |
+| ------------- | --------------------------------- | -------- | ------------------------------------ |
+| `networkId`   | `string \| number \| IResolvable` | yes      | ID of the parent network             |
+| `type`        | `SubnetType`                      | yes      | Subnet type (cloud, server, vswitch) |
+| `networkZone` | `NetworkZone`                     | yes      | Network zone for the subnet          |
+| `ipRange`     | `string`                          | yes      | CIDR block for the subnet            |
+| `vswitchId`   | `number`                          | no       | vSwitch ID (only for `VSWITCH` type) |
+
+#### Attributes
+
+| Getter     | Type          | Resolves to                                 |
+| ---------- | ------------- | ------------------------------------------- |
+| `subnetId` | `IResolvable` | `{ ref: this.logicalId, attr: 'subnetId' }` |
+
+Use `subnet.subnetId` to pass the subnet reference to other constructs (e.g. servers) without knowing the concrete ID at construction time.
 
 #### `SubnetType` enum
 
@@ -166,6 +182,55 @@ L1 construct for `Hetzner::Network::Subnet`.
 | `CLOUD`   | `cloud`   |
 | `SERVER`  | `server`  |
 | `VSWITCH` | `vswitch` |
+
+#### Cross-resource reference pattern (L1)
+
+`networkId` accepts `string | number | IResolvable`. Pass `network.networkId` to
+reference a sibling network — the resolver pipeline unwraps the token at synthesis
+time to `{ ref: logicalId, attr: 'networkId' }`, which the engine uses at deploy
+time to wire the real cloud ID:
+
+```ts
+const network = new NtvHetznerNetwork(stack, 'Network', {
+  name: 'my-network',
+  ipRange: '10.0.0.0/16',
+});
+
+const subnet = new NtvHetznerSubnet(stack, 'Subnet', {
+  networkId: network.networkId, // ← IResolvable, resolved at synthesis time
+  type: SubnetType.CLOUD,
+  networkZone: NetworkZone.EU_CENTRAL,
+  ipRange: '10.0.1.0/24',
+});
+```
+
+The synthesized `networkId` in the stack JSON will be:
+
+```json
+"networkId": { "ref": "DefaultTestStackNetwork36EFB155", "attr": "networkId" }
+```
+
+#### Implicit dependency resolution
+
+**No `addDependency()` calls are needed.** The engine infers creation order by
+scanning the synthesized JSON for `{ ref, attr }` tokens:
+
+- If `networkId` is `network.networkId` (a token), the engine detects the
+  reference, creates the network first, reads its real cloud ID, and injects
+  it before creating the subnet.
+- If `networkId` is a hardcoded `string | number`, no dependency is recorded
+  and creation order is not guaranteed — this is the user's responsibility.
+
+This is a framework-level contract: always use attribute getters for
+cross-resource references to get guaranteed ordering for free.
+
+> **Note:** `ResourceAttribute` (which also produces `{ ref, attr }`) is for L2
+> cross-resource references between `Resource` subclasses. For direct L1-to-L1
+> references, each L1 class exposes attribute getters returning an `IResolvable`
+> inline object directly — no L2 layer required.
+>
+> **Engine note:** when the engine package is created, its CONTEXT.md must
+> document how it scans `{ ref, attr }` tokens and builds the dependency graph.
 
 ---
 
@@ -203,8 +268,10 @@ packages/providers/hetzner/
 │       │   └── index.ts                      re-export barrel
 │       └── networking/
 │           ├── ntc-hetzner-network.ts        NtvHetznerNetwork L1 + HetznerNetwork interface
-│           ├── ntc-hetzner-network.spec.ts   unit tests
-│           └── ntv-hetzner-subnet.ts         NtvHetznerSubnet L1 + HetznerSubnet interface + SubnetType enum
+│           ├── ntc-hetzner-network.spec.ts   unit tests (10 tests, 1 snapshot)
+│           ├── ntv-hetzner-subnet.ts         NtvHetznerSubnet L1 + HetznerSubnet interface + SubnetType enum
+│           ├── ntv-hetzner-subnet.spec.ts    unit tests + cross-resource reference tests (29 tests, 2 snapshots)
+│           └── __snapshots__/               co-located Jest snapshots
 └── test/                                     (future integration tests)
 ```
 
