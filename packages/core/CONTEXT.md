@@ -331,13 +331,13 @@ Used by L2 resources to express cross-resource references.
 
 ### Supporting types
 
-| File                          | Exports                                                                                          |
-| ----------------------------- | ------------------------------------------------------------------------------------------------ |
-| `constants.ts`                | `RESOURCE_SYMBOL` (used by `isProviderResource`), `PropertyValue` type                           |
-| `removal-policy.ts`           | `RemovalPolicy` enum (`DESTROY`, `RETAIN`, `RETAIN_ON_UPDATE_OR_DELETE`), `RemovalPolicyOptions` |
-| `provider-resource-policy.ts` | `ProviderDeletionPolicy` enum, `ProviderCreatePolicy`, `ProviderUpdatePolicy`                    |
-| `provider-condition.ts`       | `ProviderResourceCondition` interface                                                            |
-| `resolvables.ts`              | `IResolvable`, `ResolveContext`, `ResolutionContext`, `IResolver`, `Resolvables` (static utils)  |
+| File                          | Exports                                                                                                                                           |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `constants.ts`                | `RESOURCE_SYMBOL` (used by `isProviderResource`), `PropertyValue` type (includes `IResolvable` — tokens are valid property values pre-resolution) |
+| `removal-policy.ts`           | `RemovalPolicy` enum (`DESTROY`, `RETAIN`, `RETAIN_ON_UPDATE_OR_DELETE`), `RemovalPolicyOptions`                                                  |
+| `provider-resource-policy.ts` | `ProviderDeletionPolicy` enum, `ProviderCreatePolicy`, `ProviderUpdatePolicy`                                                                     |
+| `provider-condition.ts`       | `ProviderResourceCondition` interface                                                                                                             |
+| `resolvables.ts`              | `IResolvable`, `ResolveContext`, `ResolutionContext`, `IResolver`, `Resolvables` (static utils)                                                   |
 
 ---
 
@@ -408,6 +408,32 @@ different copy of the package.
 The `@nx/dependency-checks` ESLint rule enforces this. If `constructs` is
 only in `devDependencies`, lint fails.
 
+### 8. Implicit dependency resolution via `{ ref, attr }` tokens
+
+Cross-resource dependencies are **implicit** — they are inferred by the engine
+at deploy time by scanning the synthesized JSON for `{ ref, attr }` tokens.
+
+L1 constructs expose attribute getters (e.g. `network.networkId`) that return
+an `IResolvable` resolving to `{ ref: logicalId, attr: attrName }`. When a
+resource's props contain such a token, the engine knows:
+
+- Which resource is being referenced (`ref` = logical ID of the dependency)
+- Which output attribute to read after creating it (`attr`)
+- That this resource must be created **before** the one that references it
+
+**Contract:**
+
+- If you use attribute getters (`network.networkId`), the engine guarantees
+  correct creation order automatically.
+- If you hardcode a concrete ID (e.g. `networkId: 12345`), no dependency is
+  recorded and creation order is not guaranteed. This is intentional — the
+  framework does not prevent it, but it is the user's responsibility.
+
+This design keeps L1 constructs simple (no `addDependency()` calls needed) and
+makes dependency management a concern of the engine, not the constructs layer.
+The engine CONTEXT.md must document how it scans tokens and builds the
+dependency graph.
+
 ---
 
 ## File map
@@ -419,7 +445,7 @@ packages/core/
 ├── src/
 │   ├── index.ts                         public barrel — exports everything
 │   └── lib/
-│       ├── constants.ts                 RESOURCE_SYMBOL, PropertyValue
+│       ├── constants.ts                 RESOURCE_SYMBOL, PropertyValue (includes IResolvable)
 │       ├── removal-policy.ts            RemovalPolicy enum + RemovalPolicyOptions
 │       ├── app/
 │       │   ├── app.ts                   App class
