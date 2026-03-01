@@ -68,7 +68,7 @@ Stack (provider: HetznerProvider)
 
 `HetznerProvider` extends `Provider` from `@cdk-x/core`. It:
 
-- Sets `identifier = 'hetzner'`
+- Sets `identifier = 'Hetzner'`
 - (Future) overrides `getResolvers()` to add Hetzner-specific resolvers
 - (Future) overrides `getSynthesizer()` to use a Hetzner-specific synthesizer
 - (Future) overrides `getEnvironment()` to expose `project` and `datacenter`
@@ -77,15 +77,95 @@ Stack (provider: HetznerProvider)
 
 ## Class inventory
 
-### `HetznerProvider` (`src/lib/hetzner.ts`)
+### `HetznerProvider` (`src/lib/provider/hetzner.ts`)
 
 Extends `Provider`.
 
 | Member               | Description                                            |
 | -------------------- | ------------------------------------------------------ |
-| `identifier: string` | `'hetzner'` — used in `manifest.json` `provider` field |
+| `identifier: string` | `'Hetzner'` — used in `manifest.json` `provider` field |
 
 Constructor accepts `HetznerProviderProps` (future — credentials, project, datacenter).
+
+---
+
+### Common types (`src/lib/common/common.ts`)
+
+Shared enums and constants used across all Hetzner resource constructs.
+
+#### `NetworkZone`
+
+Hetzner Cloud network zones. Resources within a stack (subnets, floating IPs,
+load balancers) must belong to the same network zone.
+
+| Member         | Value          |
+| -------------- | -------------- |
+| `EU_CENTRAL`   | `eu-central`   |
+| `US_EAST`      | `us-east`      |
+| `US_WEST`      | `us-west`      |
+| `AP_SOUTHEAST` | `ap-southeast` |
+
+#### `Location`
+
+Hetzner Cloud physical locations.
+
+| Member | Value  | City              | Network zone |
+| ------ | ------ | ----------------- | ------------ |
+| `FSN1` | `fsn1` | Falkenstein, DE   | eu-central   |
+| `NBG1` | `nbg1` | Nuremberg, DE     | eu-central   |
+| `HEL1` | `hel1` | Helsinki, FI      | eu-central   |
+| `ASH`  | `ash`  | Ashburn, VA, US   | us-east      |
+| `HIL`  | `hil`  | Hillsboro, OR, US | us-west      |
+| `SIN`  | `sin`  | Singapore         | ap-southeast |
+
+#### `HetznerResourceType`
+
+`as const` object grouping all Hetzner resource type identifier strings by
+domain. Use instead of raw strings when setting `type` on a `ProviderResource`
+— eliminates typos and provides autocompletion.
+
+```ts
+type: HetznerResourceType.Networking.NETWORK;
+type: HetznerResourceType.Networking.SUBNET;
+```
+
+Add a new domain group (`Compute`, `Storage`, etc.) when the first resource of
+that domain is implemented.
+
+---
+
+### `NtvHetznerNetwork` (`src/lib/networking/ntc-hetzner-network.ts`)
+
+L1 construct for `Hetzner::Network::Network`.
+
+| Prop                    | Type                     | Required | Description                |
+| ----------------------- | ------------------------ | -------- | -------------------------- |
+| `name`                  | `string`                 | yes      | Network name               |
+| `ipRange`               | `string`                 | yes      | CIDR block for the network |
+| `labels`                | `Record<string, string>` | no       | Resource labels            |
+| `exposeRoutesToVswitch` | `boolean`                | no       | Expose routes to vSwitch   |
+
+---
+
+### `NtvHetznerSubnet` (`src/lib/networking/ntv-hetzner-subnet.ts`)
+
+L1 construct for `Hetzner::Network::Subnet`.
+
+| Prop          | Type             | Required | Description                          |
+| ------------- | ---------------- | -------- | ------------------------------------ |
+| `networkId`   | `string\|number` | yes      | ID of the parent network             |
+| `type`        | `SubnetType`     | yes      | Subnet type (cloud, server, vswitch) |
+| `networkZone` | `NetworkZone`    | yes      | Network zone for the subnet          |
+| `ipRange`     | `string`         | yes      | CIDR block for the subnet            |
+| `vswitchId`   | `number`         | no       | vSwitch ID (only for `VSWITCH` type) |
+
+#### `SubnetType` enum
+
+| Member    | Value     |
+| --------- | --------- |
+| `CLOUD`   | `cloud`   |
+| `SERVER`  | `server`  |
+| `VSWITCH` | `vswitch` |
 
 ---
 
@@ -108,15 +188,24 @@ Identical to `@cdk-x/core`. Key points:
 
 ```
 packages/providers/hetzner/
-├── package.json                  name: @cdk-x/hetzner, type: module
-├── project.json                  Nx project configuration
-├── CONTEXT.md                    ← this file
+├── package.json                              name: @cdk-x/hetzner, type: module
+├── project.json                              Nx project configuration
+├── CONTEXT.md                                ← this file
 ├── src/
-│   ├── index.ts                  public barrel
+│   ├── index.ts                              public barrel
 │   └── lib/
-│       ├── hetzner.ts            HetznerProvider class
-│       └── hetzner.spec.ts       unit tests
-└── test/                         (future integration tests)
+│       ├── common/
+│       │   ├── common.ts                     NetworkZone, Location enums + HetznerResourceType const
+│       │   └── index.ts                      re-export barrel
+│       ├── provider/
+│       │   ├── hetzner.ts                    HetznerProvider class
+│       │   ├── hetzner.spec.ts               unit tests
+│       │   └── index.ts                      re-export barrel
+│       └── networking/
+│           ├── ntc-hetzner-network.ts        NtvHetznerNetwork L1 + HetznerNetwork interface
+│           ├── ntc-hetzner-network.spec.ts   unit tests
+│           └── ntv-hetzner-subnet.ts         NtvHetznerSubnet L1 + HetznerSubnet interface + SubnetType enum
+└── test/                                     (future integration tests)
 ```
 
 ---
