@@ -28,6 +28,19 @@
         "tsConfig": "packages/providers/hetzner/tsconfig.lib.json",
         "rootDir": "packages/providers/hetzner/src"
       }
+    },
+    "codegen": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node_modules/.bin/tsx packages/providers/hetzner/scripts/generate.ts",
+        "cwd": "{workspaceRoot}"
+      },
+      "dependsOn": [
+        {
+          "projects": ["@cdk-x/core"],
+          "target": "build"
+        }
+      ]
     }
   }
 }
