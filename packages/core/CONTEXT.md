@@ -436,6 +436,132 @@ dependency graph.
 
 ---
 
+## Codegen subsystem (`src/lib/codegen/`)
+
+`@cdk-x/core` ships a **provider-agnostic code-generation subsystem** used by
+provider packages (e.g. `@cdk-x/hetzner`) to auto-generate TypeScript L1
+constructs and engine JSON from OpenAPI specifications.
+
+### Architecture
+
+```
+OpenAPIExtractor (abstract)        ← download, cache, parse spec
+ └── HetznerExtractor              ← provider-specific extraction logic
+
+TypeMapper                         ← maps OpenAPI schemas → TS type strings
+
+ResourceCodeGenerator              ← ResourceSpec[] → .ts source files
+
+ResourceSpecWriter                 ← ResourceSpec[] → engine JSON
+```
+
+The central data contract is `ResourceSpec` (see `types.ts`), which carries:
+
+- `resourceName`, `domain`, `providerType` — identity
+- `createProps: PropertySpec[]` — typed props for the L1 interface
+- `attributes: AttributeSpec[]` — cross-reference getters (e.g. `networkId`)
+- `enums: EnumSpec[]` — generated enums (e.g. `CertificateType`)
+- `nestedInterfaces: NestedInterfaceSpec[]` — inline nested objects (e.g. `FirewallRule`)
+- `api: ApiSpec` — engine metadata (CRUD paths, HTTP methods, async detection)
+
+### Class inventory
+
+#### `TypeMapper` (`src/lib/codegen/type-mapper.ts`)
+
+Static utility class. All methods are static.
+
+| Method                                      | Description                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------------- |
+| `mapType(schema, context)`                  | Maps an `OpenAPISchema` to a TypeScript type string                       |
+| `isCrossRef(propName)`                      | Returns `true` if prop is a cross-resource ID reference                   |
+| `toCamelCase(snake)`                        | `snake_case` → `camelCase`                                                |
+| `toEnumName(propName, resourceName)`        | Derives enum name: `direction` + `FirewallRule` → `FirewallRuleDirection` |
+| `toNestedInterfaceName(propName, resource)` | Derives interface name: `rules` + `Firewall` → `FirewallRule`             |
+| `toScreamingSnake(str)`                     | `label_selector` → `LABEL_SELECTOR`                                       |
+
+**Type mapping rules:**
+
+- Props ending in `_id`/`Id` (not bare `id`) → `string | number | IResolvable`
+- Known ID array props (`ssh_keys`, `networks`, `volumes`, `firewalls`) → `Array<number | IResolvable>`
+- `additionalProperties: { type: string }` → `Record<string, string>`
+- Inline object with `properties` → named nested interface reference
+- `nullable: true` → `T | null`
+- `enum` → enum type reference (e.g. `CertificateType`)
+
+#### `OpenAPIExtractor` (`src/lib/codegen/open-api-extractor.ts`)
+
+Abstract base class. Provider packages subclass and implement `extractResources()`.
+
+| Member                 | Description                                                |
+| ---------------------- | ---------------------------------------------------------- |
+| `loadSpec()`           | Downloads (or loads from SHA-256 cache) the OpenAPI spec   |
+| `checkForUpdates()`    | Returns `true` if remote spec has changed since last fetch |
+| `extractResources()`   | Abstract — subclass populates `ResourceSpec[]`             |
+| `mapType(schema, ctx)` | Delegates to `TypeMapper.mapType()`                        |
+| `spec`                 | Protected — parsed `OpenAPISpec` after `loadSpec()`        |
+
+Cache files are written to `<cacheDir>/hetzner.json` (or `<providerKey>.json`).
+`cacheDir` absolute-path bug: when the caller passes an absolute path,
+`isAbsolute()` is checked before `resolve()` to avoid double-joining.
+
+#### `ResourceCodeGenerator` (`src/lib/codegen/resource-code-generator.ts`)
+
+Generates TypeScript `.ts` source files from `ResourceSpec` objects.
+
+Each generated file contains (in order):
+
+1. Auto-generated header comment
+2. Imports: `ProviderResource`, `PropertyValue`, optionally `IResolvable`, plus `Construct` and the resource type const
+3. Nested interfaces (flat list — includes deep nesting, all at top level)
+4. Enums
+5. Resource props interface (`HetznerNetwork`)
+6. L1 props interface (`NtvHetznerNetworkProps extends HetznerNetwork {}`)
+7. L1 class (`NtvHetznerNetwork extends ProviderResource`)
+
+**Key detail:** the L1 class constructor casts `props` as
+`props as unknown as Record<string, PropertyValue>` — this is necessary because
+TypeScript cannot prove that nested interface arrays (e.g. `NetworkSubnet[]`)
+are assignable to `Record<string, PropertyValue>` without the cast.
+
+**`PropertyValue` is always imported** regardless of whether nested interfaces
+are present, because the cast is always emitted.
+
+#### `ResourceSpecWriter` (`src/lib/codegen/resource-spec-writer.ts`)
+
+Serialises `ResourceSpec[]` to engine JSON. Output keyed by `providerType`.
+
+```json
+{
+  "Hetzner::Networking::Network": {
+    "resourceName": "Network",
+    "domain": "Networking",
+    "providerType": "Hetzner::Networking::Network",
+    "api": { "createPath": "/networks", ... }
+  }
+}
+```
+
+Only `api` metadata is written (not `createProps`, `enums`, etc. — those are
+compile-time only). Future engine CONTEXT.md must document how it reads this file.
+
+### `tsconfig.scripts.json` (provider packages only)
+
+Provider packages that run codegen scripts need a `tsconfig.scripts.json`:
+
+```json
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": { "outDir": "./out-tsc/scripts", "types": ["node"], ... },
+  "ts-node": { "esm": true, "experimentalSpecifierResolution": "node" },
+  "include": ["scripts/**/*.ts"]
+}
+```
+
+The `codegen` Nx target uses `tsx` (not `ts-node-esm`) to run ESM scripts — `tsx`
+handles `.js`→`.ts` import remapping correctly. Add `tsx` to workspace root devDependencies.
+
+---
+
 ## File map
 
 ```
