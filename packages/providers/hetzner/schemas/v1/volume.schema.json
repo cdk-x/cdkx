@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerVolume",
+  "description": "Manages a Hetzner Cloud Volume.",
+  "typeName": "Hetzner::Storage::Volume",
+  "domain": "Storage",
+  "additionalProperties": false,
+  "properties": {
+    "size": {
+      "type": "integer",
+      "description": "Size of the Volume in GB."
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the volume."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "automount": {
+      "type": "boolean",
+      "description": "Auto-mount Volume after attach. `server` must be provided."
+    },
+    "format": {
+      "type": "string",
+      "description": "Format Volume after creation. One of: `xfs`, `ext4`."
+    },
+    "location": {
+      "type": "string",
+      "description": "Location to create the Volume in (can be omitted if Server is specified)."
+    },
+    "server": {
+      "type": "integer",
+      "description": "Server to which to attach the Volume once it's created (Volume will be created in the same Location as the server).",
+      "x-cdkx-resolvable": true
+    }
+  },
+  "required": ["size", "name"],
+  "readOnlyProperties": ["/properties/volumeId"],
+  "primaryIdentifier": ["/properties/volumeId"]
+}

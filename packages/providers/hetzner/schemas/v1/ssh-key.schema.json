@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerSshKey",
+  "description": "Manages a Hetzner Cloud SSH Key.",
+  "typeName": "Hetzner::Security::SshKey",
+  "domain": "Security",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the SSH key."
+    },
+    "publicKey": {
+      "type": "string",
+      "description": "Public key."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    }
+  },
+  "required": ["name", "publicKey"],
+  "readOnlyProperties": ["/properties/name"],
+  "primaryIdentifier": ["/properties/name"]
+}

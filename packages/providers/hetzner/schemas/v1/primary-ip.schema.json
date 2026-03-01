@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerPrimaryIp",
+  "description": "Manages a Hetzner Cloud Primary IP.",
+  "typeName": "Hetzner::Networking::PrimaryIp",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "definitions": {
+    "PrimaryIpType": {
+      "type": "string",
+      "description": "Primary IP type.",
+      "enum": ["ipv4", "ipv6"]
+    },
+    "PrimaryIpAssigneeType": {
+      "type": "string",
+      "description": "Type of resource the Primary IP can get assigned to. Currently Primary IPs can only be assigned to Servers, therefore this field must be set to `server`.",
+      "enum": ["server"]
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Resource. Must be unique per Project."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "type": {
+      "$ref": "#/definitions/PrimaryIpType",
+      "description": "Primary IP type."
+    },
+    "datacenter": {
+      "type": "string",
+      "description": "**Deprecated**: This property is deprecated and will be removed after 1 July 2026."
+    },
+    "location": {
+      "type": "string",
+      "description": "Location ID or name the Primary IP will be bound to."
+    },
+    "assigneeType": {
+      "$ref": "#/definitions/PrimaryIpAssigneeType",
+      "description": "Type of resource the Primary IP can get assigned to."
+    },
+    "assigneeId": {
+      "type": "integer",
+      "description": "ID of resource to assign the Primary IP to.",
+      "nullable": true,
+      "x-cdkx-resolvable": true
+    },
+    "autoDelete": {
+      "type": "boolean",
+      "description": "Auto deletion state."
+    }
+  },
+  "required": ["name", "type", "assigneeType"],
+  "readOnlyProperties": ["/properties/primaryIpId"],
+  "primaryIdentifier": ["/properties/primaryIpId"]
+}

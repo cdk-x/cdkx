@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerPlacementGroup",
+  "description": "Manages a Hetzner Cloud Placement Group.",
+  "typeName": "Hetzner::Compute::PlacementGroup",
+  "domain": "Compute",
+  "additionalProperties": false,
+  "definitions": {
+    "PlacementGroupType": {
+      "type": "string",
+      "description": "Define the Placement Group Type.",
+      "enum": ["spread"]
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Placement Group."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "type": {
+      "$ref": "#/definitions/PlacementGroupType",
+      "description": "Define the Placement Group Type."
+    }
+  },
+  "required": ["name", "type"],
+  "readOnlyProperties": ["/properties/placementGroupId"],
+  "primaryIdentifier": ["/properties/placementGroupId"]
+}
