@@ -23,3 +23,6 @@ export * from './lib/app/index.js';
 // Resource abstractions: L1 ProviderResource and L2 Resource base
 export * from './lib/provider-resource/index.js';
 export * from './lib/resource/index.js';
+
+// Code generation: OpenAPI extractor, type mapper, code generator, spec writer
+export * from './lib/codegen/index.js';
