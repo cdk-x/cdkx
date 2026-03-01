@@ -51,7 +51,11 @@ export class NtvHetznerPlacementGroup extends ProviderResource {
    * @param id    - The construct ID, unique within the scope.
    * @param props - Resource configuration.
    */
-  constructor(scope: Construct, id: string, props: NtvHetznerPlacementGroupProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: NtvHetznerPlacementGroupProps,
+  ) {
     super(scope, id, {
       type: HetznerResourceType.Compute.PLACEMENTGROUP,
       properties: props as unknown as Record<string, PropertyValue>,

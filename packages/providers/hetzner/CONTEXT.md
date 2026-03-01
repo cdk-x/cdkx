@@ -78,9 +78,11 @@ Stack (provider: HetznerProvider)
 `HetznerProvider` extends `Provider` from `@cdk-x/core`. It:
 
 - Sets `identifier = 'Hetzner'`
+- Accepts `HetznerProviderProps` in its constructor (project, token, location, datacenter)
+- Overrides `getEnvironment()` to expose `projectName`, `location`, and `datacenter` in `manifest.json`
+- Exposes `apiToken` via a getter (never serialized)
 - (Future) overrides `getResolvers()` to add Hetzner-specific resolvers
 - (Future) overrides `getSynthesizer()` to use a Hetzner-specific synthesizer
-- (Future) overrides `getEnvironment()` to expose `project` and `datacenter`
 
 ---
 
@@ -139,11 +141,49 @@ Key behaviours:
 
 Extends `Provider`.
 
-| Member               | Description                                            |
-| -------------------- | ------------------------------------------------------ |
-| `identifier: string` | `'Hetzner'` — used in `manifest.json` `provider` field |
+| Member               | Description                                                                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `identifier: string` | `'Hetzner'` — used in `manifest.json` `provider` field                                                                                         |
+| `apiToken: string`   | Getter — the Hetzner API token. Never serialized. Used by the engine at deploy time and by future L2 `fromLookup()` methods at synthesis time. |
+| `getEnvironment()`   | Returns `{ projectName, location?, datacenter? }` — written to `manifest.json`                                                                 |
 
-Constructor accepts `HetznerProviderProps` (future — credentials, project, datacenter).
+#### `HetznerProviderProps`
+
+| Prop          | Type       | Required | Description                                                                                          |
+| ------------- | ---------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `projectName` | `string`   | yes      | Human-readable project name. Written to `manifest.json`. Not available via API — provided by user.   |
+| `apiToken`    | `string`   | yes      | Hetzner Cloud API token. Do NOT hardcode — use `process.env.HETZNER_API_TOKEN`. Never serialized.    |
+| `location`    | `Location` | no       | Default stack location (e.g. `Location.NBG1`). Written to `manifest.json` when set.                  |
+| `datacenter`  | `string`   | no       | Default datacenter (e.g. `'nbg1-dc3'`). More specific than `location`. Written to manifest when set. |
+
+**`getEnvironment()` output in `manifest.json`:**
+
+```json
+{
+  "projectName": "my-project",
+  "location": "nbg1"
+}
+```
+
+`apiToken` is **never** included in `getEnvironment()` output — it is a credential.
+
+**Credentials design note:** For L1 constructs, synthesis does not require the API token —
+`cdkx synth` only generates JSON manifests. For future L2 constructs with `fromLookup()`
+methods (similar to AWS CDK context API / `cxapi`), the token will be read from the
+`apiToken` getter during synthesis to populate the context cache. The engine resolves the
+token at deploy time via the `apiToken` getter or the `HETZNER_API_TOKEN` environment variable.
+
+**Usage:**
+
+```ts
+const provider = new HetznerProvider({
+  projectName: 'my-project',
+  apiToken: process.env.HETZNER_API_TOKEN!,
+  location: Location.NBG1,
+});
+
+const stack = new Stack(app, 'MyStack', { provider });
+```
 
 ---
 
@@ -580,17 +620,14 @@ packages/providers/hetzner/
         │   ├── common.ts                          NetworkZone, Location, HetznerResourceType
         │   └── index.ts                           re-export barrel
         ├── provider/
-        │   ├── hetzner.ts                         HetznerProvider class
-        │   ├── hetzner.spec.ts                    unit tests
+        │   ├── hetzner.ts                         HetznerProvider + HetznerProviderProps
+        │   ├── hetzner.spec.ts                    8 unit tests (identifier, apiToken, getEnvironment)
         │   └── index.ts                           re-export barrel
         ├── networking/
         │   ├── ntv-hetzner-network.ts             AUTO-GENERATED L1 + NetworkSubnet/Route/Enum
         │   ├── ntv-hetzner-floating-ip.ts         AUTO-GENERATED L1 + FloatingIpType enum
         │   ├── ntv-hetzner-primary-ip.ts          AUTO-GENERATED L1 + PrimaryIpType/AssigneeType enums
-        │   ├── ntv-hetzner-subnet.ts              HANDWRITTEN L1 + SubnetType enum
-        │   ├── ntc-hetzner-network.spec.ts        tests for NtvHetznerNetwork (10 tests, 1 snapshot)
-        │   ├── ntv-hetzner-subnet.spec.ts         tests for NtvHetznerSubnet (29 tests, 2 snapshots)
-        │   └── __snapshots__/                     co-located Jest snapshots
+        │   └── ntv-hetzner-subnet.ts              HANDWRITTEN L1 + SubnetType enum
         ├── compute/
         │   ├── ntv-hetzner-server.ts              AUTO-GENERATED L1 + nested interfaces
         │   ├── ntv-hetzner-load-balancer.ts       AUTO-GENERATED L1 + many nested interfaces/enums

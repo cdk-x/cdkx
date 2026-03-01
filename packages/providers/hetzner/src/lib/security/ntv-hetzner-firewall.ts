@@ -34,9 +34,7 @@ export interface FirewallRule {
 Only set for `type` `server`, otherwise `null`.
 
  */
-export interface FirewallApplyToServer {
-
-}
+export interface FirewallApplyToServer {}
 
 /**
  * [Label Selector](#description/label-selector) the [Firewall](#tag/firewalls) is applied to.
