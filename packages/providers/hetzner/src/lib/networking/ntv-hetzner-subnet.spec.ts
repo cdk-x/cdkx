@@ -1,6 +1,7 @@
 import { SynthHelpers, TestApp, TestStack } from '@cdk-x/testing';
 import { HetznerProvider } from '../provider/index.js';
 import { HetznerResourceType, NetworkZone } from '../common/index.js';
+import { NtvHetznerNetwork } from './ntc-hetzner-network.js';
 import { NtvHetznerSubnet, SubnetType } from './ntv-hetzner-subnet.js';
 
 describe('NtvHetznerSubnet', () => {
@@ -222,6 +223,45 @@ describe('NtvHetznerSubnet', () => {
         networkZone: NetworkZone.EU_CENTRAL,
         ipRange: '10.0.0.0/24',
         vswitchId: 9876,
+      });
+
+      expect(SynthHelpers.resourceEntry(subnet)).toMatchSnapshot();
+    });
+  });
+
+  // ─── cross-resource reference ─────────────────────────────────────────────
+
+  describe('cross-resource reference', () => {
+    it('resolves networkId from network.networkId to a { ref, attr } token', () => {
+      const network = new NtvHetznerNetwork(stack, 'Network', {
+        name: 'my-network',
+        ipRange: '10.0.0.0/16',
+      });
+
+      const subnet = new NtvHetznerSubnet(stack, 'Subnet', {
+        networkId: network.networkId,
+        type: SubnetType.CLOUD,
+        networkZone: NetworkZone.EU_CENTRAL,
+        ipRange: '10.0.1.0/24',
+      });
+
+      expect(SynthHelpers.resourceEntry(subnet).properties.networkId).toEqual({
+        ref: network.logicalId,
+        attr: 'networkId',
+      });
+    });
+
+    it('snapshot: subnet with network.networkId resolves to { ref, attr } token', () => {
+      const network = new NtvHetznerNetwork(stack, 'Network', {
+        name: 'my-network',
+        ipRange: '10.0.0.0/16',
+      });
+
+      const subnet = new NtvHetznerSubnet(stack, 'Subnet', {
+        networkId: network.networkId,
+        type: SubnetType.CLOUD,
+        networkZone: NetworkZone.EU_CENTRAL,
+        ipRange: '10.0.1.0/24',
       });
 
       expect(SynthHelpers.resourceEntry(subnet)).toMatchSnapshot();
