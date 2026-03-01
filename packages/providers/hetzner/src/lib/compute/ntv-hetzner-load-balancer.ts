@@ -86,9 +86,7 @@ export interface LoadBalancerService {
 /**
  * Configuration for type Server, only valid and required if type is `server`.
  */
-export interface LoadBalancerTargetServer {
-
-}
+export interface LoadBalancerTargetServer {}
 
 /**
  * Configuration for label selector targets, only valid and required if type is `label_selector`.
@@ -207,7 +205,11 @@ export class NtvHetznerLoadBalancer extends ProviderResource {
    * @param id    - The construct ID, unique within the scope.
    * @param props - Resource configuration.
    */
-  constructor(scope: Construct, id: string, props: NtvHetznerLoadBalancerProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: NtvHetznerLoadBalancerProps,
+  ) {
     super(scope, id, {
       type: HetznerResourceType.Compute.LOADBALANCER,
       properties: props as unknown as Record<string, PropertyValue>,
