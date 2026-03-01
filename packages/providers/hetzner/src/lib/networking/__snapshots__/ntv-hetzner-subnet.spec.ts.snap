@@ -1,5 +1,23 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
+exports[`NtvHetznerSubnet cross-resource reference snapshot: subnet with network.networkId resolves to { ref, attr } token 1`] = `
+{
+  "metadata": {
+    "cdkx:path": "DefaultTestStack/Subnet",
+  },
+  "properties": {
+    "ipRange": "10.0.1.0/24",
+    "networkId": {
+      "attr": "networkId",
+      "ref": "DefaultTestStackNetwork36EFB155",
+    },
+    "networkZone": "eu-central",
+    "type": "cloud",
+  },
+  "type": "Hetzner::Network::Subnet",
+}
+`;
+
 exports[`NtvHetznerSubnet render matches snapshot with all props 1`] = `
 {
   "metadata": {
