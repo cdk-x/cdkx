@@ -1,8 +1,8 @@
 import { HetznerProvider } from './hetzner.js';
 
 describe('HetznerProvider', () => {
-  it('should have identifier "hetzner"', () => {
+  it('should have identifier "Hetzner"', () => {
     const provider = new HetznerProvider();
-    expect(provider.identifier).toBe('hetzner');
+    expect(provider.identifier).toBe('Hetzner');
   });
 });

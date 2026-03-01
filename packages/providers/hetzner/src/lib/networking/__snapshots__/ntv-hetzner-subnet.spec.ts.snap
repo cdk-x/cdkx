@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`NtvHetznerSubnet render matches snapshot with all props 1`] = `
+{
+  "metadata": {
+    "cdkx:path": "DefaultTestStack/Subnet",
+  },
+  "properties": {
+    "ipRange": "10.0.0.0/24",
+    "networkId": 1,
+    "networkZone": "eu-central",
+    "type": "vswitch",
+    "vswitchId": 9876,
+  },
+  "type": "Hetzner::Network::Subnet",
+}
+`;
