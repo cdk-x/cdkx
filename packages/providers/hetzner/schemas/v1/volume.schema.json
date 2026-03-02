@@ -38,7 +38,7 @@
   "createOnlyProperties": [
     "/properties/location",
     "/properties/format",
-    "/properties/server",
+    "/properties/serverId",
     "/properties/automount"
   ],
   "readOnlyProperties": ["/properties/volumeId"],

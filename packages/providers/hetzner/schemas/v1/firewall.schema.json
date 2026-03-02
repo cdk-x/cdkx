@@ -121,6 +121,7 @@
     }
   },
   "required": ["name"],
+  "createOnlyProperties": ["/properties/rules", "/properties/applyTo"],
   "readOnlyProperties": ["/properties/firewallId"],
   "primaryIdentifier": ["/properties/firewallId"]
 }
