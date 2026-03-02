@@ -151,13 +151,18 @@
       "type": "object",
       "description": "Configuration for type Server, only valid and required if type is `server`.",
       "additionalProperties": false,
-      "required": ["id"],
+      "required": ["serverId"],
       "properties": {
-        "id": {
+        "serverId": {
           "type": "integer",
           "description": "ID of the Server."
         }
       }
+    },
+    "LoadBalancerType": {
+      "type": "string",
+      "description": "Load Balancer type.",
+      "enum": ["lb11", "lb21", "lb31"]
     },
     "LoadBalancerTargetLabelSelector": {
       "type": "object",
@@ -238,8 +243,8 @@
       "description": "Name of the Load Balancer."
     },
     "loadBalancerType": {
-      "type": "string",
-      "description": "ID or name of the Load Balancer type this Load Balancer should be created with."
+      "$ref": "#/definitions/LoadBalancerType",
+      "description": "Type of this Load Balancer."
     },
     "algorithm": {
       "$ref": "#/definitions/LoadBalancerAlgorithm",
@@ -262,21 +267,30 @@
       "type": "boolean",
       "description": "Enable or disable the public interface of the Load Balancer."
     },
-    "network": {
+    "networkId": {
       "type": "integer",
-      "description": "ID of the network the Load Balancer should be attached to on creation.",
-      "x-cdkx-resolvable": true
+      "description": "ID of the network the Load Balancer should be attached to on creation."
     },
     "networkZone": {
-      "type": "string",
+      "$ref": "./common.schema.json#/definitions/NetworkZone",
       "description": "Name of network zone."
     },
     "location": {
-      "type": "string",
-      "description": "ID or name of Location to create Load Balancer in."
+      "$ref": "./common.schema.json#/definitions/Location",
+      "description": "Location to create Load Balancer in."
     }
   },
   "required": ["name", "loadBalancerType"],
+  "createOnlyProperties": [
+    "/properties/loadBalancerType",
+    "/properties/algorithm",
+    "/properties/services",
+    "/properties/targets",
+    "/properties/publicInterface",
+    "/properties/networkId",
+    "/properties/networkZone",
+    "/properties/location"
+  ],
   "readOnlyProperties": ["/properties/loadBalancerId"],
   "primaryIdentifier": ["/properties/loadBalancerId"]
 }

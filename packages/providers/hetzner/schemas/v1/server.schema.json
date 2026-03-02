@@ -14,8 +14,7 @@
       "properties": {
         "firewall": {
           "type": "integer",
-          "description": "ID of the Firewall.",
-          "x-cdkx-resolvable": true
+          "description": "ID of the Firewall."
         }
       }
     },
@@ -115,6 +114,21 @@
     }
   },
   "required": ["name", "serverType", "image"],
+  "createOnlyProperties": [
+    "/properties/location",
+    "/properties/datacenter",
+    "/properties/serverType",
+    "/properties/startAfterCreate",
+    "/properties/image",
+    "/properties/placementGroup",
+    "/properties/sshKeys",
+    "/properties/volumes",
+    "/properties/networks",
+    "/properties/firewalls",
+    "/properties/userData",
+    "/properties/automount",
+    "/properties/publicNet"
+  ],
   "readOnlyProperties": ["/properties/serverId"],
   "primaryIdentifier": ["/properties/serverId"]
 }
