@@ -1,8 +1,5 @@
-import { IResolver } from '../resolvables/resolvables.js';
-import {
-  IStackSynthesizer,
-  JsonSynthesizer,
-} from '../synthesizer/synthesizer.js';
+import { IResolver } from '../resolvables/resolvables';
+import { IStackSynthesizer, JsonSynthesizer } from '../synthesizer/synthesizer';
 
 /**
  * Abstract base class for all cdkx providers.

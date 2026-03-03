@@ -1,4 +1,4 @@
-import { makeUniqueId } from './unique-id.js';
+import { makeUniqueId } from './unique-id';
 
 describe('makeUniqueId', () => {
   // ── Single component (no hash suffix) ────────────────────────────────────

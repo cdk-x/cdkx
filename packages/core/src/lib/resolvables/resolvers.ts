@@ -1,11 +1,11 @@
-import { Lazy } from './lazy.js';
+import { Lazy } from './lazy';
 import {
   IResolver,
   IResolvable,
   ResolveContext,
   ResolutionContext,
   Resolvables,
-} from './resolvables.js';
+} from './resolvables';
 
 /**
  * Built-in resolver that handles `Lazy` instances.

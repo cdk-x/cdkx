@@ -1,11 +1,11 @@
-import { ResolverPipeline } from './resolver-pipeline.js';
-import { Lazy } from './lazy.js';
+import { ResolverPipeline } from './resolver-pipeline';
+import { Lazy } from './lazy';
 import {
   IResolvable,
   ResolveContext,
   ResolutionContext,
   IResolver,
-} from './resolvables.js';
+} from './resolvables';
 
 const RESOURCE = {};
 const PROVIDER = 'test';

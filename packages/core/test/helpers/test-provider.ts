@@ -1,5 +1,5 @@
-import { Provider } from '../../src/lib/provider/provider.js';
-import { IStackSynthesizer } from '../../src/lib/synthesizer/synthesizer.js';
+import { Provider } from '../../src/lib/provider/provider';
+import { IStackSynthesizer } from '../../src/lib/synthesizer/synthesizer';
 
 /**
  * Minimal concrete Provider for use in tests.

@@ -1,6 +1,6 @@
-import { Stack } from '../../src/lib/stack/stack.js';
-import { ProviderResource } from '../../src/lib/provider-resource/provider-resource.js';
-import { Lazy } from '../../src/lib/resolvables/lazy.js';
+import { Stack } from '../../src/lib/stack/stack';
+import { ProviderResource } from '../../src/lib/provider-resource/provider-resource';
+import { Lazy } from '../../src/lib/resolvables/lazy';
 
 /**
  * Object Mother for generic test L1 resources.

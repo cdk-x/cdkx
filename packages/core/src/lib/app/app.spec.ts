@@ -1,17 +1,17 @@
 import { Construct } from 'constructs';
-import { App } from './app.js';
-import { Stack } from '../stack/stack.js';
+import { App } from './app';
+import { Stack } from '../stack/stack';
 import {
   IStackSynthesizer,
   ISynthesisSession,
-} from '../synthesizer/synthesizer.js';
-import { IResolver, ResolutionContext } from '../resolvables/resolvables.js';
+} from '../synthesizer/synthesizer';
+import { IResolver, ResolutionContext } from '../resolvables/resolvables';
 import {
   makeApp,
   makeStack,
   TestProvider,
   SpyProvider,
-} from '../../../test/helpers/index.js';
+} from '../../../test/helpers';
 
 describe('App', () => {
   describe('App.isApp()', () => {

@@ -301,7 +301,7 @@ package follows them identically.
 
 ```
 packages/testing/
-├── package.json                   name: @cdk-x/testing, type: module
+├── package.json                   name: @cdk-x/testing (no "type" field — CommonJS)
 │                                  peerDependencies: @cdk-x/core, tslib
 │                                  devDependencies: @cdk-x/core
 ├── project.json                   Nx project configuration

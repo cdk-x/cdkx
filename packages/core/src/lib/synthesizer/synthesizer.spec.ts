@@ -1,18 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import {
-  JsonSynthesizer,
-  IStackRef,
-  ISynthesisSession,
-} from './synthesizer.js';
-import { CloudAssemblyBuilder } from '../assembly/cloud-assembly.js';
-import {
-  makeApp,
-  makeStack,
-  TestProvider,
-} from '../../../test/helpers/index.js';
-import { ProviderResource } from '../provider-resource/provider-resource.js';
+import { JsonSynthesizer, IStackRef, ISynthesisSession } from './synthesizer';
+import { CloudAssemblyBuilder } from '../assembly/cloud-assembly';
+import { makeApp, makeStack, TestProvider } from '../../../test/helpers';
+import { ProviderResource } from '../provider-resource/provider-resource';
 
 function tmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'cdkx-synth-test-'));

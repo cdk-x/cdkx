@@ -4,7 +4,7 @@ import {
   ResolutionContext,
   Resolvables,
   isResolvable,
-} from './resolvables.js';
+} from './resolvables';
 
 const DUMMY_RESOURCE = {};
 const DUMMY_PROVIDER = 'test';

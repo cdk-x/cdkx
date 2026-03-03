@@ -1,9 +1,6 @@
-import { Provider } from './provider.js';
-import {
-  IStackSynthesizer,
-  JsonSynthesizer,
-} from '../synthesizer/synthesizer.js';
-import { IResolver } from '../resolvables/resolvables.js';
+import { Provider } from './provider';
+import { IStackSynthesizer, JsonSynthesizer } from '../synthesizer/synthesizer';
+import { IResolver } from '../resolvables/resolvables';
 
 class MinimalProvider extends Provider {
   public readonly identifier = 'minimal';

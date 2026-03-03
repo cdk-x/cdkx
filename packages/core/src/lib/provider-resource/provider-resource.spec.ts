@@ -1,12 +1,12 @@
-import { App } from '../app/app.js';
-import { Stack } from '../stack/stack.js';
-import { Provider } from '../provider/provider.js';
-import { ProviderResource } from './provider-resource.js';
-import { RemovalPolicy } from '../removal-policy.js';
-import { ProviderDeletionPolicy } from './provider-resource-policy.js';
-import { Lazy } from '../resolvables/lazy.js';
-import { IResolvable } from '../resolvables/resolvables.js';
-import { PropertyValue } from '../constants.js';
+import { App } from '../app/app';
+import { Stack } from '../stack/stack';
+import { Provider } from '../provider/provider';
+import { ProviderResource } from './provider-resource';
+import { RemovalPolicy } from '../removal-policy';
+import { ProviderDeletionPolicy } from './provider-resource-policy';
+import { Lazy } from '../resolvables/lazy';
+import { IResolvable } from '../resolvables/resolvables';
+import { PropertyValue } from '../constants';
 
 class TestProvider extends Provider {
   public readonly identifier = 'test';
