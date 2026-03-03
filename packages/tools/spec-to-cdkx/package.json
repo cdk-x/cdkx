@@ -1,0 +1,24 @@
+{
+  "name": "@cdk-x/spec-to-cdkx",
+  "version": "0.0.1",
+  "bin": {
+    "spec-to-cdkx": "./bin/spec-to-cdkx.js"
+  },
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "files": [
+    "bin",
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3"
+  },
+  "devDependencies": {
+    "esbuild": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

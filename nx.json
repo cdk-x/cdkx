@@ -93,6 +93,21 @@
             "createRelease": "github"
           }
         }
+      },
+      "tools": {
+        "projects": ["spec-to-cdkx"],
+        "projectsRelationship": "fixed",
+        "releaseTag": {
+          "pattern": "tools-v{version}"
+        },
+        "version": {
+          "updateDependents": "never"
+        },
+        "changelog": {
+          "projectChangelogs": {
+            "createRelease": "github"
+          }
+        }
       }
     }
   },

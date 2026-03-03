@@ -1,0 +1,61 @@
+{
+  "name": "spec-to-cdkx",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/tools/spec-to-cdkx/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "packages/tools/spec-to-cdkx/dist",
+        "format": ["cjs"],
+        "bundle": true,
+        "declaration": true,
+        "declarationRootDir": "packages/tools/spec-to-cdkx/src",
+        "main": "packages/tools/spec-to-cdkx/src/main.ts",
+        "tsConfig": "packages/tools/spec-to-cdkx/tsconfig.lib.json",
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}
