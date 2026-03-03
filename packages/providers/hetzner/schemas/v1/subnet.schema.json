@@ -11,7 +11,7 @@
       "description": "ID of the Network to add the subnet to."
     },
     "type": {
-      "$ref": "./network.schema.json#/definitions/NetworkSubnetType",
+      "$ref": "#/definitions/NetworkSubnetType",
       "description": "Type of subnet."
     },
     "networkZone": {
@@ -25,6 +25,13 @@
     "vswitchId": {
       "type": "integer",
       "description": "ID of the robot vSwitch. Required when type is 'vswitch'."
+    }
+  },
+  "definitions": {
+    "NetworkSubnetType": {
+      "type": "string",
+      "description": "Type of subnet.",
+      "enum": ["cloud", "server", "vswitch"]
     }
   },
   "required": ["networkId", "type", "networkZone"],

@@ -32,12 +32,12 @@
     "codegen": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node_modules/.bin/tsx packages/providers/hetzner/scripts/generate.ts",
-        "cwd": "{workspaceRoot}"
+        "command": "spec-to-cdkx generate --prefix Htz --provider-name Hetzner --resource-type-const HetznerResourceType",
+        "cwd": "{projectRoot}"
       },
       "dependsOn": [
         {
-          "projects": ["@cdk-x/core"],
+          "projects": ["spec-to-cdkx"],
           "target": "build"
         }
       ]
