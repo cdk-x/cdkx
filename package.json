@@ -49,6 +49,7 @@
   },
   "workspaces": [
     "packages/*",
-    "packages/providers/*"
+    "packages/providers/*",
+    "packages/tools/*"
   ]
 }
