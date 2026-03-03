@@ -1,6 +1,6 @@
-import { ProviderResource } from '../provider-resource/provider-resource.js';
-import { IResolvable } from '../resolvables/index.js';
-import { Resource } from './resource.js';
+import { ProviderResource } from '../provider-resource/provider-resource';
+import { IResolvable } from '../resolvables/index';
+import { Resource } from './resource';
 
 export class ResourceAttribute implements IResolvable {
   constructor(

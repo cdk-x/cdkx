@@ -12,16 +12,16 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { App } from '../../src/lib/app/app.js';
-import { Stack } from '../../src/lib/stack/stack.js';
-import { ProviderResource } from '../../src/lib/provider-resource/provider-resource.js';
-import { Lazy } from '../../src/lib/resolvables/lazy.js';
+import { App } from '../../src/lib/app/app';
+import { Stack } from '../../src/lib/stack/stack';
+import { ProviderResource } from '../../src/lib/provider-resource/provider-resource';
+import { Lazy } from '../../src/lib/resolvables/lazy';
 import {
   IResolvable,
   ResolveContext,
-} from '../../src/lib/resolvables/resolvables.js';
-import { MANIFEST_VERSION } from '../../src/lib/assembly/cloud-assembly.js';
-import { TestProvider, SynthHelpers, TestResources } from '../helpers/index.js';
+} from '../../src/lib/resolvables/resolvables';
+import { MANIFEST_VERSION } from '../../src/lib/assembly/cloud-assembly';
+import { TestProvider, SynthHelpers, TestResources } from '../helpers';
 
 // ---------------------------------------------------------------------------
 // 1. Basic single-stack synthesis

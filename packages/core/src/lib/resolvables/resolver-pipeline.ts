@@ -1,5 +1,5 @@
-import { IResolver, ResolutionContext } from './resolvables.js';
-import { LazyResolver, ImplicitTokenResolver } from './resolvers.js';
+import { IResolver, ResolutionContext } from './resolvables';
+import { LazyResolver, ImplicitTokenResolver } from './resolvers';
 
 /**
  * Options for `ResolverPipeline.sanitize()`.

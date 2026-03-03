@@ -1,14 +1,14 @@
 import { Construct } from 'constructs';
-import { RESOURCE_SYMBOL, PropertyValue } from '../constants.js';
-import { makeUniqueId } from '../private/unique-id.js';
-import { RemovalPolicy, RemovalPolicyOptions } from '../removal-policy.js';
+import { RESOURCE_SYMBOL, PropertyValue } from '../constants';
+import { makeUniqueId } from '../private/unique-id';
+import { RemovalPolicy, RemovalPolicyOptions } from '../removal-policy';
 import {
   ProviderCreatePolicy,
   ProviderDeletionPolicy,
   ProviderUpdatePolicy,
-} from './provider-resource-policy.js';
-import { ProviderResourceCondition } from './provider-condition.js';
-import { IResolvable } from '../resolvables/resolvables.js';
+} from './provider-resource-policy';
+import { ProviderResourceCondition } from './provider-condition';
+import { IResolvable } from '../resolvables/resolvables';
 
 export interface ProviderResourceProps {
   /** The resource type identifier (e.g. `'Deployment'`, `'server'`, `'workflow'`). */
@@ -213,8 +213,8 @@ export class ProviderResource extends Construct {
     // Lazily import to avoid circular dependencies at module load time.
     // App and Stack are higher-level constructs that depend on ProviderResource,
     // so we resolve them at call time rather than at import time.
-    const { App } = require('../app/app.js');
-    const { Stack } = require('../stack/stack.js');
+    const { App } = require('../app/app');
+    const { Stack } = require('../stack/stack');
 
     const stack = Stack.of(this);
     const app = App.of(this);

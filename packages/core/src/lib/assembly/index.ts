@@ -1,1 +1,1 @@
-export * from './cloud-assembly.js';
+export * from './cloud-assembly';

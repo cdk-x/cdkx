@@ -1,1 +1,1 @@
-export * from './synthesizer.js';
+export * from './synthesizer';

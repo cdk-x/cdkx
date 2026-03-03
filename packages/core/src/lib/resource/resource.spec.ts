@@ -1,10 +1,10 @@
 import { Construct } from 'constructs';
-import { App } from '../app/app.js';
-import { Stack } from '../stack/stack.js';
-import { Provider } from '../provider/provider.js';
-import { Resource } from './resource.js';
-import { RemovalPolicy } from '../removal-policy.js';
-import { ProviderResource } from '../provider-resource/provider-resource.js';
+import { App } from '../app/app';
+import { Stack } from '../stack/stack';
+import { Provider } from '../provider/provider';
+import { Resource } from './resource';
+import { RemovalPolicy } from '../removal-policy';
+import { ProviderResource } from '../provider-resource/provider-resource';
 
 class TestProvider extends Provider {
   public readonly identifier = 'test';

@@ -1,7 +1,7 @@
 import { Construct, IConstruct } from 'constructs';
-import { Provider } from '../provider/provider.js';
-import { IStackSynthesizer, IStackRef } from '../synthesizer/synthesizer.js';
-import { ProviderResource } from '../provider-resource/provider-resource.js';
+import { Provider } from '../provider/provider';
+import { IStackSynthesizer, IStackRef } from '../synthesizer/synthesizer';
+import { ProviderResource } from '../provider-resource/provider-resource';
 
 export interface StackProps {
   /**

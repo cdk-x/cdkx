@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { ProviderResource } from '../provider-resource/provider-resource.js';
-import { CloudAssemblyBuilder } from '../assembly/cloud-assembly.js';
+import { ProviderResource } from '../provider-resource/provider-resource';
+import { CloudAssemblyBuilder } from '../assembly/cloud-assembly';
 
 /**
  * The session object passed to `IStackSynthesizer.synthesize()`.

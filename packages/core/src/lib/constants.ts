@@ -1,4 +1,4 @@
-import { IResolvable } from './resolvables/resolvables.js';
+import { IResolvable } from './resolvables/resolvables';
 
 /**
  * Resource symbol for re-usability.

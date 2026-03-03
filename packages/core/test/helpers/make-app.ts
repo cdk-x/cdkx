@@ -1,8 +1,8 @@
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { App } from '../../src/lib/app/app.js';
-import { Stack } from '../../src/lib/stack/stack.js';
-import { TestProvider } from './test-provider.js';
+import { App } from '../../src/lib/app/app';
+import { Stack } from '../../src/lib/stack/stack';
+import { TestProvider } from './test-provider';
 
 /**
  * Creates an App with a unique temporary outdir so parallel tests don't collide.

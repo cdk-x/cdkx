@@ -1,4 +1,4 @@
-import { Lazy } from './lazy.js';
+import { Lazy } from './lazy';
 
 describe('Lazy', () => {
   describe('Lazy.any()', () => {

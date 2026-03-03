@@ -28,12 +28,12 @@ Hetzner Cloud JSON file, a GitHub Actions workflow, etc. — depending on which
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Monorepo tool   | Nx 22                                                                                                                         |
 | Package manager | Yarn (yarn.lock at root)                                                                                                      |
-| Language        | TypeScript 5.9, strict mode, ESM (`"type": "module"`)                                                                         |
+| Language        | TypeScript 5.9, strict mode, CommonJS (`module: commonjs`, `moduleResolution: node`)                                          |
 | Build tool      | `@nx/js:tsc` — emits JS + `.d.ts` + `.d.ts.map`                                                                               |
 | Test runner     | Jest 30 + SWC (`@swc/jest`)                                                                                                   |
 | Linter          | ESLint with `@typescript-eslint`                                                                                              |
 | Formatter       | Prettier ~3.6 (`.prettierrc` at workspace root)                                                                               |
-| Node            | ESM — all local imports use `.js` extension                                                                                   |
+| Node            | CJS — local imports use **no extension** (extensionless)                                                                      |
 | Output dir      | `cdkx.out/` (flat) — one JSON per stack + `manifest.json`. Visual test writes to `.cdkx.out/` at workspace root (gitignored). |
 
 Run tasks via Nx:
@@ -365,7 +365,7 @@ Used by L2 resources to express cross-resource references.
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Everything OOP                  | No standalone `export function`. All utilities are static methods on classes.                                                                                                                                                                                                                                                                                                                                                                          |
 | No `any`                        | Use `unknown` everywhere. The one exception is `Lazy.any()` return type — intentional escape hatch, gets `eslint-disable` comment.                                                                                                                                                                                                                                                                                                                     |
-| ESM imports                     | All local imports use `.js` extension even though source is `.ts`.                                                                                                                                                                                                                                                                                                                                                                                     |
+| CJS imports                     | All local imports use **no file extension** (extensionless). `moduleResolution: node` resolves them correctly at both compile time and runtime.                                                                                                                                                                                                                                                                                                        |
 | Unused params in class methods  | ESLint's `argsIgnorePattern: "^_"` does NOT suppress warnings for class method params. Fix: **omit the parameter entirely** from the method signature. TypeScript allows implementing an interface method with fewer params than declared. When a param is dropped, also remove its import if it's no longer used.                                                                                                                                     |
 | Prettier                        | Run `yarn nx run @cdk-x/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 80`, `tabWidth: 2`, `semi: true`.                                                                                                                                                                                                                                                                            |
 | Specs co-located                | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -584,7 +584,7 @@ handles `.js`→`.ts` import remapping correctly. Add `tsx` to workspace root de
 
 ```
 packages/core/
-├── package.json                         name: @cdk-x/core, type: module
+├── package.json                         name: @cdk-x/core (no "type" field — CommonJS)
 ├── CONTEXT.md                           ← this file
 ├── src/
 │   ├── index.ts                         public barrel — exports everything

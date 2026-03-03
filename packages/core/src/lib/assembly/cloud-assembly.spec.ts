@@ -5,7 +5,7 @@ import {
   CloudAssemblyBuilder,
   CloudAssembly,
   MANIFEST_VERSION,
-} from './cloud-assembly.js';
+} from './cloud-assembly';
 
 function tmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'cdkx-assembly-test-'));

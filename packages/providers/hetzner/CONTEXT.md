@@ -271,7 +271,7 @@ addition specific to this package:
 
 ```
 packages/providers/hetzner/
-├── package.json                        name: @cdk-x/hetzner, type: module
+├── package.json                        name: @cdk-x/hetzner (no "type" field — CommonJS)
 │                                       dependencies: @cdk-x/core, constructs, tslib
 │                                       devDependencies: @cdk-x/spec-to-cdkx, @cdk-x/testing
 ├── project.json                        Nx project config (includes codegen target)

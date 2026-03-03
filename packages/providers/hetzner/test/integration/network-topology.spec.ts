@@ -22,7 +22,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { App, Stack } from '@cdk-x/core';
 import { SynthHelpers } from '@cdk-x/testing';
-import { HetznerProvider } from '../../src/lib/provider/index.js';
+import { HetznerProvider } from '../../src/lib/provider/index';
 import {
   HtzNetwork,
   HtzSubnet,
@@ -31,7 +31,7 @@ import {
   NetworkZone,
   NetworkSubnetType,
   LoadBalancerType,
-} from '../../src/lib/resources.generated.js';
+} from '../../src/lib/resources.generated';
 
 // ---------------------------------------------------------------------------
 // Permanent output directory — written once in beforeAll, not cleaned up.

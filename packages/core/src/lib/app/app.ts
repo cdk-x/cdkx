@@ -1,13 +1,13 @@
 import { Construct, IConstruct } from 'constructs';
-import { IResolver } from '../resolvables/resolvables.js';
-import { ResolverPipeline } from '../resolvables/resolver-pipeline.js';
-import { Provider } from '../provider/provider.js';
-import { Stack } from '../stack/stack.js';
+import { IResolver } from '../resolvables/resolvables';
+import { ResolverPipeline } from '../resolvables/resolver-pipeline';
+import { Provider } from '../provider/provider';
+import { Stack } from '../stack/stack';
 import {
   CloudAssembly,
   CloudAssemblyBuilder,
-} from '../assembly/cloud-assembly.js';
-import { ISynthesisSession } from '../synthesizer/synthesizer.js';
+} from '../assembly/cloud-assembly';
+import { ISynthesisSession } from '../synthesizer/synthesizer';
 
 export interface AppProps {
   /**

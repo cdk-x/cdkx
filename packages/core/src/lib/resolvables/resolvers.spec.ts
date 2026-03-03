@@ -1,6 +1,6 @@
-import { ResolutionContext } from './resolvables.js';
-import { Lazy } from './lazy.js';
-import { LazyResolver, ImplicitTokenResolver } from './resolvers.js';
+import { ResolutionContext } from './resolvables';
+import { Lazy } from './lazy';
+import { LazyResolver, ImplicitTokenResolver } from './resolvers';
 
 const RESOURCE = {};
 const PROVIDER = 'test';
