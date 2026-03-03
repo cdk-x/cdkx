@@ -6,6 +6,7 @@ import { RemovalPolicy } from '../removal-policy.js';
 import { ProviderDeletionPolicy } from './provider-resource-policy.js';
 import { Lazy } from '../resolvables/lazy.js';
 import { IResolvable } from '../resolvables/resolvables.js';
+import { PropertyValue } from '../constants.js';
 
 class TestProvider extends Provider {
   public readonly identifier = 'test';
@@ -91,6 +92,41 @@ describe('ProviderResource', () => {
     });
   });
 
+  describe('getAtt()', () => {
+    it('returns an IResolvable that resolves to { ref, attr }', () => {
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+      });
+      const token = resource.getAtt('networkId');
+      expect(
+        token.resolve(
+          undefined as unknown as Parameters<IResolvable['resolve']>[0],
+        ),
+      ).toEqual({
+        ref: resource.logicalId,
+        attr: 'networkId',
+      });
+    });
+
+    it('captures the logicalId at call time', () => {
+      const resource = new ProviderResource(stack, 'Server', {
+        type: 'test::Type',
+      });
+      const idToken = resource.getAtt('id');
+      const nameToken = resource.getAtt('name');
+      const resolved1 = idToken.resolve(
+        undefined as unknown as Parameters<IResolvable['resolve']>[0],
+      ) as Record<string, unknown>;
+      const resolved2 = nameToken.resolve(
+        undefined as unknown as Parameters<IResolvable['resolve']>[0],
+      ) as Record<string, unknown>;
+      expect(resolved1.ref).toBe(resource.logicalId);
+      expect(resolved1.attr).toBe('id');
+      expect(resolved2.ref).toBe(resource.logicalId);
+      expect(resolved2.attr).toBe('name');
+    });
+  });
+
   describe('toJson()', () => {
     it('returns a keyed object with logicalId as the key', () => {
       const resource = new ProviderResource(stack, 'Res', {
@@ -170,6 +206,34 @@ describe('ProviderResource', () => {
       const json = resource.toJson();
       const entry = json[resource.logicalId] as Record<string, unknown>;
       expect(entry.properties).toEqual({});
+    });
+
+    it('uses renderProperties() override when subclass overrides it', () => {
+      class MyL1 extends ProviderResource {
+        public name = 'from-member';
+        public count = 42;
+
+        constructor() {
+          super(stack, 'MyL1', { type: 'test::MyType' });
+        }
+
+        protected override renderProperties(): Record<string, PropertyValue> {
+          return { name: this.name, count: this.count } as Record<
+            string,
+            PropertyValue
+          >;
+        }
+      }
+
+      const l1 = new MyL1();
+      l1.name = 'mutated';
+
+      const json = l1.toJson();
+      const entry = json[l1.logicalId] as Record<string, unknown>;
+      expect((entry.properties as Record<string, unknown>).name).toBe(
+        'mutated',
+      );
+      expect((entry.properties as Record<string, unknown>).count).toBe(42);
     });
   });
 });
