@@ -1,5 +1,5 @@
 {
-  "name": "spec-to-cdkx",
+  "name": "@cdk-x/spec-to-cdkx",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/tools/spec-to-cdkx/src",
   "projectType": "library",

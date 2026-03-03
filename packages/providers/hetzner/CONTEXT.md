@@ -50,7 +50,7 @@ modified, or removed.
 **`resources.generated.ts`** is the single output file. It is exported from
 `src/index.ts` via `export * from './lib/resources.generated.js'`.
 
-**`codegen` depends on `spec-to-cdkx:build`** — the tool is always rebuilt before
+**`codegen` depends on `@cdk-x/spec-to-cdkx:build`** — the tool is always rebuilt before
 running codegen, so the dist bundle is always fresh.
 
 ---

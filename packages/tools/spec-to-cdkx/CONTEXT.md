@@ -37,9 +37,9 @@ auto-generate their `src/lib/resources.generated.ts`.
 Run tasks via Nx:
 
 ```bash
-yarn nx build spec-to-cdkx
-yarn nx test spec-to-cdkx
-yarn nx lint spec-to-cdkx
+yarn nx build @cdk-x/spec-to-cdkx
+yarn nx test @cdk-x/spec-to-cdkx
+yarn nx lint @cdk-x/spec-to-cdkx
 yarn nx run @cdk-x/spec-to-cdkx:format        # format src/ with prettier
 yarn nx run @cdk-x/spec-to-cdkx:format:check  # check formatting without writing
 ```
