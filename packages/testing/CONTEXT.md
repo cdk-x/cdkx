@@ -20,46 +20,141 @@ It is published as a peer of `@cdk-x/core`, declared as a `peerDependency`
 (and `devDependency`) by packages that use it. It ships no production code —
 it is a pure test support library.
 
----
+Consumer packages declare it as:
 
-## Workspace setup
-
-| Property        | Value                                                 |
-| --------------- | ----------------------------------------------------- |
-| Monorepo tool   | Nx 22                                                 |
-| Package manager | Yarn (yarn.lock at root)                              |
-| Language        | TypeScript 5.9, strict mode, ESM (`"type": "module"`) |
-| Build tool      | `@nx/js:tsc` — emits JS + `.d.ts` + `.d.ts.map`       |
-| Test runner     | Jest 30 + SWC (`@swc/jest`)                           |
-| Linter          | ESLint with `@typescript-eslint`                      |
-| Formatter       | Prettier ~3.6 (`.prettierrc` at workspace root)       |
-| Node            | ESM — all local imports use `.js` extension           |
-| Output dir      | `packages/testing/dist/`                              |
-
-Run tasks via Nx:
-
-```bash
-yarn nx lint @cdk-x/testing
-yarn nx build @cdk-x/testing
-yarn nx run @cdk-x/testing:format        # format src/ with prettier
-yarn nx run @cdk-x/testing:format:check  # check formatting without writing
+```json
+{
+  "peerDependencies": { "@cdk-x/testing": "*" },
+  "devDependencies": { "@cdk-x/testing": "*" }
+}
 ```
 
 ---
 
-## Package identity
+## Typical usage patterns
 
-| Field              | Value                              |
-| ------------------ | ---------------------------------- |
-| `name`             | `@cdk-x/testing`                   |
-| `version`          | `0.1.0`                            |
-| `peerDependencies` | `@cdk-x/core: *`, `tslib: >=2.3.0` |
-| `devDependencies`  | `@cdk-x/core: *`                   |
-| `dependencies`     | (none)                             |
+### Unit test (ephemeral output, cleaned up after)
 
-`@cdk-x/core` is a `peerDependency` — consuming packages must bring their own
-copy. It is also a `devDependency` so the build and type-checking work within
-the monorepo without an extra install step.
+Use `SynthHelpers.synthSnapshot()` — it synthesizes, reads the stack JSON, and
+removes the output directory automatically.
+
+```ts
+import { TestApp, TestStack, TestProvider, SynthHelpers } from '@cdk-x/testing';
+import { ProviderResource } from '@cdk-x/core';
+
+describe('MyResource', () => {
+  it('synthesizes correctly', () => {
+    const app = TestApp.default();
+    const stack = TestStack.default(app, { provider: new TestProvider() });
+
+    new ProviderResource(stack, 'MyResource', {
+      type: 'test::Resource',
+      properties: { name: 'hello' },
+    });
+
+    const json = SynthHelpers.synthSnapshot(app, 'DefaultTestStack');
+    const resources = SynthHelpers.resourceValues(json);
+
+    expect(resources[0].type).toBe('test::Resource');
+    expect(resources[0].properties).toMatchObject({ name: 'hello' });
+  });
+});
+```
+
+### Integration test (permanent output for visual inspection)
+
+Write to a fixed path and pass `cleanup = false` to `synthSnapshot`, or call
+`app.synth()` directly and read the files with `SynthHelpers.readJson()`. This
+is the pattern used by `@cdk-x/hetzner`'s network topology test.
+
+```ts
+import * as path from 'node:path';
+import { App, Stack } from '@cdk-x/core';
+import { HetznerProvider } from '@cdk-x/hetzner';
+import { SynthHelpers } from '@cdk-x/testing';
+
+const OUTDIR = path.resolve(__dirname, '../../cdkx.out');
+
+describe('network topology', () => {
+  let stackJson: unknown;
+
+  beforeAll(() => {
+    const app = new App({ outdir: OUTDIR });
+    const stack = new Stack(app, 'HetznerNetworkStack', {
+      provider: new HetznerProvider(),
+    });
+
+    // ... add resources to stack ...
+
+    app.synth(); // writes OUTDIR — not cleaned up
+    stackJson = SynthHelpers.readJson(
+      path.join(OUTDIR, 'HetznerNetworkStack.json'),
+    );
+  });
+
+  it('has correct resource count', () => {
+    const resources = SynthHelpers.resourceValues(stackJson);
+    expect(resources).toHaveLength(6);
+  });
+});
+```
+
+### Unit test for a single resource (without a full stack synthesis)
+
+Use `SynthHelpers.resourceEntry()` to assert on a single `ProviderResource`
+directly, bypassing the file system entirely.
+
+```ts
+import {
+  TestApp,
+  TestStack,
+  TestProvider,
+  TestResources,
+  SynthHelpers,
+} from '@cdk-x/testing';
+
+const app = TestApp.default();
+const stack = TestStack.default(app, { provider: new TestProvider() });
+const resource = TestResources.resource(stack, 'MyRes');
+
+const entry = SynthHelpers.resourceEntry(resource);
+expect(entry.type).toBe('test::Resource');
+expect(entry.properties).toMatchObject({ name: 'MyRes' });
+```
+
+### App with custom global resolvers
+
+Extend `TestApp` when the test needs custom resolvers registered at the `App`
+level (e.g. to test a provider's custom resolver logic):
+
+```ts
+import { TestApp } from '@cdk-x/testing';
+import { App } from '@cdk-x/core';
+
+class AppWithCustomResolver extends TestApp {
+  constructor() {
+    super(undefined, { resolvers: [myCustomResolver] });
+  }
+}
+
+const app = new AppWithCustomResolver();
+```
+
+---
+
+## When to use which helper
+
+| Scenario                                                  | Use                                                   |
+| --------------------------------------------------------- | ----------------------------------------------------- |
+| Unit test — single resource, no file I/O                  | `TestApp.default()` + `SynthHelpers.resourceEntry()`  |
+| Unit test — full stack synthesis, ephemeral               | `TestApp.default()` + `SynthHelpers.synthSnapshot()`  |
+| Integration test — permanent output for visual inspection | `new App({ outdir: FIXEDPATH })` + `app.synth()`      |
+| Testing a real provider (e.g. `HetznerProvider`)          | Pass `new HetznerProvider()` to `TestStack.default()` |
+| Testing resolver pipeline cache or `getResolvers()` calls | `SpyProvider`                                         |
+| Testing a custom synthesizer                              | `CustomSynthesizerProvider`                           |
+| Testing provider-agnostic synthesis behaviour             | `TestProvider` (identifier `'test'`)                  |
+| Testing `null` / `undefined` stripping by the sanitizer   | `TestResources.resourceWithNull()`                    |
+| Testing `Lazy` token resolution                           | `TestResources.resourceWithLazy()`                    |
 
 ---
 
@@ -69,11 +164,24 @@ the monorepo without an extra install step.
 
 Extends `App` from `@cdk-x/core`.
 
-| Member             | Description                                               |
-| ------------------ | --------------------------------------------------------- |
-| `static default()` | Creates a new `App` with a default auto-generated outdir. |
+| Member             | Description                                                            |
+| ------------------ | ---------------------------------------------------------------------- |
+| `static default()` | Creates a new `App` with no explicit `outdir` (uses the default path). |
 
-Use `TestApp.default()` in `beforeEach` to get a fresh isolated app per test.
+`App` (from `@cdk-x/core`) defaults `outdir` to `'cdkx.out'` relative to
+`process.cwd()`. In tests this is fine — `SynthHelpers.synthSnapshot()` cleans
+it up, and `SynthHelpers.tmpDir()` + `new App({ outdir: tmpDir })` is
+available when isolation is required.
+
+Extend `TestApp` when you need a custom `AppProps` (e.g. global resolvers):
+
+```ts
+class AppWithGlobalResolver extends TestApp {
+  constructor() {
+    super(undefined, { resolvers: [myResolver] });
+  }
+}
+```
 
 ---
 
@@ -81,11 +189,11 @@ Use `TestApp.default()` in `beforeEach` to get a fresh isolated app per test.
 
 Extends `Stack` from `@cdk-x/core`.
 
-| Member                         | Description                                                    |
-| ------------------------------ | -------------------------------------------------------------- |
-| `static default(scope, props)` | Creates a `Stack` named `'DefaultTestStack'` with given props. |
+| Member                         | Description                                                        |
+| ------------------------------ | ------------------------------------------------------------------ |
+| `static default(scope, props)` | Creates a `Stack` named `'DefaultTestStack'` with the given props. |
 
-`StackProps.provider` is required — pass the provider under test (e.g. `new HetznerProvider()`).
+`StackProps.provider` is required — pass the provider under test or `new TestProvider()`.
 
 ---
 
@@ -98,12 +206,18 @@ returns no custom resolvers.
 | -------------------- | ----------------------------------------------- |
 | `identifier: string` | Defaults to `'test'`; override via constructor. |
 
+```ts
+const provider = new TestProvider(); // identifier = 'test'
+const provider = new TestProvider('hetzner'); // custom identifier
+```
+
 ---
 
 ### `SpyProvider` (`src/lib/test-provider.ts`)
 
-Records how many times `getResolvers()` has been called. Used to test that
-the resolver pipeline cache works correctly.
+Records how many times `getResolvers()` has been called. Used to verify that
+the resolver pipeline cache works — `getResolvers()` should only be called once
+per provider per `App` instance.
 
 | Member               | Description                       |
 | -------------------- | --------------------------------- |
@@ -115,14 +229,19 @@ the resolver pipeline cache works correctly.
 ### `CustomSynthesizerProvider` (`src/lib/test-provider.ts`)
 
 Provider that returns a caller-supplied synthesizer via `getSynthesizer()`.
-Used to test custom synthesizer behaviour.
+Used to test custom synthesizer behaviour (e.g. `YamlSynthesizer`).
+
+| Member                     | Description                                     |
+| -------------------------- | ----------------------------------------------- |
+| `identifier`               | `'custom-synth'`                                |
+| `constructor(synthesizer)` | Accepts any `IStackSynthesizer` implementation. |
 
 ---
 
 ### `TestResources` (`src/lib/test-resources.ts`)
 
-Object Mother for generic test L1 resources. All methods return a
-`ProviderResource` pre-configured for common scenarios.
+Object Mother for generic test L1 resources. All methods create and return a
+`ProviderResource` attached to the given `Stack`.
 
 | Method                         | Description                                                   |
 | ------------------------------ | ------------------------------------------------------------- |
@@ -130,39 +249,51 @@ Object Mother for generic test L1 resources. All methods return a
 | `resourceWithNull(scope, id?)` | Resource with a `null` property — tests sanitizer null-strip. |
 | `resourceWithLazy(scope, id?)` | Resource with a `Lazy` token — tests deferred resolution.     |
 
+Default `id` values: `'Resource'`, `'NullResource'`, `'LazyResource'`.
+
 ---
 
 ### `SynthHelpers` (`src/lib/synth-helpers.ts`)
 
 Static utilities for synthesis tests. Usable in any provider package test suite.
 
-| Method                                  | Description                                                                                                                                   |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tmpDir()`                              | Creates a unique OS temp dir (`mkdtempSync`). Use in integration tests to avoid parallel test collisions.                                     |
-| `readJson(filePath)`                    | Reads and parses a JSON file from disk. Returns `unknown`.                                                                                    |
-| `resourceEntry(resource)`               | Unwraps a single `ProviderResource`'s `toJson()` keyed output `{ [logicalId]: {...} }` to `{ type, properties }`. For unit test assertions.   |
-| `resourceValues(json)`                  | Extracts all resource entries from a full keyed stack JSON object. For assertions over a whole stack's synthesized output.                    |
-| `synthSnapshot(app, stackId, cleanup?)` | Synthesizes the app, reads the stack JSON file by `stackId`, and returns it. Cleans up `outdir` by default. For snapshot testing full stacks. |
+| Method                                  | Description                                                                                                                                                                           |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tmpDir()`                              | Creates a unique OS temp dir (`mkdtempSync`, prefix `cdkx-integration-`). Use when you need a clean isolated outdir per test.                                                         |
+| `readJson(filePath)`                    | Reads and parses a JSON file from disk. Returns `unknown`.                                                                                                                            |
+| `resourceEntry(resource)`               | Calls `resource.toJson()` and unwraps the single keyed entry. Returns `{ type, properties, metadata }`. For unit test assertions on individual constructs (no file I/O).              |
+| `resourceValues(json)`                  | Extracts all resource entries from a full keyed stack JSON object. Returns `Array<{ type, properties, metadata }>`. For assertions over a whole stack's synthesized output.           |
+| `synthSnapshot(app, stackId, cleanup?)` | Synthesizes the app, reads the stack JSON file by `stackId`, and returns it as a plain object. Cleans up `outdir` by default (`cleanup = true`). Use for snapshot or assertion tests. |
+
+**`toJson()` output shape** (what `resourceEntry` unwraps):
+
+```json
+{
+  "MyStackMyResourceA1B2C3D4": {
+    "type": "test::Resource",
+    "properties": { "name": "hello" },
+    "metadata": { "cdkx:path": "MyStack/MyResource" }
+  }
+}
+```
+
+`resourceEntry(resource)` returns the inner object — i.e. `{ type, properties, metadata }`.
+`metadata['cdkx:path']` is the construct node path and is useful for asserting
+that the logical ID maps to the correct construct location.
 
 **`resourceEntry` vs `resourceValues`:**
 
-- `resourceEntry(resource)` — operates on a single `ProviderResource` instance;
-  unwraps its `toJson()` output. Use in unit tests for individual constructs.
-- `resourceValues(json)` — operates on a full stack JSON object (already read
-  from disk or produced by `synthSnapshot`). Use in integration tests.
+- `resourceEntry(resource)` — operates on a single `ProviderResource` **instance**;
+  calls `toJson()` directly. No file I/O. Use in unit tests.
+- `resourceValues(json)` — operates on a **full stack JSON object** (already
+  read from disk or returned by `synthSnapshot`). Use in integration tests.
 
 ---
 
 ## Coding conventions
 
-Identical to `@cdk-x/core`. Key points:
-
-| Rule           | Detail                                                                             |
-| -------------- | ---------------------------------------------------------------------------------- |
-| Everything OOP | No standalone `export function`. All utilities are static methods on classes.      |
-| No `any`       | Use `unknown` everywhere.                                                          |
-| ESM imports    | All local imports use `.js` extension even though source is `.ts`.                 |
-| Prettier       | Run `yarn nx run @cdk-x/testing:format` after writing or modifying any `.ts` file. |
+See `packages/core/CONTEXT.md` for the authoritative coding conventions — this
+package follows them identically.
 
 ---
 
@@ -171,6 +302,8 @@ Identical to `@cdk-x/core`. Key points:
 ```
 packages/testing/
 ├── package.json                   name: @cdk-x/testing, type: module
+│                                  peerDependencies: @cdk-x/core, tslib
+│                                  devDependencies: @cdk-x/core
 ├── project.json                   Nx project configuration
 ├── CONTEXT.md                     ← this file
 └── src/
@@ -178,16 +311,8 @@ packages/testing/
     └── lib/
         ├── index.ts               lib barrel
         ├── synth-helpers.ts       SynthHelpers — tmpDir, readJson, resourceEntry, resourceValues, synthSnapshot
-        ├── test-app.ts            TestApp
-        ├── test-stack.ts          TestStack
+        ├── test-app.ts            TestApp — default() factory, extensible for custom AppProps
+        ├── test-stack.ts          TestStack — default(scope, props) factory
         ├── test-provider.ts       TestProvider, SpyProvider, CustomSynthesizerProvider
         └── test-resources.ts      TestResources — resource, resourceWithNull, resourceWithLazy
 ```
-
----
-
-## Release configuration
-
-Part of the `core` release group in `nx.json`. Released in lock-step with
-`@cdk-x/core` and `@cdk-x/hetzner`. Tag pattern: `core-v{version}`. See
-`packages/core/CONTEXT.md` for full release configuration documentation.

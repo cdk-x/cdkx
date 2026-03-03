@@ -17,39 +17,98 @@ construct tree.
 
 ---
 
-## Workspace setup
-
-| Property        | Value                                                       |
-| --------------- | ----------------------------------------------------------- |
-| Monorepo tool   | Nx 22                                                       |
-| Package manager | Yarn (yarn.lock at root)                                    |
-| Language        | TypeScript 5.9, strict mode, ESM (`"type": "module"`)       |
-| Build tool      | `@nx/js:tsc` — emits JS + `.d.ts` + `.d.ts.map`             |
-| Test runner     | Jest 30 + SWC (`@swc/jest`)                                 |
-| Linter          | ESLint with `@typescript-eslint`                            |
-| Formatter       | Prettier ~3.6 (`.prettierrc` at workspace root)             |
-| Node            | ESM — all local imports use `.js` extension                 |
-| Output dir      | `packages/providers/hetzner/dist/` — JS + type declarations |
-
-Run tasks via Nx:
-
-```bash
-yarn nx lint @cdk-x/hetzner
-yarn nx test @cdk-x/hetzner
-yarn nx build @cdk-x/hetzner
-yarn nx run @cdk-x/hetzner:format       # format src/ with prettier
-yarn nx run @cdk-x/hetzner:format:check # check formatting without writing
-```
+> Part of the `core` release group — lock-stepped with `@cdk-x/core`, tag `core-v{version}`.
 
 ---
 
-## Package identity
+## Codegen (`codegen` Nx target)
 
-| Field         | Value                                            |
-| ------------- | ------------------------------------------------ |
-| `name`        | `@cdk-x/hetzner`                                 |
-| `version`     | `0.0.1` (lock-stepped with `core` release group) |
-| Release group | `core` (fixed versioning, tag `core-v{version}`) |
+L1 constructs are **auto-generated** from JSON Schema files using the
+`@cdk-x/spec-to-cdkx` tool. The generated file is committed to the repo.
+
+```bash
+yarn nx run @cdk-x/hetzner:codegen
+```
+
+This runs:
+
+```
+spec-to-cdkx generate \
+  --prefix Htz \
+  --provider-name Hetzner \
+  --resource-type-const HetznerResourceType
+```
+
+from the project root (`packages/providers/hetzner/`), using the `spec-to-cdkx`
+binary installed as a `devDependency` (`@cdk-x/spec-to-cdkx: "*"` in
+`package.json`). Reading schemas from
+`schemas/v1/` and writing to `src/lib/resources.generated.ts`.
+
+**When to re-run codegen:** whenever any `schemas/v1/*.schema.json` file is added,
+modified, or removed.
+
+**`resources.generated.ts`** is the single output file. It is exported from
+`src/index.ts` via `export * from './lib/resources.generated.js'`.
+
+**`codegen` depends on `spec-to-cdkx:build`** — the tool is always rebuilt before
+running codegen, so the dist bundle is always fresh.
+
+---
+
+## Generated L1 constructs
+
+Each schema produces:
+
+- A `{ProviderName}{Resource}` props interface (e.g. `HetznerNetwork`)
+  - Required props (from `required: [...]` in the schema) are emitted without `?`
+- An `{Prefix}{Resource}` L1 class extending `ProviderResource` (e.g. `HtzNetwork`)
+  - Public mutable members for each writable prop (e.g. `public name: string`)
+  - Required props are non-optional class members; optional props use `?`
+  - Constructor calls `super(scope, id, { type: ... })` — no `properties` arg
+  - Constructor omits `= {}` default when any props are required
+  - Overrides `protected renderProperties()` to return props from its own members
+- Nested interfaces and enums defined in the schema's `definitions` block
+- An `attr*: IResolvable` member per `readOnlyProperty` (e.g. `attrNetworkId`)
+
+Example generated L1 class shape:
+
+```ts
+export class HtzCertificate extends ProviderResource {
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Security::Certificate';
+
+  public readonly attrCertificateId: IResolvable;
+
+  public name: string; // required (no ?)
+  public labels?: Record<string, string>;
+  public resourceType?: CertificateType; // 'type' renamed — clashes with base class
+
+  constructor(scope: Construct, id: string, props: HetznerCertificate) {
+    super(scope, id, { type: HtzCertificate.RESOURCE_TYPE_NAME });
+    this.node.defaultChild = this;
+    this.attrCertificateId = this.getAtt('certificateId');
+    this.name = props.name;
+    this.labels = props.labels;
+    this.resourceType = props.type;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      name: this.name,
+      labels: this.labels,
+      type: this.resourceType,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+```
+
+The `HetznerResourceType` const groups all type strings by domain:
+
+```ts
+HetznerResourceType.Networking.Network; // 'Hetzner::Networking::Network'
+HetznerResourceType.Compute.Server; // 'Hetzner::Compute::Server'
+```
+
+See `@cdk-x/spec-to-cdkx/CONTEXT.md` for the full code generation design.
 
 ---
 
@@ -108,19 +167,103 @@ Shared definitions referenced by other schemas via `$ref: "./common.schema.json#
 | `NetworkZone` | string | Enum: `eu-central`, `us-east`, `us-west`, `ap-southeast` |
 | `Location`    | string | Enum: `fsn1`, `nbg1`, `hel1`, `ash`, `hil`, `sin`        |
 
+### Cross-file `$ref` rule
+
+When a schema needs to reference a type from another schema, use a cross-file ref:
+
+```json
+{ "$ref": "./common.schema.json#/definitions/NetworkZone" }
+```
+
+The `spec-to-cdkx` tool handles cross-file refs differently depending on the kind
+of definition they point to:
+
+- **Named types** (enums like `NetworkZone`/`Location`, objects with `properties`)
+  are emitted as named TypeScript types. The type is collected into a shared
+  "Common" section in `resources.generated.ts` and emitted exactly once —
+  properties reference it by name (e.g. `networkZone?: NetworkZone`).
+- **Structural types** (e.g. `Labels` with `additionalProperties`) are inlined
+  at the usage site — `TypeMapper` maps them directly to `Record<string, string>`
+  etc., and no named type is emitted.
+
+**Do NOT reference definitions from other resource schemas** (e.g. avoid
+`"$ref": "./network.schema.json#/definitions/SomeType"`). If a type is needed only
+in one resource's schema, define it locally in `definitions`. If it is shared, move
+it to `common.schema.json`.
+
+---
+
+## `HetznerProvider` (`src/lib/provider/provider.ts`)
+
+The provider class wires `@cdk-x/hetzner` into the cdkx construct tree.
+
+```ts
+import { Provider } from '@cdk-x/core';
+
+export class HetznerProvider extends Provider {
+  readonly identifier = 'hetzner';
+}
+```
+
+- Extends `Provider` from `@cdk-x/core`.
+- `identifier = 'hetzner'` — written to `manifest.json` as the `provider` field
+  for each stack artifact.
+- `getResolvers()`, `getSynthesizer()`, and `getEnvironment()` all inherit the
+  base defaults (no custom resolvers, `JsonSynthesizer`, empty environment).
+- Exported from `src/lib/provider/index.ts` and re-exported from `src/index.ts`.
+
+---
+
+## Tests
+
+### Integration test: network topology (`test/integration/network-topology.spec.ts`)
+
+Exercises a realistic Hetzner network topology: 1 `HtzNetwork` + 2 `HtzSubnet`s +
+2 `HtzRoute`s + 1 `HtzLoadBalancer` = **6 resources** in a single stack.
+
+**Permanent output:** `packages/providers/hetzner/cdkx.out/` — files are written
+by the test and **not cleaned up**, so they can be inspected after the test run.
+
+**Run:** `yarn nx test @cdk-x/hetzner`
+
+**Dependencies:** `@cdk-x/testing` (added as `devDependency` in `package.json`).
+
+**Describe groups (36 tests total):**
+
+| Group              | Tests |
+| ------------------ | ----- |
+| file system        | 2     |
+| manifest           | 5     |
+| snapshot           | 1     |
+| resource count     | 1     |
+| HtzNetwork         | 5     |
+| HtzSubnet (web)    | 5     |
+| HtzSubnet (app)    | 2     |
+| HtzRoute (default) | 4     |
+| HtzRoute (mgmt)    | 3     |
+| HtzLoadBalancer    | 8     |
+
+**Snapshot:** `test/integration/__snapshots__/network-topology.spec.ts.snap` —
+written on first run; update with `--updateSnapshot` if resources change.
+
+**Key assertions per resource:**
+
+- Correct `type` string (e.g. `Hetzner::Networking::Network`)
+- Cross-reference tokens `{ ref: logicalId, attr: 'networkId' }` for all
+  `networkId` props that reference the parent `HtzNetwork`
+- Optional props that are `undefined` are stripped from the output (not present)
+- `metadata['cdkx:path']` reflects the construct node path
+
 ---
 
 ## Coding conventions
 
-Identical to `@cdk-x/core`. Key points:
+See `packages/core/CONTEXT.md` for the authoritative coding conventions. One
+addition specific to this package:
 
-| Rule             | Detail                                                                  |
-| ---------------- | ----------------------------------------------------------------------- |
-| Everything OOP   | No standalone `export function`. All utilities are static methods.      |
-| No `any`         | Use `unknown` everywhere.                                               |
-| ESM imports      | All local imports use `.js` extension even though source is `.ts`.      |
-| Prettier         | Run `yarn nx run @cdk-x/hetzner:format` after modifying any `.ts` file. |
-| Specs co-located | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                           |
+| Rule             | Detail                                        |
+| ---------------- | --------------------------------------------- |
+| Specs co-located | `foo/foo.spec.ts` lives next to `foo/foo.ts`. |
 
 ---
 
@@ -129,7 +272,9 @@ Identical to `@cdk-x/core`. Key points:
 ```
 packages/providers/hetzner/
 ├── package.json                        name: @cdk-x/hetzner, type: module
-├── project.json                        Nx project config
+│                                       dependencies: @cdk-x/core, constructs, tslib
+│                                       devDependencies: @cdk-x/spec-to-cdkx, @cdk-x/testing
+├── project.json                        Nx project config (includes codegen target)
 ├── tsconfig.json
 ├── tsconfig.lib.json
 ├── tsconfig.spec.json
@@ -153,14 +298,25 @@ packages/providers/hetzner/
 │       ├── certificate.schema.json     Hetzner::Security::Certificate
 │       ├── firewall.schema.json        Hetzner::Security::Firewall
 │       └── ssh-key.schema.json         Hetzner::Security::SshKey
-└── src/
-    └── index.ts                        public barrel (empty — L1s not yet implemented)
+├── src/
+│   ├── index.ts                        public barrel — exports provider + resources.generated.js
+│   └── lib/
+│       ├── provider/
+│       │   ├── provider.ts             HetznerProvider class
+│       │   └── index.ts                barrel
+│       └── resources.generated.ts     AUTO-GENERATED — do not edit manually
+│                                       regenerate with: yarn nx run @cdk-x/hetzner:codegen
+└── test/
+    └── integration/
+        ├── network-topology.spec.ts    36-test integration test (network topology)
+        └── __snapshots__/
+            └── network-topology.spec.ts.snap  Jest snapshot (written on first run)
 ```
 
----
+Also written by tests (gitignored):
 
-## Release configuration
-
-Part of the `core` release group in `nx.json`. Released in lock-step with
-`@cdk-x/core`. Tag pattern: `core-v{version}`. See
-`packages/core/CONTEXT.md` for full release configuration documentation.
+```
+packages/providers/hetzner/cdkx.out/
+├── manifest.json                       cloud assembly manifest
+└── HetznerNetworkStack.json            synthesized stack template
+```

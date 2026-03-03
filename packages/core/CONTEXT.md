@@ -146,22 +146,40 @@ Credentials must **never** appear in `getEnvironment()` output.
 
 L1 construct (extends `constructs.Construct`).
 
-| Member                                       | Description                                                            |
-| -------------------------------------------- | ---------------------------------------------------------------------- |
-| `static isProviderResource(x)`               | Type guard — checks for `RESOURCE_SYMBOL` on object                    |
-| `resourceOptions: IProviderResourceOptions`  | Condition, policies, metadata                                          |
-| `type: string`                               | Resource type identifier (e.g. `'Deployment'`, `'server'`)             |
-| `properties?: Record<string, PropertyValue>` | Raw pre-resolution properties                                          |
-| `addDependency(resource)`                    | Explicit dependency edge                                               |
-| `applyRemovalPolicy(policy, options?)`       | Maps `RemovalPolicy` → `ProviderDeletionPolicy`                        |
-| `toJson()`                                   | Resolves + sanitizes properties; returns `{ type, properties: {...} }` |
+| Member                                      | Description                                                                                                                        |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `static isProviderResource(x)`              | Type guard — checks for `RESOURCE_SYMBOL` on object                                                                                |
+| `resourceOptions: IProviderResourceOptions` | Condition, policies, metadata                                                                                                      |
+| `logicalId: string`                         | Stable logical ID derived from node path (human prefix + 8-char SHA-256 hash)                                                      |
+| `type: string`                              | Resource type identifier (e.g. `'Deployment'`, `'server'`)                                                                         |
+| `protected readonly properties?`            | Raw pre-resolution properties (used by base `renderProperties()` impl)                                                             |
+| `getAtt(attr)`                              | Returns `IResolvable` resolving to `{ ref: logicalId, attr }` for cross-resource references                                        |
+| `protected renderProperties()`              | **Virtual.** Returns the properties object used during synthesis. Base impl: `this.properties ?? {}`. Generated L1s override this. |
+| `addDependency(resource)`                   | Explicit dependency edge                                                                                                           |
+| `applyRemovalPolicy(policy, options?)`      | Maps `RemovalPolicy` → `ProviderDeletionPolicy`                                                                                    |
+| `toJson()`                                  | Calls `this.renderProperties()`, resolves + sanitizes; returns `{ type, properties: {...} }`                                       |
+
+**`renderProperties()` virtual method:**
+
+The base implementation returns `this.properties ?? {}`. L1 subclasses generated
+by `spec-to-cdkx` **override** this method to build the properties object from
+their own public mutable members (following the AWS CDK `CfnResource.cfnProperties`
+pattern). This means mutations to public L1 members after construction are correctly
+reflected at synthesis time — `toJson()` calls `this.renderProperties()` via virtual
+dispatch, so no re-construction is needed.
+
+Custom L1 classes that want mutable props should override `renderProperties()` rather
+than passing `properties` to the constructor.
 
 **`toJson()` output shape:**
 
 ```json
 {
-  "type": "Deployment",
-  "properties": { "replicas": 3, "name": "web" }
+  "MyStackWebServer3A1B2C3D": {
+    "type": "hetzner::Server",
+    "properties": { "name": "web", "serverType": "cx21" },
+    "metadata": { "cdkx:path": "MyStack/WebServer/Resource" }
+  }
 }
 ```
 
