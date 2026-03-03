@@ -95,7 +95,7 @@
         }
       },
       "tools": {
-        "projects": ["spec-to-cdkx"],
+        "projects": ["@cdk-x/spec-to-cdkx"],
         "projectsRelationship": "fixed",
         "releaseTag": {
           "pattern": "tools-v{version}"

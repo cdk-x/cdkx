@@ -37,7 +37,7 @@
       },
       "dependsOn": [
         {
-          "projects": ["spec-to-cdkx"],
+          "projects": ["@cdk-x/spec-to-cdkx"],
           "target": "build"
         }
       ]
