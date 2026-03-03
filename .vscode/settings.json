@@ -1,5 +1,12 @@
 {
-  "conventionalCommits.scopes": ["core", "cli", "engine", "testing", "hetzner"],
+  "conventionalCommits.scopes": [
+    "core",
+    "cli",
+    "engine",
+    "testing",
+    "hetzner",
+    "spec-to-cdkx"
+  ],
   "editor.formatOnSave": true,
   "editor.indentSize": 2,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
