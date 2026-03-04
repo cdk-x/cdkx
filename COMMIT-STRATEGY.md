@@ -1,18 +1,18 @@
 # cdkx Monorepo — Development Context
 
-Context transversal del monorepo cdkx. Este archivo se auto-carga en todas
-las sesiones de OpenCode desde la raíz del workspace.
+Transversal context for the cdkx monorepo. This file is auto-loaded in every
+OpenCode session from the workspace root.
 
-> **Maintenance rule:** actualiza este archivo cuando cambien convenciones
-> globales del monorepo (commits, releases, estructura de packages, etc.).
+> **Maintenance rule:** update this file whenever global monorepo conventions
+> change (commits, releases, package structure, etc.).
 
 ---
 
 ## Git Commit Conventions
 
-### Formato — Conventional Commits
+### Format — Conventional Commits
 
-Usamos [Conventional Commits](https://www.conventionalcommits.org/):
+We use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>(<scope>): <subject>
@@ -22,8 +22,8 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/):
 
 ### Scopes
 
-El scope es **siempre un único package** (sin el prefijo `@cdk-x/`).
-**Nunca mezcles más de un scope en el mismo commit.**
+The scope is **always a single package** (without the `@cdk-x/` prefix).
+**Never mix more than one scope in the same commit.**
 
 | Scope     | Package                  |
 | --------- | ------------------------ |
@@ -31,82 +31,82 @@ El scope es **siempre un único package** (sin el prefijo `@cdk-x/`).
 | `cli`     | `@cdk-x/cli`             |
 | `testing` | `@cdk-x/testing`         |
 | `hetzner` | `@cdk-x/hetzner`         |
-| `engine`  | `@cdk-x/engine` (futuro) |
+| `engine`  | `@cdk-x/engine` (future) |
 
-Si los cambios afectan a múltiples packages → **un commit por scope**.
+If changes affect multiple packages → **one commit per scope**.
 
 ### Types
 
-| Type       | Cuándo usarlo                                                   |
-| ---------- | --------------------------------------------------------------- |
-| `feat`     | Nueva funcionalidad                                             |
-| `fix`      | Corrección de bugs                                              |
-| `docs`     | Solo cambios en documentación (CONTEXT.md, README, JSDoc)       |
-| `style`    | Cambios de formato (prettier, whitespace) sin afectar la lógica |
-| `refactor` | Cambios de código que no añaden features ni arreglan bugs       |
-| `test`     | Añadir o modificar tests (specs, snapshots)                     |
-| `chore`    | Build, configs, dependencias, CI, nx.json, etc.                 |
+| Type       | When to use                                                       |
+| ---------- | ----------------------------------------------------------------- |
+| `feat`     | New functionality                                                 |
+| `fix`      | Bug fixes                                                         |
+| `docs`     | Documentation-only changes (CONTEXT.md, README, JSDoc)            |
+| `style`    | Formatting changes (prettier, whitespace) without affecting logic |
+| `refactor` | Code changes that neither add features nor fix bugs               |
+| `test`     | Adding or modifying tests (specs, snapshots)                      |
+| `chore`    | Build, configs, dependencies, CI, nx.json, etc.                   |
 
 ### Subject
 
-- **Máximo 72 caracteres**
-- **Minúsculas**, sin punto final
-- Usa **imperativo** ("add", no "added" ni "adds")
-- Sé específico pero conciso
+- **Maximum 72 characters**
+- **Lowercase**, no trailing period
+- Use the **imperative** ("add", not "added" or "adds")
+- Be specific but concise
 
-### Body (opcional)
+### Body (optional)
 
-- Explica **qué** y **por qué**, no el cómo
-- Usa viñetas (`-`) para listar cambios múltiples
-- Deja una línea en blanco entre subject y body
+- Explain **what** and **why**, not how
+- Use bullet points (`-`) to list multiple changes
+- Leave a blank line between subject and body
 
-### Commits pequeños y atómicos
+### Small, atomic commits
 
-**CRÍTICO:** Cada commit debe representar **un único cambio lógico**.
+**CRITICAL:** Each commit must represent **a single logical change**.
 
-- PRs más fáciles de revisar
-- Git history más legible y trazable
-- Rollbacks quirúrgicos si algo falla
-- `git bisect` más efectivo para encontrar bugs
-- Semantic release y changelogs más precisos
+- PRs are easier to review
+- Git history is more readable and traceable
+- Surgical rollbacks if something breaks
+- More effective `git bisect` for finding bugs
+- More precise semantic releases and changelogs
 
-**Regla de oro:** si usas "y" en el subject, probablemente necesitas 2 commits.
+**Golden rule:** if you use "and" in the subject, you probably need 2 commits.
 
 ---
 
-## Workflow para analizar y commitear cambios
+## Workflow for analysing and committing changes
 
-### 1. Analizar el alcance
+### 1. Analyse the scope
 
 ```bash
-git status          # archivos modificados
-git diff --stat     # resumen
-git diff            # diff completo
+git status          # modified files
+git diff --stat     # summary
+git diff            # full diff
 ```
 
-### 2. Agrupar cambios
+### 2. Group changes
 
-Agrupa por **scope** (package afectado), luego sub-agrupa por **tipo y
-funcionalidad**:
+Group by **scope** (affected package), then sub-group by **type and
+functionality**:
 
 ```
 Scope: core
-  ├─ fix:  PropertyValue ahora incluye IResolvable
-  └─ docs: documentar implicit dependency resolution
+  ├─ fix:  PropertyValue now includes IResolvable
+  └─ docs: document implicit dependency resolution
 
 Scope: hetzner
-  ├─ feat: networkId getter en NtvHetznerNetwork
-  ├─ feat: subnetId getter en NtvHetznerSubnet
+  ├─ feat: networkId getter on NtvHetznerNetwork
+  ├─ feat: subnetId getter on NtvHetznerSubnet
   ├─ test: cross-resource reference tests
-  └─ docs: documentar cross-resource reference pattern
+  └─ docs: document cross-resource reference pattern
 ```
 
-### 3. Proponer el plan al usuario
+### 3. Propose the plan to the user
 
-**Antes de hacer cualquier commit**, presenta la lista ordenada:
+**Before making any commit**, present the ordered list:
 
 ```
-Propongo dividir los cambios en N commits:
+I propose splitting the changes into N commits:
 
 1. fix(core): include IResolvable in PropertyValue type
    git add packages/core/src/lib/constants.ts
@@ -119,13 +119,13 @@ Propongo dividir los cambios en N commits:
 
 ...
 
-¿Te parece correcto?
+Does this look right?
 ```
 
-### 4. Ejecutar los commits
+### 4. Execute the commits
 
-Usa `git add` **archivo por archivo** — **nunca `git add .` ni `git add -A`**
-cuando hay cambios de múltiples scopes o funcionalidades.
+Use `git add` **file by file** — **never `git add .` or `git add -A`**
+when there are changes across multiple scopes or functionalities.
 
 ```bash
 # Commit 1
@@ -139,34 +139,34 @@ git commit -m "feat(hetzner): add networkId attribute getter to NtvHetznerNetwor
 # etc.
 ```
 
-Usa `git add -p` (patch mode) solo si un mismo archivo contiene cambios de
-distinta naturaleza que deben ir en commits separados.
+Use `git add -p` (patch mode) only when a single file contains changes of
+different nature that must go into separate commits.
 
-### 5. Verificar tras cada commit
+### 5. Verify after each commit
 
 ```bash
-git log -1 --stat   # verificar el commit
-git status          # ver qué queda por commitear
+git log -1 --stat   # verify the commit
+git status          # see what is left to commit
 ```
 
 ---
 
-## Casos especiales
+## Special cases
 
-### Formatting automático (prettier)
+### Automatic formatting (prettier)
 
-Si prettier reformatea archivos al guardar, mezclando formato con lógica:
+If prettier reformats files on save, mixing formatting with logic:
 
-1. **Commit 1:** los cambios de lógica (`git add -p` si hace falta)
+1. **Commit 1:** the logic changes (`git add -p` if needed)
 2. **Commit 2:** `style(<scope>): format with prettier`
 
-Buena práctica: corre `yarn nx run <scope>:format` **antes** de escribir
-código para separar el ruido de formato del cambio real.
+Best practice: run `yarn nx run <scope>:format` **before** writing code to
+separate formatting noise from the actual change.
 
-### Refactor que toca múltiples archivos del mismo scope
+### Refactor touching multiple files in the same scope
 
-Si un refactor toca N archivos pero es **una sola operación lógica**
-(e.g. renombrar una clase y actualizar todos sus imports), es **un solo commit**:
+If a refactor touches N files but is **a single logical operation**
+(e.g. renaming a class and updating all its imports), it is **one commit**:
 
 ```bash
 git add packages/core/src/lib/foo.ts
@@ -175,38 +175,38 @@ git add packages/core/src/lib/baz.ts
 git commit -m "refactor(core): rename Foo to Bar"
 ```
 
-### Feat + test + docs (mismo scope)
+### Feat + test + docs (same scope)
 
-Son **tres commits separados**, en este orden:
+These are **three separate commits**, in this order:
 
 ```bash
-# 1. La feature
+# 1. The feature
 git add packages/hetzner/src/lib/networking/ntv-hetzner-subnet.ts
 git commit -m "feat(hetzner): add subnetId getter to NtvHetznerSubnet"
 
-# 2. Los tests
+# 2. The tests
 git add packages/hetzner/src/lib/networking/ntv-hetzner-subnet.spec.ts
 git add packages/hetzner/src/lib/networking/__snapshots__/ntv-hetzner-subnet.spec.ts.snap
 git commit -m "test(hetzner): add cross-resource reference tests for subnet"
 
-# 3. La doc
+# 3. The docs
 git add packages/hetzner/CONTEXT.md
 git commit -m "docs(hetzner): document cross-resource reference pattern"
 ```
 
 ---
 
-## Ejemplos de commits bien formados
+## Well-formed commit examples
 
 ```bash
-# Fix con body explicativo
+# Fix with explanatory body
 git commit -m "fix(core): include IResolvable in PropertyValue type
 
 PropertyValue now accepts IResolvable tokens (Lazy, ResourceAttribute, etc.)
 that are resolved by the ResolverPipeline at synthesis time. Fixes type errors
 when passing attribute getters as resource props."
 
-# Feature simple
+# Simple feature
 git commit -m "feat(hetzner): add networkId attribute getter to NtvHetznerNetwork"
 
 # Docs
@@ -220,12 +220,12 @@ git commit -m "chore(hetzner): configure jest in verbose mode"
 
 ## Release configuration
 
-Ver `packages/core/CONTEXT.md` para detalles de `nx release` y release groups.
+See `packages/core/CONTEXT.md` for details on `nx release` and release groups.
 
 ## Package context files
 
-Cada package tiene su propio `CONTEXT.md` con arquitectura, convenciones de
-código, y decisiones de diseño:
+Each package has its own `CONTEXT.md` with architecture, coding conventions,
+and design decisions:
 
 - `packages/core/CONTEXT.md`
 - `packages/cli/CONTEXT.md`
