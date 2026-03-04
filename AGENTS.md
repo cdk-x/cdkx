@@ -26,3 +26,4 @@
 
 - **Commits are never made automatically.** Do not include commit steps in plans or task lists. Only create a commit when the user explicitly asks for it.
 - **Format + test before committing.** When the user asks to commit, run the formatter and tests first (unless already done in the same session step).
+- **English only.** All documentation (markdown files), JSDoc comments, and inline code comments must be written in English.
