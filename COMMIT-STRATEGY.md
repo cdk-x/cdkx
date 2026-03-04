@@ -22,30 +22,33 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ### Scopes
 
-The scope is **always a single package** (without the `@cdk-x/` prefix).
+The scope is **always required** — every commit must have one.
 **Never mix more than one scope in the same commit.**
 
-| Scope     | Package                  |
-| --------- | ------------------------ |
-| `core`    | `@cdk-x/core`            |
-| `cli`     | `@cdk-x/cli`             |
-| `testing` | `@cdk-x/testing`         |
-| `hetzner` | `@cdk-x/hetzner`         |
-| `engine`  | `@cdk-x/engine` (future) |
+| Scope     | When to use                                                                                                                 |
+| --------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `cdkx`    | Repo-level changes not tied to a specific package (root configs, `nx.json`, `.github/`, `opencode.json`, `AGENTS.md`, etc.) |
+| `core`    | `@cdk-x/core`                                                                                                               |
+| `cli`     | `@cdk-x/cli`                                                                                                                |
+| `testing` | `@cdk-x/testing`                                                                                                            |
+| `hetzner` | `@cdk-x/hetzner`                                                                                                            |
+| `engine`  | `@cdk-x/engine` (future)                                                                                                    |
 
 If changes affect multiple packages → **one commit per scope**.
 
 ### Types
 
-| Type       | When to use                                                       |
-| ---------- | ----------------------------------------------------------------- |
-| `feat`     | New functionality                                                 |
-| `fix`      | Bug fixes                                                         |
-| `docs`     | Documentation-only changes (CONTEXT.md, README, JSDoc)            |
-| `style`    | Formatting changes (prettier, whitespace) without affecting logic |
-| `refactor` | Code changes that neither add features nor fix bugs               |
-| `test`     | Adding or modifying tests (specs, snapshots)                      |
-| `chore`    | Build, configs, dependencies, CI, nx.json, etc.                   |
+| Type       | When to use                                                        |
+| ---------- | ------------------------------------------------------------------ |
+| `feat`     | New functionality                                                  |
+| `fix`      | Bug fixes                                                          |
+| `docs`     | Documentation-only changes (CONTEXT.md, README, JSDoc)             |
+| `style`    | Formatting changes (prettier, whitespace) without affecting logic  |
+| `refactor` | Code changes that neither add features nor fix bugs                |
+| `test`     | Adding or modifying tests (specs, snapshots)                       |
+| `chore`    | Build, configs, dependencies, nx.json, etc.                        |
+| `ci`       | CI/CD pipeline changes (GitHub Actions, workflows, Nx Cloud, etc.) |
+| `wip`      | Work in progress — temporary commits not intended for release      |
 
 ### Subject
 
