@@ -118,9 +118,11 @@ beforeAll(() => {
 
   app.synth();
 
-  stackOut = SynthHelpers.readJson(
-    path.join(OUTDIR, 'HetznerNetworkStack.json'),
-  ) as StackOutput;
+  stackOut = (
+    SynthHelpers.readJson(path.join(OUTDIR, 'HetznerNetworkStack.json')) as {
+      resources: StackOutput;
+    }
+  ).resources;
 });
 
 // ---------------------------------------------------------------------------

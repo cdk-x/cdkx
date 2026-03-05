@@ -14,6 +14,9 @@ export * from './lib/assembly';
 // Synthesizer: ISynthesisSession, IStackSynthesizer, JsonSynthesizer
 export * from './lib/synthesizer';
 
+// Stack outputs: StackOutput construct for cross-stack data sharing
+export * from './lib/stack-output';
+
 // Stack: deployment unit targeting a single provider
 export * from './lib/stack';
 

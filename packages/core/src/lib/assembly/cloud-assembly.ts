@@ -48,6 +48,14 @@ export interface StackArtifact {
 
   /** Human-readable display name. Typically the construct node path. */
   readonly displayName?: string;
+
+  /**
+   * Keys of all outputs declared in this stack.
+   * Listed here so the engine can discover cross-stack dependencies by reading
+   * `manifest.json` alone, without parsing each stack template file.
+   * Actual resolved values are written to the stack template under `"outputs"`.
+   */
+  readonly outputKeys?: string[];
 }
 
 /**
@@ -83,6 +91,13 @@ export interface AddArtifactOptions {
 
   /** Human-readable display name. */
   readonly displayName?: string;
+
+  /**
+   * Keys of all outputs declared in this stack (optional).
+   * When present, the engine can resolve cross-stack output dependencies
+   * from the manifest without reading the full stack template.
+   */
+  readonly outputKeys?: string[];
 }
 
 /**
@@ -131,6 +146,9 @@ export class CloudAssemblyBuilder {
       properties: { templateFile: options.templateFile },
       ...(options.displayName !== undefined
         ? { displayName: options.displayName }
+        : {}),
+      ...(options.outputKeys !== undefined && options.outputKeys.length > 0
+        ? { outputKeys: options.outputKeys }
         : {}),
     };
     this.artifacts[options.id] = artifact;
