@@ -114,6 +114,8 @@ Deployment unit (extends `constructs.Construct`, implements `IStackRef`).
 | `environment: Record<string, unknown>` | Delegates to `provider.getEnvironment()` (for `IStackRef`)                                |
 | `displayName: string`                  | Returns `stackName` — used as `displayName` in `manifest.json`                            |
 | `getProviderResources()`               | Returns all `ProviderResource` descendants                                                |
+| `getOutputs()`                         | Returns all `StackOutput` descendants (used by synthesizer to write `"outputs"` section)  |
+| `resolveOutputValue(value)`            | Resolves a value through this stack's pipeline — used by synthesizer for output tokens    |
 
 **`StackProps.provider`** is required. The synthesizer defaults to
 `provider.getSynthesizer()` but can be overridden via `StackProps.synthesizer`.
@@ -246,14 +248,47 @@ typed property without casting at the call site. The `// eslint-disable-next-lin
 
 ### `JsonSynthesizer` (`src/lib/synthesizer/synthesizer.ts`)
 
-Default synthesizer. Produces a JSON file keyed by logical ID (one key per resource).
+Default synthesizer. Produces a JSON file with a `resources` key (and optional
+`outputs` key) keyed by logical ID.
 
 Output file name: `<stack.artifactId>.json`
 
-`IStackRef` interface (not the concrete `Stack` class) is used as the
+**Output shape:**
+
+```json
+{
+  "resources": {
+    "MyStackWebServer3A1B2C3D": {
+      "type": "hetzner::Server",
+      "properties": { "name": "web", "serverType": "cx21" },
+      "metadata": { "cdkx:path": "MyStack/WebServer/Resource" }
+    }
+  },
+  "outputs": {
+    "ServerId": {
+      "value": "resolved-value-or-token",
+      "description": "The server ID"
+    }
+  }
+}
+```
+
+The `"outputs"` key is **omitted** when the stack declares no `StackOutput` constructs.
+Output values are resolved through the stack's resolver pipeline at synthesis time.
+
+**`IStackRef`** interface (not the concrete `Stack` class) is used as the
 synthesizer's stack reference to avoid a circular dependency between
-`synthesizer.ts` and `stack.ts`. `IStackRef` exposes `environment` (from
-`provider.getEnvironment()`) which the synthesizer passes to `addArtifact()`.
+`synthesizer.ts` and `stack.ts`. It exposes:
+
+| Member                      | Description                                                     |
+| --------------------------- | --------------------------------------------------------------- |
+| `artifactId`                | Used as the output file name (without extension)                |
+| `providerIdentifier`        | Written to the manifest                                         |
+| `environment`               | From `Provider.getEnvironment()` — passed to `addArtifact()`    |
+| `displayName`               | Human-readable name for the manifest                            |
+| `getProviderResources()`    | Returns all `ProviderResource` descendants                      |
+| `getOutputs()`              | Returns all `StackOutput` descendants                           |
+| `resolveOutputValue(value)` | Resolves an output token through this stack's resolver pipeline |
 
 Custom synthesizers (e.g. `YamlSynthesizer` for Kubernetes) override
 `Provider.getSynthesizer()` and can extend `JsonSynthesizer` or implement
@@ -280,7 +315,8 @@ Custom synthesizers (e.g. `YamlSynthesizer` for Kubernetes) override
       "provider": "hetzner",
       "environment": { "project": "my-project", "datacenter": "nbg1" },
       "properties": { "templateFile": "HetznerStack.json" },
-      "displayName": "HetznerStack"
+      "displayName": "HetznerStack",
+      "outputKeys": ["ServerId", "NetworkId"]
     },
     "KubernetesStack": {
       "type": "cdkx:stack",
@@ -300,6 +336,9 @@ Custom synthesizers (e.g. `YamlSynthesizer` for Kubernetes) override
 - `environment` comes from `Provider.getEnvironment()` — non-sensitive deployment target metadata.
 - `properties.templateFile` is the output file name for the stack template.
 - `type: 'cdkx:stack'` is the artifact type discriminator. Future types: `'cdkx:asset-manifest'`, `'cdkx:tree'`.
+- `outputKeys` — optional array of output key names declared in this stack. Listed
+  in the manifest so the engine can discover cross-stack dependencies without reading
+  each stack template file. **Omitted** when the stack declares no outputs.
 
 **`AddArtifactOptions`** — input to `addArtifact()`:
 
@@ -310,6 +349,7 @@ interface AddArtifactOptions {
   environment: Record<string, unknown>; // from Provider.getEnvironment()
   templateFile: string; // output file name
   displayName?: string;
+  outputKeys?: string[]; // output key names (omit when empty)
 }
 ```
 
@@ -344,6 +384,47 @@ Provider packages will implement their own `NtvXxx` L1 classes. Test helpers use
 
 Implements `IResolvable`. Resolves to `{ ref: logicalId, attr: attributeName }`.
 Used by L2 resources to express cross-resource references.
+
+---
+
+### `StackOutput` (`src/lib/stack-output/stack-output.ts`)
+
+A construct that declares a named output for a `Stack`. Extends `Construct`.
+The construct `id` becomes the `outputKey`.
+
+```ts
+new StackOutput(stack, 'ServerId', {
+  value: server.attrServerId, // IResolvable token
+  description: 'The Hetzner server ID',
+});
+```
+
+| Member                                   | Description                                                                |
+| ---------------------------------------- | -------------------------------------------------------------------------- |
+| `static isStackOutput(x)`                | Type guard — `instanceof` check (safe: no cross-module concerns here)      |
+| `outputKey: string`                      | Equal to the construct `id` — key in the `"outputs"` section of stack JSON |
+| `value: IResolvable \| string \| number` | The value to export. Resolved at synthesis time by the synthesizer.        |
+| `description?: string`                   | Optional human-readable description written alongside the value            |
+
+**`StackOutputProps`:**
+
+```ts
+interface StackOutputProps {
+  value: IResolvable | string | number;
+  description?: string;
+}
+```
+
+Stack outputs serve two purposes:
+
+1. Written into the synthesized stack JSON under `"outputs"` so the engine can
+   surface them after the stack is deployed.
+2. Listed in `manifest.json` as `outputKeys` so the engine can discover
+   cross-stack dependencies without reading each stack template.
+
+`Stack.getOutputs()` returns all `StackOutput` descendants. The synthesizer
+calls `stack.resolveOutputValue(output.value)` to resolve any tokens before
+writing the output entry.
 
 ---
 
@@ -625,12 +706,16 @@ packages/core/
 │       │   ├── resolver-pipeline.spec.ts
 │       │   └── index.ts
 │       ├── assembly/
-│       │   ├── cloud-assembly.ts        CloudAssembly, CloudAssemblyBuilder, StackArtifact, CloudAssemblyManifest
+│       │   ├── cloud-assembly.ts        CloudAssembly, CloudAssemblyBuilder, StackArtifact, CloudAssemblyManifest, AddArtifactOptions
 │       │   ├── cloud-assembly.spec.ts
 │       │   └── index.ts
-│       └── synthesizer/
-│           ├── synthesizer.ts           IStackSynthesizer, IStackRef, ISynthesisSession, JsonSynthesizer
-│           ├── synthesizer.spec.ts
+│       ├── synthesizer/
+│       │   ├── synthesizer.ts           IStackSynthesizer, IStackRef, ISynthesisSession, JsonSynthesizer
+│       │   ├── synthesizer.spec.ts
+│       │   └── index.ts
+│       └── stack-output/
+│           ├── stack-output.ts          StackOutput construct, StackOutputProps
+│           ├── stack-output.spec.ts     unit tests
 │           └── index.ts
 └── test/                                outside src/ — not compiled into dist/
     ├── helpers/

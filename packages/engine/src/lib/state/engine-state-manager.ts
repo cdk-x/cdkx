@@ -133,6 +133,9 @@ export class EngineStateManager {
       ...(options?.properties !== undefined && {
         properties: options.properties,
       }),
+      ...(options?.outputs !== undefined && {
+        outputs: options.outputs,
+      }),
     };
 
     this.applyResourceTransition(
