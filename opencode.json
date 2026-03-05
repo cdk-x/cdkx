@@ -1,11 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "instructions": [
-    "COMMIT-STRATEGY.md",
+    ".opencode/rules/conventions.md",
+    ".opencode/rules/architecture.md",
     "packages/core/CONTEXT.md",
     "packages/cli/CONTEXT.md",
     "packages/testing/CONTEXT.md",
-    "packages/providers/hetzner/CONTEXT.md"
+    "packages/providers/hetzner/CONTEXT.md",
+    "packages/engine/CONTEXT.md"
   ],
   "share": "disabled",
   "mcp": {
