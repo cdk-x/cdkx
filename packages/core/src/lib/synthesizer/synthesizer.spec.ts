@@ -27,6 +27,8 @@ function makeStackRef(
     environment,
     displayName: `App/${artifactId}`,
     getProviderResources: () => resources,
+    getOutputs: () => [],
+    resolveOutputValue: (value: unknown) => value,
   };
 }
 
@@ -72,24 +74,26 @@ describe('JsonSynthesizer', () => {
 
       const content = JSON.parse(
         fs.readFileSync(path.join(outdir, 'MyStack.json'), 'utf-8'),
-      ) as Record<
-        string,
-        {
-          type: string;
-          properties: Record<string, unknown>;
-          metadata: Record<string, unknown>;
-        }
-      >;
-      expect(Object.keys(content)).toHaveLength(2);
+      ) as {
+        resources: Record<
+          string,
+          {
+            type: string;
+            properties: Record<string, unknown>;
+            metadata: Record<string, unknown>;
+          }
+        >;
+      };
+      expect(Object.keys(content.resources)).toHaveLength(2);
       // Each entry is keyed by its logical ID
-      expect(content[r1.logicalId].type).toBe('test::TypeA');
-      expect(content[r1.logicalId].properties).toEqual({ name: 'a' });
-      expect(content[r2.logicalId].type).toBe('test::TypeB');
-      expect(content[r2.logicalId].properties).toEqual({ count: 2 });
+      expect(content.resources[r1.logicalId].type).toBe('test::TypeA');
+      expect(content.resources[r1.logicalId].properties).toEqual({ name: 'a' });
+      expect(content.resources[r2.logicalId].type).toBe('test::TypeB');
+      expect(content.resources[r2.logicalId].properties).toEqual({ count: 2 });
       fs.rmSync(outdir, { recursive: true });
     });
 
-    it('produces an empty object when the stack has no resources', () => {
+    it('produces an empty resources object when the stack has no resources', () => {
       const outdir = tmpDir();
       const app = makeApp(outdir);
       const stack = makeStack(app, 'EmptyStack', new TestProvider());
@@ -98,8 +102,8 @@ describe('JsonSynthesizer', () => {
 
       const content = JSON.parse(
         fs.readFileSync(path.join(outdir, 'EmptyStack.json'), 'utf-8'),
-      );
-      expect(content).toEqual({});
+      ) as Record<string, unknown>;
+      expect(content).toEqual({ resources: {} });
       fs.rmSync(outdir, { recursive: true });
     });
 

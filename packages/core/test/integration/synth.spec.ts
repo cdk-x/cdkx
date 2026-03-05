@@ -53,9 +53,9 @@ describe('Single stack — basic synthesis', () => {
 
     const content = SynthHelpers.readJson(
       path.join(outdir, 'MyStack.json'),
-    ) as Record<string, unknown>;
-    expect(Object.keys(content)).toHaveLength(1);
-    const entry = content[resource.logicalId] as {
+    ) as { resources: Record<string, unknown> };
+    expect(Object.keys(content.resources)).toHaveLength(1);
+    const entry = content.resources[resource.logicalId] as {
       type: string;
       properties: Record<string, unknown>;
     };
@@ -109,7 +109,7 @@ describe('Single stack — basic synthesis', () => {
     app.synth();
 
     const content = SynthHelpers.readJson(path.join(outdir, 'Empty.json'));
-    expect(content).toEqual({});
+    expect(content).toEqual({ resources: {} });
   });
 });
 
@@ -517,9 +517,11 @@ describe('Visual synth output', () => {
     };
 
     // ── Stack A assertions ──────────────────────────────────────────────────
-    const aOut = SynthHelpers.readJson(
-      path.join(outdir, 'StackA.json'),
-    ) as Record<string, ResourceEntry>;
+    const aOut = (
+      SynthHelpers.readJson(path.join(outdir, 'StackA.json')) as {
+        resources: Record<string, ResourceEntry>;
+      }
+    ).resources;
 
     // Source resource present, keyed by its hashed logicalId
     const sourceEntry = aOut[source.logicalId];
@@ -545,9 +547,11 @@ describe('Visual synth output', () => {
     expect(nullEntry?.properties).not.toHaveProperty('optional');
 
     // ── Stack B assertions ──────────────────────────────────────────────────
-    const bOut = SynthHelpers.readJson(
-      path.join(outdir, 'StackB.json'),
-    ) as Record<string, ResourceEntry>;
+    const bOut = (
+      SynthHelpers.readJson(path.join(outdir, 'StackB.json')) as {
+        resources: Record<string, ResourceEntry>;
+      }
+    ).resources;
 
     // Lazy value was resolved at synthesis time
     const lazyEntry = Object.values(bOut).find(

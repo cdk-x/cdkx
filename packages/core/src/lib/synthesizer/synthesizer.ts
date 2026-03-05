@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ProviderResource } from '../provider-resource/provider-resource';
 import { CloudAssemblyBuilder } from '../assembly/cloud-assembly';
+import { StackOutput } from '../stack-output/stack-output';
 
 /**
  * The session object passed to `IStackSynthesizer.synthesize()`.
@@ -61,26 +62,37 @@ export interface IStackRef {
 
   /** Returns all ProviderResource constructs in this stack. */
   getProviderResources(): ProviderResource[];
+
+  /** Returns all StackOutput constructs declared in this stack. */
+  getOutputs(): StackOutput[];
+
+  /**
+   * Resolves a single value through this stack's resolver pipeline.
+   * Used by the synthesizer to resolve output token values at synthesis time.
+   */
+  resolveOutputValue(value: unknown): unknown;
 }
 
 /**
  * Synthesizer that produces a JSON file.
  *
- * Output format — a keyed object where each key is the resource's logical ID:
+ * Output format — a keyed object with two top-level keys:
  * ```json
  * {
- *   "MyStackWebServer3A1B2C3D": {
- *     "type": "hetzner::Server",
- *     "properties": { ... },
- *     "metadata": { "cdkx:path": "MyStack/WebServer/Resource" }
+ *   "resources": {
+ *     "MyStackWebServer3A1B2C3D": {
+ *       "type": "hetzner::Server",
+ *       "properties": { ... },
+ *       "metadata": { "cdkx:path": "MyStack/WebServer/Resource" }
+ *     }
  *   },
- *   "MyStackFirewallE5F6A7B8": {
- *     "type": "hetzner::Firewall",
- *     "properties": { ... },
- *     "metadata": { "cdkx:path": "MyStack/Firewall" }
+ *   "outputs": {
+ *     "ServerId": { "value": "resolved-value-or-token", "description": "..." }
  *   }
  * }
  * ```
+ *
+ * The `"outputs"` key is omitted when the stack declares no outputs.
  */
 export class JsonSynthesizer implements IStackSynthesizer {
   protected stack!: IStackRef;
@@ -91,12 +103,33 @@ export class JsonSynthesizer implements IStackSynthesizer {
 
   public synthesize(session: ISynthesisSession): void {
     // Merge all per-resource keyed objects into a single map
-    const resourceMap = Object.assign(
+    const resources = Object.assign(
       {},
       ...this.stack.getProviderResources().map((r) => r.toJson()),
     );
+
+    // Resolve output values through the stack's resolver pipeline
+    const stackOutputs = this.stack.getOutputs();
+    const outputs: Record<string, { value: unknown; description?: string }> =
+      {};
+    for (const output of stackOutputs) {
+      const resolved = this.stack.resolveOutputValue(output.value);
+      const entry: { value: unknown; description?: string } = {
+        value: resolved,
+      };
+      if (output.description !== undefined) {
+        entry.description = output.description;
+      }
+      outputs[output.outputKey] = entry;
+    }
+
+    const templateContent: Record<string, unknown> = { resources };
+    if (stackOutputs.length > 0) {
+      templateContent['outputs'] = outputs;
+    }
+
     const fileName = `${this.stack.artifactId}.json`;
-    const content = JSON.stringify(resourceMap, null, 2);
+    const content = JSON.stringify(templateContent, null, 2);
 
     this.writeFile(session.outdir, fileName, content);
 
@@ -106,6 +139,10 @@ export class JsonSynthesizer implements IStackSynthesizer {
       environment: this.stack.environment,
       templateFile: fileName,
       displayName: this.stack.displayName,
+      outputKeys:
+        stackOutputs.length > 0
+          ? stackOutputs.map((o) => o.outputKey)
+          : undefined,
     });
   }
 

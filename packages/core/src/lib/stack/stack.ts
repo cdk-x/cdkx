@@ -2,6 +2,7 @@ import { Construct, IConstruct } from 'constructs';
 import { Provider } from '../provider/provider';
 import { IStackSynthesizer, IStackRef } from '../synthesizer/synthesizer';
 import { ProviderResource } from '../provider-resource/provider-resource';
+import { StackOutput } from '../stack-output/stack-output';
 
 export interface StackProps {
   /**
@@ -139,5 +140,33 @@ export class Stack extends Construct implements IStackRef {
       .filter((c): c is ProviderResource =>
         ProviderResource.isProviderResource(c),
       );
+  }
+
+  /**
+   * Returns all `StackOutput` constructs that are direct or indirect descendants
+   * of this stack, keyed by their `outputKey`.
+   *
+   * The returned map is used by the synthesizer to write the `"outputs"` section
+   * of the stack template and to populate the manifest.
+   */
+  public getOutputs(): StackOutput[] {
+    return this.node
+      .findAll()
+      .filter((c): c is StackOutput => StackOutput.isStackOutput(c));
+  }
+
+  /**
+   * Resolves a single value through this stack's resolver pipeline.
+   *
+   * Used by the `JsonSynthesizer` to resolve output token values (e.g.
+   * `IResolvable` tokens like `ResourceAttribute`) at synthesis time.
+   * Delegates to `App.getResolverPipeline(provider).resolve(...)`.
+   */
+  public resolveOutputValue(value: unknown): unknown {
+    // Lazily import to avoid circular dependencies at module load time.
+    const { App } = require('../app/app');
+    const app = App.of(this);
+    const pipeline = app.getResolverPipeline(this.provider);
+    return pipeline.resolve([], value, this, this.provider.identifier);
   }
 }

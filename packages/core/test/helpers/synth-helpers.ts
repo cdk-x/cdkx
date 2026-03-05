@@ -24,12 +24,22 @@ export class SynthHelpers {
 
   /**
    * Extracts all resource entries from a keyed stack JSON object.
-   * Stack JSON is a `{ [logicalId]: { type, properties, metadata } }` object.
+   *
+   * Stack JSON has the shape:
+   * ```json
+   * {
+   *   "resources": { "[logicalId]": { "type", "properties", "metadata" } },
+   *   "outputs": { ... }   // optional
+   * }
+   * ```
    */
   static resourceValues(
     json: unknown,
   ): Array<{ type: string; properties: Record<string, unknown> }> {
-    return Object.values(json as Record<string, unknown>) as Array<{
+    const stackJson = json as Record<string, unknown>;
+    const resources =
+      stackJson['resources'] != null ? stackJson['resources'] : json;
+    return Object.values(resources as Record<string, unknown>) as Array<{
       type: string;
       properties: Record<string, unknown>;
     }>;
