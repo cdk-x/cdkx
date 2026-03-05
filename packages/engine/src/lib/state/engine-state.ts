@@ -20,6 +20,14 @@ export interface ResourceState {
    * with real provider outputs.
    */
   readonly properties: Record<string, unknown>;
+
+  /**
+   * Provider-returned output values for this resource.
+   * Keyed by attribute name (e.g. `'networkId'`, `'serverId'`).
+   * Populated from `CreateResult.outputs` after a successful CREATE_COMPLETE.
+   * Used by the engine to resolve `{ ref, attr }` tokens in dependent resources.
+   */
+  readonly outputs?: Record<string, unknown>;
 }
 
 /**
@@ -75,4 +83,11 @@ export interface TransitionResourceOptions {
    * Used when a token substitution occurs after a dependency is created.
    */
   readonly properties?: Record<string, unknown>;
+
+  /**
+   * Provider-returned output values for this resource.
+   * Supplied when transitioning to CREATE_COMPLETE with adapter-returned outputs.
+   * Keyed by attribute name (e.g. `'networkId'`).
+   */
+  readonly outputs?: Record<string, unknown>;
 }
