@@ -130,5 +130,15 @@
     "/properties/publicNet"
   ],
   "readOnlyProperties": ["/properties/serverId"],
-  "primaryIdentifier": ["/properties/serverId"]
+  "primaryIdentifier": ["/properties/serverId"],
+  "api": {
+    "createPath": "/servers",
+    "getPath": "/servers/{id}",
+    "updatePath": "/servers/{id}",
+    "deletePath": "/servers/{id}",
+    "responseBodyKey": "server",
+    "outputAttrMap": {
+      "serverId": "id"
+    }
+  }
 }

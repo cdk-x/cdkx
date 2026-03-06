@@ -46,5 +46,15 @@
     "/properties/domainNames"
   ],
   "readOnlyProperties": ["/properties/certificateId"],
-  "primaryIdentifier": ["/properties/certificateId"]
+  "primaryIdentifier": ["/properties/certificateId"],
+  "api": {
+    "createPath": "/certificates",
+    "getPath": "/certificates/{id}",
+    "updatePath": "/certificates/{id}",
+    "deletePath": "/certificates/{id}",
+    "responseBodyKey": "certificate",
+    "outputAttrMap": {
+      "certificateId": "id"
+    }
+  }
 }
