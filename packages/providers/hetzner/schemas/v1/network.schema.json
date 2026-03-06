@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerNetwork",
+  "description": "Manages a Hetzner Cloud private Network.",
+  "typeName": "Hetzner::Networking::Network",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Network."
+    },
+    "ipRange": {
+      "type": "string",
+      "description": "IP range of the Network in CIDR notation. Must be a private IPv4 range per RFC1918. Minimum /24, recommended /16."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "exposeRoutesToVswitch": {
+      "type": "boolean",
+      "description": "Toggle to expose routes to the Networks vSwitch."
+    }
+  },
+  "required": ["name", "ipRange"],
+  "createOnlyProperties": ["/properties/ipRange"],
+  "readOnlyProperties": ["/properties/networkId"],
+  "primaryIdentifier": ["/properties/networkId"],
+  "api": {
+    "createPath": "/networks",
+    "getPath": "/networks/{id}",
+    "updatePath": "/networks/{id}",
+    "deletePath": "/networks/{id}",
+    "responseBodyKey": "network",
+    "outputAttrMap": {
+      "networkId": "id"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TestNetwork",
+  "description": "A test network resource.",
+  "typeName": "Test::Networking::Network",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "definitions": {
+    "NetworkSubnetType": {
+      "type": "string",
+      "description": "Type of subnet.",
+      "enum": ["cloud", "server", "vswitch"]
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Network."
+    },
+    "ipRange": {
+      "type": "string",
+      "description": "IP range in CIDR notation."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "exposeRoutesToVswitch": {
+      "type": "boolean",
+      "description": "Toggle to expose routes."
+    }
+  },
+  "required": ["name", "ipRange"],
+  "createOnlyProperties": ["/properties/ipRange"],
+  "readOnlyProperties": ["/properties/networkId"],
+  "primaryIdentifier": ["/properties/networkId"],
+  "api": {
+    "createPath": "/networks",
+    "getPath": "/networks/{id}",
+    "updatePath": "/networks/{id}",
+    "deletePath": "/networks/{id}",
+    "responseBodyKey": "network",
+    "outputAttrMap": {
+      "networkId": "id"
+    }
+  }
+}

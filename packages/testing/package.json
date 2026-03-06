@@ -1,0 +1,29 @@
+{
+  "name": "@cdkx-io/testing",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "peerDependencies": {
+    "@cdkx-io/core": "*",
+    "tslib": ">=2.3.0"
+  },
+  "devDependencies": {
+    "@cdkx-io/core": "*"
+  },
+  "dependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}

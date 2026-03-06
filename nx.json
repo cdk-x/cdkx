@@ -54,18 +54,74 @@
     }
   ],
   "release": {
-    "projects": ["cli"],
+    "projectsRelationship": "independent",
     "version": {
+      "preVersionCommand": "yarn nx run-many -t build --projects={projectName}",
       "conventionalCommits": true,
-      "adjustSemverBumpsForZeroMajorVersion": true      
+      "adjustSemverBumpsForZeroMajorVersion": true
     },
     "changelog": {
-      "workspaceChangelog": {
-        "createRelease": "github"
+      "workspaceChangelog": false
+    },
+    "groups": {
+      "core": {
+        "projects": [
+          "@cdkx-io/core",
+          "@cdkx-io/engine",
+          "@cdkx-io/testing",
+          "@cdkx-io/hetzner"
+        ],
+        "projectsRelationship": "fixed",
+        "releaseTag": {
+          "pattern": "core-v{version}"
+        },
+        "version": {
+          "updateDependents": "never"
+        },
+        "changelog": {
+          "projectChangelogs": {
+            "createRelease": "github"
+          }
+        }
+      },
+      "cli": {
+        "projects": ["@cdkx-io/cli"],
+        "projectsRelationship": "fixed",
+        "releaseTag": {
+          "pattern": "cli-v{version}"
+        },
+        "version": {
+          "updateDependents": "never"
+        },
+        "changelog": {
+          "projectChangelogs": {
+            "createRelease": "github"
+          }
+        }
+      },
+      "tools": {
+        "projects": ["@cdkx-io/spec-to-cdkx"],
+        "projectsRelationship": "fixed",
+        "releaseTag": {
+          "pattern": "tools-v{version}"
+        },
+        "version": {
+          "updateDependents": "never"
+        },
+        "changelog": {
+          "projectChangelogs": {
+            "createRelease": "github"
+          }
+        }
       }
     }
   },
   "targetDefaults": {
+    "@nx/js:tsc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
+    },
     "@nx/esbuild:esbuild": {
       "cache": true,
       "dependsOn": ["^build"],
@@ -78,11 +134,14 @@
       "dependsOn": ["build"],
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "npm publish --registry http://localhost:4873"
-        ],
+        "commands": ["npm publish --registry http://localhost:4873"],
         "cwd": "{projectRoot}/dist"
       }
+    },
+    "@nx/js:swc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     }
   }
 }

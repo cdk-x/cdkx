@@ -1,0 +1,25 @@
+{
+  "name": "@cdkx-io/cli",
+  "version": "0.1.0",
+  "bin": {
+    "cdkx": "./bin/cdkx.js"
+  },
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "files": [
+    "bin",
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3"
+  },
+  "devDependencies": {
+    "@cdkx-io/core": "*",
+    "esbuild": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerCommon",
+  "description": "Shared type definitions for all Hetzner Cloud resource schemas.",
+  "definitions": {
+    "Labels": {
+      "type": "object",
+      "description": "User-defined labels (`key/value` pairs) for the Resource.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "NetworkZone": {
+      "type": "string",
+      "description": "Hetzner Cloud network zone.",
+      "enum": ["eu-central", "us-east", "us-west", "ap-southeast"]
+    },
+    "Location": {
+      "type": "string",
+      "description": "Hetzner Cloud physical location.",
+      "enum": ["fsn1", "nbg1", "hel1", "ash", "hil", "sin"]
+    }
+  }
+}

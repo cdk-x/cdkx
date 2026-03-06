@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerPrimaryIp",
+  "description": "Manages a Hetzner Cloud Primary IP.",
+  "typeName": "Hetzner::Networking::PrimaryIp",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "definitions": {
+    "PrimaryIpType": {
+      "type": "string",
+      "description": "Primary IP type.",
+      "enum": ["ipv4", "ipv6"]
+    },
+    "PrimaryIpAssigneeType": {
+      "type": "string",
+      "description": "Type of resource the Primary IP can get assigned to. Currently Primary IPs can only be assigned to Servers, therefore this field must be set to `server`.",
+      "enum": ["server"]
+    }
+  },
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "ID of the Primary IP. Assigned by the API on creation."
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the Resource. Must be unique per Project."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "type": {
+      "$ref": "#/definitions/PrimaryIpType",
+      "description": "Primary IP type."
+    },
+    "location": {
+      "$ref": "./common.schema.json#/definitions/Location",
+      "description": "Location the Primary IP will be bound to."
+    },
+    "assigneeType": {
+      "$ref": "#/definitions/PrimaryIpAssigneeType",
+      "description": "Type of resource the Primary IP can get assigned to."
+    },
+    "assigneeId": {
+      "type": "integer",
+      "description": "ID of resource to assign the Primary IP to.",
+      "nullable": true
+    },
+    "autoDelete": {
+      "type": "boolean",
+      "description": "Auto deletion state."
+    }
+  },
+  "required": ["name", "type", "assigneeType"],
+  "createOnlyProperties": [
+    "/properties/type",
+    "/properties/assigneeType",
+    "/properties/location"
+  ],
+  "readOnlyProperties": ["/properties/id"],
+  "primaryIdentifier": ["/properties/id"],
+  "api": {
+    "createPath": "/primary_ips",
+    "getPath": "/primary_ips/{id}",
+    "updatePath": "/primary_ips/{id}",
+    "deletePath": "/primary_ips/{id}",
+    "responseBodyKey": "primary_ip"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@cdkx-io/engine",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/engine/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/engine/dist",
+        "main": "packages/engine/src/index.ts",
+        "tsConfig": "packages/engine/tsconfig.lib.json",
+        "rootDir": "packages/engine/src"
+      }
+    }
+  }
+}
