@@ -9,6 +9,14 @@ export interface ResourceState {
   readonly status: ResourceStatus;
 
   /**
+   * Provider resource type string (e.g. `'Hetzner::Compute::Server'`).
+   * Stored so that the engine can emit correctly-typed events when operating
+   * on resources that are no longer present in the new assembly (e.g. during
+   * reconcile deletes).
+   */
+  readonly type?: string;
+
+  /**
    * Provider-assigned physical ID (e.g. Hetzner server id, Kubernetes
    * resource name). Populated after a successful CREATE_COMPLETE transition.
    */
