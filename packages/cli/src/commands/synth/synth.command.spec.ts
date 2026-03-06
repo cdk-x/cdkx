@@ -99,6 +99,7 @@ describe('SynthCommand — execution', () => {
     expect(spawnApp).toHaveBeenCalledWith(
       'node app.js',
       expect.objectContaining({ CDKX_OUT_DIR: 'my-out' }),
+      expect.any(String),
     );
   });
 
@@ -115,6 +116,7 @@ describe('SynthCommand — execution', () => {
     expect(spawnApp).toHaveBeenCalledWith(
       'node app.js',
       expect.objectContaining({ CDKX_OUT_DIR: 'from-flag' }),
+      expect.any(String),
     );
   });
 
@@ -131,6 +133,7 @@ describe('SynthCommand — execution', () => {
     expect(spawnApp).toHaveBeenCalledWith(
       'node app.js',
       expect.objectContaining({ CDKX_OUT_DIR: 'cdkx.out' }),
+      expect.any(String),
     );
   });
 
