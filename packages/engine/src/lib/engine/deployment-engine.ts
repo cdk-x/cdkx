@@ -5,8 +5,15 @@ import { EngineEvent } from '../events/engine-event';
 import { EngineStateManager } from '../state/engine-state-manager';
 import { StatePersistence } from '../state/state-persistence';
 import type { ProviderAdapter } from '../adapter/provider-adapter';
-import type { AssemblyStack } from '../assembly/assembly-types';
+import type {
+  AssemblyStack,
+  AssemblyResource,
+} from '../assembly/assembly-types';
 import type { DeploymentPlan } from '../planner/deployment-plan';
+import {
+  ReconcileValidationError,
+  type BlockedDelete,
+} from './reconcile-validation-error';
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -93,17 +100,20 @@ export interface DeploymentEngineOptions {
  * Orchestrates the full deployment of a cloud assembly.
  *
  * Given a `DeploymentPlan` and the parsed `AssemblyStack[]`, the engine:
- * 1. Iterates stacks in `plan.stackOrder`.
- * 2. For each stack, iterates resources in `plan.resourceOrders[stackId]`.
- * 3. For each resource:
- *    a. Resolves `{ ref, attr }` tokens by looking up completed resources in
- *       `EngineState`.
- *    b. Calls `adapter.create()`.
- *    c. On success: records the physical ID and outputs in `EngineStateManager`.
- *    d. On failure: initiates stack rollback (delete already-created resources
- *       in reverse order), then marks the stack as failed and aborts.
- * 4. After all resources succeed, reads stack-level outputs from the template
- *    and stores them in `EngineState` for cross-stack resolution.
+ * 1. Loads any prior `engine-state.json` from `stateDir` (if it exists).
+ * 2. For each stack in `plan.stackOrder`:
+ *    a. **Reconciles** the stack — deletes resources that exist in prior state
+ *       but are absent from the new assembly.
+ *    b. **Creates** resources that are present in the new assembly but absent
+ *       from prior state (or have no prior state at all).
+ *    c. **Updates** resources that are already `CREATE_COMPLETE` in prior state
+ *       when their resolved properties differ from the stored properties.
+ *    d. Skips resources that are already `CREATE_COMPLETE` and have no property
+ *       changes.
+ * 3. Uses `UPDATE_IN_PROGRESS → UPDATE_COMPLETE` lifecycle for stacks that
+ *    already have prior state; `CREATE_IN_PROGRESS → CREATE_COMPLETE` for new
+ *    stacks.
+ * 4. On failure: rolls back already-created resources in reverse order.
  *
  * Stacks execute **in series** (not parallel). Resources within a stack also
  * execute **in series** in topological order.
@@ -114,10 +124,18 @@ export class DeploymentEngine {
 
   constructor(private readonly options: DeploymentEngineOptions) {
     this.eventBus = options.eventBus ?? new EventBus<EngineEvent>();
-    const persistence = new StatePersistence(options.stateDir);
-    this.stateManager =
-      options.stateManager ??
-      new EngineStateManager(this.eventBus, persistence);
+
+    if (options.stateManager !== undefined) {
+      this.stateManager = options.stateManager;
+    } else {
+      const persistence = new StatePersistence(options.stateDir);
+      const loadedState = persistence.load() ?? undefined;
+      this.stateManager = new EngineStateManager(
+        this.eventBus,
+        persistence,
+        loadedState,
+      );
+    }
   }
 
   /**
@@ -188,11 +206,43 @@ export class DeploymentEngine {
       };
     }
 
-    this.stateManager.initStack(stack.id);
+    // Determine whether this stack already exists in loaded state.
+    const isUpdate = this.stateManager.getStackState(stack.id) !== undefined;
+
+    if (isUpdate) {
+      this.stateManager.transitionStack(
+        stack.id,
+        StackStatus.UPDATE_IN_PROGRESS,
+      );
+    } else {
+      this.stateManager.initStack(stack.id);
+    }
+
+    // Reconcile: delete resources that exist in prior state but are absent
+    // from the new assembly. Only runs when prior state exists.
+    let reconciledCount = 0;
+    try {
+      reconciledCount = await this.reconcileStack(stack, adapter);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.stateManager.transitionStack(
+        stack.id,
+        isUpdate ? StackStatus.UPDATE_FAILED : StackStatus.CREATE_FAILED,
+        { reason: `Reconcile failed: ${message}` },
+      );
+      return {
+        stackId: stack.id,
+        success: false,
+        resources: [],
+        error: `Reconcile failed: ${message}`,
+      };
+    }
 
     const resourceById = new Map(stack.resources.map((r) => [r.logicalId, r]));
     const createdInOrder: string[] = []; // track for rollback
     const resourceResults: ResourceDeploymentResult[] = [];
+    let anyCreated = false;
+    let anyUpdated = false;
 
     for (const logicalId of resourceOrder) {
       const resource = resourceById.get(logicalId);
@@ -203,6 +253,131 @@ export class DeploymentEngine {
         resource.properties,
         stack.id,
       );
+
+      // If this resource already exists as CREATE_COMPLETE in prior state,
+      // compute a diff to decide whether to update or skip.
+      const existingState = this.stateManager.getResourceState(
+        stack.id,
+        logicalId,
+      );
+      if (existingState?.status === ResourceStatus.CREATE_COMPLETE) {
+        const patch = this.computePatch(
+          existingState.properties,
+          resolvedProperties,
+        );
+
+        if (patch === undefined) {
+          // No change — skip this resource entirely.
+          resourceResults.push({
+            logicalId,
+            success: true,
+            physicalId: existingState.physicalId,
+          });
+          continue;
+        }
+
+        // Strip create-only properties from the patch. The adapter (if it
+        // implements getCreateOnlyProps) tells us which props cannot be
+        // changed in-place. If the filtered patch is empty, all differences
+        // are create-only — treat this resource as a no-op.
+        const createOnlyProps =
+          adapter.getCreateOnlyProps?.(resource.type) ?? new Set<string>();
+        const filteredPatch: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(patch)) {
+          if (!createOnlyProps.has(key)) {
+            filteredPatch[key] = value;
+          }
+        }
+
+        if (Object.keys(filteredPatch).length === 0) {
+          // All differing props are create-only — no mutable change to apply.
+          resourceResults.push({
+            logicalId,
+            success: true,
+            physicalId: existingState.physicalId,
+          });
+          continue;
+        }
+
+        // Properties changed — call adapter.update().
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          resource.type,
+          ResourceStatus.UPDATE_IN_PROGRESS,
+        );
+
+        try {
+          const updateResult = await adapter.update(
+            {
+              logicalId,
+              type: resource.type,
+              properties: resolvedProperties,
+              stackId: stack.id,
+              provider: stack.provider,
+              physicalId: existingState.physicalId,
+            },
+            filteredPatch,
+          );
+
+          this.stateManager.transitionResource(
+            stack.id,
+            logicalId,
+            resource.type,
+            ResourceStatus.UPDATE_COMPLETE,
+            {
+              properties: resolvedProperties,
+              ...(updateResult?.outputs !== undefined && {
+                outputs: updateResult.outputs,
+              }),
+            },
+          );
+
+          anyUpdated = true;
+          resourceResults.push({
+            logicalId,
+            success: true,
+            physicalId: existingState.physicalId,
+          });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+
+          this.stateManager.transitionResource(
+            stack.id,
+            logicalId,
+            resource.type,
+            ResourceStatus.UPDATE_FAILED,
+            { reason: message },
+          );
+
+          resourceResults.push({ logicalId, success: false, error: message });
+
+          await this.rollback(
+            stack,
+            createdInOrder,
+            resourceById,
+            adapter,
+            isUpdate,
+          );
+
+          const rollbackComplete = isUpdate
+            ? StackStatus.UPDATE_ROLLBACK_COMPLETE
+            : StackStatus.ROLLBACK_COMPLETE;
+
+          this.stateManager.transitionStack(stack.id, rollbackComplete, {
+            reason: `Resource '${logicalId}' update failed: ${message}`,
+          });
+
+          return {
+            stackId: stack.id,
+            success: false,
+            resources: resourceResults,
+            error: `Resource '${logicalId}' update failed: ${message}`,
+          };
+        }
+
+        continue;
+      }
 
       this.stateManager.initResource(
         stack.id,
@@ -231,6 +406,7 @@ export class DeploymentEngine {
           },
         );
 
+        anyCreated = true;
         createdInOrder.push(logicalId);
         resourceResults.push({
           logicalId,
@@ -250,14 +426,22 @@ export class DeploymentEngine {
 
         resourceResults.push({ logicalId, success: false, error: message });
 
-        // Rollback already-created resources in reverse order.
-        await this.rollback(stack, createdInOrder, resourceById, adapter);
-
-        this.stateManager.transitionStack(
-          stack.id,
-          StackStatus.ROLLBACK_COMPLETE,
-          { reason: `Resource '${logicalId}' failed: ${message}` },
+        // Rollback only newly-created resources (not pre-existing ones).
+        await this.rollback(
+          stack,
+          createdInOrder,
+          resourceById,
+          adapter,
+          isUpdate,
         );
+
+        const rollbackComplete = isUpdate
+          ? StackStatus.UPDATE_ROLLBACK_COMPLETE
+          : StackStatus.ROLLBACK_COMPLETE;
+
+        this.stateManager.transitionStack(stack.id, rollbackComplete, {
+          reason: `Resource '${logicalId}' failed: ${message}`,
+        });
 
         return {
           stackId: stack.id,
@@ -268,7 +452,25 @@ export class DeploymentEngine {
       }
     }
 
-    this.stateManager.transitionStack(stack.id, StackStatus.CREATE_COMPLETE);
+    // A deploy is a no-op when nothing was created, updated, or reconciled.
+    // On a first deploy (isUpdate = false) this only applies when the stack
+    // has no resources at all. On a re-deploy (isUpdate = true) it applies
+    // whenever all resources were already CREATE_COMPLETE with unchanged
+    // properties and nothing needed to be deleted.
+    const isNoOp =
+      !anyCreated &&
+      !anyUpdated &&
+      reconciledCount === 0 &&
+      (isUpdate || resourceOrder.length === 0);
+
+    this.stateManager.transitionStack(
+      stack.id,
+      isNoOp
+        ? StackStatus.NO_CHANGES
+        : isUpdate
+          ? StackStatus.UPDATE_COMPLETE
+          : StackStatus.CREATE_COMPLETE,
+    );
 
     return {
       stackId: stack.id,
@@ -278,9 +480,197 @@ export class DeploymentEngine {
   }
 
   /**
+   * Reconcile the stack: delete resources that exist in prior state with
+   * status `CREATE_COMPLETE` but are absent from the new assembly.
+   *
+   * Before making any API calls, validates that none of the resources
+   * scheduled for deletion are still referenced by resources that remain in
+   * the new assembly. Throws `ReconcileValidationError` if any conflict is
+   * found — no API calls are made in that case.
+   *
+   * Deletes are performed in reverse insertion order of the prior state
+   * (approximate reverse-creation order). A single delete failure aborts
+   * reconcile and the error is re-thrown to the caller.
+   *
+   * No-op if the stack has no prior state.
+   */
+  private async reconcileStack(
+    stack: AssemblyStack,
+    adapter: ProviderAdapter,
+  ): Promise<number> {
+    const prevState = this.stateManager.getStackState(stack.id);
+    if (prevState === undefined) return 0;
+
+    const newIds = new Set(stack.resources.map((r) => r.logicalId));
+
+    // Find resources to delete: CREATE_COMPLETE in prior state, absent from
+    // new assembly.
+    const toDelete = Object.entries(prevState.resources)
+      .filter(
+        ([logicalId, resourceState]) =>
+          resourceState.status === ResourceStatus.CREATE_COMPLETE &&
+          !newIds.has(logicalId),
+      )
+      .reverse(); // reverse insertion order ≈ reverse-creation order
+
+    if (toDelete.length === 0) return 0;
+
+    // Validate that no resource staying in the new assembly references any
+    // resource scheduled for deletion.
+    this.validateReconcile(
+      toDelete.map(([logicalId, rs]) => ({
+        logicalId,
+        type: rs.type ?? 'unknown',
+      })),
+      stack.resources,
+    );
+
+    for (const [logicalId, resourceState] of toDelete) {
+      const resourceType = resourceState.type ?? 'unknown';
+
+      this.stateManager.transitionResource(
+        stack.id,
+        logicalId,
+        resourceType,
+        ResourceStatus.DELETE_IN_PROGRESS,
+      );
+
+      try {
+        await adapter.delete({
+          logicalId,
+          type: resourceType,
+          properties: resourceState.properties,
+          physicalId: resourceState.physicalId,
+          stackId: stack.id,
+          provider: stack.provider,
+        });
+
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          resourceType,
+          ResourceStatus.DELETE_COMPLETE,
+        );
+
+        this.stateManager.removeResource(stack.id, logicalId);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          resourceType,
+          ResourceStatus.DELETE_FAILED,
+          { reason: message },
+        );
+        throw err; // abort reconcile
+      }
+    }
+
+    return toDelete.length;
+  }
+
+  /**
+   * Validate that no resource in the new assembly (a resource that stays)
+   * references — via a `{ ref, attr }` token — a resource scheduled for
+   * deletion.
+   *
+   * The "silent case": if the referencing resource is itself also scheduled
+   * for deletion, there is no conflict (both are removed in the same run,
+   * and reverse-creation order guarantees correct delete ordering).
+   *
+   * Throws `ReconcileValidationError` if any conflict is detected. No API
+   * calls have been made at the point this throws.
+   */
+  private validateReconcile(
+    toDelete: { logicalId: string; type: string }[],
+    assemblyResources: AssemblyResource[],
+  ): void {
+    const toDeleteIds = new Set(toDelete.map((r) => r.logicalId));
+    const toDeleteTypeMap = new Map(toDelete.map((r) => [r.logicalId, r.type]));
+
+    const blockedDeletes: BlockedDelete[] = [];
+
+    for (const resource of assemblyResources) {
+      // Silent case: if this resource is also being deleted, skip it.
+      if (toDeleteIds.has(resource.logicalId)) continue;
+
+      this.collectBlockedDeletes(
+        resource.properties,
+        resource.logicalId,
+        resource.type,
+        toDeleteIds,
+        toDeleteTypeMap,
+        blockedDeletes,
+      );
+    }
+
+    if (blockedDeletes.length > 0) {
+      throw new ReconcileValidationError(blockedDeletes);
+    }
+  }
+
+  /**
+   * Recursively walk `value` and collect any `{ ref, attr }` tokens whose
+   * `ref` is in `toDeleteIds` into `blockedDeletes`.
+   */
+  private collectBlockedDeletes(
+    value: unknown,
+    dependentLogicalId: string,
+    dependentType: string,
+    toDeleteIds: Set<string>,
+    toDeleteTypeMap: Map<string, string>,
+    blockedDeletes: BlockedDelete[],
+  ): void {
+    if (value === null || value === undefined) return;
+
+    if (this.isRefAttrToken(value)) {
+      if (toDeleteIds.has(value.ref)) {
+        blockedDeletes.push({
+          toDeleteLogicalId: value.ref,
+          toDeleteType: toDeleteTypeMap.get(value.ref) ?? 'unknown',
+          dependentLogicalId,
+          dependentType,
+          attr: value.attr,
+        });
+      }
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        this.collectBlockedDeletes(
+          item,
+          dependentLogicalId,
+          dependentType,
+          toDeleteIds,
+          toDeleteTypeMap,
+          blockedDeletes,
+        );
+      }
+      return;
+    }
+
+    if (typeof value === 'object') {
+      for (const v of Object.values(value as Record<string, unknown>)) {
+        this.collectBlockedDeletes(
+          v,
+          dependentLogicalId,
+          dependentType,
+          toDeleteIds,
+          toDeleteTypeMap,
+          blockedDeletes,
+        );
+      }
+    }
+  }
+
+  /**
    * Delete already-created resources in reverse creation order (rollback).
    * Failures during rollback are swallowed — we log via the event bus but do
    * not propagate exceptions, so the rollback continues as far as possible.
+   *
+   * Only rolls back resources that were newly created in this run — resources
+   * that were pre-existing (skipped during the create loop) are not deleted.
    */
   private async rollback(
     stack: AssemblyStack,
@@ -290,10 +680,13 @@ export class DeploymentEngine {
       { logicalId: string; type: string; properties: Record<string, unknown> }
     >,
     adapter: ProviderAdapter,
+    isUpdate: boolean,
   ): Promise<void> {
     this.stateManager.transitionStack(
       stack.id,
-      StackStatus.ROLLBACK_IN_PROGRESS,
+      isUpdate
+        ? StackStatus.UPDATE_ROLLBACK_IN_PROGRESS
+        : StackStatus.ROLLBACK_IN_PROGRESS,
     );
 
     const reversed = [...createdInOrder].reverse();
@@ -301,6 +694,17 @@ export class DeploymentEngine {
     for (const logicalId of reversed) {
       const resource = resourceById.get(logicalId);
       if (resource === undefined) continue;
+
+      // Skip pre-existing resources — don't delete what we didn't create.
+      const resourceState = this.stateManager.getResourceState(
+        stack.id,
+        logicalId,
+      );
+      if (
+        resourceState === undefined ||
+        resourceState.status !== ResourceStatus.CREATE_COMPLETE
+      )
+        continue;
 
       this.stateManager.transitionResource(
         stack.id,
@@ -313,11 +717,13 @@ export class DeploymentEngine {
         await adapter.delete({
           logicalId,
           type: resource.type,
-          properties: resource.properties,
+          // Use the resolved properties stored at creation time, not the raw
+          // assembly properties which may still contain unresolved { ref, attr }
+          // tokens (e.g. networkId for action resources).
+          properties: resourceState.properties,
           stackId: stack.id,
           provider: stack.provider,
-          physicalId: this.stateManager.getResourceState(stack.id, logicalId)
-            ?.physicalId,
+          physicalId: resourceState.physicalId,
         });
 
         this.stateManager.transitionResource(
@@ -337,6 +743,69 @@ export class DeploymentEngine {
         );
       }
     }
+  }
+
+  /**
+   * Compute a shallow-keyed patch between `prior` and `next` property maps.
+   *
+   * Returns an object containing only the keys where the values differ
+   * (deep equality). Returns `undefined` when there are no differences at all
+   * — signalling that the resource is unchanged and can be skipped.
+   *
+   * New keys (present in `next` but absent in `prior`) are included in the
+   * patch. Removed keys (present in `prior` but absent in `next`) are
+   * represented as `undefined` in the patch so the adapter can handle them.
+   */
+  private computePatch(
+    prior: Record<string, unknown>,
+    next: Record<string, unknown>,
+  ): Record<string, unknown> | undefined {
+    const patch: Record<string, unknown> = {};
+
+    const allKeys = new Set([...Object.keys(prior), ...Object.keys(next)]);
+    for (const key of allKeys) {
+      const priorVal = prior[key];
+      const nextVal = next[key];
+      if (!this.deepEqual(priorVal, nextVal)) {
+        patch[key] = nextVal;
+      }
+    }
+
+    return Object.keys(patch).length === 0 ? undefined : patch;
+  }
+
+  /**
+   * Deep equality check for JSON-compatible values (primitives, arrays,
+   * plain objects). Class instances and functions are compared by reference.
+   */
+  private deepEqual(a: unknown, b: unknown): boolean {
+    if (a === b) return true;
+    if (a === null || b === null) return false;
+    if (typeof a !== typeof b) return false;
+
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (!this.deepEqual(a[i], b[i])) return false;
+      }
+      return true;
+    }
+
+    if (Array.isArray(a) || Array.isArray(b)) return false;
+
+    if (typeof a === 'object' && typeof b === 'object') {
+      const aObj = a as Record<string, unknown>;
+      const bObj = b as Record<string, unknown>;
+      const aKeys = Object.keys(aObj);
+      const bKeys = Object.keys(bObj);
+      if (aKeys.length !== bKeys.length) return false;
+      for (const key of aKeys) {
+        if (!this.deepEqual(aObj[key], bObj[key])) return false;
+      }
+      return true;
+    }
+
+    return false;
   }
 
   /**

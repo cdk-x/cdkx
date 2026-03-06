@@ -10,9 +10,11 @@ import type {
   ProviderAdapter,
   ManifestResource,
   CreateResult,
+  UpdateResult,
 } from '../adapter/provider-adapter';
 import type { AssemblyStack } from '../assembly/assembly-types';
 import type { DeploymentPlan } from '../planner/deployment-plan';
+import type { EngineState } from '../state/engine-state';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -74,6 +76,7 @@ function makeEngine(
       adapter.update ?? (() => Promise.reject(new Error('not implemented'))),
     delete: adapter.delete ?? (() => Promise.resolve()),
     getOutput: adapter.getOutput ?? (() => Promise.resolve(undefined)),
+    getCreateOnlyProps: adapter.getCreateOnlyProps ?? (() => new Set<string>()),
   };
 
   return new DeploymentEngine({
@@ -101,6 +104,132 @@ function failingAdapter(message: string): Partial<ProviderAdapter> {
     create: (): Promise<CreateResult> => Promise.reject(new Error(message)),
     delete: (): Promise<void> => Promise.resolve(),
   };
+}
+
+/**
+ * Build an engine that already has prior state for the given stack.
+ * The prior state contains the provided resources as CREATE_COMPLETE.
+ * The stack ID is always 'S'.
+ */
+function makeEngineWithPriorState(
+  priorResources: {
+    logicalId: string;
+    type?: string;
+    physicalId?: string;
+    outputs?: Record<string, unknown>;
+  }[],
+  adapter: Partial<ProviderAdapter>,
+  bus?: EventBus<EngineEvent>,
+): DeploymentEngine {
+  const eventBus = bus ?? new EventBus<EngineEvent>();
+  const persistence = makeNullPersistence();
+
+  const priorState: EngineState = {
+    stacks: {
+      S: {
+        status: StackStatus.CREATE_COMPLETE,
+        resources: Object.fromEntries(
+          priorResources.map((r) => [
+            r.logicalId,
+            {
+              status: ResourceStatus.CREATE_COMPLETE,
+              type: r.type ?? 'test::Resource',
+              physicalId: r.physicalId ?? `phys-${r.logicalId}`,
+              properties: {},
+              ...(r.outputs !== undefined ? { outputs: r.outputs } : {}),
+            },
+          ]),
+        ),
+      },
+    },
+  };
+
+  const stateManager = new EngineStateManager(
+    eventBus,
+    persistence,
+    priorState,
+  );
+
+  const fullAdapter: ProviderAdapter = {
+    create:
+      adapter.create ?? (() => Promise.reject(new Error('not implemented'))),
+    update:
+      adapter.update ?? (() => Promise.reject(new Error('not implemented'))),
+    delete: adapter.delete ?? (() => Promise.resolve()),
+    getOutput: adapter.getOutput ?? (() => Promise.resolve(undefined)),
+    getCreateOnlyProps: adapter.getCreateOnlyProps ?? (() => new Set<string>()),
+  };
+
+  return new DeploymentEngine({
+    adapters: { test: fullAdapter },
+    assemblyDir: '/fake/assembly',
+    stateDir: '/fake/state',
+    stateManager,
+    eventBus,
+  });
+}
+
+/**
+ * Build an engine that already has prior state with specific stored properties.
+ * Useful for update tests where the diff against prior properties matters.
+ */
+function makeEngineWithPriorStateAndProps(
+  priorResources: {
+    logicalId: string;
+    type?: string;
+    physicalId?: string;
+    properties?: Record<string, unknown>;
+    outputs?: Record<string, unknown>;
+  }[],
+  adapter: Partial<ProviderAdapter>,
+  bus?: EventBus<EngineEvent>,
+): DeploymentEngine {
+  const eventBus = bus ?? new EventBus<EngineEvent>();
+  const persistence = makeNullPersistence();
+
+  const priorState: EngineState = {
+    stacks: {
+      S: {
+        status: StackStatus.CREATE_COMPLETE,
+        resources: Object.fromEntries(
+          priorResources.map((r) => [
+            r.logicalId,
+            {
+              status: ResourceStatus.CREATE_COMPLETE,
+              type: r.type ?? 'test::Resource',
+              physicalId: r.physicalId ?? `phys-${r.logicalId}`,
+              properties: r.properties ?? {},
+              ...(r.outputs !== undefined ? { outputs: r.outputs } : {}),
+            },
+          ]),
+        ),
+      },
+    },
+  };
+
+  const stateManager = new EngineStateManager(
+    eventBus,
+    persistence,
+    priorState,
+  );
+
+  const fullAdapter: ProviderAdapter = {
+    create:
+      adapter.create ?? (() => Promise.reject(new Error('not implemented'))),
+    update:
+      adapter.update ?? (() => Promise.reject(new Error('not implemented'))),
+    delete: adapter.delete ?? (() => Promise.resolve()),
+    getOutput: adapter.getOutput ?? (() => Promise.resolve(undefined)),
+    getCreateOnlyProps: adapter.getCreateOnlyProps ?? (() => new Set<string>()),
+  };
+
+  return new DeploymentEngine({
+    adapters: { test: fullAdapter },
+    assemblyDir: '/fake/assembly',
+    stateDir: '/fake/state',
+    stateManager,
+    eventBus,
+  });
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -505,6 +634,1227 @@ describe('DeploymentEngine', () => {
       const serverProps = createdProps.find((p) => p.logicalId === 'Server');
       // Token should have been resolved to the actual output value 99.
       expect(serverProps?.networkId).toBe(99);
+    });
+  });
+
+  // ─── Reconcile — resources deleted from assembly ──────────────────────────
+
+  describe('reconcile — resources deleted from assembly', () => {
+    it('calls adapter.delete with the correct physicalId for removed resource', async () => {
+      const deletedResources: ManifestResource[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        create: () => Promise.resolve({ physicalId: 'new-phys' }),
+        delete: (r: ManifestResource): Promise<void> => {
+          deletedResources.push(r);
+          return Promise.resolve();
+        },
+      };
+
+      // Prior: ResA + ResB. New assembly: only ResA.
+      const engine = makeEngineWithPriorState(
+        [
+          { logicalId: 'ResA', physicalId: 'phys-A' },
+          { logicalId: 'ResB', physicalId: 'phys-B' },
+        ],
+        adapter,
+      );
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      expect(deletedResources).toHaveLength(1);
+      expect(deletedResources[0].logicalId).toBe('ResB');
+      expect(deletedResources[0].physicalId).toBe('phys-B');
+    });
+
+    it('removes the deleted resource from state', async () => {
+      let savedState: EngineState | undefined;
+      const persistence = new StatePersistence('/fake', {
+        mkdirSync: () => undefined,
+        writeFileSync: (_, data) => {
+          savedState = JSON.parse(data) as EngineState;
+        },
+        readFileSync: () => {
+          throw new Error('not found');
+        },
+        existsSync: () => false,
+      });
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: {},
+              },
+              ResB: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-B',
+                properties: {},
+              },
+            },
+          },
+        },
+      };
+
+      const bus = new EventBus<EngineEvent>();
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+
+      const engine = new DeploymentEngine({
+        adapters: {
+          test: {
+            create: () => Promise.resolve({ physicalId: 'new-A' }),
+            update: () => Promise.reject(new Error('not implemented')),
+            delete: () => Promise.resolve(),
+            getOutput: () => Promise.resolve(undefined),
+          },
+        },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        eventBus: bus,
+      });
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      expect(savedState?.stacks['S']?.resources['ResB']).toBeUndefined();
+    });
+
+    it('emits DELETE_IN_PROGRESS and DELETE_COMPLETE events for reconciled resource', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      const engine = makeEngineWithPriorState(
+        [
+          { logicalId: 'ResA', physicalId: 'phys-A' },
+          { logicalId: 'ResB', physicalId: 'phys-B' },
+        ],
+        { create: () => Promise.resolve({ physicalId: 'new-A' }) },
+        bus,
+      );
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      const resBEvents = events.filter((e) => e.logicalResourceId === 'ResB');
+      expect(resBEvents.map((e) => e.resourceStatus)).toEqual([
+        ResourceStatus.DELETE_IN_PROGRESS,
+        ResourceStatus.DELETE_COMPLETE,
+      ]);
+    });
+
+    it('transitions stack through UPDATE_IN_PROGRESS → NO_CHANGES when nothing to do', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      const engine = makeEngineWithPriorState(
+        [{ logicalId: 'ResA', physicalId: 'phys-A' }],
+        {},
+        bus,
+      );
+
+      // Assembly still has ResA — nothing to delete or create.
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      const stackStatuses = events
+        .filter((e) => e.resourceType === 'cdkx::stack')
+        .map((e) => e.resourceStatus);
+
+      expect(stackStatuses).toContain(StackStatus.UPDATE_IN_PROGRESS);
+      expect(stackStatuses).toContain(StackStatus.NO_CHANGES);
+    });
+
+    it('creates a new resource after reconcile deletes an old one (mixed run)', async () => {
+      const createdIds: string[] = [];
+      const deletedIds: string[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          createdIds.push(r.logicalId);
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: (r: ManifestResource): Promise<void> => {
+          deletedIds.push(r.logicalId);
+          return Promise.resolve();
+        },
+      };
+
+      // Prior: ResOld. New assembly: ResNew.
+      const engine = makeEngineWithPriorState(
+        [{ logicalId: 'ResOld', physicalId: 'old-phys' }],
+        adapter,
+      );
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResNew' }])];
+      const plan = makePlan(['S'], { S: ['ResNew'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+      expect(deletedIds).toContain('ResOld');
+      expect(createdIds).toContain('ResNew');
+    });
+
+    it('returns success=true for a mixed delete+create run', async () => {
+      const engine = makeEngineWithPriorState(
+        [{ logicalId: 'ResOld', physicalId: 'old-phys' }],
+        successAdapter('new-phys'),
+      );
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResNew' }])];
+      const plan = makePlan(['S'], { S: ['ResNew'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('does not re-create a pre-existing CREATE_COMPLETE resource', async () => {
+      const createdIds: string[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          createdIds.push(r.logicalId);
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+      };
+
+      // Prior: ResA already complete. Assembly still has ResA.
+      const engine = makeEngineWithPriorState(
+        [{ logicalId: 'ResA', physicalId: 'phys-A' }],
+        adapter,
+      );
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+      // create should NOT have been called for ResA.
+      expect(createdIds).not.toContain('ResA');
+    });
+
+    it('fails the stack when reconcile delete throws', async () => {
+      const adapter: Partial<ProviderAdapter> = {
+        delete: (): Promise<void> => Promise.reject(new Error('delete failed')),
+      };
+
+      // Prior: ResA + ResB. New assembly: only ResA.
+      const engine = makeEngineWithPriorState(
+        [
+          { logicalId: 'ResA', physicalId: 'phys-A' },
+          { logicalId: 'ResB', physicalId: 'phys-B' },
+        ],
+        adapter,
+      );
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(false);
+      expect(result.stacks[0].error).toContain('delete failed');
+    });
+  });
+
+  // ─── Reconcile — dependency validation ────────────────────────────────────
+
+  describe('reconcile — dependency validation', () => {
+    it('does not throw when removed resource has no dependents in new assembly', async () => {
+      // Prior: ResA + ResB. New assembly: only ResA (no reference to ResB).
+      const engine = makeEngineWithPriorState(
+        [
+          { logicalId: 'ResA', physicalId: 'phys-A' },
+          { logicalId: 'ResB', physicalId: 'phys-B' },
+        ],
+        successAdapter('new-phys'),
+      );
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+    });
+
+    it('throws ReconcileValidationError when a staying resource references a removed one', async () => {
+      const deleteCalled: string[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        create: () => Promise.resolve({ physicalId: 'new-phys' }),
+        delete: (r: ManifestResource): Promise<void> => {
+          deleteCalled.push(r.logicalId);
+          return Promise.resolve();
+        },
+      };
+
+      // Prior: Network + Subnet. New assembly: Network only, but Network
+      // properties contain { ref: 'Subnet', attr: 'subnetId' }.
+      const engine = makeEngineWithPriorState(
+        [
+          {
+            logicalId: 'Network',
+            type: 'test::Network',
+            physicalId: 'net-1',
+          },
+          {
+            logicalId: 'Subnet',
+            type: 'test::Subnet',
+            physicalId: 'subnet-1',
+          },
+        ],
+        adapter,
+      );
+
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'Network',
+            type: 'test::Network',
+            properties: { subnetRef: { ref: 'Subnet', attr: 'subnetId' } },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['Network'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(false);
+      expect(result.stacks[0].error).toContain('Cannot delete');
+      expect(result.stacks[0].error).toContain('Subnet');
+    });
+
+    it('error contains all blocked deletes, not just the first', async () => {
+      // Prior: Net + SubnetA + SubnetB. New assembly: Net only, but it
+      // references both SubnetA and SubnetB.
+      const engine = makeEngineWithPriorState(
+        [
+          { logicalId: 'Net', type: 'test::Network', physicalId: 'net-1' },
+          {
+            logicalId: 'SubnetA',
+            type: 'test::Subnet',
+            physicalId: 'sub-a',
+          },
+          {
+            logicalId: 'SubnetB',
+            type: 'test::Subnet',
+            physicalId: 'sub-b',
+          },
+        ],
+        successAdapter('new-phys'),
+      );
+
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'Net',
+            type: 'test::Network',
+            properties: {
+              subnetA: { ref: 'SubnetA', attr: 'subnetId' },
+              subnetB: { ref: 'SubnetB', attr: 'subnetId' },
+            },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['Net'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(false);
+      expect(result.stacks[0].error).toContain('2 resource(s)');
+      expect(result.stacks[0].error).toContain('SubnetA');
+      expect(result.stacks[0].error).toContain('SubnetB');
+    });
+
+    it('does not call adapter.delete when validation fails', async () => {
+      const deleteCalled: string[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        create: () => Promise.resolve({ physicalId: 'new-phys' }),
+        delete: (r: ManifestResource): Promise<void> => {
+          deleteCalled.push(r.logicalId);
+          return Promise.resolve();
+        },
+      };
+
+      const engine = makeEngineWithPriorState(
+        [
+          { logicalId: 'Net', type: 'test::Network', physicalId: 'net-1' },
+          { logicalId: 'Subnet', type: 'test::Subnet', physicalId: 'sub-1' },
+        ],
+        adapter,
+      );
+
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'Net',
+            type: 'test::Network',
+            properties: { subnetRef: { ref: 'Subnet', attr: 'subnetId' } },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['Net'] });
+      await engine.deploy(stacks, plan);
+
+      // adapter.delete must never have been called.
+      expect(deleteCalled).toHaveLength(0);
+    });
+
+    it('does not throw when both the referencing and referenced resources are removed', async () => {
+      const deleteCalled: string[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        delete: (r: ManifestResource): Promise<void> => {
+          deleteCalled.push(r.logicalId);
+          return Promise.resolve();
+        },
+      };
+
+      // Prior: Net + Subnet + LB. New assembly: empty.
+      // LB references Subnet, Subnet references Net — both are removed,
+      // so no conflict (silent case).
+      const engine = makeEngineWithPriorState(
+        [
+          { logicalId: 'Net', type: 'test::Network', physicalId: 'net-1' },
+          { logicalId: 'Subnet', type: 'test::Subnet', physicalId: 'sub-1' },
+          { logicalId: 'LB', type: 'test::LB', physicalId: 'lb-1' },
+        ],
+        adapter,
+      );
+
+      const stacks = [makeStack('S', [])];
+      const plan = makePlan(['S'], { S: [] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+      expect(deleteCalled).toHaveLength(3);
+    });
+
+    it('detects token nested inside an array in properties', async () => {
+      // Token is nested inside an array value — the recursive walker must
+      // find it.
+      const engine = makeEngineWithPriorState(
+        [
+          { logicalId: 'Net', type: 'test::Network', physicalId: 'net-1' },
+          { logicalId: 'Subnet', type: 'test::Subnet', physicalId: 'sub-1' },
+        ],
+        successAdapter('new-phys'),
+      );
+
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'Net',
+            type: 'test::Network',
+            properties: {
+              subnets: [{ ref: 'Subnet', attr: 'subnetId' }],
+            },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['Net'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(false);
+      expect(result.stacks[0].error).toContain('Subnet');
+    });
+  });
+
+  // ─── No-op deploy ─────────────────────────────────────────────────────────────
+
+  describe('no-op deploy', () => {
+    it('emits NO_CHANGES when re-deploy has all resources already CREATE_COMPLETE and nothing to reconcile', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      // Prior state: ResA + ResB both CREATE_COMPLETE.
+      // New assembly: same two resources — nothing to create or delete.
+      const engine = makeEngineWithPriorState(
+        [
+          { logicalId: 'ResA', physicalId: 'phys-A' },
+          { logicalId: 'ResB', physicalId: 'phys-B' },
+        ],
+        {},
+        bus,
+      );
+
+      const stacks = [
+        makeStack('S', [{ logicalId: 'ResA' }, { logicalId: 'ResB' }]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      await engine.deploy(stacks, plan);
+
+      const stackStatuses = events
+        .filter((e) => e.resourceType === 'cdkx::stack')
+        .map((e) => e.resourceStatus);
+
+      expect(stackStatuses).toContain(StackStatus.NO_CHANGES);
+      expect(stackStatuses).not.toContain(StackStatus.UPDATE_COMPLETE);
+    });
+
+    it('emits UPDATE_COMPLETE when re-deploy creates at least one new resource', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      // Prior state: ResA only. New assembly: ResA + ResB (ResB is new).
+      const engine = makeEngineWithPriorState(
+        [{ logicalId: 'ResA', physicalId: 'phys-A' }],
+        successAdapter('phys-B'),
+        bus,
+      );
+
+      const stacks = [
+        makeStack('S', [{ logicalId: 'ResA' }, { logicalId: 'ResB' }]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      await engine.deploy(stacks, plan);
+
+      const stackStatuses = events
+        .filter((e) => e.resourceType === 'cdkx::stack')
+        .map((e) => e.resourceStatus);
+
+      expect(stackStatuses).toContain(StackStatus.UPDATE_COMPLETE);
+      expect(stackStatuses).not.toContain(StackStatus.NO_CHANGES);
+    });
+
+    it('emits UPDATE_COMPLETE when re-deploy reconcile-deletes at least one resource', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      // Prior state: ResA + ResB. New assembly: ResA only (ResB removed).
+      const engine = makeEngineWithPriorState(
+        [
+          { logicalId: 'ResA', physicalId: 'phys-A' },
+          { logicalId: 'ResB', physicalId: 'phys-B' },
+        ],
+        { create: () => Promise.resolve({ physicalId: 'new-A' }) },
+        bus,
+      );
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      const stackStatuses = events
+        .filter((e) => e.resourceType === 'cdkx::stack')
+        .map((e) => e.resourceStatus);
+
+      expect(stackStatuses).toContain(StackStatus.UPDATE_COMPLETE);
+      expect(stackStatuses).not.toContain(StackStatus.NO_CHANGES);
+    });
+
+    it('emits NO_CHANGES on first deploy when the stack has zero resources', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      // First deploy (no prior state), assembly has no resources.
+      const engine = makeEngine({}, bus);
+
+      const stacks = [makeStack('S', [])];
+      const plan = makePlan(['S'], { S: [] });
+      await engine.deploy(stacks, plan);
+
+      const stackStatuses = events
+        .filter((e) => e.resourceType === 'cdkx::stack')
+        .map((e) => e.resourceStatus);
+
+      expect(stackStatuses).toContain(StackStatus.NO_CHANGES);
+      expect(stackStatuses).not.toContain(StackStatus.CREATE_COMPLETE);
+    });
+  });
+
+  // ─── Update — changed properties ─────────────────────────────────────────────
+
+  describe('update — changed properties', () => {
+    it('calls adapter.update when a resource has different properties', async () => {
+      const updatedResources: ManifestResource[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        update: (r: ManifestResource): Promise<UpdateResult> => {
+          updatedResources.push(r);
+          return Promise.resolve({});
+        },
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'old-name' },
+          },
+        ],
+        adapter,
+      );
+
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA', properties: { name: 'new-name' } },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+      expect(updatedResources).toHaveLength(1);
+      expect(updatedResources[0].logicalId).toBe('ResA');
+    });
+
+    it('passes the patch (only changed keys) to adapter.update', async () => {
+      const receivedPatches: unknown[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        update: (
+          _r: ManifestResource,
+          patch: unknown,
+        ): Promise<UpdateResult> => {
+          receivedPatches.push(patch);
+          return Promise.resolve({});
+        },
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'web', replicas: 2 },
+          },
+        ],
+        adapter,
+      );
+
+      // Only 'replicas' changed — 'name' is the same.
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'ResA',
+            properties: { name: 'web', replicas: 4 },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      expect(receivedPatches[0]).toEqual({ replicas: 4 });
+    });
+
+    it('passes physicalId on the ManifestResource to adapter.update', async () => {
+      const receivedResource: ManifestResource[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        update: (r: ManifestResource): Promise<UpdateResult> => {
+          receivedResource.push(r);
+          return Promise.resolve({});
+        },
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'old' },
+          },
+        ],
+        adapter,
+      );
+
+      const stacks = [
+        makeStack('S', [{ logicalId: 'ResA', properties: { name: 'new' } }]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      expect(receivedResource[0].physicalId).toBe('phys-A');
+    });
+
+    it('does NOT call adapter.update when properties are identical', async () => {
+      const updateCalled: string[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        update: (r: ManifestResource): Promise<UpdateResult> => {
+          updateCalled.push(r.logicalId);
+          return Promise.resolve({});
+        },
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'web', replicas: 2 },
+          },
+        ],
+        adapter,
+      );
+
+      // Same properties — no update expected.
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'ResA',
+            properties: { name: 'web', replicas: 2 },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+      expect(updateCalled).toHaveLength(0);
+    });
+
+    it('emits UPDATE_IN_PROGRESS and UPDATE_COMPLETE events for updated resource', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (): Promise<UpdateResult> => Promise.resolve({}),
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'old' },
+          },
+        ],
+        adapter,
+        bus,
+      );
+
+      const stacks = [
+        makeStack('S', [{ logicalId: 'ResA', properties: { name: 'new' } }]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      const resAStatuses = events
+        .filter((e) => e.logicalResourceId === 'ResA')
+        .map((e) => e.resourceStatus);
+
+      expect(resAStatuses).toContain(ResourceStatus.UPDATE_IN_PROGRESS);
+      expect(resAStatuses).toContain(ResourceStatus.UPDATE_COMPLETE);
+    });
+
+    it('emits UPDATE_COMPLETE (not NO_CHANGES) for a stack with an updated resource', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (): Promise<UpdateResult> => Promise.resolve({}),
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'old' },
+          },
+        ],
+        adapter,
+        bus,
+      );
+
+      const stacks = [
+        makeStack('S', [{ logicalId: 'ResA', properties: { name: 'new' } }]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      const stackStatuses = events
+        .filter((e) => e.resourceType === 'cdkx::stack')
+        .map((e) => e.resourceStatus);
+
+      expect(stackStatuses).toContain(StackStatus.UPDATE_COMPLETE);
+      expect(stackStatuses).not.toContain(StackStatus.NO_CHANGES);
+    });
+
+    it('returns success=false and emits UPDATE_FAILED when adapter.update throws', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (): Promise<UpdateResult> =>
+          Promise.reject(new Error('update API error')),
+        delete: (): Promise<void> => Promise.resolve(),
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'old' },
+          },
+        ],
+        adapter,
+        bus,
+      );
+
+      const stacks = [
+        makeStack('S', [{ logicalId: 'ResA', properties: { name: 'new' } }]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(false);
+      expect(result.stacks[0].error).toContain('update API error');
+
+      const resAStatuses = events
+        .filter((e) => e.logicalResourceId === 'ResA')
+        .map((e) => e.resourceStatus);
+      expect(resAStatuses).toContain(ResourceStatus.UPDATE_FAILED);
+    });
+
+    it('updates outputs in state after a successful update', async () => {
+      let savedState: EngineState | undefined;
+      const persistence = new StatePersistence('/fake', {
+        mkdirSync: () => undefined,
+        writeFileSync: (_, data) => {
+          savedState = JSON.parse(data) as EngineState;
+        },
+        readFileSync: () => {
+          throw new Error('not found');
+        },
+        existsSync: () => false,
+      });
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'old' },
+                outputs: { serverId: 1 },
+              },
+            },
+          },
+        },
+      };
+
+      const bus = new EventBus<EngineEvent>();
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+
+      const engine = new DeploymentEngine({
+        adapters: {
+          test: {
+            create: () => Promise.reject(new Error('not implemented')),
+            update: (): Promise<UpdateResult> =>
+              Promise.resolve({ outputs: { serverId: 2 } }),
+            delete: () => Promise.resolve(),
+            getOutput: () => Promise.resolve(undefined),
+          },
+        },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        eventBus: bus,
+      });
+
+      const stacks = [
+        makeStack('S', [{ logicalId: 'ResA', properties: { name: 'new' } }]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      expect(savedState?.stacks['S']?.resources['ResA']?.outputs).toEqual({
+        serverId: 2,
+      });
+      expect(savedState?.stacks['S']?.resources['ResA']?.properties).toEqual({
+        name: 'new',
+      });
+    });
+
+    it('includes a newly added key in the patch (prior had fewer keys)', async () => {
+      const receivedPatches: unknown[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        update: (
+          _r: ManifestResource,
+          patch: unknown,
+        ): Promise<UpdateResult> => {
+          receivedPatches.push(patch);
+          return Promise.resolve({});
+        },
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'web' },
+          },
+        ],
+        adapter,
+      );
+
+      // 'algorithm' is a new key not in prior props.
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'ResA',
+            properties: {
+              name: 'web',
+              algorithm: { type: 'least_connections' },
+            },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      expect(receivedPatches[0]).toEqual({
+        algorithm: { type: 'least_connections' },
+      });
+    });
+  });
+
+  // ─── Update — create-only prop filtering ──────────────────────────────────────
+
+  describe('update — create-only prop filtering', () => {
+    it('skips update (no-op) when all changed properties are create-only', async () => {
+      // If the only difference between prior and new props is a create-only
+      // property, the engine must not call adapter.update() at all.
+      const updateMock = jest.fn().mockResolvedValue({});
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: updateMock,
+        getCreateOnlyProps: (_type: string) => new Set(['algorithm']),
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'lb', algorithm: { type: 'round_robin' } },
+          },
+        ],
+        adapter,
+      );
+
+      // Only 'algorithm' changed — which is create-only.
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'ResA',
+            properties: {
+              name: 'lb',
+              algorithm: { type: 'least_connections' },
+            },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+      expect(updateMock).not.toHaveBeenCalled();
+    });
+
+    it('calls adapter.update with only mutable props when patch contains a mix', async () => {
+      const receivedPatches: Record<string, unknown>[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (
+          _resource: ManifestResource,
+          patch: unknown,
+        ): Promise<UpdateResult> => {
+          receivedPatches.push(patch as Record<string, unknown>);
+          return Promise.resolve({});
+        },
+        getCreateOnlyProps: (_type: string) => new Set(['algorithm']),
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: {
+              name: 'old-name',
+              algorithm: { type: 'round_robin' },
+            },
+          },
+        ],
+        adapter,
+      );
+
+      // Both 'name' (mutable) and 'algorithm' (create-only) changed.
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'ResA',
+            properties: {
+              name: 'new-name',
+              algorithm: { type: 'least_connections' },
+            },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+      expect(receivedPatches).toHaveLength(1);
+      // The patch passed to adapter.update must only contain the mutable prop.
+      expect(receivedPatches[0]).toEqual({ name: 'new-name' });
+      expect(receivedPatches[0]).not.toHaveProperty('algorithm');
+    });
+
+    it('calls adapter.update normally when adapter does not implement getCreateOnlyProps', async () => {
+      const receivedPatches: Record<string, unknown>[] = [];
+
+      // Adapter has no getCreateOnlyProps method at all.
+      const adapter: Partial<ProviderAdapter> = {
+        update: (
+          _resource: ManifestResource,
+          patch: unknown,
+        ): Promise<UpdateResult> => {
+          receivedPatches.push(patch as Record<string, unknown>);
+          return Promise.resolve({});
+        },
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'old', algorithm: { type: 'round_robin' } },
+          },
+        ],
+        adapter,
+      );
+
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'ResA',
+            properties: {
+              name: 'new',
+              algorithm: { type: 'least_connections' },
+            },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+      expect(receivedPatches).toHaveLength(1);
+      // All diffs passed through — no filtering applied.
+      expect(receivedPatches[0]).toEqual({
+        name: 'new',
+        algorithm: { type: 'least_connections' },
+      });
+    });
+
+    it('emits UPDATE_IN_PROGRESS and UPDATE_COMPLETE only for mutable changes', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (): Promise<UpdateResult> => Promise.resolve({}),
+        getCreateOnlyProps: (_type: string) => new Set(['algorithm']),
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { algorithm: { type: 'round_robin' } },
+          },
+        ],
+        adapter,
+        bus,
+      );
+
+      // Only create-only prop changed → no-op, no UPDATE events.
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'ResA',
+            properties: { algorithm: { type: 'least_connections' } },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      const resourceEvents = events.filter(
+        (e) => e.logicalResourceId === 'ResA',
+      );
+      expect(
+        resourceEvents.some(
+          (e) => e.resourceStatus === ResourceStatus.UPDATE_IN_PROGRESS,
+        ),
+      ).toBe(false);
+      expect(
+        resourceEvents.some(
+          (e) => e.resourceStatus === ResourceStatus.UPDATE_COMPLETE,
+        ),
+      ).toBe(false);
+    });
+  });
+
+  // ─── Rollback bug regressions ─────────────────────────────────────────────────
+
+  describe('rollback — pre-existing resources are not deleted', () => {
+    it('does not call adapter.delete for a skipped (no-change) pre-existing resource during rollback', async () => {
+      // Regression: before the fix, a skipped resource was pushed into
+      // createdInOrder and then deleted during rollback.
+      const deletedIds: string[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'ResB') {
+            return Promise.reject(new Error('create failed'));
+          }
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: (r: ManifestResource): Promise<void> => {
+          deletedIds.push(r.logicalId);
+          return Promise.resolve();
+        },
+      };
+
+      // Prior: ResA already CREATE_COMPLETE with empty properties.
+      // New assembly: ResA (unchanged, will be skipped) + ResB (new, will fail).
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: {},
+          },
+        ],
+        adapter,
+      );
+
+      const stacks = [
+        makeStack('S', [{ logicalId: 'ResA' }, { logicalId: 'ResB' }]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      await engine.deploy(stacks, plan);
+
+      // ResA was skipped (no-change) — it must NOT be deleted during rollback.
+      expect(deletedIds).not.toContain('ResA');
+    });
+
+    it('does not call adapter.delete for an updated pre-existing resource during rollback', async () => {
+      // Regression: updated resources should not be in createdInOrder either.
+      const deletedIds: string[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (): Promise<UpdateResult> => Promise.resolve({}),
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'ResB') {
+            return Promise.reject(new Error('create failed'));
+          }
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: (r: ManifestResource): Promise<void> => {
+          deletedIds.push(r.logicalId);
+          return Promise.resolve();
+        },
+      };
+
+      // Prior: ResA CREATE_COMPLETE with old properties.
+      // New assembly: ResA (changed, will be updated) + ResB (new, will fail).
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'old' },
+          },
+        ],
+        adapter,
+      );
+
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA', properties: { name: 'new' } },
+          { logicalId: 'ResB' },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      await engine.deploy(stacks, plan);
+
+      // ResA was updated (pre-existing) — it must NOT be deleted during rollback.
+      expect(deletedIds).not.toContain('ResA');
+    });
+  });
+
+  describe('rollback — resolved properties used for action resource delete', () => {
+    it('passes resolved properties (not raw assembly properties) to adapter.delete during rollback', async () => {
+      // Regression: before the fix, rollback passed resource.properties (which
+      // may contain unresolved { ref, attr } tokens) instead of
+      // resourceState.properties (which were resolved at creation time).
+      const deletedResources: ManifestResource[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'Net') {
+            return Promise.resolve({
+              physicalId: 'net-42',
+              outputs: { networkId: 42 },
+            });
+          }
+          if (r.logicalId === 'Subnet') {
+            return Promise.resolve({ physicalId: 'net-42:10.0.1.0/24' });
+          }
+          // LoadBalancer fails → triggers rollback
+          return Promise.reject(new Error('lb create failed'));
+        },
+        delete: (r: ManifestResource): Promise<void> => {
+          deletedResources.push(r);
+          return Promise.resolve();
+        },
+      };
+
+      const engine = makeEngine(adapter);
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'Net', properties: {} },
+          {
+            logicalId: 'Subnet',
+            properties: { networkId: { ref: 'Net', attr: 'networkId' } },
+          },
+          { logicalId: 'LB', properties: {} },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['Net', 'Subnet', 'LB'] });
+      await engine.deploy(stacks, plan);
+
+      // Subnet was created before LB failed — it must be rolled back.
+      const subnetDelete = deletedResources.find(
+        (r) => r.logicalId === 'Subnet',
+      );
+      expect(subnetDelete).toBeDefined();
+      // The networkId in rollback must be the resolved integer (42), NOT the
+      // { ref, attr } token.
+      expect(subnetDelete?.properties['networkId']).toBe(42);
     });
   });
 });
