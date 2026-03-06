@@ -1,4 +1,4 @@
-import type { ManifestResource } from '@cdk-x/engine';
+import type { ManifestResource } from '@cdkx-io/engine';
 import { HetznerAdapter } from './hetzner-adapter';
 import type { HetznerClient } from './hetzner-client';
 import type { ActionPoller } from './action-poller';

@@ -1,5 +1,5 @@
 {
-  "name": "@cdk-x/cli",
+  "name": "@cdkx-io/cli",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/cli/src",
   "projectType": "library",
@@ -69,15 +69,15 @@
       "defaultConfiguration": "development",
       "dependsOn": ["build"],
       "options": {
-        "buildTarget": "@cdk-x/cli:build",
+        "buildTarget": "@cdkx-io/cli:build",
         "runBuildTargetDependencies": false
       },
       "configurations": {
         "development": {
-          "buildTarget": "@cdk-x/cli:build:development"
+          "buildTarget": "@cdkx-io/cli:build:development"
         },
         "production": {
-          "buildTarget": "@cdk-x/cli:build:production"
+          "buildTarget": "@cdkx-io/cli:build:production"
         }
       }
     },

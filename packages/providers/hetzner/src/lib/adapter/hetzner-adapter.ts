@@ -3,7 +3,7 @@ import type {
   ManifestResource,
   ProviderAdapter,
   UpdateResult,
-} from '@cdk-x/engine';
+} from '@cdkx-io/engine';
 import { ActionPoller, type ActionPollerOptions } from './action-poller';
 import { HetznerClient, type HetznerClientOptions } from './hetzner-client';
 import { RESOURCE_REGISTRY } from '../generated/resource-registry.generated';

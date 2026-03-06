@@ -1,4 +1,4 @@
-import { Provider } from '@cdk-x/core';
+import { Provider } from '@cdkx-io/core';
 import { HetznerAdapter, type HetznerAdapterOptions } from '../adapter/index';
 
 // ─── Types ────────────────────────────────────────────────────────────────────

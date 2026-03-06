@@ -1,5 +1,5 @@
-import { Provider } from '@cdk-x/core';
-import { IStackSynthesizer } from '@cdk-x/core';
+import { Provider } from '@cdkx-io/core';
+import { IStackSynthesizer } from '@cdkx-io/core';
 
 /**
  * Minimal concrete Provider for use in tests.

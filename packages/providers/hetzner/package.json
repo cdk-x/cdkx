@@ -1,5 +1,5 @@
 {
-  "name": "@cdk-x/hetzner",
+  "name": "@cdkx-io/hetzner",
   "version": "0.0.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,17 +16,17 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
-    "@cdk-x/core": "^0.1.0",
+    "@cdkx-io/core": "^0.1.0",
     "constructs": "^10.4.2",
     "tslib": "^2.8.1"
   },
   "peerDependencies": {
-    "@cdk-x/engine": "*"
+    "@cdkx-io/engine": "*"
   },
   "devDependencies": {
-    "@cdk-x/engine": "*",
-    "@cdk-x/spec-to-cdkx": "*",
-    "@cdk-x/testing": "*"
+    "@cdkx-io/engine": "*",
+    "@cdkx-io/spec-to-cdkx": "*",
+    "@cdkx-io/testing": "*"
   },
   "publishConfig": {
     "access": "public"

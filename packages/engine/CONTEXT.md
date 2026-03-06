@@ -1,7 +1,7 @@
-# @cdk-x/engine — Development Context
+# @cdkx-io/engine — Development Context
 
 This file captures the full design, architecture, and implementation details of
-`@cdk-x/engine` for future AI-assisted sessions. It is auto-loaded by OpenCode.
+`@cdkx-io/engine` for future AI-assisted sessions. It is auto-loaded by OpenCode.
 
 > **Maintenance rule:** whenever code in `packages/engine` is modified — classes,
 > interfaces, file structure, conventions, or design decisions — this file must
@@ -9,13 +9,13 @@ This file captures the full design, architecture, and implementation details of
 
 ---
 
-## What is @cdk-x/engine?
+## What is @cdkx-io/engine?
 
-**@cdk-x/engine** is the deployment runtime for cdkx. It reads the cloud assembly
+**@cdkx-io/engine** is the deployment runtime for cdkx. It reads the cloud assembly
 produced by `app.synth()` — the `manifest.json` and per-stack JSON template files —
 and drives the actual infrastructure deployment against the target provider.
 
-The engine is a library consumed by `@cdk-x/cli` (e.g. the `cdkx deploy` command
+The engine is a library consumed by `@cdkx-io/cli` (e.g. the `cdkx deploy` command
 imports and calls it programmatically). It runs as async Node.js code in the same
 process as the CLI.
 
@@ -37,11 +37,11 @@ process as the CLI.
 Run tasks via Nx:
 
 ```bash
-yarn nx lint @cdk-x/engine
-yarn nx test @cdk-x/engine
-yarn nx build @cdk-x/engine
-yarn nx run @cdk-x/engine:format        # format src/ with prettier
-yarn nx run @cdk-x/engine:format:check  # check formatting without writing
+yarn nx lint @cdkx-io/engine
+yarn nx test @cdkx-io/engine
+yarn nx build @cdkx-io/engine
+yarn nx run @cdkx-io/engine:format        # format src/ with prettier
+yarn nx run @cdkx-io/engine:format:check  # check formatting without writing
 ```
 
 ---
@@ -74,7 +74,7 @@ CloudAssemblyReader          reads manifest.json + stack JSON files
            ├── EngineStateManager  tracks + persists all state transitions
            ├── EventBus            emits EngineEvent on every transition
            └── ProviderAdapter (interface)
-                └── HetznerAdapter   (in @cdk-x/hetzner — implemented)
+                └── HetznerAdapter   (in @cdkx-io/hetzner — implemented)
                 └── KubernetesAdapter (future)
 ```
 
@@ -506,17 +506,17 @@ interface DeploymentEngineOptions {
 
 ---
 
-## Relationship with @cdk-x/core
+## Relationship with @cdkx-io/core
 
-`@cdk-x/engine` is a **consumer** of the cloud assembly format defined by
-`@cdk-x/core`:
+`@cdkx-io/engine` is a **consumer** of the cloud assembly format defined by
+`@cdkx-io/core`:
 
-- `manifest.json` shape → defined by `CloudAssemblyManifest` in `@cdk-x/core`
-- Stack template shape (`{ resources, outputs? }`) → defined by `JsonSynthesizer` in `@cdk-x/core`
-- `{ ref, attr }` token contract → defined by `ResourceAttribute` in `@cdk-x/core`
+- `manifest.json` shape → defined by `CloudAssemblyManifest` in `@cdkx-io/core`
+- Stack template shape (`{ resources, outputs? }`) → defined by `JsonSynthesizer` in `@cdkx-io/core`
+- `{ ref, attr }` token contract → defined by `ResourceAttribute` in `@cdkx-io/core`
 - `outputKeys` in manifest → populated by `Stack.getOutputs()` + `JsonSynthesizer`
 
-The engine does **not** depend on `@cdk-x/core` at runtime — it only needs to
+The engine does **not** depend on `@cdkx-io/core` at runtime — it only needs to
 understand the JSON file formats, not the TypeScript construct classes. This keeps
 the engine lightweight and provider-agnostic.
 
@@ -524,8 +524,8 @@ the engine lightweight and provider-agnostic.
 
 ## Release configuration
 
-Part of the `core` release group in `nx.json` — lock-stepped with `@cdk-x/core`,
-`@cdk-x/testing`, and `@cdk-x/hetzner`. Tag pattern: `core-v{version}`.
+Part of the `core` release group in `nx.json` — lock-stepped with `@cdkx-io/core`,
+`@cdkx-io/testing`, and `@cdkx-io/hetzner`. Tag pattern: `core-v{version}`.
 
 ---
 
@@ -539,7 +539,7 @@ package follows them identically:
 - No non-null assertions (`!`) — use guards or `?? []` patterns instead
 - CJS imports — extensionless local imports
 - Specs co-located — `foo/foo.spec.ts` next to `foo/foo.ts`
-- Prettier — run `yarn nx run @cdk-x/engine:format` after any `.ts` change
+- Prettier — run `yarn nx run @cdkx-io/engine:format` after any `.ts` change
 
 ### Dependency injection in tests
 
@@ -554,7 +554,7 @@ See `StatePersistence` / `StatePersistenceDeps` and `CloudAssemblyReader` /
 
 ```
 packages/engine/
-├── package.json          name: @cdk-x/engine (no "type" field — CommonJS)
+├── package.json          name: @cdkx-io/engine (no "type" field — CommonJS)
 ├── project.json          Nx project configuration (build, format, format:check, test)
 ├── tsconfig.json
 ├── tsconfig.lib.json

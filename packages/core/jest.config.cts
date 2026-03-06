@@ -7,7 +7,7 @@ const swcJestConfig = JSON.parse(readFileSync(`${__dirname}/.spec.swcrc`, 'utf-8
 swcJestConfig.swcrc = false;
 
 module.exports = {
-  displayName: '@cdk-x/core',
+  displayName: '@cdkx-io/core',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
   transform: {

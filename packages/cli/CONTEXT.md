@@ -1,7 +1,7 @@
-# @cdk-x/cli — Development Context
+# @cdkx-io/cli — Development Context
 
 This file captures the full design, architecture, and implementation details of
-`@cdk-x/cli` for future AI-assisted sessions. It is auto-loaded by OpenCode.
+`@cdkx-io/cli` for future AI-assisted sessions. It is auto-loaded by OpenCode.
 
 > **Maintenance rule:** whenever code in `packages/cli` is modified — commands,
 > interfaces, file structure, conventions, or design decisions — this file must
@@ -9,9 +9,9 @@ This file captures the full design, architecture, and implementation details of
 
 ---
 
-## What is @cdk-x/cli?
+## What is @cdkx-io/cli?
 
-**@cdk-x/cli** is the command-line interface for cdkx. It provides developer-facing
+**@cdkx-io/cli** is the command-line interface for cdkx. It provides developer-facing
 commands (`synth`, and future: `deploy`, `diff`, `destroy`) that drive the cdkx
 workflow from the terminal.
 
@@ -38,13 +38,13 @@ runtime `node_modules` required when installed globally.
 Run tasks via Nx:
 
 ```bash
-yarn nx lint @cdk-x/cli
-yarn nx test @cdk-x/cli
-yarn nx build @cdk-x/cli
-yarn nx run @cdk-x/cli:format              # format src/ with prettier
-yarn nx run @cdk-x/cli:format:check        # check formatting without writing
-yarn nx run @cdk-x/cli:build:fixtures      # compile fixtures to dist-fixtures/
-yarn nx run @cdk-x/cli:run                 # build and run the CLI directly
+yarn nx lint @cdkx-io/cli
+yarn nx test @cdkx-io/cli
+yarn nx build @cdkx-io/cli
+yarn nx run @cdkx-io/cli:format              # format src/ with prettier
+yarn nx run @cdkx-io/cli:format:check        # check formatting without writing
+yarn nx run @cdkx-io/cli:build:fixtures      # compile fixtures to dist-fixtures/
+yarn nx run @cdkx-io/cli:run                 # build and run the CLI directly
 ```
 
 ---
@@ -67,7 +67,7 @@ in the command modules.
 
 ### CJS + esbuild bundle
 
-Unlike `@cdk-x/core` (ESM), the CLI is **CommonJS**. esbuild inlines all
+Unlike `@cdkx-io/core` (ESM), the CLI is **CommonJS**. esbuild inlines all
 dependencies (`chalk`, `commander`) into a single `dist/main.js`. Local imports
 do NOT need the `.js` extension (TypeScript resolves them), but using `.js` is
 acceptable for consistency.
@@ -332,7 +332,7 @@ is always fresh before tests run.
 
 ### `simple-app` (`test/fixtures/simple-app/src/main.ts`)
 
-A real cdkx app used by integration tests. Imports from `@cdk-x/core`.
+A real cdkx app used by integration tests. Imports from `@cdkx-io/core`.
 
 - Creates an `App`
 - Creates two `Stack`s (`StackA`, `StackB`) each with a `SimpleProvider`
@@ -369,7 +369,7 @@ Key rules:
 
 - `dist-fixtures/**` is ignored (compiled output, not source).
 - `test/**/*` is in `@nx/dependency-checks` `ignoredFiles` — test helpers
-  use `esbuild` and `@cdk-x/core` as dev deps, which should not be required in
+  use `esbuild` and `@cdkx-io/core` as dev deps, which should not be required in
   `dependencies`.
 
 ---
@@ -380,7 +380,7 @@ Key rules:
 | -------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Module format              | CJS — esbuild handles bundling. Local imports: `.js` extension is fine.                                |
 | No `any`                   | Use `unknown`. Exception: `require('../package.json') as { version: string }` cast is fine.            |
-| Prettier                   | Run `yarn nx run @cdk-x/cli:format` after writing or modifying any `.ts` file.                         |
+| Prettier                   | Run `yarn nx run @cdkx-io/cli:format` after writing or modifying any `.ts` file.                         |
 | Specs co-located           | `foo/foo.command.spec.ts` lives next to `foo/foo.command.ts`.                                          |
 | OOP — all logic in classes | No standalone `export function`. Commands extend `BaseCommand`. Utilities go in classes in `src/lib/`. |
 | Error handling             | Always use `this.run()` + `this.fail()`. Never call `process.exit()` directly in command logic.        |
@@ -412,9 +412,9 @@ class instance. `main.ts` and tests both use `XxxCommand.create(deps?)`.
 esbuild inlines the package.json at bundle time. This is intentional and not a
 problem — do not change it to a static ESM import.
 
-### 4. `bundle: true` means future `@cdk-x/core` will be inlined
+### 4. `bundle: true` means future `@cdkx-io/core` will be inlined
 
-When `@cdk-x/core` is added as a production dependency in the future, esbuild
+When `@cdkx-io/core` is added as a production dependency in the future, esbuild
 will bundle it into `dist/main.js`. This is intentional — the CLI is self-contained.
 That is also why `updateDependents: "never"` is set in the release config.
 
@@ -449,7 +449,7 @@ prevent the test output from being polluted.
 ### 8. `test/**` excluded from `tsconfig.lib.json`
 
 The build tsconfig excludes `test/**/*` so the esbuild executor doesn't
-pick up fixture files that import `@cdk-x/core` with ESM types incompatible
+pick up fixture files that import `@cdkx-io/core` with ESM types incompatible
 with the CLI's `moduleResolution: nodenext` build config.
 
 ### 9. `test/**` included in `tsconfig.spec.json`
@@ -471,7 +471,7 @@ option is set so the platform shell handles more complex command strings if need
 packages/cli/
 ├── bin/
 │   └── cdkx.js                                npm bin shim
-├── package.json                               name: @cdk-x/cli, type: (none — CJS)
+├── package.json                               name: @cdkx-io/cli, type: (none — CJS)
 ├── project.json                               Nx project configuration
 ├── eslint.config.mjs                          ESLint config (dist-fixtures ignored, test in ignoredFiles)
 ├── tsconfig.lib.json                          excludes test/**/*
@@ -515,5 +515,5 @@ cdkx.out/                                      workspace-root synthesis output (
 ## Release configuration
 
 Part of the `cli` release group in `nx.json`. Released independently from
-`@cdk-x/core`. Tag pattern: `cli-v{version}`. See `packages/core/CONTEXT.md`
+`@cdkx-io/core`. Tag pattern: `cli-v{version}`. See `packages/core/CONTEXT.md`
 for the full release configuration documentation.
