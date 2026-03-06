@@ -74,7 +74,7 @@ CloudAssemblyReader          reads manifest.json + stack JSON files
            ├── EngineStateManager  tracks + persists all state transitions
            ├── EventBus            emits EngineEvent on every transition
            └── ProviderAdapter (interface)
-                └── HetznerAdapter   (in @cdk-x/hetzner — not yet implemented)
+                └── HetznerAdapter   (in @cdk-x/hetzner — implemented)
                 └── KubernetesAdapter (future)
 ```
 
@@ -289,6 +289,7 @@ interface ManifestResource {
   properties: Record<string, unknown>; // all { ref, attr } tokens already resolved
   stackId: string;
   provider: string;
+  physicalId?: string; // set by engine from ResourceState.physicalId for update/delete/getOutput
 }
 
 interface CreateResult {
@@ -618,9 +619,8 @@ Also written at runtime (gitignored):
 
 ## Not yet implemented (next iterations)
 
-| Component        | Description                                                     |
-| ---------------- | --------------------------------------------------------------- |
-| `HetznerAdapter` | Concrete `ProviderAdapter` in `@cdk-x/hetzner`                  |
-| Update logic     | `adapter.update()` called for existing resources (diff-based)   |
-| Delete command   | `cdkx destroy` driving `adapter.delete()` for all resources     |
-| Resume support   | Loading `engine-state.json` to skip already-completed resources |
+| Component      | Description                                                     |
+| -------------- | --------------------------------------------------------------- |
+| Update logic   | `adapter.update()` called for existing resources (diff-based)   |
+| Delete command | `cdkx destroy` driving `adapter.delete()` for all resources     |
+| Resume support | Loading `engine-state.json` to skip already-completed resources |
