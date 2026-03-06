@@ -99,6 +99,36 @@ terminal output. Color conventions:
 | `chalk.yellow`     | Warnings                             |
 | `chalk.red`        | Errors (via `BaseCommand.run()`)     |
 
+### Event table formatting (`deploy.command.ts`)
+
+Engine events are buffered during the deployment and printed **after** the
+deploy completes. Column widths are computed dynamically from the longest value
+in each column across all collected events, so every row aligns without
+wasting space on fixed padding.
+
+Each event line has 4 columns:
+
+| Column        | Content                                                                 |
+| ------------- | ----------------------------------------------------------------------- |
+| Stack ID      | `event.stackId`                                                         |
+| Resource type | `event.resourceType` (e.g. `cdkx::stack`, `Hetzner::Networking::Route`) |
+| Logical ID    | `event.logicalResourceId`                                               |
+| Status        | `event.resourceStatus` (colored, no pad — last column)                  |
+
+Columns are separated by two spaces. The timestamp is **not** included.
+
+**Key implementation details:**
+
+- Events are stored in `bufferedEvents: EngineEvent[]` during the subscribe
+  callback. After `engine.deploy()` resolves, `computeColWidths()` scans the
+  buffer to find the max length per column, then `renderEvent()` prints each
+  row using those widths.
+- `pad(s, width)` is applied to the **plain string before** wrapping with chalk.
+  ANSI escape codes inflate `String.length` without affecting visual width —
+  padding after chalk would misalign all rows.
+- Because events are buffered, all rows in a deployment are always aligned
+  to each other regardless of which events arrive first.
+
 ---
 
 ## BaseCommand — abstract base class
@@ -324,7 +354,9 @@ Options:
 11. Call `engine.deploy(stacks, plan)`.
 12. Release the lock in a `finally` block (always released, even on failure).
 13. If `result.success` is `false`, call `this.fail()` → exit 1.
-14. Print `chalk.green('✔') + ' Deployment complete'` on success.
+14. Check `NO_CHANGES` events collected during step 10 — if **all** stacks emitted
+    `NO_CHANGES`, print `chalk.dim('No changes — all stacks are up-to-date')`.
+    Otherwise print `chalk.green('✔') + ' Deployment complete'`.
 
 ### Injectable dependencies (`DeployCommandDeps`)
 
@@ -358,6 +390,8 @@ Options:
 - `stateDir` and `assemblyDir` passed correctly to `createEngine`.
 - Lock released even when deploy fails (`finally` block).
 - `LockError` from `acquire()` → exit 1.
+- Engine emits `NO_CHANGES` for all stacks → prints `No changes — all stacks are up-to-date`.
+- Engine emits `UPDATE_COMPLETE` → prints `Deployment complete`, not the no-op message.
 
 ---
 
