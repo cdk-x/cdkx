@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { synthCommand } from './commands/synth/index.js';
+import { deployCommand } from './commands/deploy/index.js';
 
 const { version } = require('../package.json') as { version: string };
 
@@ -29,5 +30,6 @@ program
   .addHelpText('beforeAll', `\n${banner}\n`);
 
 program.addCommand(synthCommand);
+program.addCommand(deployCommand);
 
 program.parse(process.argv);

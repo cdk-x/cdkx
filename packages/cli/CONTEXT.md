@@ -12,7 +12,7 @@ This file captures the full design, architecture, and implementation details of
 ## What is @cdkx-io/cli?
 
 **@cdkx-io/cli** is the command-line interface for cdkx. It provides developer-facing
-commands (`synth`, and future: `deploy`, `diff`, `destroy`) that drive the cdkx
+commands (`synth`, `deploy`, and future: `diff`, `destroy`) that drive the cdkx
 workflow from the terminal.
 
 It is distributed as a standalone npm package with a `cdkx` binary entry point.
@@ -177,6 +177,15 @@ src/
 ├── lib/
 │   ├── base-command.ts             abstract BaseCommand
 │   ├── base-command.spec.ts        tests for run() and fail()
+│   ├── cdkx-config.ts              CdkxConfig interface + readConfig helper
+│   ├── adapter-registry/
+│   │   ├── adapter-registry.ts     AdapterRegistry — maps provider IDs to adapter factories
+│   │   ├── adapter-registry.spec.ts
+│   │   └── index.ts
+│   ├── deploy-lock/
+│   │   ├── deploy-lock.ts          DeployLock — file-based concurrency lock
+│   │   ├── deploy-lock.spec.ts     unit tests
+│   │   └── index.ts
 │   └── index.ts                    re-export barrel for src/lib/
 ├── main.ts                         root command + subcommand registration
 ├── index.ts                        public barrel (re-exports lib + commands)
@@ -185,7 +194,10 @@ src/
     │   ├── synth.command.ts        SynthCommand extends BaseCommand
     │   ├── synth.command.spec.ts   tests
     │   └── index.ts                re-export barrel
-    └── (future: deploy/, diff/, destroy/, init/)
+    └── deploy/
+        ├── deploy.command.ts       DeployCommand extends BaseCommand
+        ├── deploy.command.spec.ts  tests
+        └── index.ts                re-export barrel
 ```
 
 ### Adding a new command
@@ -277,6 +289,155 @@ no module-level state.
 
 **Important:** `parseAsync` calls omit the command name — since `create()` returns
 the `synth` subcommand directly, tests call `cmd.parseAsync(['node', 'cdkx'])`.
+
+---
+
+## Command: `deploy`
+
+### Usage
+
+```
+cdkx deploy
+
+Options:
+  -c, --config <file>   Path to cdkx.json config file (default: "cdkx.json")
+  -o, --output <dir>    Override output directory
+  -h, --help            Display help for command
+```
+
+### Behaviour
+
+1. Resolve and validate the `--config` path (same logic as `synth`).
+2. Read and validate `cdkx.json` — `app` field must be present.
+3. Compute `assemblyDir` from `--output` flag > `config.output` > `'cdkx.out'`,
+   resolved relative to `dirname(configPath)`.
+4. Compute `stateDir = join(dirname(configPath), '.cdkx')` — always `.cdkx/`
+   next to `cdkx.json`, regardless of `--output`. State is kept separate from
+   the cloud assembly so it survives `cdkx synth` re-runs.
+5. Read the cloud assembly via `readAssembly(assemblyDir)`.
+6. Build the deployment plan via `planDeployment(stacks)`.
+7. Build provider adapters via `registry.build(providerIds, process.env)`.
+8. Acquire the deploy lock (`createLock(stateDir).acquire()`) — throws
+   `LockError` if another deployment is in progress.
+9. Create the engine with `assemblyDir`, `stateDir`, and an `EventBus`.
+10. Subscribe to engine events and stream them to `console.log`.
+11. Call `engine.deploy(stacks, plan)`.
+12. Release the lock in a `finally` block (always released, even on failure).
+13. If `result.success` is `false`, call `this.fail()` → exit 1.
+14. Print `chalk.green('✔') + ' Deployment complete'` on success.
+
+### Injectable dependencies (`DeployCommandDeps`)
+
+| Dep              | Default                 | Purpose                                            |
+| ---------------- | ----------------------- | -------------------------------------------------- |
+| `existsSync`     | `fs.existsSync`         | Checks if the config file exists                   |
+| `readConfig`     | `defaultReadConfig`     | Reads and parses `cdkx.json`                       |
+| `readAssembly`   | `defaultReadAssembly`   | Reads the cloud assembly via `CloudAssemblyReader` |
+| `planDeployment` | `defaultPlanDeployment` | Builds a plan via `DeploymentPlanner`              |
+| `createEngine`   | `defaultCreateEngine`   | Instantiates `DeploymentEngine`                    |
+| `createLock`     | `defaultCreateLock`     | Factory: `(stateDir) => new DeployLock(stateDir)`  |
+| `registry`       | `defaultRegistry`       | `AdapterRegistry` with `HetznerAdapterFactory`     |
+
+### Tests
+
+`src/commands/deploy/deploy.command.spec.ts` — unit tests:
+
+- Metadata: command name, description, `--config` default, `--output` option.
+- Config not found → exit 1.
+- Missing `app` field → exit 1.
+- `readAssembly` throws → exit 1.
+- No stacks in assembly → exit 1.
+- `planDeployment` throws (cycle) → exit 1.
+- `registry.build` throws (missing token) → exit 1.
+- `engine.deploy` returns `success: false` → exit 1.
+- `engine.deploy` returns `success: true` → success message printed.
+- Events are streamed to stdout via `engine.subscribe`.
+- `--output` flag passed to `readAssembly`.
+- `config.output` used when `--output` not set.
+- `stateDir` ends with `.cdkx` — passed to `createLock`.
+- `stateDir` and `assemblyDir` passed correctly to `createEngine`.
+- Lock released even when deploy fails (`finally` block).
+- `LockError` from `acquire()` → exit 1.
+
+---
+
+## DeployLock (`src/lib/deploy-lock/`)
+
+File-based deploy lock that prevents concurrent `cdkx deploy` invocations.
+
+### Lock file location
+
+`.cdkx/deploy.lock` — inside `stateDir`, which is always `.cdkx/` next to
+`cdkx.json`.
+
+### Lock file contents
+
+```json
+{
+  "pid": 12345,
+  "startedAt": "2026-01-01T00:00:00.000Z",
+  "hostname": "my-machine"
+}
+```
+
+### API
+
+```ts
+class DeployLock {
+  constructor(stateDir: string, deps?: DeployLockDeps);
+
+  acquire(): void; // writes lock or throws LockError; auto-cleans stale PID
+  release(): void; // deletes lock file; idempotent
+  get lockFilePath(): string;
+}
+```
+
+**`acquire()` algorithm:**
+
+1. `mkdirSync(stateDir, { recursive: true })` — ensures the state dir exists.
+2. If the lock file exists: parse it, check if the holder PID is alive via
+   `process.kill(pid, 0)`. If alive → throw `LockError`. If dead (stale) → delete
+   the lock file.
+3. Write a new lock file with `{ pid, startedAt, hostname }`.
+
+**`release()` algorithm:** if the lock file exists, delete it. No-op otherwise.
+
+### `LockError`
+
+```ts
+class LockError extends Error {
+  constructor(lockPath: string, lockData: LockData);
+  readonly lockPath: string;
+  readonly lockData: LockData;
+}
+```
+
+Message format:
+
+```
+Deploy already in progress (pid <pid> on <hostname>, started <startedAt>).
+Lock file: <lockPath>
+If the process is no longer running, delete the lock file manually and retry.
+```
+
+### `DeployLockDeps`
+
+All I/O and process operations are injectable for testing:
+
+```ts
+interface DeployLockDeps {
+  mkdirSync?: (p: string, options?: { recursive?: boolean }) => void;
+  writeFileSync?: (p: string, data: string, encoding: BufferEncoding) => void;
+  readFileSync?: (p: string, encoding: BufferEncoding) => string;
+  unlinkSync?: (p: string) => void;
+  existsSync?: (p: string) => boolean;
+  isProcessAlive?: (pid: number) => boolean; // default: process.kill(pid, 0)
+  getPid?: () => number; // default: process.pid
+  getHostname?: () => string; // default: os.hostname()
+}
+```
+
+Exported from `src/lib/index.ts`: `DeployLock`, `LockError`, `LockData`, `DeployLockDeps`.
 
 ---
 
@@ -380,7 +541,7 @@ Key rules:
 | -------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Module format              | CJS — esbuild handles bundling. Local imports: `.js` extension is fine.                                |
 | No `any`                   | Use `unknown`. Exception: `require('../package.json') as { version: string }` cast is fine.            |
-| Prettier                   | Run `yarn nx run @cdkx-io/cli:format` after writing or modifying any `.ts` file.                         |
+| Prettier                   | Run `yarn nx run @cdkx-io/cli:format` after writing or modifying any `.ts` file.                       |
 | Specs co-located           | `foo/foo.command.spec.ts` lives next to `foo/foo.command.ts`.                                          |
 | OOP — all logic in classes | No standalone `export function`. Commands extend `BaseCommand`. Utilities go in classes in `src/lib/`. |
 | Error handling             | Always use `this.run()` + `this.fail()`. Never call `process.exit()` directly in command logic.        |
@@ -483,11 +644,24 @@ packages/cli/
     ├── lib/
     │   ├── base-command.ts                    abstract BaseCommand class
     │   ├── base-command.spec.ts               tests for run() and fail()
-    │   └── index.ts                           lib barrel
+    │   ├── cdkx-config.ts                     CdkxConfig interface + readConfig helper
+    │   ├── adapter-registry/
+    │   │   ├── adapter-registry.ts            AdapterRegistry — provider ID → adapter factory
+    │   │   ├── adapter-registry.spec.ts       tests
+    │   │   └── index.ts
+    │   ├── deploy-lock/
+    │   │   ├── deploy-lock.ts                 DeployLock + LockError + LockData + DeployLockDeps
+    │   │   ├── deploy-lock.spec.ts            unit tests
+    │   │   └── index.ts                       re-export barrel
+    │   └── index.ts                           lib barrel (exports DeployLock, LockError, LockData)
     ├── commands/
-    │   └── synth/
-    │       ├── synth.command.ts               SynthCommand (reads cdkx.json, spawns subprocess)
-    │       ├── synth.command.spec.ts          12 unit tests
+    │   ├── synth/
+    │   │   ├── synth.command.ts               SynthCommand (reads cdkx.json, spawns subprocess)
+    │   │   ├── synth.command.spec.ts          12 unit tests
+    │   │   └── index.ts                       re-export barrel
+    │   └── deploy/
+    │       ├── deploy.command.ts              DeployCommand (reads assembly, drives engine, lock)
+    │       ├── deploy.command.spec.ts         unit tests
     │       └── index.ts                       re-export barrel
     └── test/
         ├── fixtures/
@@ -508,6 +682,7 @@ packages/cli/dist/main.js                      compiled CLI bundle (built, not c
 packages/cli/dist-fixtures/                    compiled fixtures for manual use (gitignored)
 cdkx.json                                      workspace-root manual test config (gitignored)
 cdkx.out/                                      workspace-root synthesis output (gitignored)
+.cdkx/                                         engine state + deploy lock (gitignored, next to cdkx.json)
 ```
 
 ---
