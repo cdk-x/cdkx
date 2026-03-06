@@ -46,6 +46,9 @@ test-output
 # cdkx local synthesis output (visual inspection)
 .cdkx.out
 
+# cdkx local state and lock files
+.cdkx/
+
 # cdkx workspace-root config and output (for local manual testing)
 cdkx.json
 cdkx.out
@@ -54,3 +57,6 @@ cdkx.out
 packages/cli/dist-fixtures
 
 .nx/polygraph
+
+# examples — local test apps (not part of the repo)
+examples/
