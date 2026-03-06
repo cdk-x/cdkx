@@ -34,6 +34,16 @@ export interface ManifestResource {
    * Matches `manifest.artifacts[stackId].provider`.
    */
   readonly provider: string;
+
+  /**
+   * The provider-assigned physical ID of this resource.
+   *
+   * Present when the engine calls `update()`, `delete()`, or `getOutput()` —
+   * i.e. when the resource has already been created and its physical ID has been
+   * stored in `EngineState`. Absent (`undefined`) for `create()` calls, where
+   * the physical ID is not yet known.
+   */
+  readonly physicalId?: string;
 }
 
 /**

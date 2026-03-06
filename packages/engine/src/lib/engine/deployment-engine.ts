@@ -293,9 +293,6 @@ export class DeploymentEngine {
       const resource = resourceById.get(logicalId);
       if (resource === undefined) continue;
 
-      // physicalId retained for future use (e.g. optimistic deletes by provider ID).
-      void this.stateManager.getResourceState(stack.id, logicalId)?.physicalId;
-
       this.stateManager.transitionResource(
         stack.id,
         logicalId,
@@ -310,6 +307,8 @@ export class DeploymentEngine {
           properties: resource.properties,
           stackId: stack.id,
           provider: stack.provider,
+          physicalId: this.stateManager.getResourceState(stack.id, logicalId)
+            ?.physicalId,
         });
 
         this.stateManager.transitionResource(
