@@ -12,11 +12,15 @@ This file captures the full design, architecture, and implementation details of
 ## What is spec-to-cdkx?
 
 **spec-to-cdkx** is a CLI code-generation tool. It reads JSON Schema files describing
-provider resources and generates a single TypeScript file containing L1 constructs
-(nested interfaces, enums, props interfaces, and L1 classes extending `ProviderResource`).
+provider resources and generates:
+
+1. A TypeScript file containing L1 constructs (nested interfaces, enums, props
+   interfaces, and L1 classes extending `ProviderResource`) — `resources.generated.ts`.
+2. Optionally, a TypeScript file containing the adapter resource registry
+   (`resource-registry.generated.ts`) — enabled via `--registry-output`.
 
 Provider packages (e.g. `@cdk-x/hetzner`) use it via an Nx `codegen` target to
-auto-generate their `src/lib/resources.generated.ts`.
+auto-generate both files in a single run.
 
 ---
 
@@ -70,12 +74,17 @@ Required:
 
 Optional:
   -s, --schemas <dir>             Path to schemas dir (default: "schemas/v1")
-  -o, --output <file>             Output file (default: "src/lib/resources.generated.ts")
+  -o, --output <file>             Output file (default: "src/lib/generated/resources.generated.ts")
+  --registry-output <file>        Output file for the resource registry (optional; omit to skip)
   -h, --help                      Display help
 ```
 
 All paths are resolved relative to `process.cwd()`. Provider packages call this
 from their project root via the Nx `codegen` target.
+
+When `--registry-output` is supplied, `RegistryGenerator.generate()` is called
+after `CodeGenerator.generate()` and the result is written to the given path.
+Only schemas that have an `api` block are included in the registry.
 
 ---
 
@@ -109,6 +118,11 @@ SchemaReader.read(schemasDir)     ← load + resolve all *.schema.json files
 CodeGenerator.generate(resources, opts)   ← emit TypeScript source string
        ↓  string
 fs.writeFileSync(outputFile, source)      ← write resources.generated.ts
+
+(optional, when --registry-output is given)
+RegistryGenerator.generate(resources, opts)  ← emit registry source string
+       ↓  string
+fs.writeFileSync(registryFile, source)       ← write resource-registry.generated.ts
 ```
 
 ---
@@ -147,10 +161,12 @@ the directory and returns one `ResourceSchema` per file that has a `typeName`.
 | `description`           | Schema-level description                                                                                                                                    |
 | `properties`            | Top-level properties (cross-file named-type refs kept as same-file `$ref`; structural refs inlined; same-file refs left as-is)                              |
 | `readOnlyProperties`    | Plain prop names (extracted from JSON pointer strings like `/properties/networkId`)                                                                         |
+| `createOnlyProperties`  | Plain prop names (extracted from JSON pointer strings like `/properties/ipRange`). Used by `RegistryGenerator` to populate `createOnlyProps`.               |
 | `required`              | Required prop names from the top-level `required` array. When non-empty, the generated L1 constructor omits the `= {}` default and props are non-optional.  |
 | `definitions`           | Merged defs map (own + global). Used by code generator for `$ref` resolution and type names                                                                 |
 | `localDefinitionNames`  | Keys of the schema's **own** `definitions` block (before global merge). Used by `CodeGenerator.isDefinedInFile` to avoid emitting defs from other files.    |
 | `sharedDefinitionNames` | Names of cross-file **named type** definitions (enums, interfaces) actually referenced by this resource's properties. Used to emit a single Common section. |
+| `api`                   | Optional `ApiSpec` block read from the schema's `api` field. Used by `RegistryGenerator`. Absent for schemas without `api`.                                 |
 | `filePath`              | Absolute path to the schema file                                                                                                                            |
 
 **Key design decision — `localDefinitionNames`:**
@@ -298,6 +314,60 @@ as plain `number`.
 
 ---
 
+### `RegistryGenerator` (`src/lib/registry-generator.ts`)
+
+Static class. `RegistryGenerator.generate(resources, opts)` returns the full
+TypeScript source string for `resource-registry.generated.ts`.
+
+Only `ResourceSchema` entries that have an `api` block are included in the
+generated registry.
+
+**`RegistryGeneratorOptions`:**
+
+| Field                 | Description                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------- |
+| `resourceTypeConst`   | Name of the const to import from `resources.generated.ts` (e.g. `"HetznerResourceType"`) |
+| `resourcesImportPath` | Import path for that const. Default: `'./resources.generated'`                           |
+
+**Generated file structure (in order):**
+
+1. Auto-generated header comment
+2. `import { HetznerResourceType } from '../resources.generated'`
+3. `ResourceConfig` interface (verbatim — same shape as the former hand-written file)
+4. `asRecord` helper function
+5. `RESOURCE_REGISTRY` object — one entry per resource with an `api` block
+
+**`ApiSpec` interface (from `schema-reader.ts`):**
+
+| Field              | Description                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| `createPath`       | HTTP path for creation; may contain `{propName}` for action resources                             |
+| `getPath`          | HTTP path for GET (absent for action resources)                                                   |
+| `updatePath`       | HTTP path for PUT (absent for action resources)                                                   |
+| `deletePath`       | HTTP path for DELETE                                                                              |
+| `responseBodyKey`  | Key in the API response body that holds the resource object. `null` for action resources.         |
+| `outputAttrMap`    | Optional — maps cdkx prop name → response field name when they differ (e.g. `networkId: 'id'`)    |
+| `compositeIdProps` | Optional — for action resources only: ordered list of prop names forming the composite physicalId |
+
+**Derivation rules for `ResourceConfig` fields:**
+
+| `ResourceConfig` field | Source                                                                                                                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `createPath`           | `api.createPath` verbatim                                                                                                                                                              |
+| `getPath`              | `api.getPath` → `(id) => \`/path/${id}\``; query-string paths use `encodeURIComponent`. Absent → omit.                                                                                 |
+| `updatePath`           | Same pattern. Absent → omit.                                                                                                                                                           |
+| `deletePath`           | Action resource → string literal; normal resource → arrow function.                                                                                                                    |
+| `createOnlyProps`      | `new Set(resource.createOnlyProperties)`                                                                                                                                               |
+| `isActionResource`     | `true` when `api.responseBodyKey === null`                                                                                                                                             |
+| `parentIdProp`         | `api.compositeIdProps[0]`                                                                                                                                                              |
+| `extractOutputs`       | Built from `readOnlyProperties` + `api.outputAttrMap`. Fallback: when no `outputAttrMap` but `readOnlyProperties` exists, prop name = response field. Action resources → `() => ({})`. |
+| `extractPhysicalId`    | Normal: `String(asRecord(asRecord(response)[bodyKey])[idField])`. Action: compose from `compositeIdProps` using `properties`.                                                          |
+
+**Physical ID response field rule:** if `outputAttrMap` is present, use
+`outputAttrMap[firstReadOnlyProp]`; else default to `'id'`.
+
+---
+
 ## JSON Schema conventions
 
 Each provider schema file should follow these conventions:
@@ -309,9 +379,10 @@ Each provider schema file should follow these conventions:
 | `domain`               | Domain group name (e.g. `"Networking"`) — used to group resources in the generated file                                     |
 | `required`             | Array of required top-level prop names. Generates non-optional props interface members and omits `= {}` default on L1 ctor. |
 | `readOnlyProperties`   | JSON pointers like `"/properties/networkId"` — generate `attr*` members on the L1 class                                     |
-| `createOnlyProperties` | Informational only — not used by the code generator                                                                         |
+| `createOnlyProperties` | JSON pointers like `"/properties/ipRange"` — mapped by `RegistryGenerator` into `createOnlyProps: new Set([...])`.          |
 | `primaryIdentifier`    | Informational only — not used by the code generator                                                                         |
 | `definitions`          | Local type definitions (enums, nested interfaces). Cross-file refs use `"$ref": "./<file>.schema.json#/definitions/<Name>"` |
+| `api`                  | Optional block used by `RegistryGenerator`. See `ApiSpec` above. Absent → resource omitted from registry.                   |
 
 **`common.schema.json`:** A file without `typeName` contributes its `definitions`
 to all other schemas (for `$ref` resolution) but does not produce any L1 output.
@@ -348,20 +419,22 @@ test/
 └── fixtures/
     └── schemas/
         ├── common.schema.json   shared definitions (Labels, NetworkZone)
-        ├── network.schema.json  Test::Networking::Network
-        └── server.schema.json   Test::Compute::Server
+        ├── network.schema.json  Test::Networking::Network (has api block)
+        ├── subnet.schema.json   Test::Networking::Subnet  (action resource, has api block)
+        └── server.schema.json   Test::Compute::Server     (has api block)
 ```
 
 **Unit tests (co-located with source):**
 
-| File                                             | Tests                          |
-| ------------------------------------------------ | ------------------------------ |
-| `src/lib/schema-reader.spec.ts`                  | ~18 tests for `SchemaReader`   |
-| `src/lib/code-generator.spec.ts`                 | ~37 tests for `CodeGenerator`  |
-| `src/lib/type-mapper.spec.ts`                    | ~18 tests for `TypeMapper`     |
-| `src/commands/generate/generate.command.spec.ts` | ~8 tests for `GenerateCommand` |
+| File                                             | Tests                             |
+| ------------------------------------------------ | --------------------------------- |
+| `src/lib/schema-reader.spec.ts`                  | ~18 tests for `SchemaReader`      |
+| `src/lib/code-generator.spec.ts`                 | ~37 tests for `CodeGenerator`     |
+| `src/lib/type-mapper.spec.ts`                    | ~18 tests for `TypeMapper`        |
+| `src/lib/registry-generator.spec.ts`             | ~30 tests for `RegistryGenerator` |
+| `src/commands/generate/generate.command.spec.ts` | ~13 tests for `GenerateCommand`   |
 
-Total: **80 tests**, 4 suites.
+Total: **123 tests**, 5 suites.
 
 **`FIXTURES_DIR`** in spec files:
 
@@ -483,27 +556,30 @@ packages/tools/spec-to-cdkx/
 ├── tsconfig.spec.json                      jest config (references: [])
 ├── CONTEXT.md                              ← this file
 ├── src/
-│   ├── index.ts                            public barrel
+│   ├── index.ts                            public barrel (exports ApiSpec, RegistryGenerator, RegistryGeneratorOptions)
 │   ├── main.ts                             CLI entry point (banner + addCommand)
 │   ├── lib/
 │   │   ├── base-command.ts                 abstract BaseCommand (run, fail)
 │   │   ├── base-command.spec.ts
-│   │   ├── schema-reader.ts                SchemaReader + JsonSchema + ResourceSchema types
-│   │   ├── schema-reader.spec.ts           12 tests
+│   │   ├── schema-reader.ts                SchemaReader + JsonSchema + ResourceSchema + ApiSpec types
+│   │   ├── schema-reader.spec.ts           ~18 tests
 │   │   ├── type-mapper.ts                  TypeMapper static class
 │   │   ├── type-mapper.spec.ts             ~18 tests
 │   │   ├── code-generator.ts               CodeGenerator static class
-│   │   ├── code-generator.spec.ts          ~20 tests
+│   │   ├── code-generator.spec.ts          ~37 tests
+│   │   ├── registry-generator.ts           RegistryGenerator static class + RegistryGeneratorOptions
+│   │   ├── registry-generator.spec.ts      ~30 tests
 │   │   └── index.ts                        lib barrel
 │   └── commands/
 │       └── generate/
-│           ├── generate.command.ts         GenerateCommand extends BaseCommand
-│           ├── generate.command.spec.ts    ~8 tests
+│           ├── generate.command.ts         GenerateCommand (--registry-output support)
+│           ├── generate.command.spec.ts    ~13 tests
 │           └── index.ts                    re-export barrel
 └── test/
     └── fixtures/
         └── schemas/
             ├── common.schema.json          shared defs (Labels, NetworkZone)
-            ├── network.schema.json         Test::Networking::Network
-            └── server.schema.json          Test::Compute::Server
+            ├── network.schema.json         Test::Networking::Network (api block)
+            ├── subnet.schema.json          Test::Networking::Subnet  (action resource, api block)
+            └── server.schema.json          Test::Compute::Server     (api block)
 ```

@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TestSubnet",
+  "description": "A test subnet action resource.",
+  "typeName": "Test::Networking::Subnet",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "definitions": {
+    "NetworkSubnetType": {
+      "type": "string",
+      "description": "Type of subnet.",
+      "enum": ["cloud", "server", "vswitch"]
+    }
+  },
+  "properties": {
+    "networkId": {
+      "type": "integer",
+      "description": "ID of the Network to add the subnet to."
+    },
+    "type": {
+      "$ref": "#/definitions/NetworkSubnetType",
+      "description": "Type of subnet."
+    },
+    "ipRange": {
+      "type": "string",
+      "description": "IP range in CIDR notation."
+    }
+  },
+  "required": ["networkId", "type"],
+  "createOnlyProperties": [
+    "/properties/networkId",
+    "/properties/type",
+    "/properties/ipRange"
+  ],
+  "primaryIdentifier": ["/properties/networkId", "/properties/ipRange"],
+  "api": {
+    "createPath": "/networks/{networkId}/actions/add_subnet",
+    "deletePath": "/networks/{networkId}/actions/delete_subnet",
+    "responseBodyKey": null,
+    "compositeIdProps": ["networkId", "ipRange"]
+  }
+}
