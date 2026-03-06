@@ -382,3 +382,100 @@ describe('DeployCommand — execution', () => {
     expect(exitSpy).toHaveBeenCalledWith(1);
   });
 });
+
+describe('DeployCommand — no-op message', () => {
+  let exitSpy: jest.SpyInstance;
+  let consoleSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    exitSpy = jest
+      .spyOn(process, 'exit')
+      .mockImplementation((() => undefined) as () => never);
+    consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('prints no-changes message when the only stack emits NO_CHANGES', async () => {
+    let capturedHandler: ((event: unknown) => void) | undefined;
+
+    const cmd = DeployCommand.create({
+      existsSync: () => true,
+      readConfig: () => ({ app: 'node app.js' }),
+      readAssembly: () => [makeStack()],
+      planDeployment: () => makePlan(),
+      registry: makeRegistry(),
+      createEngine: () =>
+        ({
+          subscribe: (handler: (event: unknown) => void) => {
+            capturedHandler = handler;
+            return () => undefined;
+          },
+          deploy: jest.fn().mockImplementation(async () => {
+            capturedHandler?.({
+              timestamp: new Date(),
+              stackId: 'TestStack',
+              logicalResourceId: 'TestStack',
+              resourceType: 'cdkx::stack',
+              resourceStatus: 'NO_CHANGES',
+            });
+            return { success: true, stacks: [] };
+          }),
+        }) as never,
+      createLock: () => makeNullLock(),
+    });
+
+    await cmd.parseAsync(['node', 'cdkx']);
+
+    expect(exitSpy).not.toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('No changes — all stacks are up-to-date'),
+    );
+    expect(consoleSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('Deployment complete'),
+    );
+  });
+
+  it('prints Deployment complete when the stack emits UPDATE_COMPLETE', async () => {
+    let capturedHandler: ((event: unknown) => void) | undefined;
+
+    const cmd = DeployCommand.create({
+      existsSync: () => true,
+      readConfig: () => ({ app: 'node app.js' }),
+      readAssembly: () => [makeStack()],
+      planDeployment: () => makePlan(),
+      registry: makeRegistry(),
+      createEngine: () =>
+        ({
+          subscribe: (handler: (event: unknown) => void) => {
+            capturedHandler = handler;
+            return () => undefined;
+          },
+          deploy: jest.fn().mockImplementation(async () => {
+            capturedHandler?.({
+              timestamp: new Date(),
+              stackId: 'TestStack',
+              logicalResourceId: 'TestStack',
+              resourceType: 'cdkx::stack',
+              resourceStatus: 'UPDATE_COMPLETE',
+            });
+            return { success: true, stacks: [] };
+          }),
+        }) as never,
+      createLock: () => makeNullLock(),
+    });
+
+    await cmd.parseAsync(['node', 'cdkx']);
+
+    expect(exitSpy).not.toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Deployment complete'),
+    );
+    expect(consoleSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('No changes'),
+    );
+  });
+});

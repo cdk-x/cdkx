@@ -47,21 +47,43 @@ const defaultRegistry = new AdapterRegistry().register(
 
 // ─── Event formatting ─────────────────────────────────────────────────────────
 
+/** Pads a plain string to a fixed visual width (applied before chalk wrapping). */
+function pad(s: string, width: number): string {
+  return s.length >= width ? s : s + ' '.repeat(width - s.length);
+}
+
 function statusColor(status: ResourceStatus | StackStatus): string {
   const s = status as string;
+  if (s === 'NO_CHANGES') return chalk.dim(s);
   if (s.endsWith('_COMPLETE')) return chalk.green(s);
   if (s.endsWith('_FAILED')) return chalk.red(s);
   if (s.includes('ROLLBACK')) return chalk.yellow(s);
   return chalk.cyan(s); // *_IN_PROGRESS
 }
 
-function formatEvent(event: EngineEvent): string {
-  const ts = event.timestamp.toISOString();
+interface ColWidths {
+  stack: number;
+  type: number;
+  id: number;
+}
+
+function computeColWidths(events: EngineEvent[]): ColWidths {
+  let stack = 0;
+  let type = 0;
+  let id = 0;
+  for (const e of events) {
+    if (e.stackId.length > stack) stack = e.stackId.length;
+    if (e.resourceType.length > type) type = e.resourceType.length;
+    if (e.logicalResourceId.length > id) id = e.logicalResourceId.length;
+  }
+  return { stack, type, id };
+}
+
+function renderEvent(event: EngineEvent, widths: ColWidths): string {
   const parts = [
-    chalk.dim(ts),
-    chalk.white(event.stackId),
-    chalk.dim(event.resourceType),
-    event.logicalResourceId,
+    chalk.white(pad(event.stackId, widths.stack)),
+    chalk.dim(pad(event.resourceType, widths.type)),
+    pad(event.logicalResourceId, widths.id),
     statusColor(event.resourceStatus),
   ];
   if (event.resourceStatusReason) {
@@ -203,19 +225,42 @@ export class DeployCommand extends BaseCommand {
         eventBus,
       });
 
-      // 9. Stream events to stdout.
+      // Track stacks that emitted NO_CHANGES to decide the final message.
+      const noChangeStacks = new Set<string>();
+
+      // Buffer events so column widths can be computed from the full dataset
+      // before printing. This ensures every row aligns to the longest value.
+      const bufferedEvents: EngineEvent[] = [];
+
+      // 9. Buffer events (printed after deploy completes).
       engine.subscribe((event) => {
-        console.log(formatEvent(event));
+        if (event.resourceStatus === StackStatus.NO_CHANGES) {
+          noChangeStacks.add(event.stackId);
+        }
+        bufferedEvents.push(event);
       });
 
       // 10. Deploy.
       const result = await engine.deploy(stacks, plan);
 
+      // Flush buffered events with dynamic column widths.
+      const widths = computeColWidths(bufferedEvents);
+      for (const event of bufferedEvents) {
+        console.log(renderEvent(event, widths));
+      }
+
       if (!result.success) {
         this.fail('Deployment failed — see above for details.');
       }
 
-      console.log(chalk.green('✔') + ' Deployment complete');
+      const allNoOp =
+        noChangeStacks.size > 0 && noChangeStacks.size === stacks.length;
+
+      if (allNoOp) {
+        console.log(chalk.dim('No changes — all stacks are up-to-date'));
+      } else {
+        console.log(chalk.green('✔') + ' Deployment complete');
+      }
     } finally {
       lock.release();
     }
