@@ -128,6 +128,22 @@ export interface ProviderAdapter {
    * @returns The resolved attribute value.
    */
   getOutput(resource: ManifestResource, attr: string): Promise<unknown>;
+
+  /**
+   * Optional. Returns the set of property names that are create-only for the
+   * given resource type — properties that can only be set at creation time and
+   * cannot be changed in place.
+   *
+   * The engine calls this before `update()` to strip these keys from the
+   * computed patch. If the filtered patch becomes empty (all remaining changes
+   * are create-only), the resource is treated as a no-op and `update()` is
+   * never called. If not implemented, an empty set is assumed (no create-only
+   * properties).
+   *
+   * @param type — The resource type string (e.g. `'Hetzner::Compute::Server'`).
+   * @returns The set of create-only property names for this type.
+   */
+  getCreateOnlyProps?(type: string): ReadonlySet<string>;
 }
 
 /**
