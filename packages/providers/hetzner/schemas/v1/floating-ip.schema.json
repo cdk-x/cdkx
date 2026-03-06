@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerFloatingIp",
+  "description": "Manages a Hetzner Cloud Floating IP.",
+  "typeName": "Hetzner::Networking::FloatingIp",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "definitions": {
+    "FloatingIpType": {
+      "type": "string",
+      "description": "The Floating IP type.",
+      "enum": ["ipv4", "ipv6"]
+    }
+  },
+  "properties": {
+    "type": {
+      "$ref": "#/definitions/FloatingIpType",
+      "description": "The Floating IP type."
+    },
+    "serverId": {
+      "type": "integer",
+      "description": "ID of the Server the Floating IP is assigned to.",
+      "nullable": true
+    },
+    "homeLocation": {
+      "$ref": "./common.schema.json#/definitions/Location",
+      "description": "Home Location for the Floating IP."
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the Resource.",
+      "nullable": true
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the Resource. Must be unique per Project."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    }
+  },
+  "required": ["type"],
+  "createOnlyProperties": ["/properties/type", "/properties/homeLocation"],
+  "readOnlyProperties": ["/properties/floatingIpId"],
+  "primaryIdentifier": ["/properties/floatingIpId"],
+  "api": {
+    "createPath": "/floating_ips",
+    "getPath": "/floating_ips/{id}",
+    "updatePath": "/floating_ips/{id}",
+    "deletePath": "/floating_ips/{id}",
+    "responseBodyKey": "floating_ip",
+    "outputAttrMap": {
+      "floatingIpId": "id"
+    }
+  }
+}

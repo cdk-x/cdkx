@@ -4,7 +4,22 @@
   "files": [],
   "references": [
     {
-      "path": "./apps/cli"
+      "path": "./packages/core"
+    },
+    {
+      "path": "./packages/cli"
+    },
+    {
+      "path": "./packages/testing"
+    },
+    {
+      "path": "./packages/providers/hetzner"
+    },
+    {
+      "path": "./packages/tools/spec-to-cdkx"
+    },
+    {
+      "path": "./packages/engine"
     }
   ]
 }

@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TestServer",
+  "description": "A test server resource.",
+  "typeName": "Test::Compute::Server",
+  "domain": "Compute",
+  "additionalProperties": false,
+  "definitions": {
+    "ServerPublicNet": {
+      "type": "object",
+      "description": "Public network options.",
+      "additionalProperties": false,
+      "properties": {
+        "enableIpv4": {
+          "type": "boolean",
+          "description": "Enable IPv4."
+        },
+        "enableIpv6": {
+          "type": "boolean",
+          "description": "Enable IPv6."
+        }
+      }
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Server."
+    },
+    "serverType": {
+      "type": "string",
+      "description": "Server type."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "networkZone": {
+      "$ref": "./common.schema.json#/definitions/NetworkZone",
+      "description": "The network zone."
+    },
+    "publicNet": {
+      "$ref": "#/definitions/ServerPublicNet",
+      "description": "Public network options."
+    }
+  },
+  "required": ["name", "serverType"],
+  "readOnlyProperties": ["/properties/serverId"],
+  "primaryIdentifier": ["/properties/serverId"]
+}

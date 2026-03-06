@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerServer",
+  "description": "Manages a Hetzner Cloud Server.",
+  "typeName": "Hetzner::Compute::Server",
+  "domain": "Compute",
+  "additionalProperties": false,
+  "definitions": {
+    "ServerFirewall": {
+      "type": "object",
+      "description": "Firewalls which should be applied on the Server's public network interface at creation time.",
+      "additionalProperties": false,
+      "required": ["firewall"],
+      "properties": {
+        "firewall": {
+          "type": "integer",
+          "description": "ID of the Firewall."
+        }
+      }
+    },
+    "ServerPublicNet": {
+      "type": "object",
+      "description": "Public Network options.",
+      "additionalProperties": false,
+      "properties": {
+        "enableIpv4": {
+          "type": "boolean",
+          "description": "Attach an IPv4 on the public NIC. If false, no IPv4 address will be attached."
+        },
+        "enableIpv6": {
+          "type": "boolean",
+          "description": "Attach an IPv6 on the public NIC. If false, no IPv6 address will be attached."
+        },
+        "ipv4": {
+          "type": "integer",
+          "description": "ID of the ipv4 Primary IP to use. If omitted and enable_ipv4 is true, a new ipv4 Primary IP will automatically be created.",
+          "nullable": true
+        },
+        "ipv6": {
+          "type": "integer",
+          "description": "ID of the ipv6 Primary IP to use. If omitted and enable_ipv6 is true, a new ipv6 Primary IP will automatically be created.",
+          "nullable": true
+        }
+      }
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Server to create (must be unique per Project and a valid hostname as per RFC 1123)."
+    },
+    "location": {
+      "type": "string",
+      "description": "ID or name of the Location to create the Server in (must not be used together with `datacenter`)."
+    },
+    "datacenter": {
+      "type": "string",
+      "description": "**Deprecated**: This property is deprecated and will be removed after the 1 July 2026."
+    },
+    "serverType": {
+      "type": "string",
+      "description": "ID or name of the Server type this Server should be created with."
+    },
+    "startAfterCreate": {
+      "type": "boolean",
+      "description": "This automatically triggers a Power on a Server-Server Action after the creation is finished and is returned in the `next_actions` response object."
+    },
+    "image": {
+      "type": "string",
+      "description": "ID or name of the Image the Server is created from."
+    },
+    "placementGroup": {
+      "type": "integer",
+      "description": "ID of the Placement Group the Server should be in.",
+      "x-cdkx-resolvable": true
+    },
+    "sshKeys": {
+      "type": "array",
+      "description": "SSH key IDs (`integer`) or names (`string`) which should be injected into the Server at creation time.",
+      "items": { "type": "string" },
+      "x-cdkx-resolvable-items": "string-or-integer"
+    },
+    "volumes": {
+      "type": "array",
+      "description": "Volume IDs which should be attached to the Server at the creation time. Volumes must be in the same Location.",
+      "items": { "type": "integer" },
+      "x-cdkx-resolvable-items": "integer"
+    },
+    "networks": {
+      "type": "array",
+      "description": "Network IDs which should be attached to the Server private network interface at the creation time.",
+      "items": { "type": "integer" },
+      "x-cdkx-resolvable-items": "integer"
+    },
+    "firewalls": {
+      "type": "array",
+      "description": "Firewalls which should be applied on the Server's public network interface at creation time.",
+      "items": { "$ref": "#/definitions/ServerFirewall" }
+    },
+    "userData": {
+      "type": "string",
+      "description": "Cloud-Init user data to use during Server creation. This field is limited to 32KiB."
+    },
+    "labels": {
+      "$ref": "./common.schema.json#/definitions/Labels"
+    },
+    "automount": {
+      "type": "boolean",
+      "description": "Auto-mount Volumes after attach."
+    },
+    "publicNet": {
+      "$ref": "#/definitions/ServerPublicNet",
+      "description": "Public Network options."
+    }
+  },
+  "required": ["name", "serverType", "image"],
+  "createOnlyProperties": [
+    "/properties/location",
+    "/properties/datacenter",
+    "/properties/serverType",
+    "/properties/startAfterCreate",
+    "/properties/image",
+    "/properties/placementGroup",
+    "/properties/sshKeys",
+    "/properties/volumes",
+    "/properties/networks",
+    "/properties/firewalls",
+    "/properties/userData",
+    "/properties/automount",
+    "/properties/publicNet"
+  ],
+  "readOnlyProperties": ["/properties/serverId"],
+  "primaryIdentifier": ["/properties/serverId"],
+  "api": {
+    "createPath": "/servers",
+    "getPath": "/servers/{id}",
+    "updatePath": "/servers/{id}",
+    "deletePath": "/servers/{id}",
+    "responseBodyKey": "server",
+    "outputAttrMap": {
+      "serverId": "id"
+    }
+  }
+}

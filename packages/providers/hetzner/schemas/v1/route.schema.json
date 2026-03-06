@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerRoute",
+  "description": "Manages a route added to an existing Hetzner Cloud Network via the add_route action.",
+  "typeName": "Hetzner::Networking::Route",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "properties": {
+    "networkId": {
+      "type": "integer",
+      "description": "ID of the Network to add the route to."
+    },
+    "destination": {
+      "type": "string",
+      "description": "Destination network or host of the route in CIDR notation (e.g. '10.100.1.0/24')."
+    },
+    "gateway": {
+      "type": "string",
+      "description": "Gateway IP address for the route (e.g. '10.0.1.1'). Cannot be the first IP of the Network's ip_range or 172.31.1.1."
+    }
+  },
+  "required": ["networkId", "destination", "gateway"],
+  "createOnlyProperties": [
+    "/properties/networkId",
+    "/properties/destination",
+    "/properties/gateway"
+  ],
+  "primaryIdentifier": ["/properties/networkId", "/properties/destination"],
+  "api": {
+    "createPath": "/networks/{networkId}/actions/add_route",
+    "deletePath": "/networks/{networkId}/actions/delete_route",
+    "responseBodyKey": null,
+    "compositeIdProps": ["networkId", "destination"]
+  }
+}

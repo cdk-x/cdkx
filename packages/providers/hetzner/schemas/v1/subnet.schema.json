@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerSubnet",
+  "description": "Manages a subnet added to an existing Hetzner Cloud Network via the add_subnet action.",
+  "typeName": "Hetzner::Networking::Subnet",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "properties": {
+    "networkId": {
+      "type": "integer",
+      "description": "ID of the Network to add the subnet to."
+    },
+    "type": {
+      "$ref": "#/definitions/NetworkSubnetType",
+      "description": "Type of subnet."
+    },
+    "networkZone": {
+      "$ref": "./common.schema.json#/definitions/NetworkZone",
+      "description": "Name of the Network Zone."
+    },
+    "ipRange": {
+      "type": "string",
+      "description": "IP range of the subnet in CIDR notation. If omitted, a /24 within the Network's ip_range is automatically allocated."
+    },
+    "vswitchId": {
+      "type": "integer",
+      "description": "ID of the robot vSwitch. Required when type is 'vswitch'."
+    }
+  },
+  "definitions": {
+    "NetworkSubnetType": {
+      "type": "string",
+      "description": "Type of subnet.",
+      "enum": ["cloud", "server", "vswitch"]
+    }
+  },
+  "required": ["networkId", "type", "networkZone"],
+  "createOnlyProperties": [
+    "/properties/networkId",
+    "/properties/type",
+    "/properties/networkZone",
+    "/properties/ipRange",
+    "/properties/vswitchId"
+  ],
+  "primaryIdentifier": ["/properties/networkId", "/properties/ipRange"],
+  "api": {
+    "createPath": "/networks/{networkId}/actions/add_subnet",
+    "deletePath": "/networks/{networkId}/actions/delete_subnet",
+    "responseBodyKey": null,
+    "compositeIdProps": ["networkId", "ipRange"]
+  }
+}

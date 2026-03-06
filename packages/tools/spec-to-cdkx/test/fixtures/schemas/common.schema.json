@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TestCommon",
+  "description": "Shared definitions for test schemas.",
+  "definitions": {
+    "Labels": {
+      "type": "object",
+      "description": "Key/value labels.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "NetworkZone": {
+      "type": "string",
+      "description": "Network zone.",
+      "enum": ["eu-central", "us-east"]
+    }
+  }
+}

@@ -1,10 +1,18 @@
 {
-  "name": "@cdk-x/cdkx",
+  "name": "@cdkx-io/cdkx",
   "version": "0.1.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "cdkx": "nx build @cdkx-io/cli && node packages/cli/dist/main.js"
+  },
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "@nx/devkit": "22.5.2",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
+    "constructs": "10.5.1",
+    "ora": "^9.3.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
     "@nx/docker": "22.5.2",
@@ -14,7 +22,9 @@
     "@nx/jest": "22.5.2",
     "@nx/js": "22.5.2",
     "@nx/node": "22.5.2",
+    "@nx/plugin": "22.5.2",
     "@swc-node/register": "~1.11.1",
+    "@swc/cli": "~0.8.0",
     "@swc/core": "~1.15.5",
     "@swc/helpers": "~0.5.18",
     "@swc/jest": "~0.2.38",
@@ -26,17 +36,20 @@
     "jest": "^30.0.2",
     "jest-environment-node": "^30.0.2",
     "jest-util": "^30.0.2",
+    "jsonc-eslint-parser": "^2.1.0",
     "nx": "22.5.2",
     "prettier": "~3.6.2",
     "ts-jest": "^29.4.0",
     "ts-node": "10.9.1",
     "tslib": "^2.3.0",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0",
     "verdaccio": "^6.0.5"
   },
   "workspaces": [
     "packages/*",
-    "apps/*"
+    "packages/providers/*",
+    "packages/tools/*"
   ]
 }
