@@ -31,7 +31,7 @@ import {
   NetworkZone,
   NetworkSubnetType,
   LoadBalancerType,
-} from '../../src/lib/resources.generated';
+} from '../../src/lib/generated';
 
 // ---------------------------------------------------------------------------
 // Permanent output directory — written once in beforeAll, not cleaned up.

@@ -1,2 +1,3 @@
-export * from './lib/resources.generated';
+export * from './lib/generated';
 export * from './lib/provider/index';
+export * from './lib/adapter/index';

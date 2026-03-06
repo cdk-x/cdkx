@@ -20,7 +20,11 @@
     "constructs": "^10.4.2",
     "tslib": "^2.8.1"
   },
+  "peerDependencies": {
+    "@cdk-x/engine": "*"
+  },
   "devDependencies": {
+    "@cdk-x/engine": "*",
     "@cdk-x/spec-to-cdkx": "*",
     "@cdk-x/testing": "*"
   },
