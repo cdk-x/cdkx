@@ -249,13 +249,14 @@ Both `transitionStack()` and `transitionResource()` throw if the entity is not r
 
 ## StatePersistence
 
-Writes and reads `engine-state.json` in the cloud assembly output directory.
+Writes and reads `engine-state.json` into the **state directory** (separate from
+the cloud assembly output directory).
 
 ```ts
 class StatePersistence {
-  constructor(outdir: string, deps?: StatePersistenceDeps);
+  constructor(stateDir: string, deps?: StatePersistenceDeps);
 
-  save(state: EngineState): void; // writes <outdir>/engine-state.json
+  save(state: EngineState): void; // writes <stateDir>/engine-state.json
   load(): EngineState | null; // reads file; returns null if not found
   get stateFilePath(): string; // absolute path to the state file
 }
@@ -264,8 +265,13 @@ class StatePersistence {
 All I/O is synchronous (`fs.writeFileSync`, `fs.readFileSync`). The `deps`
 parameter accepts injectable I/O functions for testing without hitting disk.
 
-The output directory is created with `{ recursive: true }` on every `save()` —
+The state directory is created with `{ recursive: true }` on every `save()` —
 safe to call even if the directory already exists.
+
+**Design note:** `stateDir` is intentionally separate from the cloud assembly
+`outdir`. The CLI passes `.cdkx/` next to `cdkx.json` as `stateDir`, keeping
+engine state in a gitignored local directory, while the assembly output (`cdkx.out/`)
+may be regenerated or cleaned up independently.
 
 ---
 
@@ -432,7 +438,8 @@ and drives the deployment loop.
 ```ts
 const engine = new DeploymentEngine({
   adapters: { hetzner: myHetznerAdapter },
-  outdir: '/project/cdkx.out',
+  assemblyDir: '/project/cdkx.out',
+  stateDir: '/project/.cdkx',
   eventBus: myBus, // optional
   stateManager: myManager, // optional (for tests)
 });
@@ -498,7 +505,8 @@ interface ResourceDeploymentResult {
 ```ts
 interface DeploymentEngineOptions {
   adapters: Record<string, ProviderAdapter>; // provider id → adapter
-  outdir: string;
+  assemblyDir: string; // absolute path to the cloud assembly outdir (passed to CloudAssemblyReader by the CLI)
+  stateDir: string; // absolute path for engine-state.json — separate from assemblyDir
   stateManager?: EngineStateManager; // injectable for tests
   eventBus?: EventBus<EngineEvent>; // injectable for tests
 }
@@ -612,7 +620,8 @@ packages/engine/
 Also written at runtime (gitignored):
 
 ```
-<outdir>/engine-state.json    persisted EngineState — written after every transition
+<stateDir>/engine-state.json    persisted EngineState — written after every transition
+                                 stateDir = .cdkx/ next to cdkx.json (set by CLI)
 ```
 
 ---

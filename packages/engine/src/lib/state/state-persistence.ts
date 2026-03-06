@@ -8,8 +8,8 @@ const STATE_FILE_NAME = 'engine-state.json';
 /**
  * Persists and loads `EngineState` as a JSON file on disk.
  *
- * Written to `<outdir>/engine-state.json` after every state transition so that
- * interrupted deployments can be resumed.
+ * Written to `<stateDir>/engine-state.json` after every state transition so
+ * that interrupted deployments can be resumed.
  *
  * All I/O is synchronous to keep the state machine simple — the engine already
  * controls the async deployment loop; there is no benefit in making the tiny
@@ -19,23 +19,24 @@ export class StatePersistence {
   private readonly filePath: string;
 
   /**
-   * @param outdir — Absolute path to the cloud assembly output directory
-   *   (the same directory that contains `manifest.json`).
+   * @param stateDir — Absolute path to the directory where the engine state
+   *   file is written (e.g. `<projectRoot>/.cdkx/`). This is separate from
+   *   the cloud assembly output directory that contains `manifest.json`.
    * @param deps — Injectable I/O functions (for testing without hitting disk).
    */
   public constructor(
-    private readonly outdir: string,
+    private readonly stateDir: string,
     private readonly deps: StatePersistenceDeps = defaultDeps,
   ) {
-    this.filePath = path.join(outdir, STATE_FILE_NAME);
+    this.filePath = path.join(stateDir, STATE_FILE_NAME);
   }
 
   /**
-   * Serialises `state` to `<outdir>/engine-state.json`, creating the directory
-   * if it does not already exist.
+   * Serialises `state` to `<stateDir>/engine-state.json`, creating the
+   * directory if it does not already exist.
    */
   public save(state: EngineState): void {
-    this.deps.mkdirSync(this.outdir, { recursive: true });
+    this.deps.mkdirSync(this.stateDir, { recursive: true });
     this.deps.writeFileSync(
       this.filePath,
       JSON.stringify(state, null, 2),
