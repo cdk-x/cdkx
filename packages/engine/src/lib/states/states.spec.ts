@@ -2,8 +2,8 @@ import { StackStatus } from './stack-status';
 import { ResourceStatus } from './resource-status';
 
 describe('StackStatus', () => {
-  it('has 15 values', () => {
-    expect(Object.keys(StackStatus)).toHaveLength(15);
+  it('has 16 values', () => {
+    expect(Object.keys(StackStatus)).toHaveLength(16);
   });
 
   describe('creation states', () => {
@@ -82,6 +82,12 @@ describe('StackStatus', () => {
     for (const [key, value] of Object.entries(StackStatus)) {
       expect(value).toBe(key);
     }
+  });
+
+  describe('no-op states', () => {
+    it('defines NO_CHANGES', () => {
+      expect(StackStatus.NO_CHANGES).toBe('NO_CHANGES');
+    });
   });
 });
 

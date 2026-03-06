@@ -45,4 +45,12 @@ export enum StackStatus {
   ROLLBACK_COMPLETE = 'ROLLBACK_COMPLETE',
   /** Rollback of the failed creation also failed. Manual intervention required. */
   ROLLBACK_FAILED = 'ROLLBACK_FAILED',
+
+  // ── No-op ─────────────────────────────────────────────────────────────────
+  /**
+   * Stack was deployed but no resources were created, updated, or deleted.
+   * Emitted on a re-deploy when all resources are already up-to-date, or on
+   * a first deploy when the stack contains no resources.
+   */
+  NO_CHANGES = 'NO_CHANGES',
 }
