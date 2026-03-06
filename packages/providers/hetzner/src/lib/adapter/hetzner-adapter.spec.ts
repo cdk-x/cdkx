@@ -66,7 +66,7 @@ describe('HetznerAdapter', () => {
 
       expect(client.post).toHaveBeenCalledWith('/networks', {
         name: 'my-net',
-        ipRange: '10.0.0.0/16',
+        ip_range: '10.0.0.0/16',
       });
       expect(result.physicalId).toBe('42');
       expect(result.outputs).toEqual({ networkId: 42 });
@@ -152,7 +152,11 @@ describe('HetznerAdapter', () => {
 
         expect(postMock).toHaveBeenCalledWith(
           '/networks/42/actions/add_subnet',
-          { type: 'cloud', networkZone: 'eu-central', ipRange: '10.0.1.0/24' },
+          {
+            type: 'cloud',
+            network_zone: 'eu-central',
+            ip_range: '10.0.1.0/24',
+          },
         );
         // Composite physicalId: {networkId}:{ipRange}
         expect(result.physicalId).toBe('42:10.0.1.0/24');
