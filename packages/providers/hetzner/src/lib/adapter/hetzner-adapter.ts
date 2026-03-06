@@ -197,6 +197,20 @@ export class HetznerAdapter implements ProviderAdapter {
     await this.client.delete(path);
   }
 
+  // ─── getCreateOnlyProps ────────────────────────────────────────────────────
+
+  /**
+   * Returns the set of create-only property names for the given resource type.
+   * The engine uses this to strip create-only props from the patch before
+   * calling `update()`, so the adapter never receives them.
+   *
+   * Delegates to `RESOURCE_REGISTRY[type]?.createOnlyProps`. Returns an empty
+   * set for unknown types (the subsequent `validate()` call will catch those).
+   */
+  public getCreateOnlyProps(type: string): ReadonlySet<string> {
+    return RESOURCE_REGISTRY[type]?.createOnlyProps ?? new Set();
+  }
+
   // ─── validate ──────────────────────────────────────────────────────────────
 
   /**

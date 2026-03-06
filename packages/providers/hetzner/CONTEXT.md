@@ -314,13 +314,14 @@ endpoint (e.g. `/networks/{networkId}/actions/add_subnet`).
 
 Implements `ProviderAdapter` from `@cdkx-io/engine`.
 
-| Method        | Behaviour                                                                                                                     |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `create()`    | POSTs to `createPath`; polls action if response contains `action.id`; returns `physicalId` + `outputs`.                       |
-| `update()`    | PUTs to `updatePath(physicalId)`; throws on create-only props in patch; throws for action resources.                          |
-| `delete()`    | DELETEs via `deletePath(physicalId)` for regular resources; POSTs to the parent-network action for action resources.          |
-| `validate()`  | Checks that `resource.type` is in `RESOURCE_REGISTRY`; throws with a helpful message if not.                                  |
-| `getOutput()` | GETs via `getPath(physicalId)` and extracts `attr` from `extractOutputs(response)`. Returns `undefined` for action resources. |
+| Method                 | Behaviour                                                                                                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `create()`             | POSTs to `createPath`; polls action if response contains `action.id`; returns `physicalId` + `outputs`.                                                                  |
+| `update()`             | PUTs to `updatePath(physicalId)`; throws on create-only props in patch; throws for action resources.                                                                     |
+| `delete()`             | DELETEs via `deletePath(physicalId)` for regular resources; POSTs to the parent-network action for action resources.                                                     |
+| `validate()`           | Checks that `resource.type` is in `RESOURCE_REGISTRY`; throws with a helpful message if not.                                                                             |
+| `getOutput()`          | GETs via `getPath(physicalId)` and extracts `attr` from `extractOutputs(response)`. Returns `undefined` for action resources.                                            |
+| `getCreateOnlyProps()` | Returns `RESOURCE_REGISTRY[type]?.createOnlyProps ?? new Set()` — used by the engine to strip create-only props from the update patch before calling `adapter.update()`. |
 
 **Action resource physicalId:** for Subnet/Route a composite key is stored —
 `{networkId}:{discriminator}` (e.g. `42:10.0.1.0/24` for a Subnet). The adapter
@@ -334,11 +335,11 @@ sets this from `ResourceState.physicalId` when calling `update()`, `delete()`, a
 
 ### Tests
 
-| File                      | Tests | Coverage                                                                                   |
-| ------------------------- | ----- | ------------------------------------------------------------------------------------------ |
-| `hetzner-client.spec.ts`  | 12    | GET/POST/PUT/DELETE, non-2xx errors, custom baseUrl, socket errors                         |
-| `action-poller.spec.ts`   | 7     | immediate success, poll-until-success, error states, timeout, path, default interval       |
-| `hetzner-adapter.spec.ts` | 25    | create/update/delete/validate/getOutput, action resources, polling, createOnly enforcement |
+| File                      | Tests | Coverage                                                                                                      |
+| ------------------------- | ----- | ------------------------------------------------------------------------------------------------------------- |
+| `hetzner-client.spec.ts`  | 12    | GET/POST/PUT/DELETE, non-2xx errors, custom baseUrl, socket errors                                            |
+| `action-poller.spec.ts`   | 7     | immediate success, poll-until-success, error states, timeout, path, default interval                          |
+| `hetzner-adapter.spec.ts` | 28    | create/update/delete/validate/getOutput/getCreateOnlyProps, action resources, polling, createOnly enforcement |
 
 ---
 
@@ -347,7 +348,7 @@ sets this from `ResourceState.physicalId` when calling `update()`, `delete()`, a
 ### Unit tests: adapter (`src/lib/adapter/`)
 
 Each adapter file has a co-located spec. See the adapter section above for the
-test counts and coverage summary. Total adapter tests: **44** (12 + 7 + 25).
+test counts and coverage summary. Total adapter tests: **47** (12 + 7 + 28).
 
 ### Integration test: network topology (`test/integration/network-topology.spec.ts`)
 
@@ -450,7 +451,7 @@ packages/providers/hetzner/
 │           ├── action-poller.ts        ActionPoller — polls GET /actions/{id}
 │           ├── action-poller.spec.ts   7 unit tests
 │           ├── hetzner-adapter.ts      HetznerAdapter implements ProviderAdapter
-│           ├── hetzner-adapter.spec.ts 25 unit tests
+│           ├── hetzner-adapter.spec.ts 28 unit tests
 │           └── index.ts                barrel
 └── test/
     └── integration/

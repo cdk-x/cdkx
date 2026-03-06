@@ -424,4 +424,37 @@ describe('HetznerAdapter', () => {
       ).rejects.toThrow('physicalId is required');
     });
   });
+
+  // ─── getCreateOnlyProps ───────────────────────────────────────────────────────
+
+  describe('getCreateOnlyProps', () => {
+    it('returns the createOnlyProps set for a known resource type', () => {
+      const { adapter } = makeAdapter();
+
+      const props = adapter.getCreateOnlyProps(
+        'Hetzner::Compute::LoadBalancer',
+      );
+
+      // 'algorithm' is a createOnlyProperty on LoadBalancer — it can only be
+      // set at creation time and cannot be changed via PUT.
+      expect(props.has('algorithm')).toBe(true);
+    });
+
+    it('returns an empty set for an unknown resource type', () => {
+      const { adapter } = makeAdapter();
+
+      const props = adapter.getCreateOnlyProps('Unknown::Resource::Type');
+
+      expect(props.size).toBe(0);
+    });
+
+    it('returns the createOnlyProps set for a networking resource', () => {
+      const { adapter } = makeAdapter();
+
+      const props = adapter.getCreateOnlyProps('Hetzner::Networking::Network');
+
+      // 'ipRange' is a createOnlyProperty on Network.
+      expect(props.has('ipRange')).toBe(true);
+    });
+  });
 });
