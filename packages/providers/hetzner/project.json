@@ -32,7 +32,7 @@
     "codegen": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "spec-to-cdkx generate --prefix Htz --provider-name Hetzner --resource-type-const HetznerResourceType",
+        "command": "spec-to-cdkx generate --prefix Htz --provider-name Hetzner --resource-type-const HetznerResourceType --registry-output src/lib/generated/resource-registry.generated.ts",
         "cwd": "{projectRoot}"
       },
       "dependsOn": [
