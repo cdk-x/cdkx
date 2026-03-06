@@ -39,5 +39,16 @@
   "required": ["name", "type"],
   "createOnlyProperties": ["/properties/type"],
   "readOnlyProperties": ["/properties/id", "/properties/serverIds"],
-  "primaryIdentifier": ["/properties/id"]
+  "primaryIdentifier": ["/properties/id"],
+  "api": {
+    "createPath": "/placement_groups",
+    "getPath": "/placement_groups/{id}",
+    "updatePath": "/placement_groups/{id}",
+    "deletePath": "/placement_groups/{id}",
+    "responseBodyKey": "placement_group",
+    "outputAttrMap": {
+      "id": "id",
+      "serverIds": "servers"
+    }
+  }
 }

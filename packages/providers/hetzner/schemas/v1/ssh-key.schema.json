@@ -20,5 +20,12 @@
   },
   "required": ["name", "publicKey"],
   "createOnlyProperties": ["/properties/publicKey"],
-  "primaryIdentifier": ["/properties/name"]
+  "primaryIdentifier": ["/properties/name"],
+  "api": {
+    "createPath": "/ssh_keys",
+    "getPath": "/ssh_keys?name={name}",
+    "updatePath": "/ssh_keys/{id}",
+    "deletePath": "/ssh_keys/{id}",
+    "responseBodyKey": "ssh_key"
+  }
 }

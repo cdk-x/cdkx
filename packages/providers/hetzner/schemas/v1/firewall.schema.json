@@ -123,5 +123,15 @@
   "required": ["name"],
   "createOnlyProperties": ["/properties/rules", "/properties/applyTo"],
   "readOnlyProperties": ["/properties/firewallId"],
-  "primaryIdentifier": ["/properties/firewallId"]
+  "primaryIdentifier": ["/properties/firewallId"],
+  "api": {
+    "createPath": "/firewalls",
+    "getPath": "/firewalls/{id}",
+    "updatePath": "/firewalls/{id}",
+    "deletePath": "/firewalls/{id}",
+    "responseBodyKey": "firewall",
+    "outputAttrMap": {
+      "firewallId": "id"
+    }
+  }
 }

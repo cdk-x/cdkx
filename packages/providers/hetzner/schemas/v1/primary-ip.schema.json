@@ -58,5 +58,12 @@
     "/properties/location"
   ],
   "readOnlyProperties": ["/properties/id"],
-  "primaryIdentifier": ["/properties/id"]
+  "primaryIdentifier": ["/properties/id"],
+  "api": {
+    "createPath": "/primary_ips",
+    "getPath": "/primary_ips/{id}",
+    "updatePath": "/primary_ips/{id}",
+    "deletePath": "/primary_ips/{id}",
+    "responseBodyKey": "primary_ip"
+  }
 }
