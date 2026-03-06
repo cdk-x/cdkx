@@ -1,7 +1,7 @@
-# @cdk-x/spec-to-cdkx — Development Context
+# @cdkx-io/spec-to-cdkx — Development Context
 
 This file captures the full design, architecture, and implementation details of
-`@cdk-x/spec-to-cdkx` for future AI-assisted sessions. It is auto-loaded by OpenCode.
+`@cdkx-io/spec-to-cdkx` for future AI-assisted sessions. It is auto-loaded by OpenCode.
 
 > **Maintenance rule:** whenever code in `packages/tools/spec-to-cdkx` is modified —
 > commands, interfaces, file structure, conventions, or design decisions — this file
@@ -19,7 +19,7 @@ provider resources and generates:
 2. Optionally, a TypeScript file containing the adapter resource registry
    (`resource-registry.generated.ts`) — enabled via `--registry-output`.
 
-Provider packages (e.g. `@cdk-x/hetzner`) use it via an Nx `codegen` target to
+Provider packages (e.g. `@cdkx-io/hetzner`) use it via an Nx `codegen` target to
 auto-generate both files in a single run.
 
 ---
@@ -41,11 +41,11 @@ auto-generate both files in a single run.
 Run tasks via Nx:
 
 ```bash
-yarn nx build @cdk-x/spec-to-cdkx
-yarn nx test @cdk-x/spec-to-cdkx
-yarn nx lint @cdk-x/spec-to-cdkx
-yarn nx run @cdk-x/spec-to-cdkx:format        # format src/ with prettier
-yarn nx run @cdk-x/spec-to-cdkx:format:check  # check formatting without writing
+yarn nx build @cdkx-io/spec-to-cdkx
+yarn nx test @cdkx-io/spec-to-cdkx
+yarn nx lint @cdkx-io/spec-to-cdkx
+yarn nx run @cdkx-io/spec-to-cdkx:format        # format src/ with prettier
+yarn nx run @cdkx-io/spec-to-cdkx:format:check  # check formatting without writing
 ```
 
 ---
@@ -92,7 +92,7 @@ Only schemas that have an `api` block are included in the registry.
 
 ### CJS + esbuild bundle
 
-Like `@cdk-x/cli`, this tool is **CommonJS** and esbuild inlines all dependencies
+Like `@cdkx-io/cli`, this tool is **CommonJS** and esbuild inlines all dependencies
 (`chalk`, `commander`) into a single `dist/main.js`. Local imports do not require
 `.js` extension (TypeScript resolves them), but `.js` is acceptable for consistency.
 
@@ -105,7 +105,7 @@ const { version } = require('../package.json') as { version: string };
 ### BaseCommand
 
 All commands extend `BaseCommand` (`src/lib/base-command.ts`) — same pattern as
-`@cdk-x/cli`. See that CONTEXT.md for the full convention (private constructor,
+`@cdkx-io/cli`. See that CONTEXT.md for the full convention (private constructor,
 `static create(deps?)` factory, `run()` + `fail()` error handling).
 
 ---
@@ -186,7 +186,7 @@ source string.
 **Generated file structure (in order):**
 
 1. Auto-generated header comment
-2. Imports: `ProviderResource`, `IResolvable`, `PropertyValue` from `@cdk-x/core`
+2. Imports: `ProviderResource`, `IResolvable`, `PropertyValue` from `@cdkx-io/core`
    - `Construct` from `constructs`
 3. `{resourceTypeConst}` constant — all type strings grouped by domain
 4. **Common section** (emitted once, only if any shared definitions exist):
@@ -452,7 +452,7 @@ const FIXTURES_DIR = path.join(__dirname, '../../test/fixtures/schemas');
 | -------------------------- | ----------------------------------------------------------------------------------------------- |
 | Module format              | CJS — esbuild handles bundling. Local imports: `.js` extension acceptable.                      |
 | No `any`                   | Use `unknown`. Exception: `require('../package.json') as { version: string }` cast is fine.     |
-| Prettier                   | Run `yarn nx run @cdk-x/spec-to-cdkx:format` after modifying any `.ts` file.                    |
+| Prettier                   | Run `yarn nx run @cdkx-io/spec-to-cdkx:format` after modifying any `.ts` file.                    |
 | Specs co-located           | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                   |
 | OOP — all logic in classes | No standalone `export function`. Commands extend `BaseCommand`. Utilities are static classes.   |
 | Error handling             | Always use `this.run()` + `this.fail()`. Never call `process.exit()` directly in command logic. |
@@ -498,7 +498,7 @@ cross-file refs point to existing definitions.**
 
 ### 4. `passWithNoTests: true` in `jest.config.cts`
 
-`@cdk-x/hetzner` has no tests yet. The hetzner `jest.config.cts` sets
+`@cdkx-io/hetzner` has no tests yet. The hetzner `jest.config.cts` sets
 `passWithNoTests: true` so the Nx `test` target doesn't fail.
 
 ### 5. chalk v5 requires `transformIgnorePatterns` in Jest
@@ -547,7 +547,7 @@ defaults to `props: HetznerNetwork = {}`.
 packages/tools/spec-to-cdkx/
 ├── bin/
 │   └── spec-to-cdkx.js                    npm bin shim
-├── package.json                            name: @cdk-x/spec-to-cdkx (CJS)
+├── package.json                            name: @cdkx-io/spec-to-cdkx (CJS)
 ├── project.json                            Nx project configuration
 ├── eslint.config.mjs
 ├── jest.config.cts

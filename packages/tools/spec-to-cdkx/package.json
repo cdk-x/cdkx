@@ -1,5 +1,5 @@
 {
-  "name": "@cdk-x/spec-to-cdkx",
+  "name": "@cdkx-io/spec-to-cdkx",
   "version": "0.0.1",
   "bin": {
     "spec-to-cdkx": "./bin/spec-to-cdkx.js"

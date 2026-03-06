@@ -1,9 +1,9 @@
 {
-  "name": "@cdk-x/cdkx",
+  "name": "@cdkx-io/cdkx",
   "version": "0.1.0",
   "license": "MIT",
   "scripts": {
-    "cdkx": "nx build @cdk-x/cli && node packages/cli/dist/main.js"
+    "cdkx": "nx build @cdkx-io/cli && node packages/cli/dist/main.js"
   },
   "private": true,
   "dependencies": {

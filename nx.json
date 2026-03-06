@@ -66,10 +66,10 @@
     "groups": {
       "core": {
         "projects": [
-          "@cdk-x/core",
-          "@cdk-x/engine",
-          "@cdk-x/testing",
-          "@cdk-x/hetzner"
+          "@cdkx-io/core",
+          "@cdkx-io/engine",
+          "@cdkx-io/testing",
+          "@cdkx-io/hetzner"
         ],
         "projectsRelationship": "fixed",
         "releaseTag": {
@@ -85,7 +85,7 @@
         }
       },
       "cli": {
-        "projects": ["@cdk-x/cli"],
+        "projects": ["@cdkx-io/cli"],
         "projectsRelationship": "fixed",
         "releaseTag": {
           "pattern": "cli-v{version}"
@@ -100,7 +100,7 @@
         }
       },
       "tools": {
-        "projects": ["@cdk-x/spec-to-cdkx"],
+        "projects": ["@cdkx-io/spec-to-cdkx"],
         "projectsRelationship": "fixed",
         "releaseTag": {
           "pattern": "tools-v{version}"

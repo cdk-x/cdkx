@@ -88,7 +88,7 @@ export interface UpdateResult {
  *   for dependent resources
  *
  * Provider adapters live in their respective provider packages (e.g.
- * `@cdk-x/hetzner` will ship a `HetznerAdapter`). The engine imports only this
+ * `@cdkx-io/hetzner` will ship a `HetznerAdapter`). The engine imports only this
  * interface — it has no compile-time dependency on any concrete adapter.
  */
 export interface ProviderAdapter {

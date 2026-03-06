@@ -1,4 +1,4 @@
-import { Stack, ProviderResource, Lazy } from '@cdk-x/core';
+import { Stack, ProviderResource, Lazy } from '@cdkx-io/core';
 
 /**
  * Object Mother for generic test L1 resources.
@@ -6,7 +6,7 @@ import { Stack, ProviderResource, Lazy } from '@cdk-x/core';
  * All methods return a pre-configured `ProviderResource` (L1) so that
  * synthesis tests can focus on the pipeline behaviour rather than resource setup.
  *
- * Usable by any provider package that depends on `@cdk-x/testing`.
+ * Usable by any provider package that depends on `@cdkx-io/testing`.
  */
 export class TestResources {
   /**

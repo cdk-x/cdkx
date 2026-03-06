@@ -3,7 +3,7 @@ import { IResolvable } from './resolvables/resolvables';
 /**
  * Resource symbol for re-usability.
  */
-export const RESOURCE_SYMBOL = Symbol.for('@cdk-x/core.Resource');
+export const RESOURCE_SYMBOL = Symbol.for('@cdkx-io/core.Resource');
 
 /**
  * Represents any valid value that can be used as a resource property before

@@ -1,5 +1,5 @@
 {
-  "name": "@cdk-x/cli",
+  "name": "@cdkx-io/cli",
   "version": "0.1.0",
   "bin": {
     "cdkx": "./bin/cdkx.js"
@@ -16,7 +16,7 @@
     "commander": "^14.0.3"
   },
   "devDependencies": {
-    "@cdk-x/core": "*",
+    "@cdkx-io/core": "*",
     "esbuild": "*"
   },
   "publishConfig": {

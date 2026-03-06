@@ -1,4 +1,4 @@
-import { App } from '@cdk-x/core';
+import { App } from '@cdkx-io/core';
 
 /**
  * A test-friendly App that auto-generates a unique temporary outdir

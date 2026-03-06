@@ -9,7 +9,7 @@ const swcJestConfig = JSON.parse(
 swcJestConfig.swcrc = false;
 
 module.exports = {
-  displayName: '@cdk-x/testing',
+  displayName: '@cdkx-io/testing',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
   passWithNoTests: true,
