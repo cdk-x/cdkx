@@ -15,19 +15,19 @@ import { IStackSynthesizer, JsonSynthesizer } from '../synthesizer/synthesizer';
  * - A default `IStackSynthesizer` that controls how stacks are serialized
  *   (e.g. `YamlSynthesizer` for Kubernetes, `JsonSynthesizer` for Hetzner)
  *
- * Provider packages (e.g. `@cdkx/kubernetes`, `@cdkx/hetzner`) extend this class and
+ * Provider packages (e.g. `@cdkx-io/kubernetes`, `@cdkx-io/hetzner`) extend this class and
  * accept their own configuration in the constructor (credentials, datacenter, cluster, etc.).
  * That configuration is intentionally NOT serialized into the synthesis output — it is
  * runtime-only information used by the deployer CLI.
  *
  * @example
- * // In @cdkx/hetzner:
+ * // In @cdkx-io/hetzner:
  * export class HetznerProvider extends Provider {
  *   public readonly identifier = 'hetzner';
  *   constructor(private readonly config: HetznerConfig) { super(); }
  * }
  *
- * // In @cdkx/kubernetes:
+ * // In @cdkx-io/kubernetes:
  * export class KubernetesProvider extends Provider {
  *   public readonly identifier = 'kubernetes';
  *   constructor(private readonly config: KubeConfig) { super(); }
@@ -82,13 +82,13 @@ export abstract class Provider {
    * The returned object must be JSON-serializable; do NOT include credentials.
    *
    * @example
-   * // In @cdkx/hetzner:
+   * // In @cdkx-io/hetzner:
    * public override getEnvironment() {
    *   return { project: this.config.project, datacenter: this.config.datacenter };
    * }
    *
    * @example
-   * // In @cdkx/kubernetes:
+   * // In @cdkx-io/kubernetes:
    * public override getEnvironment() {
    *   return { cluster: this.config.clusterName, apiServer: this.config.apiServer };
    * }

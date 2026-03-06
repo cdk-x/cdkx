@@ -18,7 +18,7 @@ Hetzner Cloud JSON file, a GitHub Actions workflow, etc. — depending on which
 `Provider` is attached to each `Stack`.
 
 `@cdkx-io/core` is the foundation package. All provider packages (e.g.
-`@cdkx/kubernetes`, `@cdkx/hetzner`) extend its abstract classes.
+`@cdkx-io/kubernetes`, `@cdkx-io/hetzner`) extend its abstract classes.
 
 ---
 

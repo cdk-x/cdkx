@@ -1,5 +1,5 @@
 {
-  "name": "@cdkx/cdkx",
+  "name": "@cdkx-io/cdkx",
   "$schema": "node_modules/nx/schemas/project-schema.json",
   "targets": {
     "local-registry": {
