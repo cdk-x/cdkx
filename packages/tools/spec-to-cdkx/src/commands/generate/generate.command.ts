@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { BaseCommand } from '../../lib/base-command.js';
 import { SchemaReader } from '../../lib/schema-reader.js';
 import { CodeGenerator } from '../../lib/code-generator.js';
+import { RegistryGenerator } from '../../lib/registry-generator.js';
 
 // ---------------------------------------------------------------------------
 // Deps interface (for testing)
@@ -20,6 +21,9 @@ export interface GenerateCommandDeps {
 
   /** Generate TypeScript source. Defaults to `CodeGenerator.generate`. */
   generateCode?: typeof CodeGenerator.generate;
+
+  /** Generate resource registry source. Defaults to `RegistryGenerator.generate`. */
+  generateRegistry?: typeof RegistryGenerator.generate;
 
   /** Write the output file. Defaults to `fs.writeFileSync`. */
   writeFile?: (filePath: string, content: string) => void;
@@ -72,7 +76,11 @@ export class GenerateCommand extends BaseCommand {
       .option(
         '-o, --output <file>',
         'Output file path',
-        'src/lib/resources.generated.ts',
+        'src/lib/generated/resources.generated.ts',
+      )
+      .option(
+        '--registry-output <file>',
+        'Output file path for the resource registry (optional)',
       )
       .action(
         async (options: {
@@ -81,6 +89,7 @@ export class GenerateCommand extends BaseCommand {
           resourceTypeConst: string;
           schemas: string;
           output: string;
+          registryOutput?: string;
         }) => {
           await this.run(() => this.execute(options));
         },
@@ -93,10 +102,13 @@ export class GenerateCommand extends BaseCommand {
     resourceTypeConst: string;
     schemas: string;
     output: string;
+    registryOutput?: string;
   }): Promise<void> {
     const existsSync = this.deps.existsSync ?? fs.existsSync;
     const readSchemas = this.deps.readSchemas ?? SchemaReader.read;
     const generateCode = this.deps.generateCode ?? CodeGenerator.generate;
+    const generateRegistry =
+      this.deps.generateRegistry ?? RegistryGenerator.generate;
     const writeFile =
       this.deps.writeFile ??
       ((filePath: string, content: string) =>
@@ -144,6 +156,26 @@ export class GenerateCommand extends BaseCommand {
       chalk.green('✔') +
         ` Generated ${resources.length} resources → ${chalk.dim(outputFile)}`,
     );
+
+    // Optionally generate the resource registry.
+    if (options.registryOutput) {
+      const registryFile = path.resolve(process.cwd(), options.registryOutput);
+      const registryDir = path.dirname(registryFile);
+      if (!existsSync(registryDir)) {
+        fs.mkdirSync(registryDir, { recursive: true });
+      }
+
+      const registrySource = generateRegistry(resources, {
+        resourceTypeConst: options.resourceTypeConst,
+      });
+      writeFile(registryFile, registrySource);
+
+      const registryCount = resources.filter((r) => r.api !== undefined).length;
+      log(
+        chalk.green('✔') +
+          ` Generated registry with ${registryCount} entries → ${chalk.dim(registryFile)}`,
+      );
+    }
   }
 }
 

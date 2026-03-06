@@ -5,6 +5,57 @@ import * as path from 'path';
 // JSON Schema types (draft-07 subset used by cdkx schemas)
 // ---------------------------------------------------------------------------
 
+/**
+ * The `api` block in a JSON Schema file, describing how the provider
+ * API manages this resource. Provider-agnostic — works for any future
+ * provider (Hetzner, LXC, etc.).
+ */
+export interface ApiSpec {
+  /** HTTP path for creating the resource. May contain `{propName}` placeholders. */
+  createPath: string;
+
+  /**
+   * HTTP path template for reading the resource after creation.
+   * May contain `{id}` or other `{propName}` placeholders.
+   * Absent for action resources.
+   */
+  getPath?: string;
+
+  /**
+   * HTTP path template for updating the resource.
+   * May contain `{id}`. Absent for action resources.
+   */
+  updatePath?: string;
+
+  /**
+   * HTTP path template or literal for deleting the resource.
+   * May contain `{id}` or `{propName}` placeholders.
+   */
+  deletePath: string;
+
+  /**
+   * The top-level key in the API response body containing the resource object.
+   * e.g. `"network"`, `"server"`. `null` for action resources that return no body.
+   */
+  responseBodyKey: string | null;
+
+  /**
+   * Maps cdkx property names (camelCase) to the field names in the API response.
+   * Only needed when the cdkx prop name differs from the API response field name.
+   * e.g. `{ "networkId": "id" }` means the cdkx `networkId` attr maps to `id` in the response.
+   * Absent when there are no readOnlyProperties, or for action resources.
+   */
+  outputAttrMap?: Record<string, string>;
+
+  /**
+   * For action resources with composite primary identifiers:
+   * the ordered list of property names (camelCase) that form the composite ID.
+   * e.g. `["networkId", "ipRange"]`.
+   * Only present on action resources.
+   */
+  compositeIdProps?: string[];
+}
+
 /** A JSON Schema definition (draft-07 subset). */
 export interface JsonSchema {
   $schema?: string;
@@ -24,6 +75,8 @@ export interface JsonSchema {
   readOnlyProperties?: string[];
   createOnlyProperties?: string[];
   primaryIdentifier?: string[];
+  /** Provider API configuration block. */
+  api?: ApiSpec;
 }
 
 /** A property entry within a JSON Schema `properties` map. */
@@ -101,6 +154,18 @@ export interface ResourceSchema {
 
   /** Source file path (absolute). */
   filePath: string;
+
+  /**
+   * Names of properties that can only be set at creation time.
+   * Derived from `createOnlyProperties` JSON pointers in the schema.
+   */
+  createOnlyProperties: string[];
+
+  /**
+   * Provider API configuration, if the schema declares an `api` block.
+   * Used by `RegistryGenerator` to emit `RESOURCE_REGISTRY` entries.
+   */
+  api?: ApiSpec;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,11 +278,15 @@ export class SchemaReader {
         readOnlyProperties: SchemaReader.extractPropNames(
           schema.readOnlyProperties ?? [],
         ),
+        createOnlyProperties: SchemaReader.extractPropNames(
+          schema.createOnlyProperties ?? [],
+        ),
         required: schema.required ?? [],
         definitions: localDefs,
         localDefinitionNames,
         sharedDefinitionNames,
         filePath: file,
+        api: schema.api,
       });
     }
 

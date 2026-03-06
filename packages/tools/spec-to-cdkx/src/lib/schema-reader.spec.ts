@@ -12,8 +12,8 @@ describe('SchemaReader', () => {
     });
 
     it('returns one ResourceSchema per file with a typeName', () => {
-      // common.schema.json has no typeName — only network + server should be returned
-      expect(resources).toHaveLength(2);
+      // common.schema.json has no typeName — network + server + subnet should be returned
+      expect(resources).toHaveLength(3);
     });
 
     it('extracts typeName, domain, and resourceName', () => {
@@ -123,6 +123,33 @@ describe('SchemaReader', () => {
       // Verify existing schemas work — network has one, server has one.
       const server = resources.find((r) => r.resourceName === 'Server');
       expect(server?.readOnlyProperties).toEqual(['serverId']);
+    });
+
+    it('populates createOnlyProperties as plain names (not JSON pointers)', () => {
+      const network = resources.find((r) => r.resourceName === 'Network');
+      // network.schema.json has createOnlyProperties: ["/properties/ipRange"]
+      expect(network?.createOnlyProperties).toEqual(['ipRange']);
+    });
+
+    it('returns an empty createOnlyProperties array when schema has none', () => {
+      const server = resources.find((r) => r.resourceName === 'Server');
+      expect(server?.createOnlyProperties).toEqual([]);
+    });
+
+    it('populates api when the schema has an api block', () => {
+      const network = resources.find((r) => r.resourceName === 'Network');
+      expect(network?.api).toBeDefined();
+      expect(network?.api?.createPath).toBe('/networks');
+      expect(network?.api?.getPath).toBe('/networks/{id}');
+      expect(network?.api?.updatePath).toBe('/networks/{id}');
+      expect(network?.api?.deletePath).toBe('/networks/{id}');
+      expect(network?.api?.responseBodyKey).toBe('network');
+      expect(network?.api?.outputAttrMap).toEqual({ networkId: 'id' });
+    });
+
+    it('leaves api undefined when the schema has no api block', () => {
+      const server = resources.find((r) => r.resourceName === 'Server');
+      expect(server?.api).toBeUndefined();
     });
   });
 });
