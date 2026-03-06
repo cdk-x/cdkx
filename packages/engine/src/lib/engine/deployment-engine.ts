@@ -60,9 +60,18 @@ export interface DeploymentEngineOptions {
 
   /**
    * Absolute path to the cloud assembly output directory.
-   * Used to initialise `StatePersistence`.
+   * Contains `manifest.json` and stack template files.
+   * Read by `CloudAssemblyReader` — the engine itself does not write here.
    */
-  readonly outdir: string;
+  readonly assemblyDir: string;
+
+  /**
+   * Absolute path to the engine state directory (e.g. `<projectRoot>/.cdkx/`).
+   * `engine-state.json` is written here after every state transition.
+   * Kept separate from `assemblyDir` so state lives in a gitignored local
+   * directory rather than alongside the committed assembly output.
+   */
+  readonly stateDir: string;
 
   /**
    * Optional pre-built `EngineStateManager`. If not provided, a new one
@@ -105,7 +114,7 @@ export class DeploymentEngine {
 
   constructor(private readonly options: DeploymentEngineOptions) {
     this.eventBus = options.eventBus ?? new EventBus<EngineEvent>();
-    const persistence = new StatePersistence(options.outdir);
+    const persistence = new StatePersistence(options.stateDir);
     this.stateManager =
       options.stateManager ??
       new EngineStateManager(this.eventBus, persistence);

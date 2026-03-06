@@ -78,7 +78,8 @@ function makeEngine(
 
   return new DeploymentEngine({
     adapters: { test: fullAdapter },
-    outdir: '/fake',
+    assemblyDir: '/fake/assembly',
+    stateDir: '/fake/state',
     stateManager,
     eventBus: bus,
   });
@@ -408,7 +409,8 @@ describe('DeploymentEngine', () => {
     it('returns failure when no adapter is registered for the stack provider', async () => {
       const engine = new DeploymentEngine({
         adapters: {}, // no adapters registered
-        outdir: '/fake',
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
         stateManager: new EngineStateManager(
           new EventBus<EngineEvent>(),
           makeNullPersistence(),
