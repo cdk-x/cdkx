@@ -846,8 +846,61 @@ Also written at runtime (gitignored):
 
 ---
 
+## Destroy (`engine.destroy()`)
+
+The engine supports destroying all resources in reverse dependency order via the
+`destroy()` method. This is used by the `cdkx destroy` CLI command.
+
+### Method signature
+
+```ts
+async destroy(stacks: AssemblyStack[], plan: DeploymentPlan): Promise<DeploymentResult>
+```
+
+### Behaviour
+
+The destroy flow mirrors deploy but processes resources in **reverse** order:
+
+1. Reverse the stack waves from `plan.stackWaves`.
+2. For each stack in each wave (waves still run in parallel):
+   a. Reverse the resource waves from `plan.resourceWaves[stackId]`.
+   b. Transition stack → `DELETE_IN_PROGRESS`.
+   c. For each reversed resource wave (waves run in parallel, waves execute sequentially):
+   - For each resource in the wave: - If not in `engine-state.json` → skip (nothing to delete). - Call `destroyResource(stack, resource, adapter)`: - Transition resource → `DELETE_IN_PROGRESS`. - Call `adapter.delete({ logicalId, type, properties, physicalId, ... })`. - On success: transition resource → `DELETE_COMPLETE`, then
+     `stateManager.removeResource(stackId, logicalId)` — removes from state + persists. - On failure: transition resource → `DELETE_FAILED`, add to failed list, **continue**
+     (do not abort — best-effort deletion).
+     d. On stack success (all resources deleted or skipped): transition stack → `DELETE_COMPLETE`.
+     e. On stack failure (any resource failed): transition stack → `DELETE_FAILED`.
+
+**Key differences from deploy:**
+
+- **No rollback** on delete failure — failures are recorded but destroy continues.
+- **No create-only prop filtering** — delete doesn't need properties at all in most cases.
+- **`removeResource()` is called after DELETE_COMPLETE** — cleans up state so re-running
+  destroy on the same assembly is idempotent.
+- **Resources already absent from state are skipped** — no DELETE_IN_PROGRESS event, no
+  adapter call. This makes partial destroys and re-runs safe.
+
+### State transitions
+
+Stack: `DELETE_IN_PROGRESS → DELETE_COMPLETE` (or `DELETE_FAILED`)
+
+Resource: `DELETE_IN_PROGRESS → DELETE_COMPLETE` (then removed from state) or `DELETE_FAILED`
+
+### Error handling
+
+- Delete failures are **not fatal** — the engine continues deleting remaining resources
+  and only marks the stack as failed at the end.
+- This "best-effort" approach ensures maximum cleanup even when some resources are
+  already gone or return 404s.
+
+---
+
 ## Not yet implemented (next iterations)
 
-| Component      | Description                                                 |
-| -------------- | ----------------------------------------------------------- |
-| Delete command | `cdkx destroy` driving `adapter.delete()` for all resources |
+Currently all planned features are implemented. Future iterations may add:
+
+| Component | Description                               |
+| --------- | ----------------------------------------- |
+| Diff      | `cdkx diff` comparing local vs. deployed  |
+| Import    | Import existing resources into cdkx state |
