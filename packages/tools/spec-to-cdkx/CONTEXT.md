@@ -287,6 +287,7 @@ Static utility class. Maps JSON Schema property definitions to TypeScript type s
 | `{ type: "integer" }` + `isCrossRefId(propName) = true`   | `number \| IResolvable`             |
 | `{ type: "boolean" }`                                     | `boolean`                           |
 | `{ type: "array", items: { type: "string" } }`            | `string[]`                          |
+| `{ type: "array", items: { type: "integer" } }`           | `(number \| IResolvable)[]`         |
 | `{ type: "array", items: { $ref: "#/definitions/Foo" } }` | `Foo[]`                             |
 | `{ additionalProperties: { type: "string" } }`            | `Record<string, string>`            |
 | `{ $ref: "#/definitions/FooEnum" }`                       | `FooEnum` (same-file ref)           |
@@ -311,6 +312,12 @@ or `_id` (e.g. `networkId`, `serverId`, `network_id`) get typed as
 `number | IResolvable`. The bare `id` property is explicitly excluded and stays
 as plain `number`. Simple integers like `port`, `interval`, `retries` also stay
 as plain `number`.
+
+**Array item parentheses rule:** when an array item type contains `|` (i.e. is a
+union), `mapBase` wraps it in parentheses before appending `[]`. This ensures
+correct TypeScript precedence: `(number | IResolvable)[]` (an array of
+`number | IResolvable`) rather than `number | IResolvable[]` (which would mean
+`number` or an array of `IResolvable`).
 
 ---
 
@@ -452,7 +459,7 @@ const FIXTURES_DIR = path.join(__dirname, '../../test/fixtures/schemas');
 | -------------------------- | ----------------------------------------------------------------------------------------------- |
 | Module format              | CJS — esbuild handles bundling. Local imports: `.js` extension acceptable.                      |
 | No `any`                   | Use `unknown`. Exception: `require('../package.json') as { version: string }` cast is fine.     |
-| Prettier                   | Run `yarn nx run @cdkx-io/spec-to-cdkx:format` after modifying any `.ts` file.                    |
+| Prettier                   | Run `yarn nx run @cdkx-io/spec-to-cdkx:format` after modifying any `.ts` file.                  |
 | Specs co-located           | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                   |
 | OOP — all logic in classes | No standalone `export function`. Commands extend `BaseCommand`. Utilities are static classes.   |
 | Error handling             | Always use `this.run()` + `this.fail()`. Never call `process.exit()` directly in command logic. |
