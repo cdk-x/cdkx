@@ -349,12 +349,13 @@ Options:
 7. Build provider adapters via `registry.build(providerIds, process.env)`.
 8. Acquire the deploy lock (`createLock(stateDir).acquire()`) — throws
    `LockError` if another deployment is in progress.
-9. Create the engine with `assemblyDir`, `stateDir`, and an `EventBus`.
-10. Subscribe to engine events and stream them to `console.log`.
-11. Call `engine.deploy(stacks, plan)`.
-12. Release the lock in a `finally` block (always released, even on failure).
-13. If `result.success` is `false`, call `this.fail()` → exit 1.
-14. Check `NO_CHANGES` events collected during step 10 — if **all** stacks emitted
+9. Create a logger via `LoggerFactory.createEngineLogger({ logDir: stateDir })`.
+10. Create the engine with `assemblyDir`, `stateDir`, `eventBus`, and `logger`.
+11. Subscribe to engine events and stream them to `console.log`.
+12. Call `engine.deploy(stacks, plan)`.
+13. Release the lock in a `finally` block (always released, even on failure).
+14. If `result.success` is `false`, call `this.fail()` → exit 1.
+15. Check `NO_CHANGES` events collected during step 11 — if **all** stacks emitted
     `NO_CHANGES`, print `chalk.dim('No changes — all stacks are up-to-date')`.
     Otherwise print `chalk.green('✔') + ' Deployment complete'`.
 
@@ -430,13 +431,14 @@ Options:
 9. Compute column widths upfront from the assembly data (same as deploy).
 10. Acquire the deploy lock (`createLock(stateDir).acquire()`) — throws
     `LockError` if another operation is in progress.
-11. Create the engine with `assemblyDir`, `stateDir`, and an `EventBus`.
-12. Subscribe to engine events and stream them to `console.log` in real-time.
-13. Call `engine.destroy(stacks, plan)` — resources are deleted in **reverse**
+11. Create a logger via `LoggerFactory.createEngineLogger({ logDir: stateDir })`.
+12. Create the engine with `assemblyDir`, `stateDir`, `eventBus`, and `logger`.
+13. Subscribe to engine events and stream them to `console.log` in real-time.
+14. Call `engine.destroy(stacks, plan)` — resources are deleted in **reverse**
     dependency order (waves are reversed, resources within waves are reversed).
-14. Release the lock in a `finally` block (always released, even on failure).
-15. If `result.success` is `false`, call `this.fail()` → exit 1.
-16. Print `chalk.green('✔') + ' All resources destroyed'`.
+15. Release the lock in a `finally` block (always released, even on failure).
+16. If `result.success` is `false`, call `this.fail()` → exit 1.
+17. Print `chalk.green('✔') + ' All resources destroyed'`.
 
 ### Injectable dependencies (`DestroyCommandDeps`)
 

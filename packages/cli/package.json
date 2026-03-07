@@ -14,6 +14,7 @@
   "dependencies": {
     "@cdkx-io/engine": "*",
     "@cdkx-io/hetzner": "*",
+    "@cdkx-io/logger": "*",
     "chalk": "^5.6.2",
     "commander": "^14.0.3"
   },

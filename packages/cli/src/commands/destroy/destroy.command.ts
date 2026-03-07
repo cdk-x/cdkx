@@ -16,6 +16,7 @@ import {
   StackStatus,
 } from '@cdkx-io/engine';
 import { HetznerAdapterFactory } from '@cdkx-io/hetzner';
+import { LoggerFactory } from '@cdkx-io/logger';
 import { BaseCommand } from '../../lib/base-command';
 import {
   type CdkxConfig,
@@ -277,11 +278,13 @@ export class DestroyCommand extends BaseCommand {
     try {
       // 10. Create the engine with an event bus for streaming progress.
       const eventBus = new EventBus<EngineEvent>();
+      const logger = LoggerFactory.createEngineLogger({ logDir: stateDir });
       const engine = this.createEngine({
         adapters,
         assemblyDir: absoluteOutdir,
         stateDir,
         eventBus,
+        logger,
       });
 
       // 11. Stream events immediately as they happen.

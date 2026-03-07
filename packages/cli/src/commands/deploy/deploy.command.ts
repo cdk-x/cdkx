@@ -15,6 +15,7 @@ import {
   StackStatus,
 } from '@cdkx-io/engine';
 import { HetznerAdapterFactory } from '@cdkx-io/hetzner';
+import { LoggerFactory } from '@cdkx-io/logger';
 import { BaseCommand } from '../../lib/base-command.js';
 import {
   type CdkxConfig,
@@ -233,11 +234,13 @@ export class DeployCommand extends BaseCommand {
     try {
       // 9. Create the engine with an event bus for streaming progress.
       const eventBus = new EventBus<EngineEvent>();
+      const logger = LoggerFactory.createEngineLogger({ logDir: stateDir });
       const engine = this.createEngine({
         adapters,
         assemblyDir: absoluteOutdir,
         stateDir,
         eventBus,
+        logger,
       });
 
       // Track stacks that emitted NO_CHANGES to decide the final message.
