@@ -148,7 +148,7 @@ Both are entirely immutable — all properties are `createOnlyProperties`.
 | `route.schema.json`           | `Hetzner::Networking::Route`       | `/properties/networkId` + `/properties/destination` | Action resource — all props create-only |
 | `floating-ip.schema.json`     | `Hetzner::Networking::FloatingIp`  | `/properties/floatingipId`                          |                                         |
 | `primary-ip.schema.json`      | `Hetzner::Networking::PrimaryIp`   | `/properties/id`                                    |                                         |
-| `server.schema.json`          | `Hetzner::Compute::Server`         | `/properties/serverId`                              |                                         |
+| `server.schema.json`          | `Hetzner::Compute::Server`         | `/properties/serverId`                              | Local `ServerType` enum (20 values)     |
 | `load-balancer.schema.json`   | `Hetzner::Compute::LoadBalancer`   | `/properties/loadbalancerId`                        |                                         |
 | `placement-group.schema.json` | `Hetzner::Compute::PlacementGroup` | `/properties/id`                                    |                                         |
 | `volume.schema.json`          | `Hetzner::Storage::Volume`         | `/properties/volumeId`                              |                                         |

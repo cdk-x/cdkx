@@ -894,7 +894,7 @@ export interface LoadBalancerServiceHttp {
   /**
    * IDs of the Certificates to use for TLS/SSL termination by the Load Balancer; empty for TLS/SSL passthrough or if `protocol` is `http`.
    */
-  certificates?: number[];
+  certificates?: (number | IResolvable)[];
   /**
    * Redirect HTTP requests to HTTPS. Only available if `protocol` is `https`.
    */
@@ -1264,6 +1264,54 @@ export interface ServerPublicNet {
 }
 
 /**
+ * Hetzner Cloud server type name. Available families:
+ * - **Shared Intel (CX):** cx22 (2 vCPU / 4 GB), cx32 (4 vCPU / 8 GB), cx42 (8 vCPU / 16 GB), cx52 (16 vCPU / 32 GB)
+ * - **Shared AMD (CPX):** cpx11 (2 vCPU / 2 GB), cpx21 (3 vCPU / 4 GB), cpx31 (4 vCPU / 8 GB), cpx41 (8 vCPU / 16 GB), cpx51 (16 vCPU / 32 GB)
+ * - **Shared Arm64 (CAX):** cax11 (2 vCPU / 4 GB), cax21 (4 vCPU / 8 GB), cax31 (8 vCPU / 16 GB), cax41 (16 vCPU / 32 GB)
+ * - **Dedicated vCPU (CCX):** ccx13 (2 vCPU / 8 GB), ccx23 (4 vCPU / 16 GB), ccx33 (8 vCPU / 32 GB), ccx43 (16 vCPU / 64 GB), ccx53 (32 vCPU / 128 GB), ccx63 (48 vCPU / 192 GB)
+ */
+export enum ServerType {
+  /** `cx22` */
+  CX22 = 'cx22',
+  /** `cx32` */
+  CX32 = 'cx32',
+  /** `cx42` */
+  CX42 = 'cx42',
+  /** `cx52` */
+  CX52 = 'cx52',
+  /** `cpx11` */
+  CPX11 = 'cpx11',
+  /** `cpx21` */
+  CPX21 = 'cpx21',
+  /** `cpx31` */
+  CPX31 = 'cpx31',
+  /** `cpx41` */
+  CPX41 = 'cpx41',
+  /** `cpx51` */
+  CPX51 = 'cpx51',
+  /** `cax11` */
+  CAX11 = 'cax11',
+  /** `cax21` */
+  CAX21 = 'cax21',
+  /** `cax31` */
+  CAX31 = 'cax31',
+  /** `cax41` */
+  CAX41 = 'cax41',
+  /** `ccx13` */
+  CCX13 = 'ccx13',
+  /** `ccx23` */
+  CCX23 = 'ccx23',
+  /** `ccx33` */
+  CCX33 = 'ccx33',
+  /** `ccx43` */
+  CCX43 = 'ccx43',
+  /** `ccx53` */
+  CCX53 = 'ccx53',
+  /** `ccx63` */
+  CCX63 = 'ccx63',
+}
+
+/**
  * Props for {@link HtzServer}.
  *
  * Manages a Hetzner Cloud Server.
@@ -1274,17 +1322,17 @@ export interface HetznerServer {
    */
   name: string;
   /**
-   * ID or name of the Location to create the Server in (must not be used together with `datacenter`).
+   * Location to create the Server in (must not be used together with `datacenter`).
    */
-  location?: string;
+  location?: Location;
   /**
    * **Deprecated**: This property is deprecated and will be removed after the 1 July 2026.
    */
   datacenter?: string;
   /**
-   * ID or name of the Server type this Server should be created with.
+   * Server type to create this Server with.
    */
-  serverType: string;
+  serverType: ServerType;
   /**
    * This automatically triggers a Power on a Server-Server Action after the creation is finished and is returned in the `next_actions` response object.
    */
@@ -1304,11 +1352,11 @@ export interface HetznerServer {
   /**
    * Volume IDs which should be attached to the Server at the creation time. Volumes must be in the same Location.
    */
-  volumes?: number[];
+  volumes?: (number | IResolvable)[];
   /**
    * Network IDs which should be attached to the Server private network interface at the creation time.
    */
-  networks?: number[];
+  networks?: (number | IResolvable)[];
   /**
    * Firewalls which should be applied on the Server's public network interface at creation time.
    */
@@ -1347,15 +1395,15 @@ export class HtzServer extends ProviderResource {
   public readonly attrServerId: IResolvable;
 
   public name: string;
-  public location?: string;
+  public location?: Location;
   public datacenter?: string;
-  public serverType: string;
+  public serverType: ServerType;
   public startAfterCreate?: boolean;
   public image: string;
   public placementGroup?: number;
   public sshKeys?: string[];
-  public volumes?: number[];
-  public networks?: number[];
+  public volumes?: (number | IResolvable)[];
+  public networks?: (number | IResolvable)[];
   public firewalls?: ServerFirewall[];
   public userData?: string;
   public labels?: Record<string, string>;
