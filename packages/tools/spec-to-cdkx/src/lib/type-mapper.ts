@@ -146,7 +146,8 @@ export class TypeMapper {
     // array
     if (prop.type === 'array') {
       const itemType = TypeMapper.mapArrayItems(prop, ctx, propName, localDefs);
-      return `${itemType}[]`;
+      const needsParens = itemType.includes('|');
+      return needsParens ? `(${itemType})[]` : `${itemType}[]`;
     }
 
     // primitives — integer cross-ref IDs get `| IResolvable`
@@ -202,7 +203,11 @@ export class TypeMapper {
     }
 
     if (items.type) {
-      return TypeMapper.mapPrimitive(items.type);
+      const primitive = TypeMapper.mapPrimitive(items.type);
+      if (primitive === 'number') {
+        return 'number | IResolvable';
+      }
+      return primitive;
     }
 
     return 'unknown';
