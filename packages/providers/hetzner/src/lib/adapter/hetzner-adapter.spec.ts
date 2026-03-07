@@ -66,7 +66,7 @@ describe('HetznerAdapter', () => {
 
       expect(client.post).toHaveBeenCalledWith('/networks', {
         name: 'my-net',
-        ipRange: '10.0.0.0/16',
+        ip_range: '10.0.0.0/16',
       });
       expect(result.physicalId).toBe('42');
       expect(result.outputs).toEqual({ networkId: 42 });
@@ -152,7 +152,11 @@ describe('HetznerAdapter', () => {
 
         expect(postMock).toHaveBeenCalledWith(
           '/networks/42/actions/add_subnet',
-          { type: 'cloud', networkZone: 'eu-central', ipRange: '10.0.1.0/24' },
+          {
+            type: 'cloud',
+            network_zone: 'eu-central',
+            ip_range: '10.0.1.0/24',
+          },
         );
         // Composite physicalId: {networkId}:{ipRange}
         expect(result.physicalId).toBe('42:10.0.1.0/24');
@@ -418,6 +422,39 @@ describe('HetznerAdapter', () => {
       await expect(
         adapter.getOutput(makeResource(), 'networkId'),
       ).rejects.toThrow('physicalId is required');
+    });
+  });
+
+  // ─── getCreateOnlyProps ───────────────────────────────────────────────────────
+
+  describe('getCreateOnlyProps', () => {
+    it('returns the createOnlyProps set for a known resource type', () => {
+      const { adapter } = makeAdapter();
+
+      const props = adapter.getCreateOnlyProps(
+        'Hetzner::Compute::LoadBalancer',
+      );
+
+      // 'algorithm' is a createOnlyProperty on LoadBalancer — it can only be
+      // set at creation time and cannot be changed via PUT.
+      expect(props.has('algorithm')).toBe(true);
+    });
+
+    it('returns an empty set for an unknown resource type', () => {
+      const { adapter } = makeAdapter();
+
+      const props = adapter.getCreateOnlyProps('Unknown::Resource::Type');
+
+      expect(props.size).toBe(0);
+    });
+
+    it('returns the createOnlyProps set for a networking resource', () => {
+      const { adapter } = makeAdapter();
+
+      const props = adapter.getCreateOnlyProps('Hetzner::Networking::Network');
+
+      // 'ipRange' is a createOnlyProperty on Network.
+      expect(props.has('ipRange')).toBe(true);
     });
   });
 });

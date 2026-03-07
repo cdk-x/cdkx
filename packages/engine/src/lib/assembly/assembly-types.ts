@@ -24,6 +24,20 @@ export interface AssemblyResource {
   readonly properties: Record<string, unknown>;
   /** Synthesizer metadata (e.g. `{ 'cdkx:path': '...' }`). */
   readonly metadata?: Record<string, unknown>;
+  /**
+   * Explicit and implicit dependency logical IDs, as emitted by the synthesizer.
+   *
+   * The synthesizer (`ProviderResource.toJson()`) populates this as the
+   * deduplicated union of:
+   * - Logical IDs from explicit `addDependency()` calls on the construct.
+   * - Logical IDs referenced by `{ ref, attr }` tokens found anywhere in the
+   *   resolved properties tree.
+   *
+   * The `DeploymentPlanner` uses this field (in addition to scanning `{ ref, attr }`
+   * tokens at plan time) to build the intra-stack dependency graph for topological
+   * sorting. Absent (undefined) when the resource has no dependencies.
+   */
+  readonly dependsOn?: string[];
 }
 
 /**

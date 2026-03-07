@@ -1,14 +1,13 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { resolve, isAbsolute } from 'path';
-import { existsSync as fsExistsSync, readFileSync as fsReadFileSync } from 'fs';
+import { resolve, isAbsolute, dirname } from 'path';
+import { existsSync as fsExistsSync } from 'fs';
 import { spawnSync as cpSpawnSync } from 'child_process';
 import { BaseCommand } from '../../lib/base-command.js';
-
-export interface CdkxConfig {
-  app: string;
-  output?: string;
-}
+import {
+  type CdkxConfig,
+  readConfig as defaultReadConfig,
+} from '../../lib/cdkx-config.js';
 
 export interface SpawnResult {
   status: number | null;
@@ -19,18 +18,18 @@ export interface SpawnResult {
 export interface SynthCommandDeps {
   existsSync?: (path: string) => boolean;
   readConfig?: (path: string) => CdkxConfig;
-  spawnApp?: (cmd: string, env: NodeJS.ProcessEnv) => SpawnResult;
+  spawnApp?: (cmd: string, env: NodeJS.ProcessEnv, cwd: string) => SpawnResult;
 }
 
-function defaultReadConfig(configPath: string): CdkxConfig {
-  const raw = fsReadFileSync(configPath, 'utf-8');
-  return JSON.parse(raw) as CdkxConfig;
-}
-
-function defaultSpawnApp(cmd: string, env: NodeJS.ProcessEnv): SpawnResult {
+function defaultSpawnApp(
+  cmd: string,
+  env: NodeJS.ProcessEnv,
+  cwd: string,
+): SpawnResult {
   const [bin, ...args] = cmd.split(' ');
   const result = cpSpawnSync(bin, args, {
     env,
+    cwd,
     stdio: ['ignore', 'pipe', 'pipe'],
     encoding: 'utf-8',
     shell: true,
@@ -48,6 +47,7 @@ export class SynthCommand extends BaseCommand {
   private readonly spawnApp: (
     cmd: string,
     env: NodeJS.ProcessEnv,
+    cwd: string,
   ) => SpawnResult;
 
   private constructor(deps: SynthCommandDeps = {}) {
@@ -102,7 +102,8 @@ export class SynthCommand extends BaseCommand {
       CDKX_OUT_DIR: outputDir,
     };
 
-    const result = this.spawnApp(config.app, env);
+    const cwd = dirname(configPath);
+    const result = this.spawnApp(config.app, env, cwd);
 
     if (result.status !== 0) {
       const detail = result.stderr.trim() || result.stdout.trim();

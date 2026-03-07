@@ -236,4 +236,116 @@ describe('ProviderResource', () => {
       expect((entry.properties as Record<string, unknown>).count).toBe(42);
     });
   });
+
+  describe('dependsOn in toJson()', () => {
+    it('omits dependsOn when there are no dependencies', () => {
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+        properties: { name: 'hello' },
+      });
+      const entry = resource.toJson()[resource.logicalId] as Record<
+        string,
+        unknown
+      >;
+      expect(entry['dependsOn']).toBeUndefined();
+    });
+
+    it('emits dependsOn from explicit addDependency() call', () => {
+      const dep = new ProviderResource(stack, 'Dep', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+      });
+      resource.addDependency(dep);
+
+      const entry = resource.toJson()[resource.logicalId] as Record<
+        string,
+        unknown
+      >;
+      expect(entry['dependsOn']).toEqual([dep.logicalId]);
+    });
+
+    it('emits dependsOn from { ref, attr } token in properties', () => {
+      const dep = new ProviderResource(stack, 'Dep', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        properties: { networkId: dep.getAtt('networkId') as any },
+      });
+
+      const entry = resource.toJson()[resource.logicalId] as Record<
+        string,
+        unknown
+      >;
+      expect(entry['dependsOn']).toEqual([dep.logicalId]);
+    });
+
+    it('deduplicates when addDependency() and token reference the same resource', () => {
+      const dep = new ProviderResource(stack, 'Dep', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        properties: { networkId: dep.getAtt('networkId') as any },
+      });
+      resource.addDependency(dep); // explicit + implicit → should appear once
+
+      const entry = resource.toJson()[resource.logicalId] as Record<
+        string,
+        unknown
+      >;
+      const dependsOn = entry['dependsOn'] as string[];
+      expect(dependsOn).toHaveLength(1);
+      expect(dependsOn).toContain(dep.logicalId);
+    });
+
+    it('collects refs from tokens nested inside objects and arrays', () => {
+      const depA = new ProviderResource(stack, 'DepA', { type: 'test::Type' });
+      const depB = new ProviderResource(stack, 'DepB', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+        properties: {
+          // token nested inside an object
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          nested: { subProp: depA.getAtt('id') as any },
+          // token inside an array
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          list: [depB.getAtt('name') as any],
+        },
+      });
+
+      const entry = resource.toJson()[resource.logicalId] as Record<
+        string,
+        unknown
+      >;
+      const dependsOn = entry['dependsOn'] as string[];
+      expect(dependsOn).toHaveLength(2);
+      expect(dependsOn).toContain(depA.logicalId);
+      expect(dependsOn).toContain(depB.logicalId);
+    });
+
+    it('emits dependsOn combining addDependency() and multiple tokens', () => {
+      const depA = new ProviderResource(stack, 'DepA', { type: 'test::Type' });
+      const depB = new ProviderResource(stack, 'DepB', { type: 'test::Type' });
+      const depC = new ProviderResource(stack, 'DepC', { type: 'test::Type' });
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+        properties: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          networkId: depA.getAtt('networkId') as any,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          subnetId: depB.getAtt('subnetId') as any,
+        },
+      });
+      resource.addDependency(depC); // a third explicit dep with no token
+
+      const entry = resource.toJson()[resource.logicalId] as Record<
+        string,
+        unknown
+      >;
+      const dependsOn = entry['dependsOn'] as string[];
+      expect(dependsOn).toHaveLength(3);
+      expect(dependsOn).toContain(depA.logicalId);
+      expect(dependsOn).toContain(depB.logicalId);
+      expect(dependsOn).toContain(depC.logicalId);
+    });
+  });
 });

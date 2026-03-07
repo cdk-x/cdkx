@@ -52,6 +52,7 @@ function makeTemplate(
       type: string;
       properties?: Record<string, unknown>;
       metadata?: Record<string, unknown>;
+      dependsOn?: string[];
     }
   >,
   outputs?: Record<string, { value: unknown; description?: string }>,
@@ -268,6 +269,75 @@ describe('CloudAssemblyReader', () => {
 
       it('parses output without description', () => {
         expect(stacks[0].outputs['NetworkId']).toEqual({ value: 42 });
+      });
+    });
+
+    describe('resource dependsOn field', () => {
+      let stacks: AssemblyStack[];
+
+      beforeAll(() => {
+        const files: Record<string, string> = {
+          [`${OUTDIR}/manifest.json`]: makeManifest({
+            MyStack: { templateFile: 'MyStack.json' },
+          }),
+          [`${OUTDIR}/MyStack.json`]: makeTemplate({
+            ResA: {
+              type: 'test::Resource',
+              properties: {},
+            },
+            ResB: {
+              type: 'test::Resource',
+              properties: {},
+              dependsOn: ['ResA'],
+            },
+            ResC: {
+              type: 'test::Resource',
+              properties: {},
+            },
+          }),
+        };
+        stacks = new CloudAssemblyReader(OUTDIR, makeDeps(files)).read();
+      });
+
+      it('parses dependsOn on a resource that has it', () => {
+        const resB = stacks[0].resources.find((r) => r.logicalId === 'ResB');
+        expect(resB).toBeDefined();
+        if (!resB) return;
+        expect(resB.dependsOn).toEqual(['ResA']);
+      });
+
+      it('omits dependsOn on a resource that does not have it', () => {
+        const resA = stacks[0].resources.find((r) => r.logicalId === 'ResA');
+        expect(resA).toBeDefined();
+        if (!resA) return;
+        expect(resA.dependsOn).toBeUndefined();
+      });
+
+      it('omits dependsOn on a resource with no dependsOn key', () => {
+        const resC = stacks[0].resources.find((r) => r.logicalId === 'ResC');
+        expect(resC).toBeDefined();
+        if (!resC) return;
+        expect(resC.dependsOn).toBeUndefined();
+      });
+
+      it('parses dependsOn with multiple entries', () => {
+        const files: Record<string, string> = {
+          [`${OUTDIR}/manifest.json`]: makeManifest({
+            S: { templateFile: 'S.json' },
+          }),
+          [`${OUTDIR}/S.json`]: makeTemplate({
+            X: { type: 'test::Resource', properties: {} },
+            Y: { type: 'test::Resource', properties: {} },
+            Z: {
+              type: 'test::Resource',
+              properties: {},
+              dependsOn: ['X', 'Y'],
+            },
+          }),
+        };
+        const result = new CloudAssemblyReader(OUTDIR, makeDeps(files)).read();
+        const z = result[0].resources.find((r) => r.logicalId === 'Z');
+        expect(z?.dependsOn).toEqual(['X', 'Y']);
       });
     });
 

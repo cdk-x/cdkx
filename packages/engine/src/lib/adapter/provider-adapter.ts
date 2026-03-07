@@ -128,4 +128,59 @@ export interface ProviderAdapter {
    * @returns The resolved attribute value.
    */
   getOutput(resource: ManifestResource, attr: string): Promise<unknown>;
+
+  /**
+   * Optional. Returns the set of property names that are create-only for the
+   * given resource type — properties that can only be set at creation time and
+   * cannot be changed in place.
+   *
+   * The engine calls this before `update()` to strip these keys from the
+   * computed patch. If the filtered patch becomes empty (all remaining changes
+   * are create-only), the resource is treated as a no-op and `update()` is
+   * never called. If not implemented, an empty set is assumed (no create-only
+   * properties).
+   *
+   * @param type — The resource type string (e.g. `'Hetzner::Compute::Server'`).
+   * @returns The set of create-only property names for this type.
+   */
+  getCreateOnlyProps?(type: string): ReadonlySet<string>;
+}
+
+/**
+ * Factory that instantiates a {@link ProviderAdapter} for a specific provider.
+ *
+ * Each provider package exports a concrete implementation (e.g.
+ * `HetznerAdapterFactory` from `@cdkx-io/hetzner`). The CLI registers all
+ * factories in an `AdapterRegistry` at startup and uses them to build the
+ * adapters map required by `DeploymentEngine`.
+ *
+ * Credentials are read from `env` (typically `process.env`) so that the
+ * factory never hard-codes or imports secrets.
+ *
+ * @example
+ * ```ts
+ * class HetznerAdapterFactory implements ProviderAdapterFactory {
+ *   readonly providerId = 'hetzner';
+ *   create(env: NodeJS.ProcessEnv): ProviderAdapter {
+ *     const token = env['HCLOUD_TOKEN'];
+ *     if (!token) throw new Error('HCLOUD_TOKEN is not set.');
+ *     return new HetznerAdapter({ apiToken: token });
+ *   }
+ * }
+ * ```
+ */
+export interface ProviderAdapterFactory {
+  /**
+   * Unique provider identifier — must match the `provider` field written
+   * into `manifest.json` by the provider's `Provider.identifier` value.
+   * Examples: `'hetzner'`, `'kubernetes'`, `'aws'`.
+   */
+  readonly providerId: string;
+
+  /**
+   * Instantiate a {@link ProviderAdapter} using credentials and configuration
+   * sourced from `env`. Throw with a descriptive message if required
+   * environment variables are missing or invalid.
+   */
+  create(env: NodeJS.ProcessEnv): ProviderAdapter;
 }

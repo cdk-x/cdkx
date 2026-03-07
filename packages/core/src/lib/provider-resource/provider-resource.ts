@@ -198,16 +198,24 @@ export class ProviderResource extends Construct {
    * `IResolvable` tokens within the properties tree. The resolved properties are then
    * sanitized (null/undefined removed, unresolved tokens detected and thrown).
    *
+   * The `dependsOn` field is always computed and emitted when non-empty. It is
+   * the deduplicated union of:
+   * - Logical IDs from explicit `addDependency()` calls.
+   * - Logical IDs referenced by `{ ref, attr }` tokens found anywhere in the
+   *   resolved (sanitized) properties tree.
+   *
    * Output shape — a single-key object keyed by the resource's `logicalId`:
    * ```json
    * {
    *   "MyStackWebServer3A1B2C3D": {
    *     "type": "hetzner::Server",
    *     "properties": { ... resolved properties ... },
-   *     "metadata": { "cdkx:path": "MyStack/WebServer/Resource" }
+   *     "metadata": { "cdkx:path": "MyStack/WebServer/Resource" },
+   *     "dependsOn": ["MyStackNetwork1A2B3C4D"]
    *   }
    * }
    * ```
+   * The `dependsOn` key is omitted when there are no dependencies.
    */
   public toJson(): Record<string, unknown> {
     // Lazily import to avoid circular dependencies at module load time.
@@ -230,14 +238,64 @@ export class ProviderResource extends Construct {
 
     const sanitizedProperties = pipeline.sanitize(resolvedProperties);
 
-    return {
-      [this.logicalId]: {
-        type: this.type,
-        properties: sanitizedProperties,
-        metadata: {
-          'cdkx:path': this.node.path,
-        },
+    // Build the deduplicated dependsOn set:
+    // 1. Explicit deps registered via addDependency().
+    // 2. Implicit deps inferred from { ref, attr } tokens in the resolved properties.
+    const dependsOnSet = new Set<string>();
+
+    for (const dep of this._dependencies) {
+      dependsOnSet.add(dep.logicalId);
+    }
+
+    this.collectRefLogicalIds(sanitizedProperties, dependsOnSet);
+
+    const entry: Record<string, unknown> = {
+      type: this.type,
+      properties: sanitizedProperties,
+      metadata: {
+        'cdkx:path': this.node.path,
       },
     };
+
+    if (dependsOnSet.size > 0) {
+      entry['dependsOn'] = Array.from(dependsOnSet);
+    }
+
+    return { [this.logicalId]: entry };
+  }
+
+  /**
+   * Recursively walks a resolved (sanitized) properties tree and collects
+   * all `ref` values from `{ ref, attr }` tokens into the given set.
+   *
+   * This is used by `toJson()` to build the unified `dependsOn` list that
+   * combines explicit `addDependency()` calls with implicit token-based refs.
+   */
+  private collectRefLogicalIds(obj: unknown, refs: Set<string>): void {
+    if (obj === null || obj === undefined) return;
+
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        this.collectRefLogicalIds(item, refs);
+      }
+      return;
+    }
+
+    if (typeof obj === 'object') {
+      const record = obj as Record<string, unknown>;
+      // Detect a { ref, attr } token: plain object with exactly these two string keys.
+      if (
+        typeof record['ref'] === 'string' &&
+        typeof record['attr'] === 'string' &&
+        Object.keys(record).length === 2
+      ) {
+        refs.add(record['ref']);
+        return;
+      }
+      // Otherwise recurse into all values.
+      for (const value of Object.values(record)) {
+        this.collectRefLogicalIds(value, refs);
+      }
+    }
   }
 }

@@ -12,11 +12,12 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
+    "@cdkx-io/engine": "*",
+    "@cdkx-io/hetzner": "*",
     "chalk": "^5.6.2",
     "commander": "^14.0.3"
   },
   "devDependencies": {
-    "@cdkx-io/core": "*",
     "esbuild": "*"
   },
   "publishConfig": {
