@@ -950,4 +950,281 @@ export class DeploymentEngine {
     // Return the token as-is if not resolvable.
     return { ref, attr };
   }
+
+  // ─── Destroy ──────────────────────────────────────────────────────────────────
+
+  /**
+   * Destroys all resources in the given stacks in reverse dependency order.
+   * Stacks are processed in reverse wave order (last wave first), and within
+   * each stack, resources are deleted in reverse wave order as well.
+   *
+   * @param stacks - The stacks to destroy (from the assembly).
+   * @param plan - The deployment plan (used to determine reverse order).
+   * @returns A result indicating success or failure.
+   */
+  public async destroy(
+    stacks: AssemblyStack[],
+    plan: DeploymentPlan,
+  ): Promise<DeploymentResult> {
+    const stackById = new Map<string, AssemblyStack>(
+      stacks.map((s) => [s.id, s]),
+    );
+
+    const stackResults: StackDeploymentResult[] = [];
+
+    // Destroy stacks in reverse wave order (last wave first).
+    const reversedStackWaves = [...plan.stackWaves].reverse();
+
+    for (const wave of reversedStackWaves) {
+      const waveResults = await Promise.allSettled(
+        wave.map(async (stackId) => {
+          const stack = stackById.get(stackId);
+          if (stack === undefined) {
+            return {
+              stackId,
+              success: false,
+              resources: [],
+              error: `Stack '${stackId}' not found in assembly stacks.`,
+            } as StackDeploymentResult;
+          }
+
+          // Get resource waves in reverse order for this stack.
+          const resourceWaves = plan.resourceWaves[stackId] ?? [];
+          const reversedResourceWaves = [...resourceWaves].reverse();
+
+          return await this.destroyStack(stack, reversedResourceWaves);
+        }),
+      );
+
+      // Collect results and check for failures.
+      for (const settledResult of waveResults) {
+        if (settledResult.status === 'fulfilled') {
+          stackResults.push(settledResult.value);
+          if (!settledResult.value.success) {
+            return { success: false, stacks: stackResults };
+          }
+        } else {
+          const error =
+            settledResult.reason instanceof Error
+              ? settledResult.reason.message
+              : String(settledResult.reason);
+          stackResults.push({
+            stackId: '(unknown)',
+            success: false,
+            resources: [],
+            error: `Unhandled error: ${error}`,
+          });
+          return { success: false, stacks: stackResults };
+        }
+      }
+    }
+
+    return { success: true, stacks: stackResults };
+  }
+
+  /**
+   * Destroys all resources in a single stack in reverse wave order.
+   *
+   * @param stack - The stack to destroy.
+   * @param reversedResourceWaves - Resource waves in reverse order (last wave first).
+   * @returns A result indicating success or failure.
+   */
+  private async destroyStack(
+    stack: AssemblyStack,
+    reversedResourceWaves: string[][],
+  ): Promise<StackDeploymentResult> {
+    const adapter = this.options.adapters[stack.provider];
+    if (adapter === undefined) {
+      return {
+        stackId: stack.id,
+        success: false,
+        resources: [],
+        error: `No adapter registered for provider '${stack.provider}'.`,
+      };
+    }
+
+    try {
+      // Transition stack to DELETE_IN_PROGRESS.
+      this.stateManager.transitionStack(
+        stack.id,
+        StackStatus.DELETE_IN_PROGRESS,
+      );
+
+      const resourceResults: ResourceDeploymentResult[] = [];
+      const resourceById = new Map<string, AssemblyResource>(
+        stack.resources.map((r) => [r.logicalId, r]),
+      );
+
+      // Delete resources wave by wave in reverse order (parallel within each wave).
+      for (const wave of reversedResourceWaves) {
+        const waveResults = await Promise.allSettled(
+          wave.map(async (logicalId) => {
+            const resource = resourceById.get(logicalId);
+            if (resource === undefined) {
+              return {
+                logicalId,
+                success: false,
+                error: `Resource '${logicalId}' not found in stack resources.`,
+              } as ResourceDeploymentResult;
+            }
+
+            return await this.destroyResource(stack, resource, adapter);
+          }),
+        );
+
+        // Collect results and check for failures.
+        for (const settledResult of waveResults) {
+          if (settledResult.status === 'fulfilled') {
+            resourceResults.push(settledResult.value);
+            if (!settledResult.value.success) {
+              // On failure, transition stack to DELETE_FAILED and abort.
+              this.stateManager.transitionStack(
+                stack.id,
+                StackStatus.DELETE_FAILED,
+                {
+                  reason: `Resource ${settledResult.value.logicalId} failed to delete.`,
+                },
+              );
+              return {
+                stackId: stack.id,
+                success: false,
+                resources: resourceResults,
+                error: `Resource ${settledResult.value.logicalId} failed to delete.`,
+              };
+            }
+          } else {
+            const error =
+              settledResult.reason instanceof Error
+                ? settledResult.reason.message
+                : String(settledResult.reason);
+            resourceResults.push({
+              logicalId: '(unknown)',
+              success: false,
+              error: `Unhandled error: ${error}`,
+            });
+            this.stateManager.transitionStack(
+              stack.id,
+              StackStatus.DELETE_FAILED,
+              { reason: error },
+            );
+            return {
+              stackId: stack.id,
+              success: false,
+              resources: resourceResults,
+              error,
+            };
+          }
+        }
+      }
+
+      // All resources deleted successfully — mark stack as DELETE_COMPLETE.
+      this.stateManager.transitionStack(stack.id, StackStatus.DELETE_COMPLETE);
+
+      return {
+        stackId: stack.id,
+        success: true,
+        resources: resourceResults,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.stateManager.transitionStack(stack.id, StackStatus.DELETE_FAILED, {
+        reason: message,
+      });
+      return {
+        stackId: stack.id,
+        success: false,
+        resources: [],
+        error: message,
+      };
+    }
+  }
+
+  /**
+   * Destroys a single resource by calling the adapter's delete method.
+   *
+   * @param stack - The stack containing the resource.
+   * @param resource - The resource to destroy.
+   * @param adapter - The provider adapter.
+   * @returns A result indicating success or failure.
+   */
+  private async destroyResource(
+    stack: AssemblyStack,
+    resource: AssemblyResource,
+    adapter: ProviderAdapter,
+  ): Promise<ResourceDeploymentResult> {
+    const resourceState = this.stateManager.getResourceState(
+      stack.id,
+      resource.logicalId,
+    );
+
+    // Skip resources that don't exist in state (not yet created).
+    if (resourceState === undefined) {
+      return {
+        logicalId: resource.logicalId,
+        success: true,
+      };
+    }
+
+    // Skip resources that are already deleted.
+    if (
+      resourceState.status === ResourceStatus.DELETE_COMPLETE ||
+      resourceState.status === ResourceStatus.DELETE_IN_PROGRESS
+    ) {
+      return {
+        logicalId: resource.logicalId,
+        success: true,
+      };
+    }
+
+    try {
+      // Transition to DELETE_IN_PROGRESS.
+      this.stateManager.transitionResource(
+        stack.id,
+        resource.logicalId,
+        resource.type,
+        ResourceStatus.DELETE_IN_PROGRESS,
+      );
+
+      // Call adapter.delete() with resolved properties and physicalId from state.
+      await adapter.delete({
+        logicalId: resource.logicalId,
+        type: resource.type,
+        properties: resourceState.properties,
+        stackId: stack.id,
+        provider: stack.provider,
+        physicalId: resourceState.physicalId,
+      });
+
+      // Transition to DELETE_COMPLETE.
+      this.stateManager.transitionResource(
+        stack.id,
+        resource.logicalId,
+        resource.type,
+        ResourceStatus.DELETE_COMPLETE,
+      );
+
+      // Remove resource from state after successful deletion.
+      this.stateManager.removeResource(stack.id, resource.logicalId);
+
+      return {
+        logicalId: resource.logicalId,
+        success: true,
+        physicalId: resourceState.physicalId,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.stateManager.transitionResource(
+        stack.id,
+        resource.logicalId,
+        resource.type,
+        ResourceStatus.DELETE_FAILED,
+        { reason: message },
+      );
+      return {
+        logicalId: resource.logicalId,
+        success: false,
+        error: message,
+      };
+    }
+  }
 }

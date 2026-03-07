@@ -12,8 +12,7 @@ This file captures the full design, architecture, and implementation details of
 ## What is @cdkx-io/cli?
 
 **@cdkx-io/cli** is the command-line interface for cdkx. It provides developer-facing
-commands (`synth`, `deploy`, and future: `diff`, `destroy`) that drive the cdkx
-workflow from the terminal.
+commands (`synth`, `deploy`, `destroy`) that drive the cdkx workflow from the terminal.
 
 It is distributed as a standalone npm package with a `cdkx` binary entry point.
 It bundles all its dependencies (chalk, commander) via esbuild — there are no
@@ -396,9 +395,116 @@ Options:
 
 ---
 
+## Command: `destroy`
+
+### Usage
+
+```
+cdkx destroy
+
+Options:
+  -c, --config <file>   Path to cdkx.json config file (default: "cdkx.json")
+  -o, --output <dir>    Override output directory
+  --force               Skip confirmation prompt
+  -h, --help            Display help for command
+```
+
+### Behaviour
+
+1. Resolve and validate the `--config` path (same logic as `deploy`).
+2. Read and validate `cdkx.json` — `app` field must be present.
+3. Compute `assemblyDir` from `--output` flag > `config.output` > `'cdkx.out'`,
+   resolved relative to `dirname(configPath)`.
+4. Compute `stateDir = join(dirname(configPath), '.cdkx')` — always `.cdkx/`
+   next to `cdkx.json`, regardless of `--output`. State is kept separate from
+   the cloud assembly so it survives `cdkx synth` re-runs.
+5. Read the cloud assembly via `readAssembly(assemblyDir)`.
+6. Build the deployment plan via `planDeployment(stacks)` (plan will be reversed
+   for destruction).
+7. Build provider adapters via `registry.build(providerIds, process.env)`.
+8. **User confirmation** (unless `--force` is set):
+   - Print a warning listing all stacks to be destroyed.
+   - Prompt the user with `Are you sure you want to continue? (y/N):`.
+   - If user responds with anything other than `y` or `yes`, print
+     `Destroy cancelled.` and exit normally (exit code 0).
+9. Compute column widths upfront from the assembly data (same as deploy).
+10. Acquire the deploy lock (`createLock(stateDir).acquire()`) — throws
+    `LockError` if another operation is in progress.
+11. Create the engine with `assemblyDir`, `stateDir`, and an `EventBus`.
+12. Subscribe to engine events and stream them to `console.log` in real-time.
+13. Call `engine.destroy(stacks, plan)` — resources are deleted in **reverse**
+    dependency order (waves are reversed, resources within waves are reversed).
+14. Release the lock in a `finally` block (always released, even on failure).
+15. If `result.success` is `false`, call `this.fail()` → exit 1.
+16. Print `chalk.green('✔') + ' All resources destroyed'`.
+
+### Injectable dependencies (`DestroyCommandDeps`)
+
+| Dep              | Default                 | Purpose                                                                |
+| ---------------- | ----------------------- | ---------------------------------------------------------------------- |
+| `existsSync`     | `fs.existsSync`         | Checks if the config file exists                                       |
+| `readConfig`     | `defaultReadConfig`     | Reads and parses `cdkx.json`                                           |
+| `readAssembly`   | `defaultReadAssembly`   | Reads the cloud assembly via `CloudAssemblyReader`                     |
+| `planDeployment` | `defaultPlanDeployment` | Builds a plan via `DeploymentPlanner` (reversed by engine for destroy) |
+| `createEngine`   | `defaultCreateEngine`   | Instantiates `DeploymentEngine`                                        |
+| `createLock`     | `defaultCreateLock`     | Factory: `(stateDir) => new DeployLock(stateDir)`                      |
+| `registry`       | `defaultRegistry`       | `AdapterRegistry` with `HetznerAdapterFactory`                         |
+| `promptUser`     | `defaultPromptUser`     | User confirmation prompt using Node.js `readline`                      |
+
+### User confirmation prompt (`defaultPromptUser`)
+
+Uses Node.js `readline.createInterface()` to read from `stdin`:
+
+```ts
+async function defaultPromptUser(message: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    rl.question(message, (answer) => {
+      rl.close();
+      const normalized = answer.trim().toLowerCase();
+      resolve(normalized === 'y' || normalized === 'yes');
+    });
+  });
+}
+```
+
+**Key behavior:**
+
+- Only `'y'` or `'yes'` (case-insensitive, trimmed) are treated as confirmation.
+- Any other input (including empty, `'n'`, `'no'`) results in cancellation.
+- The prompt is **skipped entirely** when `--force` is passed.
+
+### Tests
+
+`src/commands/destroy/destroy.command.spec.ts` — unit tests (work in progress):
+
+- Metadata: command name, description, `--config` default, `--output` option, `--force` option.
+- Config not found → exit 1.
+- Missing `app` field → exit 1.
+- `readAssembly` throws → exit 1.
+- No stacks in assembly → exit 1.
+- `planDeployment` throws (cycle) → exit 1.
+- `registry.build` throws (missing token) → exit 1.
+- `engine.destroy` returns `success: false` → exit 1.
+- `engine.destroy` returns `success: true` → success message printed.
+- Events are streamed to stdout via `engine.subscribe`.
+- `--output` flag passed to `readAssembly`.
+- `config.output` used when `--output` not set.
+- `stateDir` ends with `.cdkx` — passed to `createLock`.
+- `stateDir` and `assemblyDir` passed correctly to `createEngine`.
+- Lock released even when destroy fails (`finally` block).
+- `LockError` from `acquire()` → exit 1.
+- User declines confirmation → `promptUser` returns `false` → destroy cancelled.
+- `--force` flag skips `promptUser` entirely → destroy proceeds directly.
+
+---
+
 ## DeployLock (`src/lib/deploy-lock/`)
 
-File-based deploy lock that prevents concurrent `cdkx deploy` invocations.
+File-based deploy lock that prevents concurrent `cdkx deploy` and `cdkx destroy` invocations.
 
 ### Lock file location
 
@@ -694,9 +800,13 @@ packages/cli/
     │   │   ├── synth.command.ts               SynthCommand (reads cdkx.json, spawns subprocess)
     │   │   ├── synth.command.spec.ts          12 unit tests
     │   │   └── index.ts                       re-export barrel
-    │   └── deploy/
-    │       ├── deploy.command.ts              DeployCommand (reads assembly, drives engine, lock)
-    │       ├── deploy.command.spec.ts         unit tests
+    │   ├── deploy/
+    │   │   ├── deploy.command.ts              DeployCommand (reads assembly, drives engine, lock)
+    │   │   ├── deploy.command.spec.ts         unit tests
+    │   │   └── index.ts                       re-export barrel
+    │   └── destroy/
+    │       ├── destroy.command.ts             DestroyCommand (user confirmation, reverse-order destroy)
+    │       ├── destroy.command.spec.ts        unit tests (work in progress)
     │       └── index.ts                       re-export barrel
     └── test/
         ├── fixtures/
