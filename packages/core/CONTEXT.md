@@ -148,18 +148,18 @@ Credentials must **never** appear in `getEnvironment()` output.
 
 L1 construct (extends `constructs.Construct`).
 
-| Member                                      | Description                                                                                                                        |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `static isProviderResource(x)`              | Type guard — checks for `RESOURCE_SYMBOL` on object                                                                                |
-| `resourceOptions: IProviderResourceOptions` | Condition, policies, metadata                                                                                                      |
-| `logicalId: string`                         | Stable logical ID derived from node path (human prefix + 8-char SHA-256 hash)                                                      |
-| `type: string`                              | Resource type identifier (e.g. `'Deployment'`, `'server'`)                                                                         |
-| `protected readonly properties?`            | Raw pre-resolution properties (used by base `renderProperties()` impl)                                                             |
-| `getAtt(attr)`                              | Returns `IResolvable` resolving to `{ ref: logicalId, attr }` for cross-resource references                                        |
-| `protected renderProperties()`              | **Virtual.** Returns the properties object used during synthesis. Base impl: `this.properties ?? {}`. Generated L1s override this. |
-| `addDependency(resource)`                   | Explicit dependency edge                                                                                                           |
-| `applyRemovalPolicy(policy, options?)`      | Maps `RemovalPolicy` → `ProviderDeletionPolicy`                                                                                    |
-| `toJson()`                                  | Calls `this.renderProperties()`, resolves + sanitizes; returns `{ type, properties: {...} }`                                       |
+| Member                                      | Description                                                                                                                         |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `static isProviderResource(x)`              | Type guard — checks for `RESOURCE_SYMBOL` on object                                                                                 |
+| `resourceOptions: IProviderResourceOptions` | Condition, policies, metadata                                                                                                       |
+| `logicalId: string`                         | Stable logical ID derived from node path (human prefix + 8-char SHA-256 hash)                                                       |
+| `type: string`                              | Resource type identifier (e.g. `'Deployment'`, `'server'`)                                                                          |
+| `protected readonly properties?`            | Raw pre-resolution properties (used by base `renderProperties()` impl)                                                              |
+| `getAtt(attr)`                              | Returns `IResolvable` resolving to `{ ref: logicalId, attr }` for cross-resource references                                         |
+| `protected renderProperties()`              | **Virtual.** Returns the properties object used during synthesis. Base impl: `this.properties ?? {}`. Generated L1s override this.  |
+| `addDependency(resource)`                   | Explicit dependency edge                                                                                                            |
+| `applyRemovalPolicy(policy, options?)`      | Maps `RemovalPolicy` → `ProviderDeletionPolicy`                                                                                     |
+| `toJson()`                                  | Calls `this.renderProperties()`, resolves + sanitizes; builds `dependsOn`; returns `{ type, properties: {...}, dependsOn?: [...] }` |
 
 **`renderProperties()` virtual method:**
 
@@ -180,10 +180,24 @@ than passing `properties` to the constructor.
   "MyStackWebServer3A1B2C3D": {
     "type": "hetzner::Server",
     "properties": { "name": "web", "serverType": "cx21" },
-    "metadata": { "cdkx:path": "MyStack/WebServer/Resource" }
+    "metadata": { "cdkx:path": "MyStack/WebServer/Resource" },
+    "dependsOn": ["MyStackNetworkA1B2C3D4"]
   }
 }
 ```
+
+`dependsOn` is the **deduplicated union** of:
+
+- Explicit dependencies added via `addDependency(resource)` — stored in `this._dependencies`.
+- Implicit dependencies inferred by scanning the resolved properties for `{ ref, attr }` tokens
+  via the private `collectRefLogicalIds()` helper.
+
+`dependsOn` is **omitted** from the output entry when there are no dependencies (empty → key absent).
+This uniform representation means the engine never needs to re-scan tokens to determine creation order —
+all dependency information is available directly in `dependsOn`.
+
+**Private helper `collectRefLogicalIds(obj, refs)`:** recursively walks the sanitized properties
+tree and adds the `ref` value of every `{ ref, attr }` token object to the `refs` set.
 
 **Gotcha — circular dependency:** `toJson()` uses `require('../app/app.js')` and
 `require('../stack/stack.js')` (lazy CJS-style `require()`) instead of ESM
@@ -448,7 +462,7 @@ writing the output entry.
 | No `any`                        | Use `unknown` everywhere. The one exception is `Lazy.any()` return type — intentional escape hatch, gets `eslint-disable` comment.                                                                                                                                                                                                                                                                                                                     |
 | CJS imports                     | All local imports use **no file extension** (extensionless). `moduleResolution: node` resolves them correctly at both compile time and runtime.                                                                                                                                                                                                                                                                                                        |
 | Unused params in class methods  | ESLint's `argsIgnorePattern: "^_"` does NOT suppress warnings for class method params. Fix: **omit the parameter entirely** from the method signature. TypeScript allows implementing an interface method with fewer params than declared. When a param is dropped, also remove its import if it's no longer used.                                                                                                                                     |
-| Prettier                        | Run `yarn nx run @cdkx-io/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 80`, `tabWidth: 2`, `semi: true`.                                                                                                                                                                                                                                                                            |
+| Prettier                        | Run `yarn nx run @cdkx-io/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 80`, `tabWidth: 2`, `semi: true`.                                                                                                                                                                                                                                                                          |
 | Specs co-located                | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Test helpers                    | `test/helpers/` — not exported from the public barrel (`src/index.ts`).                                                                                                                                                                                                                                                                                                                                                                                |
 | Integration tests               | `test/integration/synth.spec.ts`. Suite 8 ("Visual synth output") writes permanent files to `.cdkx.out/` at the workspace root for manual inspection (not cleaned up after the test). Uses `TestProvider` and `TestResources` with generic `test::Resource` L1s to exercise cross-resource references (built directly with `{ ref: source.logicalId, attr }` ), `Lazy` tokens, a custom `IResolver`, and null stripping — all in a two-stack scenario. |
@@ -736,8 +750,8 @@ Releases are managed via `nx release` (configured in `nx.json`).
 
 ### Groups
 
-| Group  | Projects                                | Tag pattern       | Versioning                    |
-| ------ | --------------------------------------- | ----------------- | ----------------------------- |
+| Group  | Projects                                  | Tag pattern       | Versioning                    |
+| ------ | ----------------------------------------- | ----------------- | ----------------------------- |
 | `core` | `@cdkx-io/core` (+ `engine` when created) | `core-v{version}` | Fixed (lock-step)             |
 | `cli`  | `cli` (`@cdkx-io/cli`)                    | `cli-v{version}`  | Fixed (independent from core) |
 
