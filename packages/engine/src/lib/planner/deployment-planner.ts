@@ -50,33 +50,40 @@ function collectRefs(value: unknown, refs: Set<string>): void {
   }
 }
 
-// ─── Topological sort ─────────────────────────────────────────────────────────
+// ─── Topological sort with level assignment ───────────────────────────────────
 
 /**
- * Kahn's algorithm — topological sort of a directed acyclic graph.
+ * Kahn's algorithm — topological sort with level (wave) assignment.
+ *
+ * Assigns each node to a level based on the longest dependency path from the root:
+ * - Level 0 = no dependencies
+ * - Level N = max(levels of all dependencies) + 1
  *
  * @param ids    All node IDs.
  * @param edges  `edges[id]` = set of IDs that `id` depends on (must come before `id`).
- * @returns      IDs in topological order (independent nodes first).
+ * @returns      Object with `waves` (grouped by level) and `levels` (map of id → level).
  * @throws       `CycleError` if a cycle is detected.
  */
-function topologicalSort(
+function topologicalSortWithLevels(
   ids: string[],
   edges: Map<string, Set<string>>,
-): string[] {
+): { waves: string[][]; levels: Map<string, number> } {
   // Build in-degree map and adjacency list (dependents, not dependencies).
   const inDegree = new Map<string, number>();
   const dependents = new Map<string, string[]>(); // id → list of nodes that depend on id
+  const levels = new Map<string, number>();
 
   for (const id of ids) {
     if (!inDegree.has(id)) inDegree.set(id, 0);
     if (!dependents.has(id)) dependents.set(id, []);
+    if (!levels.has(id)) levels.set(id, 0);
   }
 
   for (const [id, deps] of edges.entries()) {
     for (const dep of deps) {
       if (!inDegree.has(dep)) inDegree.set(dep, 0);
       if (!dependents.has(dep)) dependents.set(dep, []);
+      if (!levels.has(dep)) levels.set(dep, 0);
       inDegree.set(id, (inDegree.get(id) ?? 0) + 1);
       const depList = dependents.get(dep) ?? [];
       depList.push(id);
@@ -84,7 +91,7 @@ function topologicalSort(
     }
   }
 
-  // Start with nodes that have no dependencies.
+  // Start with nodes that have no dependencies (level 0).
   const queue: string[] = [];
   for (const [id, deg] of inDegree.entries()) {
     if (deg === 0) queue.push(id);
@@ -99,11 +106,18 @@ function topologicalSort(
     if (node === undefined) break;
     result.push(node);
 
+    const currentLevel = levels.get(node) ?? 0;
+
     const nodesDependingOnThis = dependents.get(node) ?? [];
     const sorted = [...nodesDependingOnThis].sort();
     for (const dependent of sorted) {
       const newDeg = (inDegree.get(dependent) ?? 1) - 1;
       inDegree.set(dependent, newDeg);
+
+      // Update level: max of all dependencies + 1.
+      const depLevel = Math.max(levels.get(dependent) ?? 0, currentLevel + 1);
+      levels.set(dependent, depLevel);
+
       if (newDeg === 0) {
         queue.push(dependent);
         queue.sort();
@@ -117,7 +131,16 @@ function topologicalSort(
     throw new CycleError(inCycle);
   }
 
-  return result;
+  // Group by level to produce waves.
+  const maxLevel = Math.max(...Array.from(levels.values()), -1);
+  const waves: string[][] = [];
+  for (let i = 0; i <= maxLevel; i++) {
+    const wave = ids.filter((id) => levels.get(id) === i);
+    wave.sort(); // deterministic order within wave
+    waves.push(wave);
+  }
+
+  return { waves, levels };
 }
 
 // ─── CycleError ───────────────────────────────────────────────────────────────
@@ -144,12 +167,15 @@ export class CycleError extends Error {
  * Builds a `DeploymentPlan` from a list of `AssemblyStack` objects.
  *
  * Responsibilities:
- * 1. Topologically sort stacks using the `dependencies` array on each stack.
- * 2. For each stack, topologically sort resources by combining:
+ * 1. Topologically sort stacks into waves using the `dependencies` array on each stack.
+ * 2. For each stack, topologically sort resources into waves by combining:
  *    - `{ ref, attr }` tokens found in resource properties (implicit deps), and
  *    - the `dependsOn` array on each `AssemblyResource` (explicit deps, e.g. from
  *      `resource.addDependency()` calls serialized by the synthesizer).
  * 3. Detect cycles at both the stack and resource levels and throw `CycleError`.
+ *
+ * Stacks and resources within the same wave have no mutual dependencies and can
+ * be deployed in parallel. Waves are executed sequentially.
  *
  * Cross-stack resource references (token `ref` pointing to a resource in a
  * different stack) are NOT treated as intra-stack dependencies — they are
@@ -168,14 +194,14 @@ export class DeploymentPlanner {
    * @throws `CycleError` if a cycle is detected among stacks or resources.
    */
   public plan(stacks: AssemblyStack[]): DeploymentPlan {
-    const stackOrder = this.planStacks(stacks);
-    const resourceOrders = this.planResources(stacks);
-    return { stackOrder, resourceOrders };
+    const stackWaves = this.planStacks(stacks);
+    const resourceWaves = this.planResources(stacks);
+    return { stackWaves, resourceWaves };
   }
 
   // ─── Stack ordering ─────────────────────────────────────────────────────────
 
-  private planStacks(stacks: AssemblyStack[]): string[] {
+  private planStacks(stacks: AssemblyStack[]): string[][] {
     const ids = stacks.map((s) => s.id);
     const edges = new Map<string, Set<string>>();
 
@@ -183,13 +209,13 @@ export class DeploymentPlanner {
       edges.set(stack.id, new Set(stack.dependencies));
     }
 
-    return topologicalSort(ids, edges);
+    return topologicalSortWithLevels(ids, edges).waves;
   }
 
   // ─── Resource ordering (per stack) ─────────────────────────────────────────
 
-  private planResources(stacks: AssemblyStack[]): Record<string, string[]> {
-    const result: Record<string, string[]> = {};
+  private planResources(stacks: AssemblyStack[]): Record<string, string[][]> {
+    const result: Record<string, string[][]> = {};
 
     for (const stack of stacks) {
       result[stack.id] = this.planStackResources(stack);
@@ -198,7 +224,7 @@ export class DeploymentPlanner {
     return result;
   }
 
-  private planStackResources(stack: AssemblyStack): string[] {
+  private planStackResources(stack: AssemblyStack): string[][] {
     const resources = stack.resources;
     const ids = resources.map((r) => r.logicalId);
 
@@ -215,7 +241,7 @@ export class DeploymentPlanner {
       edges.set(resource.logicalId, deps);
     }
 
-    return topologicalSort(ids, edges);
+    return topologicalSortWithLevels(ids, edges).waves;
   }
 
   private collectIntraStackDeps(

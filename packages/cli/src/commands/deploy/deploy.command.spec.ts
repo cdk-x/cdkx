@@ -23,7 +23,7 @@ function makeStack(provider = 'hetzner'): AssemblyStack {
 }
 
 function makePlan(stackId = 'TestStack'): DeploymentPlan {
-  return { stackOrder: [stackId], resourceOrders: { [stackId]: [] } };
+  return { stackWaves: [[stackId]], resourceWaves: { [stackId]: [] } };
 }
 
 function makeRegistry(): AdapterRegistry {

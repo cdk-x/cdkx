@@ -162,28 +162,50 @@ export class DeploymentEngine {
 
     const stackResults: StackDeploymentResult[] = [];
 
-    for (const stackId of plan.stackOrder) {
-      const stack = stackById.get(stackId);
-      if (stack === undefined) {
-        // Defensive: plan references a stack not in the stacks array.
-        const result: StackDeploymentResult = {
-          stackId,
-          success: false,
-          resources: [],
-          error: `Stack '${stackId}' not found in assembly stacks.`,
-        };
-        stackResults.push(result);
-        return { success: false, stacks: stackResults };
-      }
+    // Deploy stacks wave by wave (parallel within each wave).
+    for (const wave of plan.stackWaves) {
+      const waveResults = await Promise.allSettled(
+        wave.map(async (stackId) => {
+          const stack = stackById.get(stackId);
+          if (stack === undefined) {
+            // Defensive: plan references a stack not in the stacks array.
+            return {
+              stackId,
+              success: false,
+              resources: [],
+              error: `Stack '${stackId}' not found in assembly stacks.`,
+            } as StackDeploymentResult;
+          }
 
-      const result = await this.deployStack(
-        stack,
-        plan.resourceOrders[stackId] ?? [],
+          return await this.deployStack(
+            stack,
+            plan.resourceWaves[stackId] ?? [],
+          );
+        }),
       );
-      stackResults.push(result);
 
-      if (!result.success) {
-        return { success: false, stacks: stackResults };
+      // Collect results and check for failures.
+      for (const settledResult of waveResults) {
+        if (settledResult.status === 'fulfilled') {
+          stackResults.push(settledResult.value);
+          if (!settledResult.value.success) {
+            return { success: false, stacks: stackResults };
+          }
+        } else {
+          // Rejection from Promise.allSettled — should not happen since
+          // deployStack() catches all errors, but handle defensively.
+          const error =
+            settledResult.reason instanceof Error
+              ? settledResult.reason.message
+              : String(settledResult.reason);
+          stackResults.push({
+            stackId: '(unknown)',
+            success: false,
+            resources: [],
+            error: `Unhandled error: ${error}`,
+          });
+          return { success: false, stacks: stackResults };
+        }
       }
     }
 
@@ -194,7 +216,7 @@ export class DeploymentEngine {
 
   private async deployStack(
     stack: AssemblyStack,
-    resourceOrder: string[],
+    resourceWaves: string[][],
   ): Promise<StackDeploymentResult> {
     const adapter = this.options.adapters[stack.provider];
     if (adapter === undefined) {
@@ -244,113 +266,31 @@ export class DeploymentEngine {
     let anyCreated = false;
     let anyUpdated = false;
 
-    for (const logicalId of resourceOrder) {
-      const resource = resourceById.get(logicalId);
-      if (resource === undefined) continue;
-
-      // Resolve { ref, attr } tokens in properties.
-      const resolvedProperties = this.resolveProperties(
-        resource.properties,
-        stack.id,
+    // Deploy resources wave by wave. Resources in the same wave can run in
+    // parallel; waves execute sequentially to respect dependencies.
+    for (const wave of resourceWaves) {
+      const wavePromises = wave.map((logicalId) =>
+        this.deployResource(stack, logicalId, resourceById, adapter, isUpdate),
       );
 
-      // If this resource already exists as CREATE_COMPLETE in prior state,
-      // compute a diff to decide whether to update or skip.
-      const existingState = this.stateManager.getResourceState(
-        stack.id,
-        logicalId,
-      );
-      if (existingState?.status === ResourceStatus.CREATE_COMPLETE) {
-        const patch = this.computePatch(
-          existingState.properties,
-          resolvedProperties,
-        );
+      const waveResults = await Promise.allSettled(wavePromises);
 
-        if (patch === undefined) {
-          // No change — skip this resource entirely.
-          resourceResults.push({
-            logicalId,
-            success: true,
-            physicalId: existingState.physicalId,
-          });
-          continue;
-        }
+      // Collect results from this wave in wave order (not completion order)
+      // to maintain deterministic createdInOrder for rollback.
+      for (let i = 0; i < wave.length; i++) {
+        const logicalId = wave[i];
+        const settled = waveResults[i];
 
-        // Strip create-only properties from the patch. The adapter (if it
-        // implements getCreateOnlyProps) tells us which props cannot be
-        // changed in-place. If the filtered patch is empty, all differences
-        // are create-only — treat this resource as a no-op.
-        const createOnlyProps =
-          adapter.getCreateOnlyProps?.(resource.type) ?? new Set<string>();
-        const filteredPatch: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(patch)) {
-          if (!createOnlyProps.has(key)) {
-            filteredPatch[key] = value;
-          }
-        }
-
-        if (Object.keys(filteredPatch).length === 0) {
-          // All differing props are create-only — no mutable change to apply.
-          resourceResults.push({
-            logicalId,
-            success: true,
-            physicalId: existingState.physicalId,
-          });
-          continue;
-        }
-
-        // Properties changed — call adapter.update().
-        this.stateManager.transitionResource(
-          stack.id,
-          logicalId,
-          resource.type,
-          ResourceStatus.UPDATE_IN_PROGRESS,
-        );
-
-        try {
-          const updateResult = await adapter.update(
-            {
-              logicalId,
-              type: resource.type,
-              properties: resolvedProperties,
-              stackId: stack.id,
-              provider: stack.provider,
-              physicalId: existingState.physicalId,
-            },
-            filteredPatch,
-          );
-
-          this.stateManager.transitionResource(
-            stack.id,
-            logicalId,
-            resource.type,
-            ResourceStatus.UPDATE_COMPLETE,
-            {
-              properties: resolvedProperties,
-              ...(updateResult?.outputs !== undefined && {
-                outputs: updateResult.outputs,
-              }),
-            },
-          );
-
-          anyUpdated = true;
-          resourceResults.push({
-            logicalId,
-            success: true,
-            physicalId: existingState.physicalId,
-          });
-        } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : String(err);
-
-          this.stateManager.transitionResource(
-            stack.id,
-            logicalId,
-            resource.type,
-            ResourceStatus.UPDATE_FAILED,
-            { reason: message },
-          );
+        if (settled.status === 'rejected') {
+          const message =
+            settled.reason instanceof Error
+              ? settled.reason.message
+              : String(settled.reason);
 
           resourceResults.push({ logicalId, success: false, error: message });
+
+          // Wait for all other resources in this wave to settle before rolling back.
+          await Promise.allSettled(wavePromises);
 
           await this.rollback(
             stack,
@@ -365,90 +305,31 @@ export class DeploymentEngine {
             : StackStatus.ROLLBACK_COMPLETE;
 
           this.stateManager.transitionStack(stack.id, rollbackComplete, {
-            reason: `Resource '${logicalId}' update failed: ${message}`,
+            reason: `Resource '${logicalId}' failed: ${message}`,
           });
 
           return {
             stackId: stack.id,
             success: false,
             resources: resourceResults,
-            error: `Resource '${logicalId}' update failed: ${message}`,
+            error: `Resource '${logicalId}' failed: ${message}`,
           };
         }
 
-        continue;
-      }
+        const result = settled.value;
+        resourceResults.push(result);
 
-      this.stateManager.initResource(
-        stack.id,
-        logicalId,
-        resource.type,
-        resolvedProperties,
-      );
-
-      try {
-        const createResult = await adapter.create({
-          logicalId,
-          type: resource.type,
-          properties: resolvedProperties,
-          stackId: stack.id,
-          provider: stack.provider,
-        });
-
-        this.stateManager.transitionResource(
-          stack.id,
-          logicalId,
-          resource.type,
-          ResourceStatus.CREATE_COMPLETE,
-          {
-            physicalId: createResult.physicalId,
-            outputs: createResult.outputs,
-          },
-        );
-
-        anyCreated = true;
-        createdInOrder.push(logicalId);
-        resourceResults.push({
-          logicalId,
-          success: true,
-          physicalId: createResult.physicalId,
-        });
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-
-        this.stateManager.transitionResource(
-          stack.id,
-          logicalId,
-          resource.type,
-          ResourceStatus.CREATE_FAILED,
-          { reason: message },
-        );
-
-        resourceResults.push({ logicalId, success: false, error: message });
-
-        // Rollback only newly-created resources (not pre-existing ones).
-        await this.rollback(
-          stack,
-          createdInOrder,
-          resourceById,
-          adapter,
-          isUpdate,
-        );
-
-        const rollbackComplete = isUpdate
-          ? StackStatus.UPDATE_ROLLBACK_COMPLETE
-          : StackStatus.ROLLBACK_COMPLETE;
-
-        this.stateManager.transitionStack(stack.id, rollbackComplete, {
-          reason: `Resource '${logicalId}' failed: ${message}`,
-        });
-
-        return {
-          stackId: stack.id,
-          success: false,
-          resources: resourceResults,
-          error: `Resource '${logicalId}' failed: ${message}`,
-        };
+        // Track flags and createdInOrder in wave order.
+        if (result.success) {
+          if (result.physicalId !== undefined && !result.wasSkipped) {
+            if (result.wasCreated) {
+              anyCreated = true;
+              createdInOrder.push(logicalId);
+            } else if (result.wasUpdated) {
+              anyUpdated = true;
+            }
+          }
+        }
       }
     }
 
@@ -457,11 +338,12 @@ export class DeploymentEngine {
     // has no resources at all. On a re-deploy (isUpdate = true) it applies
     // whenever all resources were already CREATE_COMPLETE with unchanged
     // properties and nothing needed to be deleted.
+    const totalResourceCount = resourceWaves.flat().length;
     const isNoOp =
       !anyCreated &&
       !anyUpdated &&
       reconciledCount === 0 &&
-      (isUpdate || resourceOrder.length === 0);
+      (isUpdate || totalResourceCount === 0);
 
     this.stateManager.transitionStack(
       stack.id,
@@ -477,6 +359,187 @@ export class DeploymentEngine {
       success: true,
       resources: resourceResults,
     };
+  }
+
+  /**
+   * Deploy a single resource: resolve tokens, check if it needs create/update/skip.
+   *
+   * Returns a result object with flags indicating what action was taken.
+   * Throws on any adapter failure — caught by the caller in the wave loop.
+   */
+  private async deployResource(
+    stack: AssemblyStack,
+    logicalId: string,
+    resourceById: Map<string, AssemblyResource>,
+    adapter: ProviderAdapter,
+    isUpdate: boolean,
+  ): Promise<
+    ResourceDeploymentResult & {
+      wasCreated?: boolean;
+      wasUpdated?: boolean;
+      wasSkipped?: boolean;
+    }
+  > {
+    const resource = resourceById.get(logicalId);
+    if (resource === undefined) {
+      // Should never happen — planner guarantees all IDs are valid.
+      return {
+        logicalId,
+        success: false,
+        error: 'Resource not found in assembly',
+      };
+    }
+
+    // Resolve { ref, attr } tokens in properties.
+    const resolvedProperties = this.resolveProperties(
+      resource.properties,
+      stack.id,
+    );
+
+    // If this resource already exists as CREATE_COMPLETE in prior state,
+    // compute a diff to decide whether to update or skip.
+    const existingState = this.stateManager.getResourceState(
+      stack.id,
+      logicalId,
+    );
+
+    if (existingState?.status === ResourceStatus.CREATE_COMPLETE) {
+      const patch = this.computePatch(
+        existingState.properties,
+        resolvedProperties,
+      );
+
+      if (patch === undefined) {
+        // No change — skip this resource entirely.
+        return {
+          logicalId,
+          success: true,
+          physicalId: existingState.physicalId,
+          wasSkipped: true,
+        };
+      }
+
+      // Strip create-only properties from the patch. The adapter (if it
+      // implements getCreateOnlyProps) tells us which props cannot be
+      // changed in-place. If the filtered patch is empty, all differences
+      // are create-only — treat this resource as a no-op.
+      const createOnlyProps =
+        adapter.getCreateOnlyProps?.(resource.type) ?? new Set<string>();
+      const filteredPatch: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(patch)) {
+        if (!createOnlyProps.has(key)) {
+          filteredPatch[key] = value;
+        }
+      }
+
+      if (Object.keys(filteredPatch).length === 0) {
+        // All differing props are create-only — no mutable change to apply.
+        return {
+          logicalId,
+          success: true,
+          physicalId: existingState.physicalId,
+          wasSkipped: true,
+        };
+      }
+
+      // Properties changed — call adapter.update().
+      this.stateManager.transitionResource(
+        stack.id,
+        logicalId,
+        resource.type,
+        ResourceStatus.UPDATE_IN_PROGRESS,
+      );
+
+      try {
+        const updateResult = await adapter.update(
+          {
+            logicalId,
+            type: resource.type,
+            properties: resolvedProperties,
+            stackId: stack.id,
+            provider: stack.provider,
+            physicalId: existingState.physicalId,
+          },
+          filteredPatch,
+        );
+
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          resource.type,
+          ResourceStatus.UPDATE_COMPLETE,
+          {
+            properties: resolvedProperties,
+            ...(updateResult?.outputs !== undefined && {
+              outputs: updateResult.outputs,
+            }),
+          },
+        );
+
+        return {
+          logicalId,
+          success: true,
+          physicalId: existingState.physicalId,
+          wasUpdated: true,
+        };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          resource.type,
+          ResourceStatus.UPDATE_FAILED,
+          { reason: message },
+        );
+        throw err; // Re-throw for wave-level handling
+      }
+    }
+
+    // Resource does not exist — create it.
+    this.stateManager.initResource(
+      stack.id,
+      logicalId,
+      resource.type,
+      resolvedProperties,
+    );
+
+    try {
+      const createResult = await adapter.create({
+        logicalId,
+        type: resource.type,
+        properties: resolvedProperties,
+        stackId: stack.id,
+        provider: stack.provider,
+      });
+
+      this.stateManager.transitionResource(
+        stack.id,
+        logicalId,
+        resource.type,
+        ResourceStatus.CREATE_COMPLETE,
+        {
+          physicalId: createResult.physicalId,
+          outputs: createResult.outputs,
+        },
+      );
+
+      return {
+        logicalId,
+        success: true,
+        physicalId: createResult.physicalId,
+        wasCreated: true,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.stateManager.transitionResource(
+        stack.id,
+        logicalId,
+        resource.type,
+        ResourceStatus.CREATE_FAILED,
+        { reason: message },
+      );
+      throw err; // Re-throw for wave-level handling
+    }
   }
 
   /**

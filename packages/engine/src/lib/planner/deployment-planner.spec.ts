@@ -30,6 +30,14 @@ function makeStack(
   };
 }
 
+/**
+ * Flatten waves into a single array for order assertions.
+ * Maintains relative order from the waves structure.
+ */
+function flattenWaves<T>(waves: T[][]): T[] {
+  return waves.flat();
+}
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('DeploymentPlanner', () => {
@@ -44,7 +52,7 @@ describe('DeploymentPlanner', () => {
   describe('stack ordering', () => {
     it('returns a single stack unchanged', () => {
       const plan = planner.plan([makeStack('StackA', [])]);
-      expect(plan.stackOrder).toEqual(['StackA']);
+      expect(flattenWaves(plan.stackWaves)).toEqual(['StackA']);
     });
 
     it('returns two independent stacks in stable order', () => {
@@ -53,7 +61,7 @@ describe('DeploymentPlanner', () => {
         makeStack('StackA', []),
       ]);
       // Both have no dependencies; should be sorted alphabetically for stability.
-      expect(plan.stackOrder).toEqual(['StackA', 'StackB']);
+      expect(flattenWaves(plan.stackWaves)).toEqual(['StackA', 'StackB']);
     });
 
     it('puts dependency before dependent (A → B means A first)', () => {
@@ -61,9 +69,8 @@ describe('DeploymentPlanner', () => {
         makeStack('StackB', [], ['StackA']),
         makeStack('StackA', []),
       ]);
-      expect(plan.stackOrder.indexOf('StackA')).toBeLessThan(
-        plan.stackOrder.indexOf('StackB'),
-      );
+      const order = flattenWaves(plan.stackWaves);
+      expect(order.indexOf('StackA')).toBeLessThan(order.indexOf('StackB'));
     });
 
     it('handles a chain of three stacks', () => {
@@ -72,7 +79,7 @@ describe('DeploymentPlanner', () => {
         makeStack('StackA', []),
         makeStack('StackB', [], ['StackA']),
       ]);
-      const order = plan.stackOrder;
+      const order = flattenWaves(plan.stackWaves);
       expect(order.indexOf('StackA')).toBeLessThan(order.indexOf('StackB'));
       expect(order.indexOf('StackB')).toBeLessThan(order.indexOf('StackC'));
     });
@@ -118,14 +125,14 @@ describe('DeploymentPlanner', () => {
   describe('resource ordering', () => {
     it('returns a single resource unchanged', () => {
       const plan = planner.plan([makeStack('S', [{ logicalId: 'ResA' }])]);
-      expect(plan.resourceOrders['S']).toEqual(['ResA']);
+      expect(flattenWaves(plan.resourceWaves['S'])).toEqual(['ResA']);
     });
 
     it('returns two independent resources in stable order', () => {
       const plan = planner.plan([
         makeStack('S', [{ logicalId: 'ResB' }, { logicalId: 'ResA' }]),
       ]);
-      expect(plan.resourceOrders['S']).toEqual(['ResA', 'ResB']);
+      expect(flattenWaves(plan.resourceWaves['S'])).toEqual(['ResA', 'ResB']);
     });
 
     it('places dependency before dependent resource', () => {
@@ -138,7 +145,7 @@ describe('DeploymentPlanner', () => {
           },
         ]),
       ]);
-      const order = plan.resourceOrders['S'];
+      const order = flattenWaves(plan.resourceWaves['S']);
       expect(order.indexOf('ResA')).toBeLessThan(order.indexOf('ResB'));
     });
 
@@ -156,7 +163,7 @@ describe('DeploymentPlanner', () => {
           },
         ]),
       ]);
-      const order = plan.resourceOrders['S'];
+      const order = flattenWaves(plan.resourceWaves['S']);
       expect(order.indexOf('ResA')).toBeLessThan(order.indexOf('ResB'));
       expect(order.indexOf('ResB')).toBeLessThan(order.indexOf('ResC'));
     });
@@ -173,7 +180,7 @@ describe('DeploymentPlanner', () => {
           },
         ]),
       ]);
-      const order = plan.resourceOrders['S'];
+      const order = flattenWaves(plan.resourceWaves['S']);
       expect(order.indexOf('ResA')).toBeLessThan(order.indexOf('ResB'));
     });
 
@@ -189,7 +196,7 @@ describe('DeploymentPlanner', () => {
           },
         ]),
       ]);
-      const order = plan.resourceOrders['S'];
+      const order = flattenWaves(plan.resourceWaves['S']);
       expect(order.indexOf('ResA')).toBeLessThan(order.indexOf('ResB'));
     });
 
@@ -208,7 +215,7 @@ describe('DeploymentPlanner', () => {
         ]),
       ]);
       // Both resources are independent; stable sort should give ResA first.
-      expect(plan.resourceOrders['S']).toEqual(['ResA', 'ResB']);
+      expect(flattenWaves(plan.resourceWaves['S'])).toEqual(['ResA', 'ResB']);
     });
 
     it('detects a direct cycle between two resources', () => {
@@ -236,7 +243,7 @@ describe('DeploymentPlanner', () => {
           { logicalId: 'ResB', dependsOn: ['ResA'] },
         ]),
       ]);
-      const order = plan.resourceOrders['S'];
+      const order = flattenWaves(plan.resourceWaves['S']);
       expect(order.indexOf('ResA')).toBeLessThan(order.indexOf('ResB'));
     });
 
@@ -253,7 +260,7 @@ describe('DeploymentPlanner', () => {
           },
         ]),
       ]);
-      const order = plan.resourceOrders['S'];
+      const order = flattenWaves(plan.resourceWaves['S']);
       expect(order.indexOf('ResA')).toBeLessThan(order.indexOf('ResB'));
     });
 
@@ -262,8 +269,8 @@ describe('DeploymentPlanner', () => {
         makeStack('StackA', [{ logicalId: 'ResA1' }, { logicalId: 'ResA2' }]),
         makeStack('StackB', [{ logicalId: 'ResB1' }]),
       ]);
-      expect(plan.resourceOrders['StackA']).toHaveLength(2);
-      expect(plan.resourceOrders['StackB']).toHaveLength(1);
+      expect(flattenWaves(plan.resourceWaves['StackA'])).toHaveLength(2);
+      expect(flattenWaves(plan.resourceWaves['StackB'])).toHaveLength(1);
     });
   });
 
@@ -272,13 +279,13 @@ describe('DeploymentPlanner', () => {
   describe('empty inputs', () => {
     it('handles empty stacks array', () => {
       const plan = planner.plan([]);
-      expect(plan.stackOrder).toEqual([]);
-      expect(plan.resourceOrders).toEqual({});
+      expect(flattenWaves(plan.stackWaves)).toEqual([]);
+      expect(plan.resourceWaves).toEqual({});
     });
 
     it('handles a stack with no resources', () => {
       const plan = planner.plan([makeStack('S', [])]);
-      expect(plan.resourceOrders['S']).toEqual([]);
+      expect(flattenWaves(plan.resourceWaves['S'])).toEqual([]);
     });
   });
 });
