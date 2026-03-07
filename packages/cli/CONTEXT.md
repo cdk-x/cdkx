@@ -101,10 +101,9 @@ terminal output. Color conventions:
 
 ### Event table formatting (`deploy.command.ts`)
 
-Engine events are buffered during the deployment and printed **after** the
-deploy completes. Column widths are computed dynamically from the longest value
-in each column across all collected events, so every row aligns without
-wasting space on fixed padding.
+Engine events are streamed in **real-time** as they happen. Column widths are
+computed **upfront** from the cloud assembly data before deployment starts, so
+every row aligns without wasting space on fixed padding.
 
 Each event line has 4 columns:
 
@@ -119,15 +118,17 @@ Columns are separated by two spaces. The timestamp is **not** included.
 
 **Key implementation details:**
 
-- Events are stored in `bufferedEvents: EngineEvent[]` during the subscribe
-  callback. After `engine.deploy()` resolves, `computeColWidths()` scans the
-  buffer to find the max length per column, then `renderEvent()` prints each
-  row using those widths.
+- Column widths are computed **before deployment** via `computeColWidthsFromAssembly(stacks)`,
+  which scans all `stack.id`, `resource.type`, and `resource.logicalId` values from
+  the parsed assembly. Stack-level events (type `'cdkx::stack'`) are included in the
+  width calculation.
+- Events are printed **immediately** in the `engine.subscribe()` callback via
+  `console.log(renderEvent(event, widths))` — no buffering.
 - `pad(s, width)` is applied to the **plain string before** wrapping with chalk.
   ANSI escape codes inflate `String.length` without affecting visual width —
   padding after chalk would misalign all rows.
-- Because events are buffered, all rows in a deployment are always aligned
-  to each other regardless of which events arrive first.
+- Because widths are computed from the full assembly upfront, all rows are
+  guaranteed to align even as events stream in real-time.
 
 ---
 
