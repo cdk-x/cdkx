@@ -376,6 +376,7 @@ interface AssemblyResource {
   type: string;
   properties: Record<string, unknown>; // may contain { ref, attr } tokens
   metadata?: Record<string, unknown>;
+  dependsOn?: string[]; // explicit deps from addDependency(); omitted when empty
 }
 ```
 
@@ -424,11 +425,16 @@ stacks. Stacks with no dependencies are deployed first.
 
 ### Resource ordering (per stack)
 
-For each stack, builds an intra-stack dependency graph by scanning each resource's
-`properties` for `{ ref, attr }` tokens. A resource B depends on resource A if
-`B.properties` contains `{ ref: A.logicalId, attr: '...' }`. Cross-stack refs
-(where `ref` is a logical ID from a different stack) are ignored — those are
-resolved at runtime by the engine.
+For each stack, builds an intra-stack dependency graph by combining two sources:
+
+1. **`{ ref, attr }` tokens** in resource `properties` — a resource B depends on A if
+   `B.properties` contains `{ ref: A.logicalId, attr: '...' }`.
+2. **`dependsOn` array** on each `AssemblyResource` — explicit deps serialized by the
+   synthesizer from `addDependency()` calls (which produce no token in properties).
+
+Both sources are deduplicated into a single `Set<string>`. Cross-stack refs (where
+`ref` or `dependsOn` entry is a logical ID from a different stack) are ignored — those
+are resolved at runtime by the engine.
 
 ### CycleError
 
