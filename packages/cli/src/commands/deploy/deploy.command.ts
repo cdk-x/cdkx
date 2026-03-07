@@ -67,15 +67,27 @@ interface ColWidths {
   id: number;
 }
 
-function computeColWidths(events: EngineEvent[]): ColWidths {
+/**
+ * Computes column widths from the assembly data (before deployment starts).
+ * This allows immediate event printing with correct alignment.
+ */
+function computeColWidthsFromAssembly(stacks: AssemblyStack[]): ColWidths {
   let stack = 0;
-  let type = 0;
+  let type = 'cdkx::stack'.length; // stack-level events use this type
   let id = 0;
-  for (const e of events) {
-    if (e.stackId.length > stack) stack = e.stackId.length;
-    if (e.resourceType.length > type) type = e.resourceType.length;
-    if (e.logicalResourceId.length > id) id = e.logicalResourceId.length;
+
+  for (const s of stacks) {
+    // Stack ID appears in the stackId column and as logicalResourceId for stack-level events
+    if (s.id.length > stack) stack = s.id.length;
+    if (s.id.length > id) id = s.id.length;
+
+    // Resource types and logical IDs
+    for (const r of s.resources) {
+      if (r.type.length > type) type = r.type.length;
+      if (r.logicalId.length > id) id = r.logicalId.length;
+    }
   }
+
   return { stack, type, id };
 }
 
@@ -211,12 +223,15 @@ export class DeployCommand extends BaseCommand {
     const providerIds = [...new Set(stacks.map((s) => s.provider))];
     const adapters = this.registry.build(providerIds, process.env);
 
-    // 7. Acquire the deploy lock — prevents concurrent deployments.
+    // 7. Compute column widths upfront from the assembly data.
+    const widths = computeColWidthsFromAssembly(stacks);
+
+    // 8. Acquire the deploy lock — prevents concurrent deployments.
     const lock = this.createLock(stateDir);
     lock.acquire();
 
     try {
-      // 8. Create the engine with an event bus for streaming progress.
+      // 9. Create the engine with an event bus for streaming progress.
       const eventBus = new EventBus<EngineEvent>();
       const engine = this.createEngine({
         adapters,
@@ -228,26 +243,16 @@ export class DeployCommand extends BaseCommand {
       // Track stacks that emitted NO_CHANGES to decide the final message.
       const noChangeStacks = new Set<string>();
 
-      // Buffer events so column widths can be computed from the full dataset
-      // before printing. This ensures every row aligns to the longest value.
-      const bufferedEvents: EngineEvent[] = [];
-
-      // 9. Buffer events (printed after deploy completes).
+      // 10. Stream events immediately as they happen.
       engine.subscribe((event) => {
         if (event.resourceStatus === StackStatus.NO_CHANGES) {
           noChangeStacks.add(event.stackId);
         }
-        bufferedEvents.push(event);
+        console.log(renderEvent(event, widths));
       });
 
-      // 10. Deploy.
+      // 11. Deploy.
       const result = await engine.deploy(stacks, plan);
-
-      // Flush buffered events with dynamic column widths.
-      const widths = computeColWidths(bufferedEvents);
-      for (const event of bufferedEvents) {
-        console.log(renderEvent(event, widths));
-      }
 
       if (!result.success) {
         this.fail('Deployment failed — see above for details.');
