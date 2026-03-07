@@ -401,8 +401,9 @@ scanning is delegated to `DeploymentPlanner`.
 
 ## DeploymentPlanner
 
-Builds a `DeploymentPlan` from `AssemblyStack[]` using Kahn's topological sort
-algorithm.
+Builds a `DeploymentPlan` from `AssemblyStack[]` using a wave-based topological sort
+algorithm. Resources/stacks in the same wave have no dependencies on each other and
+can be deployed in parallel; waves execute sequentially to respect dependencies.
 
 ```ts
 const planner = new DeploymentPlanner();
@@ -413,15 +414,34 @@ const plan = planner.plan(stacks); // throws CycleError on cycle
 
 ```ts
 interface DeploymentPlan {
-  stackOrder: string[]; // stack IDs in deployment order
-  resourceOrders: Record<string, string[]>; // per-stack resource IDs in deployment order
+  stackWaves: string[][]; // stack IDs grouped by wave
+  resourceWaves: Record<string, string[][]>; // per-stack resource IDs grouped by wave
 }
 ```
 
+Each wave is an array of IDs that can be deployed in parallel. Waves are ordered
+from earliest (no dependencies) to latest (depend on earlier waves).
+
+### Wave-based execution model
+
+The planner uses a **level assignment algorithm** on top of topological sort:
+
+1. Build a dependency graph (DAG) from the inputs.
+2. Perform a topological sort using Kahn's algorithm.
+3. Assign each node a **level** based on `max(levels of all dependencies) + 1`.
+   Nodes with no dependencies get level 0.
+4. Group nodes by level — each level becomes a wave.
+
+**Key benefit:** resources at the same topological level (e.g., a subnet, route,
+load balancer, and server that all depend only on a network but not on each other)
+are grouped into the same wave and can deploy concurrently, significantly reducing
+deployment time for complex stacks.
+
 ### Stack ordering
 
-Uses each `AssemblyStack.dependencies` array to build a DAG and topologically sort
-stacks. Stacks with no dependencies are deployed first.
+Uses each `AssemblyStack.dependencies` array to build a DAG and assign levels.
+Independent stacks (level 0) are in the first wave; stacks that depend only on
+level-0 stacks are in wave 1, and so on.
 
 ### Resource ordering (per stack)
 
@@ -435,6 +455,9 @@ For each stack, builds an intra-stack dependency graph by combining two sources:
 Both sources are deduplicated into a single `Set<string>`. Cross-stack refs (where
 `ref` or `dependsOn` entry is a logical ID from a different stack) are ignored — those
 are resolved at runtime by the engine.
+
+The planner then applies the same wave-based level assignment to resources within
+each stack.
 
 ### CycleError
 
@@ -485,15 +508,15 @@ For each stack the engine distinguishes two modes:
 
 Full loop:
 
-1. Iterate stacks in `plan.stackOrder` (series, not parallel).
-2. For each stack:
+1. Iterate stack waves in `plan.stackWaves` (waves run in parallel, waves execute sequentially).
+2. For each stack in a wave:
    a. Look up the provider adapter by `stack.provider`; fail immediately if not registered.
    b. Determine `isUpdate` by checking whether the stack already has state in `EngineStateManager`.
    c. If `isUpdate`: call `reconcileStack()` — delete resources that were `CREATE_COMPLETE`
    in prior state but are absent from the new assembly (see Reconcile below).
    d. Call `stateManager.initStack()` (first deploy) or
    `stateManager.transitionStack(UPDATE_IN_PROGRESS)` (re-deploy).
-   e. Iterate resources in `plan.resourceOrders[stackId]` (series, not parallel).
+   e. Iterate resource waves in `plan.resourceWaves[stackId]`. For each wave: - Deploy all resources in the wave **in parallel** using `Promise.allSettled`. - If any resource fails, wait for all others in the wave to settle, then roll back.
    f. For each resource: resolve its tokens first. Then:
    - If already `CREATE_COMPLETE` in prior state with **identical** resolved properties → skip.
    - If already `CREATE_COMPLETE` in prior state with **changed** properties → call
@@ -511,7 +534,7 @@ UPDATE_COMPLETE`, set `anyUpdated = true`.
      !anyCreated &&
      !anyUpdated &&
      reconciledCount === 0 &&
-     (isUpdate || resourceOrder.length === 0);
+     (isUpdate || resourceWaves.flat().length === 0);
    ```
 
    - If `isNoOp`: transition stack → `NO_CHANGES`.
@@ -523,6 +546,14 @@ UPDATE_COMPLETE`, set `anyUpdated = true`.
 `reconciledCount` is returned by `reconcileStack()`. `anyCreated` is set to `true`
 after each successful `adapter.create()` call; `anyUpdated` is set to `true` after
 each successful `adapter.update()` call.
+
+**Wave execution details:**
+
+- Resources in the same wave deploy concurrently via `Promise.allSettled`.
+- After a wave completes, successful creates are appended to `createdInOrder` in
+  **wave order** (not completion order) to maintain deterministic rollback behavior.
+- Token resolution works correctly because waves execute sequentially — by the time
+  wave N+1 starts, all wave N resources are `CREATE_COMPLETE` with outputs available.
 
 ### Reconcile
 

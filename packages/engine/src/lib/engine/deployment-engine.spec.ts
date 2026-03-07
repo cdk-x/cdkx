@@ -47,7 +47,14 @@ function makePlan(
   stackOrder: string[],
   resourceOrders: Record<string, string[]>,
 ): DeploymentPlan {
-  return { stackOrder, resourceOrders };
+  // Convert flat arrays to waves (each resource/stack is its own wave for
+  // simplicity in tests — no dependencies between resources in these tests).
+  const stackWaves = stackOrder.map((id) => [id]);
+  const resourceWaves: Record<string, string[][]> = {};
+  for (const [stackId, order] of Object.entries(resourceOrders)) {
+    resourceWaves[stackId] = order.map((id) => [id]);
+  }
+  return { stackWaves, resourceWaves };
 }
 
 function makeNullPersistence(): StatePersistence {
