@@ -69,6 +69,7 @@
           "@cdkx-io/core",
           "@cdkx-io/engine",
           "@cdkx-io/testing",
+          "@cdkx-io/logger",
           "@cdkx-io/hetzner"
         ],
         "projectsRelationship": "fixed",

@@ -20,6 +20,9 @@
     },
     {
       "path": "./packages/engine"
+    },
+    {
+      "path": "./packages/logger"
     }
   ]
 }
