@@ -7,7 +7,8 @@
     "packages/cli/CONTEXT.md",
     "packages/testing/CONTEXT.md",
     "packages/providers/hetzner/CONTEXT.md",
-    "packages/engine/CONTEXT.md"
+    "packages/engine/CONTEXT.md",
+    "packages/logger/CONTEXT.md"
   ],
   "share": "disabled",
   "mcp": {
