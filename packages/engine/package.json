@@ -16,6 +16,7 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
+    "@cdkx-io/logger": "*",
     "tslib": "^2.8.1"
   },
   "publishConfig": {

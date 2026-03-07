@@ -294,6 +294,7 @@ to this interface — no compile-time dependency on any concrete adapter.
 
 ```ts
 interface ProviderAdapter {
+  setLogger?(logger: Logger): void; // called by engine when logger is provided
   create(resource: ManifestResource): Promise<CreateResult>;
   update(resource: ManifestResource, patch: unknown): Promise<UpdateResult>;
   delete(resource: ManifestResource): Promise<void>;
@@ -721,7 +722,42 @@ interface DeploymentEngineOptions {
   stateDir: string; // absolute path for engine-state.json — separate from assemblyDir
   stateManager?: EngineStateManager; // injectable for tests
   eventBus?: EventBus<EngineEvent>; // injectable for tests
+  logger?: Logger; // optional logger from @cdkx-io/logger — subscribes to EventBus
 }
+```
+
+**Logger integration:** When a `logger` is provided, the engine automatically:
+
+1. Subscribes the logger to the `EventBus` via the private `subscribeLogger()` method
+2. Propagates the logger to all adapters that implement `setLogger()`
+
+Every `EngineEvent` (stack and resource state transitions) is converted to a structured log event with:
+
+- **Event type**: `engine.state.stack.transition` or `engine.state.resource.transition`
+- **Log level mapping**:
+  - `*_IN_PROGRESS` or `NO_CHANGES` → `debug`
+  - `*_COMPLETE` → `info`
+  - `ROLLBACK_IN_PROGRESS` → `warn`
+  - `*_FAILED` or `ROLLBACK_COMPLETE` → `error`
+- **Error objects**: For failed statuses, an `Error` is created from `resourceStatusReason`
+  and passed to the logger
+
+Adapters that implement `setLogger()` can log their own events (e.g., HTTP requests/responses) using the logger.
+
+Example usage:
+
+```ts
+import { DeploymentEngine } from '@cdkx-io/engine';
+import { LoggerFactory } from '@cdkx-io/logger';
+
+const logger = LoggerFactory.createFileLogger('/project/.cdkx');
+
+const engine = new DeploymentEngine({
+  adapters: { hetzner: myAdapter },
+  assemblyDir: '/project/cdkx.out',
+  stateDir: '/project/.cdkx',
+  logger, // logs all state transitions to .cdkx/deploy-{timestamp}.log
+});
 ```
 
 ---

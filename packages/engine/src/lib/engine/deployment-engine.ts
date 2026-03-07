@@ -14,6 +14,7 @@ import {
   ReconcileValidationError,
   type BlockedDelete,
 } from './reconcile-validation-error';
+import type { Logger } from '@cdkx-io/logger';
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -92,6 +93,14 @@ export interface DeploymentEngineOptions {
    * If not provided, a new one is created internally.
    */
   readonly eventBus?: EventBus<EngineEvent>;
+
+  /**
+   * Optional logger for capturing all deployment events.
+   * The engine subscribes the logger to the internal `EventBus` on construction,
+   * logging every state transition (stack and resource) with structured event data.
+   * If not provided, no file logging occurs (the CLI still receives events).
+   */
+  readonly logger?: Logger;
 }
 
 // ─── DeploymentEngine ─────────────────────────────────────────────────────────
@@ -136,6 +145,18 @@ export class DeploymentEngine {
         loadedState,
       );
     }
+
+    // Subscribe the logger to the EventBus if provided.
+    if (options.logger !== undefined) {
+      this.subscribeLogger(options.logger);
+
+      // Propagate logger to all adapters that support it.
+      for (const adapter of Object.values(options.adapters)) {
+        if (adapter.setLogger !== undefined) {
+          adapter.setLogger(options.logger);
+        }
+      }
+    }
   }
 
   /**
@@ -144,6 +165,64 @@ export class DeploymentEngine {
    */
   public subscribe(handler: (event: EngineEvent) => void): () => void {
     return this.eventBus.subscribe(handler);
+  }
+
+  /**
+   * Subscribe the logger to the EventBus, converting each `EngineEvent` to
+   * a structured `LogEvent`.
+   */
+  private subscribeLogger(logger: Logger): void {
+    this.eventBus.subscribe((event) => {
+      // Map ResourceStatus/StackStatus to LogLevel
+      const status = event.resourceStatus;
+      let level: 'debug' | 'info' | 'warn' | 'error' = 'info';
+
+      if (status.endsWith('_FAILED') || status.endsWith('ROLLBACK_COMPLETE')) {
+        level = 'error';
+      } else if (status.endsWith('ROLLBACK_IN_PROGRESS')) {
+        level = 'warn';
+      } else if (status.endsWith('_IN_PROGRESS') || status === 'NO_CHANGES') {
+        level = 'debug';
+      } else if (status.endsWith('_COMPLETE')) {
+        level = 'info';
+      }
+
+      // Determine the event type namespace
+      const isStackEvent = event.resourceType === 'cdkx::stack';
+      const category = isStackEvent ? 'state.stack' : 'state.resource';
+      const type = `engine.${category}.transition`;
+
+      // Build the data payload
+      const data: Record<string, unknown> = {
+        resourceType: event.resourceType,
+        resourceStatus: event.resourceStatus,
+      };
+
+      if (event.physicalResourceId !== undefined) {
+        data.physicalResourceId = event.physicalResourceId;
+      }
+
+      if (event.resourceStatusReason !== undefined) {
+        data.resourceStatusReason = event.resourceStatusReason;
+      }
+
+      // Log via the appropriate level
+      const logData = {
+        stackId: event.stackId,
+        resourceId: event.logicalResourceId,
+        data,
+      };
+
+      if (level === 'error' && event.resourceStatusReason !== undefined) {
+        logger.error(type, logData, new Error(event.resourceStatusReason));
+      } else if (level === 'warn') {
+        logger.warn(type, logData);
+      } else if (level === 'debug') {
+        logger.debug(type, logData);
+      } else {
+        logger.info(type, logData);
+      }
+    });
   }
 
   /**
