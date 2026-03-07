@@ -9,6 +9,7 @@ function makeStack(
     logicalId: string;
     type?: string;
     properties?: Record<string, unknown>;
+    dependsOn?: string[];
   }[],
   dependencies: string[] = [],
 ): AssemblyStack {
@@ -21,6 +22,7 @@ function makeStack(
       logicalId: r.logicalId,
       type: r.type ?? 'test::Resource',
       properties: r.properties ?? {},
+      ...(r.dependsOn !== undefined ? { dependsOn: r.dependsOn } : {}),
     })),
     outputs: {},
     outputKeys: [],
@@ -224,6 +226,35 @@ describe('DeploymentPlanner', () => {
           ]),
         ]),
       ).toThrow(CycleError);
+    });
+
+    it('respects explicit dependsOn without { ref, attr } token', () => {
+      // ResB has no tokens in properties but declares dependsOn: ['ResA'].
+      const plan = planner.plan([
+        makeStack('S', [
+          { logicalId: 'ResA' },
+          { logicalId: 'ResB', dependsOn: ['ResA'] },
+        ]),
+      ]);
+      const order = plan.resourceOrders['S'];
+      expect(order.indexOf('ResA')).toBeLessThan(order.indexOf('ResB'));
+    });
+
+    it('deduplicates when both dependsOn and token reference the same resource', () => {
+      // ResB references ResA via both a token and dependsOn — should not crash
+      // and should still place ResA before ResB.
+      const plan = planner.plan([
+        makeStack('S', [
+          { logicalId: 'ResA' },
+          {
+            logicalId: 'ResB',
+            properties: { networkId: { ref: 'ResA', attr: 'networkId' } },
+            dependsOn: ['ResA'],
+          },
+        ]),
+      ]);
+      const order = plan.resourceOrders['S'];
+      expect(order.indexOf('ResA')).toBeLessThan(order.indexOf('ResB'));
     });
 
     it('produces separate resource orders per stack', () => {
