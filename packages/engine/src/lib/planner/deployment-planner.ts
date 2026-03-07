@@ -145,8 +145,10 @@ export class CycleError extends Error {
  *
  * Responsibilities:
  * 1. Topologically sort stacks using the `dependencies` array on each stack.
- * 2. For each stack, topologically sort resources by scanning their properties
- *    for `{ ref, attr }` tokens and building an intra-stack dependency graph.
+ * 2. For each stack, topologically sort resources by combining:
+ *    - `{ ref, attr }` tokens found in resource properties (implicit deps), and
+ *    - the `dependsOn` array on each `AssemblyResource` (explicit deps, e.g. from
+ *      `resource.addDependency()` calls serialized by the synthesizer).
  * 3. Detect cycles at both the stack and resource levels and throw `CycleError`.
  *
  * Cross-stack resource references (token `ref` pointing to a resource in a
@@ -222,6 +224,14 @@ export class DeploymentPlanner {
   ): Set<string> {
     const refs = new Set<string>();
     collectRefs(resource.properties, refs);
+
+    // Also include explicit dependsOn entries (kept for backward compat —
+    // { ref, attr } token scanning already covers the implicit ones, but
+    // dependsOn is the canonical list emitted by the synthesizer and covers
+    // addDependency() calls that produce no token in properties).
+    for (const dep of resource.dependsOn ?? []) {
+      refs.add(dep);
+    }
 
     // Keep only refs that point to resources within the same stack.
     const deps = new Set<string>();
