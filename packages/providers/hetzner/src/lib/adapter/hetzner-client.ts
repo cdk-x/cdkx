@@ -1,5 +1,7 @@
 import * as https from 'node:https';
 import * as http from 'node:http';
+import type { Logger } from '@cdkx-io/logger';
+import { Sanitizers } from '@cdkx-io/logger';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -8,6 +10,8 @@ export interface HetznerClientOptions {
   readonly apiToken: string;
   /** Base URL for the API. Defaults to 'https://api.hetzner.cloud/v1'. */
   readonly baseUrl?: string;
+  /** Optional logger for HTTP request/response logging. */
+  readonly logger?: Logger;
 }
 
 /** Shape of an error response from the Hetzner Cloud API. */
@@ -39,10 +43,17 @@ interface HetznerErrorResponse {
 export class HetznerClient {
   private readonly baseUrl: string;
   private readonly apiToken: string;
+  private logger?: Logger;
 
   constructor(options: HetznerClientOptions) {
     this.apiToken = options.apiToken;
     this.baseUrl = options.baseUrl ?? 'https://api.hetzner.cloud/v1';
+    this.logger = options.logger;
+  }
+
+  /** Set a logger instance for HTTP request/response logging. */
+  public setLogger(logger: Logger): void {
+    this.logger = logger;
   }
 
   /** Perform a GET request and return the parsed JSON body. */
@@ -71,6 +82,18 @@ export class HetznerClient {
   // ─── Private helpers ───────────────────────────────────────────────────────
 
   private request<T>(method: string, path: string, body: unknown): Promise<T> {
+    const startTime = Date.now();
+
+    // Log outgoing request
+    this.logger?.debug('provider.http.request', {
+      method,
+      path,
+      headers: Sanitizers.sanitizeHeaders({
+        Authorization: `Bearer ${this.apiToken}`,
+      }),
+      body: Sanitizers.sanitizeBody(body as Record<string, unknown>),
+    });
+
     return new Promise((resolve, reject) => {
       const url = new URL(this.baseUrl + path);
       const bodyStr = body !== undefined ? JSON.stringify(body) : undefined;
@@ -98,14 +121,33 @@ export class HetznerClient {
         res.on('end', () => {
           const raw = Buffer.concat(chunks).toString('utf-8');
           const status = res.statusCode ?? 0;
+          const durationMs = Date.now() - startTime;
 
           if (status >= 200 && status < 300) {
             if (raw.length === 0) {
+              // Log successful empty response
+              this.logger?.info('provider.http.response', {
+                method,
+                path,
+                statusCode: status,
+                durationMs,
+              });
               resolve(undefined as unknown as T);
               return;
             }
             try {
-              resolve(JSON.parse(raw) as T);
+              const parsed = JSON.parse(raw) as T;
+              // Log successful response
+              this.logger?.info('provider.http.response', {
+                method,
+                path,
+                statusCode: status,
+                durationMs,
+                body: Sanitizers.sanitizeBody(
+                  parsed as Record<string, unknown>,
+                ),
+              });
+              resolve(parsed);
             } catch {
               reject(
                 new Error(
@@ -127,15 +169,40 @@ export class HetznerClient {
             // raw string fallback
           }
 
-          reject(
-            new Error(
-              `Hetzner API error ${status} ${method} ${path}: ${apiMessage}`,
-            ),
+          const errorMessage = `Hetzner API error ${status} ${method} ${path}: ${apiMessage}`;
+
+          // Log error response
+          this.logger?.error(
+            'provider.http.error',
+            {
+              method,
+              path,
+              statusCode: status,
+              durationMs,
+            },
+            new Error(errorMessage),
           );
+
+          reject(new Error(errorMessage));
         });
       });
 
-      req.on('error', (err: Error) => reject(err));
+      req.on('error', (err: Error) => {
+        const durationMs = Date.now() - startTime;
+
+        // Log network error
+        this.logger?.error(
+          'provider.http.error',
+          {
+            method,
+            path,
+            durationMs,
+          },
+          err,
+        );
+
+        reject(err);
+      });
 
       if (bodyStr !== undefined) {
         req.write(bodyStr);

@@ -257,16 +257,22 @@ HetznerAdapter          ← implements ProviderAdapter from @cdkx-io/engine
 Low-level HTTP client using `node:https` (no external dependencies).
 
 ```ts
-const client = new HetznerClient({ apiToken, baseUrl? });
+const client = new HetznerClient({ apiToken, baseUrl?, logger? });
 await client.get<T>(path);
 await client.post<T>(path, body);
 await client.put<T>(path, body);
 await client.delete(path); // resolves void on 204
+client.setLogger(logger); // set logger after construction
 ```
 
 - All methods set `Authorization: Bearer <apiToken>` and `Content-Type: application/json`.
 - Non-2xx responses throw with the Hetzner API error message (parsed from JSON or raw body).
 - Default `baseUrl`: `https://api.hetzner.cloud/v1`.
+- **Logger integration**: When a logger is provided, HTTP requests and responses are logged with event types:
+  - `provider.http.request` — outgoing requests (debug level)
+  - `provider.http.response` — successful responses (info level)
+  - `provider.http.error` — failed requests (error level)
+- **Automatic sanitization**: Sensitive headers and fields are automatically redacted using `Sanitizers` from `@cdkx-io/logger`.
 
 ### `ActionPoller` (`src/lib/adapter/action-poller.ts`)
 
@@ -316,6 +322,7 @@ Implements `ProviderAdapter` from `@cdkx-io/engine`.
 
 | Method                 | Behaviour                                                                                                                                                                |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `setLogger(logger)`    | Sets the logger for HTTP request/response logging. Propagates to `HetznerClient`.                                                                                        |
 | `create()`             | POSTs to `createPath`; polls action if response contains `action.id`; returns `physicalId` + `outputs`.                                                                  |
 | `update()`             | PUTs to `updatePath(physicalId)`; throws on create-only props in patch; throws for action resources.                                                                     |
 | `delete()`             | DELETEs via `deletePath(physicalId)` for regular resources; POSTs to the parent-network action for action resources.                                                     |
