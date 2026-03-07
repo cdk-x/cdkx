@@ -50,6 +50,7 @@
   "workspaces": [
     "packages/*",
     "packages/providers/*",
-    "packages/tools/*"
+    "packages/tools/*",
+    "examples/*"
   ]
 }

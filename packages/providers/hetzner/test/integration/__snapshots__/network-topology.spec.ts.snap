@@ -16,6 +16,9 @@ exports[`snapshot stack JSON matches snapshot 1`] = `
     "type": "Hetzner::Networking::Network",
   },
   "HetznerNetworkStackRouteDefault2E571A41": {
+    "dependsOn": [
+      "HetznerNetworkStackAppNetwork5372D6A7",
+    ],
     "metadata": {
       "cdkx:path": "HetznerNetworkStack/RouteDefault",
     },
@@ -30,6 +33,9 @@ exports[`snapshot stack JSON matches snapshot 1`] = `
     "type": "Hetzner::Networking::Route",
   },
   "HetznerNetworkStackRouteManagement823BFFB7": {
+    "dependsOn": [
+      "HetznerNetworkStackAppNetwork5372D6A7",
+    ],
     "metadata": {
       "cdkx:path": "HetznerNetworkStack/RouteManagement",
     },
@@ -44,6 +50,9 @@ exports[`snapshot stack JSON matches snapshot 1`] = `
     "type": "Hetzner::Networking::Route",
   },
   "HetznerNetworkStackSubnetApp27105C3D": {
+    "dependsOn": [
+      "HetznerNetworkStackAppNetwork5372D6A7",
+    ],
     "metadata": {
       "cdkx:path": "HetznerNetworkStack/SubnetApp",
     },
@@ -59,6 +68,9 @@ exports[`snapshot stack JSON matches snapshot 1`] = `
     "type": "Hetzner::Networking::Subnet",
   },
   "HetznerNetworkStackSubnetWebF2285455": {
+    "dependsOn": [
+      "HetznerNetworkStackAppNetwork5372D6A7",
+    ],
     "metadata": {
       "cdkx:path": "HetznerNetworkStack/SubnetWeb",
     },
@@ -74,6 +86,9 @@ exports[`snapshot stack JSON matches snapshot 1`] = `
     "type": "Hetzner::Networking::Subnet",
   },
   "HetznerNetworkStackWebLoadBalancer14E4B7C1": {
+    "dependsOn": [
+      "HetznerNetworkStackAppNetwork5372D6A7",
+    ],
     "metadata": {
       "cdkx:path": "HetznerNetworkStack/WebLoadBalancer",
     },

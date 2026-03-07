@@ -3,16 +3,18 @@
  */
 export interface DeploymentPlan {
   /**
-   * Stack IDs in topological (deployment) order.
-   * Stacks with no dependencies come first; stacks that depend on others come later.
+   * Stack deployment waves.
+   * Each inner array is a wave (set of stacks that can run in parallel).
+   * Waves are executed sequentially — wave N+1 starts only after wave N completes.
+   * Stacks with no dependencies are in wave 0; stacks depending on others are in later waves.
    */
-  readonly stackOrder: string[];
+  readonly stackWaves: string[][];
 
   /**
-   * Per-stack resource deployment order.
-   * Keyed by stack ID. Each value is an array of logical resource IDs in the
-   * order they should be created — earlier entries have no dependencies on
-   * later entries within the same stack.
+   * Per-stack resource deployment waves.
+   * Keyed by stack ID. Each inner array is a wave (set of resources that can run in parallel).
+   * Waves are executed sequentially within a stack — wave N+1 starts only after wave N completes.
+   * Resources with no intra-stack dependencies are in wave 0; dependent resources are in later waves.
    */
-  readonly resourceOrders: Record<string, string[]>;
+  readonly resourceWaves: Record<string, string[][]>;
 }

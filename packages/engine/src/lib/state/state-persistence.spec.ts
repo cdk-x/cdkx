@@ -3,7 +3,7 @@ import { StatePersistence, StatePersistenceDeps } from './state-persistence';
 import { EngineState } from './engine-state';
 import { StackStatus } from '../states/stack-status';
 
-const OUTDIR = '/fake/outdir';
+const STATE_DIR = '/fake/statedir';
 
 function makeState(): EngineState {
   return {
@@ -18,16 +18,16 @@ function makeState(): EngineState {
 
 describe('StatePersistence', () => {
   describe('stateFilePath', () => {
-    it('is <outdir>/engine-state.json', () => {
-      const persistence = new StatePersistence(OUTDIR);
+    it('is <stateDir>/engine-state.json', () => {
+      const persistence = new StatePersistence(STATE_DIR);
       expect(persistence.stateFilePath).toBe(
-        path.join(OUTDIR, 'engine-state.json'),
+        path.join(STATE_DIR, 'engine-state.json'),
       );
     });
   });
 
   describe('save()', () => {
-    it('creates the outdir with recursive: true', () => {
+    it('creates the stateDir with recursive: true', () => {
       const mkdirCalls: Array<{
         p: string;
         options?: { recursive?: boolean };
@@ -39,11 +39,11 @@ describe('StatePersistence', () => {
         readFileSync: () => '{}',
       };
 
-      const persistence = new StatePersistence(OUTDIR, deps);
+      const persistence = new StatePersistence(STATE_DIR, deps);
       persistence.save(makeState());
 
       expect(mkdirCalls).toHaveLength(1);
-      expect(mkdirCalls[0].p).toBe(OUTDIR);
+      expect(mkdirCalls[0].p).toBe(STATE_DIR);
       expect(mkdirCalls[0].options?.recursive).toBe(true);
     });
 
@@ -56,11 +56,11 @@ describe('StatePersistence', () => {
         readFileSync: () => '{}',
       };
 
-      const persistence = new StatePersistence(OUTDIR, deps);
+      const persistence = new StatePersistence(STATE_DIR, deps);
       persistence.save(makeState());
 
       expect(written).toHaveLength(1);
-      expect(written[0].p).toBe(path.join(OUTDIR, 'engine-state.json'));
+      expect(written[0].p).toBe(path.join(STATE_DIR, 'engine-state.json'));
     });
 
     it('writes valid JSON that round-trips correctly', () => {
@@ -75,7 +75,7 @@ describe('StatePersistence', () => {
       };
 
       const state = makeState();
-      const persistence = new StatePersistence(OUTDIR, deps);
+      const persistence = new StatePersistence(STATE_DIR, deps);
       persistence.save(state);
 
       const parsed = JSON.parse(writtenData) as EngineState;
@@ -91,7 +91,7 @@ describe('StatePersistence', () => {
         readFileSync: () => '{}',
       };
 
-      new StatePersistence(OUTDIR, deps).save(makeState());
+      new StatePersistence(STATE_DIR, deps).save(makeState());
 
       expect(encodings[0]).toBe('utf8');
     });
@@ -107,7 +107,7 @@ describe('StatePersistence', () => {
         readFileSync: () => '{}',
       };
 
-      new StatePersistence(OUTDIR, deps).save(makeState());
+      new StatePersistence(STATE_DIR, deps).save(makeState());
 
       // Pretty-printed JSON has newlines
       expect(writtenData).toContain('\n');
@@ -127,7 +127,7 @@ describe('StatePersistence', () => {
         },
       };
 
-      const persistence = new StatePersistence(OUTDIR, deps);
+      const persistence = new StatePersistence(STATE_DIR, deps);
       expect(persistence.load()).toBeNull();
     });
 
@@ -140,7 +140,7 @@ describe('StatePersistence', () => {
         readFileSync: () => JSON.stringify(state),
       };
 
-      const persistence = new StatePersistence(OUTDIR, deps);
+      const persistence = new StatePersistence(STATE_DIR, deps);
       const loaded = persistence.load();
 
       expect(loaded).not.toBeNull();
@@ -161,9 +161,9 @@ describe('StatePersistence', () => {
         },
       };
 
-      new StatePersistence(OUTDIR, deps).load();
+      new StatePersistence(STATE_DIR, deps).load();
 
-      expect(readPaths[0]).toBe(path.join(OUTDIR, 'engine-state.json'));
+      expect(readPaths[0]).toBe(path.join(STATE_DIR, 'engine-state.json'));
     });
 
     it('checks existence of the correct file path', () => {
@@ -178,9 +178,9 @@ describe('StatePersistence', () => {
         readFileSync: () => '{}',
       };
 
-      new StatePersistence(OUTDIR, deps).load();
+      new StatePersistence(STATE_DIR, deps).load();
 
-      expect(checkedPaths[0]).toBe(path.join(OUTDIR, 'engine-state.json'));
+      expect(checkedPaths[0]).toBe(path.join(STATE_DIR, 'engine-state.json'));
     });
   });
 });

@@ -77,7 +77,10 @@ export class HetznerAdapter implements ProviderAdapter {
       ? this.omitParentId(resource.properties, config.parentIdProp)
       : resource.properties;
 
-    const response = await this.client.post<WithAction>(path, body);
+    const response = await this.client.post<WithAction>(
+      path,
+      this.serialize(body) as Record<string, unknown>,
+    );
 
     // Poll async action if present
     if (response.action !== undefined) {
@@ -153,7 +156,7 @@ export class HetznerAdapter implements ProviderAdapter {
 
     const response = await this.client.put<WithAction>(
       config.updatePath(physicalId),
-      body,
+      this.serialize(body) as Record<string, unknown>,
     );
 
     // Some update endpoints return an async action
@@ -192,6 +195,20 @@ export class HetznerAdapter implements ProviderAdapter {
         : config.deletePath;
 
     await this.client.delete(path);
+  }
+
+  // ─── getCreateOnlyProps ────────────────────────────────────────────────────
+
+  /**
+   * Returns the set of create-only property names for the given resource type.
+   * The engine uses this to strip create-only props from the patch before
+   * calling `update()`, so the adapter never receives them.
+   *
+   * Delegates to `RESOURCE_REGISTRY[type]?.createOnlyProps`. Returns an empty
+   * set for unknown types (the subsequent `validate()` call will catch those).
+   */
+  public getCreateOnlyProps(type: string): ReadonlySet<string> {
+    return RESOURCE_REGISTRY[type]?.createOnlyProps ?? new Set();
   }
 
   // ─── validate ──────────────────────────────────────────────────────────────
@@ -288,6 +305,30 @@ export class HetznerAdapter implements ProviderAdapter {
     return result;
   }
 
+  /**
+   * Recursively converts all object keys from camelCase to snake_case before
+   * sending to the Hetzner Cloud API, which exclusively uses snake_case.
+   *
+   * Arrays are traversed element by element; primitives are returned as-is.
+   */
+  private serialize(value: unknown): unknown {
+    if (Array.isArray(value)) {
+      return value.map((item) => this.serialize(item));
+    }
+    if (value !== null && typeof value === 'object') {
+      const result: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+        result[this.toSnakeCase(k)] = this.serialize(v);
+      }
+      return result;
+    }
+    return value;
+  }
+
+  private toSnakeCase(str: string): string {
+    return str.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+  }
+
   private async deleteActionResource(
     resource: ManifestResource,
     pathTemplate: string,
@@ -310,7 +351,10 @@ export class HetznerAdapter implements ProviderAdapter {
       }
     }
 
-    const response = await this.client.post<WithAction>(path, body);
+    const response = await this.client.post<WithAction>(
+      path,
+      this.serialize(body) as Record<string, unknown>,
+    );
 
     if (response.action !== undefined) {
       await this.poller.poll(response.action.id);

@@ -99,7 +99,17 @@ describe('TypeMapper', () => {
       ).toBe('string | null');
     });
 
-    it('maps string array', () => {
+    it('maps integer array to (number | IResolvable)[]', () => {
+      expect(
+        TypeMapper.mapType(
+          { type: 'array', items: { type: 'integer' } },
+          ctx,
+          'ids',
+        ),
+      ).toBe('(number | IResolvable)[]');
+    });
+
+    it('maps string array to string[] (not affected by IResolvable change)', () => {
       expect(
         TypeMapper.mapType(
           { type: 'array', items: { type: 'string' } },
@@ -107,16 +117,6 @@ describe('TypeMapper', () => {
           'tags',
         ),
       ).toBe('string[]');
-    });
-
-    it('maps integer array to number[]', () => {
-      expect(
-        TypeMapper.mapType(
-          { type: 'array', items: { type: 'integer' } },
-          ctx,
-          'ids',
-        ),
-      ).toBe('number[]');
     });
 
     it('maps array with $ref items', () => {

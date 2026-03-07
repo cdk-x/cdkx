@@ -37,6 +37,7 @@ interface TemplateResourceEntry {
   type: string;
   properties?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
+  dependsOn?: string[];
 }
 
 interface TemplateOutputEntry {
@@ -197,6 +198,9 @@ export class CloudAssemblyReader {
         type: entry.type,
         properties: entry.properties ?? {},
         ...(entry.metadata !== undefined ? { metadata: entry.metadata } : {}),
+        ...(entry.dependsOn !== undefined && entry.dependsOn.length > 0
+          ? { dependsOn: entry.dependsOn }
+          : {}),
       };
       return resource;
     });

@@ -96,6 +96,7 @@ export class EngineStateManager {
 
     const resourceState: ResourceState = {
       status: ResourceStatus.CREATE_IN_PROGRESS,
+      type: resourceType,
       properties,
     };
 
@@ -147,6 +148,37 @@ export class EngineStateManager {
       updated,
       options,
     );
+  }
+
+  /**
+   * Removes a resource entry from the stack state after a successful reconcile
+   * delete. Persists the updated state to disk.
+   *
+   * No event is emitted — the caller is responsible for emitting the
+   * `DELETE_COMPLETE` event via `transitionResource()` before calling this.
+   *
+   * Throws if the stack or resource is not registered.
+   */
+  public removeResource(stackId: string, logicalId: string): void {
+    const stackState = this.requireStack(stackId);
+    this.requireResource(stackId, logicalId, stackState);
+
+    const { [logicalId]: _removed, ...remainingResources } =
+      stackState.resources;
+
+    const updatedStack: StackState = {
+      ...stackState,
+      resources: remainingResources,
+    };
+
+    this.state = {
+      stacks: {
+        ...this.state.stacks,
+        [stackId]: updatedStack,
+      },
+    };
+
+    this.persistence.save(this.state);
   }
 
   // ─── State accessors ─────────────────────────────────────────────────────

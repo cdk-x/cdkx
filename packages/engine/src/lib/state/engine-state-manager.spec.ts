@@ -490,6 +490,93 @@ describe('EngineStateManager', () => {
     });
   });
 
+  // ── removeResource ────────────────────────────────────────────────────────
+
+  describe('removeResource()', () => {
+    function setupWithCompleteResource(): EngineStateManager {
+      const manager = makeManager();
+      manager.initStack(STACK_ID);
+      manager.initResource(STACK_ID, LOGICAL_ID, RESOURCE_TYPE, {
+        name: 'web',
+      });
+      manager.transitionResource(
+        STACK_ID,
+        LOGICAL_ID,
+        RESOURCE_TYPE,
+        ResourceStatus.CREATE_COMPLETE,
+        { physicalId: '42' },
+      );
+      return manager;
+    }
+
+    it('removes the resource from the stack state', () => {
+      const manager = setupWithCompleteResource();
+      manager.removeResource(STACK_ID, LOGICAL_ID);
+
+      expect(manager.getResourceState(STACK_ID, LOGICAL_ID)).toBeUndefined();
+    });
+
+    it('persists state after removal', () => {
+      const saved: string[] = [];
+      const deps: StatePersistenceDeps = {
+        mkdirSync: () => undefined,
+        writeFileSync: (_, data) => saved.push(data),
+        existsSync: () => false,
+        readFileSync: () => '{}',
+      };
+      const persistence = new StatePersistence('/out', deps);
+      const bus = new EventBus<EngineEvent>();
+      const manager = new EngineStateManager(bus, persistence);
+      manager.initStack(STACK_ID);
+      manager.initResource(STACK_ID, LOGICAL_ID, RESOURCE_TYPE, {});
+      manager.transitionResource(
+        STACK_ID,
+        LOGICAL_ID,
+        RESOURCE_TYPE,
+        ResourceStatus.CREATE_COMPLETE,
+        { physicalId: '1' },
+      );
+      const savesBefore = saved.length;
+
+      manager.removeResource(STACK_ID, LOGICAL_ID);
+
+      expect(saved.length).toBe(savesBefore + 1);
+      const last = JSON.parse(saved[saved.length - 1]) as {
+        stacks: Record<string, { resources: Record<string, unknown> }>;
+      };
+      expect(last.stacks[STACK_ID].resources[LOGICAL_ID]).toBeUndefined();
+    });
+
+    it('throws if the stack is not registered', () => {
+      const manager = makeManager();
+      expect(() => manager.removeResource('Unknown', LOGICAL_ID)).toThrow(
+        `Stack 'Unknown' is not registered`,
+      );
+    });
+
+    it('throws if the resource is not registered', () => {
+      const manager = makeManager();
+      manager.initStack(STACK_ID);
+      expect(() => manager.removeResource(STACK_ID, 'UnknownResource')).toThrow(
+        `Resource 'UnknownResource' is not registered`,
+      );
+    });
+  });
+
+  // ── initResource stores type ───────────────────────────────────────────────
+
+  describe('ResourceState.type', () => {
+    it('stores the resource type when initResource is called', () => {
+      const manager = makeManager();
+      manager.initStack(STACK_ID);
+      manager.initResource(STACK_ID, LOGICAL_ID, RESOURCE_TYPE, {});
+
+      expect(manager.getResourceState(STACK_ID, LOGICAL_ID)?.type).toBe(
+        RESOURCE_TYPE,
+      );
+    });
+  });
+
   // ── persistence integration ────────────────────────────────────────────────
 
   describe('persistence integration', () => {
