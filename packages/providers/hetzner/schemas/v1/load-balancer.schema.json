@@ -96,8 +96,7 @@
         "certificates": {
           "type": "array",
           "description": "IDs of the Certificates to use for TLS/SSL termination by the Load Balancer; empty for TLS/SSL passthrough or if `protocol` is `http`.",
-          "items": { "type": "integer" },
-          "x-cdkx-resolvable-items": "integer"
+          "items": { "type": "integer" }
         },
         "redirectHttp": {
           "type": "boolean",

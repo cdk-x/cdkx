@@ -6,6 +6,31 @@
   "domain": "Compute",
   "additionalProperties": false,
   "definitions": {
+    "ServerType": {
+      "type": "string",
+      "description": "Hetzner Cloud server type name. Available families:\n * - **Shared Intel (CX):** cx22 (2 vCPU / 4 GB), cx32 (4 vCPU / 8 GB), cx42 (8 vCPU / 16 GB), cx52 (16 vCPU / 32 GB)\n * - **Shared AMD (CPX):** cpx11 (2 vCPU / 2 GB), cpx21 (3 vCPU / 4 GB), cpx31 (4 vCPU / 8 GB), cpx41 (8 vCPU / 16 GB), cpx51 (16 vCPU / 32 GB)\n * - **Shared Arm64 (CAX):** cax11 (2 vCPU / 4 GB), cax21 (4 vCPU / 8 GB), cax31 (8 vCPU / 16 GB), cax41 (16 vCPU / 32 GB)\n * - **Dedicated vCPU (CCX):** ccx13 (2 vCPU / 8 GB), ccx23 (4 vCPU / 16 GB), ccx33 (8 vCPU / 32 GB), ccx43 (16 vCPU / 64 GB), ccx53 (32 vCPU / 128 GB), ccx63 (48 vCPU / 192 GB)",
+      "enum": [
+        "cx22",
+        "cx32",
+        "cx42",
+        "cx52",
+        "cpx11",
+        "cpx21",
+        "cpx31",
+        "cpx41",
+        "cpx51",
+        "cax11",
+        "cax21",
+        "cax31",
+        "cax41",
+        "ccx13",
+        "ccx23",
+        "ccx33",
+        "ccx43",
+        "ccx53",
+        "ccx63"
+      ]
+    },
     "ServerFirewall": {
       "type": "object",
       "description": "Firewalls which should be applied on the Server's public network interface at creation time.",
@@ -50,16 +75,16 @@
       "description": "Name of the Server to create (must be unique per Project and a valid hostname as per RFC 1123)."
     },
     "location": {
-      "type": "string",
-      "description": "ID or name of the Location to create the Server in (must not be used together with `datacenter`)."
+      "$ref": "./common.schema.json#/definitions/Location",
+      "description": "Location to create the Server in (must not be used together with `datacenter`)."
     },
     "datacenter": {
       "type": "string",
       "description": "**Deprecated**: This property is deprecated and will be removed after the 1 July 2026."
     },
     "serverType": {
-      "type": "string",
-      "description": "ID or name of the Server type this Server should be created with."
+      "$ref": "#/definitions/ServerType",
+      "description": "Server type to create this Server with."
     },
     "startAfterCreate": {
       "type": "boolean",
@@ -71,26 +96,22 @@
     },
     "placementGroup": {
       "type": "integer",
-      "description": "ID of the Placement Group the Server should be in.",
-      "x-cdkx-resolvable": true
+      "description": "ID of the Placement Group the Server should be in."
     },
     "sshKeys": {
       "type": "array",
       "description": "SSH key IDs (`integer`) or names (`string`) which should be injected into the Server at creation time.",
-      "items": { "type": "string" },
-      "x-cdkx-resolvable-items": "string-or-integer"
+      "items": { "type": "string" }
     },
     "volumes": {
       "type": "array",
       "description": "Volume IDs which should be attached to the Server at the creation time. Volumes must be in the same Location.",
-      "items": { "type": "integer" },
-      "x-cdkx-resolvable-items": "integer"
+      "items": { "type": "integer" }
     },
     "networks": {
       "type": "array",
       "description": "Network IDs which should be attached to the Server private network interface at the creation time.",
-      "items": { "type": "integer" },
-      "x-cdkx-resolvable-items": "integer"
+      "items": { "type": "integer" }
     },
     "firewalls": {
       "type": "array",
