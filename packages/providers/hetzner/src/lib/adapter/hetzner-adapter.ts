@@ -4,6 +4,7 @@ import type {
   ProviderAdapter,
   UpdateResult,
 } from '@cdkx-io/engine';
+import type { Logger } from '@cdkx-io/logger';
 import { ActionPoller, type ActionPollerOptions } from './action-poller';
 import { HetznerClient, type HetznerClientOptions } from './hetzner-client';
 import { RESOURCE_REGISTRY } from '../generated/resource-registry.generated';
@@ -50,6 +51,11 @@ export class HetznerAdapter implements ProviderAdapter {
     };
     this.client = new HetznerClient(clientOptions);
     this.poller = new ActionPoller(this.client, options.pollerOptions);
+  }
+
+  /** Set a logger instance for HTTP request/response logging. */
+  public setLogger(logger: Logger): void {
+    this.client.setLogger(logger);
   }
 
   // ─── create ────────────────────────────────────────────────────────────────
