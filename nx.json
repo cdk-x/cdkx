@@ -99,13 +99,19 @@
       "providers": {
         "projects": ["@cdkx-io/hetzner", "@cdkx-io/hetzner-sdk"],
         "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "{projectName}-v{version}" },
-        "version": { "updateDependents": "auto" }
+        "releaseTag": {
+          "pattern": "{projectName}-v{version}"
+        },
+        "version": {
+          "updateDependents": "auto"
+        }
       },
       "engine": {
         "projects": ["@cdkx-io/engine"],
         "projectsRelationship": "independent",
-        "version": { "updateDependents": "never" }
+        "version": {
+          "updateDependents": "never"
+        }
       },
       "tools": {
         "projects": ["@cdkx-io/spec-to-cdkx"],
