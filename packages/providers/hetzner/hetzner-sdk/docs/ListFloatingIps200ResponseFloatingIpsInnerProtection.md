@@ -4,9 +4,9 @@ Protection configuration for the Resource.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**_delete** | **boolean** | Prevent the Resource from being deleted. | [default to undefined]
+| Name         | Type        | Description                              | Notes                  |
+| ------------ | ----------- | ---------------------------------------- | ---------------------- |
+| **\_delete** | **boolean** | Prevent the Resource from being deleted. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { ListFloatingIps200ResponseFloatingIpsInnerProtection } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListFloatingIps200ResponseFloatingIpsInnerProtection = {
-    _delete,
+  _delete,
 };
 ```
 

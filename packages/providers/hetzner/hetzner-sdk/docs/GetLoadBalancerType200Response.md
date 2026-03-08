@@ -1,11 +1,10 @@
 # GetLoadBalancerType200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**load_balancer_type** | [**ListLoadBalancerTypes200ResponseLoadBalancerTypesInner**](ListLoadBalancerTypes200ResponseLoadBalancerTypesInner.md) |  | [optional] [default to undefined]
+| Name                   | Type                                                                                                                    | Description | Notes                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------- | --------------------------------- |
+| **load_balancer_type** | [**ListLoadBalancerTypes200ResponseLoadBalancerTypesInner**](ListLoadBalancerTypes200ResponseLoadBalancerTypesInner.md) |             | [optional] [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetLoadBalancerType200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetLoadBalancerType200Response = {
-    load_balancer_type,
+  load_balancer_type,
 };
 ```
 

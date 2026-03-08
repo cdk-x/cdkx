@@ -1,12 +1,11 @@
 # CertificateUsedByInner
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**id** | **number** | ID of resource referenced. | [default to undefined]
-**type** | **string** | Type of resource referenced. | [default to undefined]
+| Name     | Type       | Description                  | Notes                  |
+| -------- | ---------- | ---------------------------- | ---------------------- |
+| **id**   | **number** | ID of resource referenced.   | [default to undefined] |
+| **type** | **string** | Type of resource referenced. | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { CertificateUsedByInner } from '@cdkx-io/hetzner-sdk';
 
 const instance: CertificateUsedByInner = {
-    id,
-    type,
+  id,
+  type,
 };
 ```
 

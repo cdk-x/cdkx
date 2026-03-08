@@ -1,11 +1,10 @@
 # ChangeTypeRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**load_balancer_type** | **string** | ID or name of Load Balancer type the Load Balancer should migrate to. | [default to undefined]
+| Name                   | Type       | Description                                                           | Notes                  |
+| ---------------------- | ---------- | --------------------------------------------------------------------- | ---------------------- |
+| **load_balancer_type** | **string** | ID or name of Load Balancer type the Load Balancer should migrate to. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ChangeTypeRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeTypeRequest = {
-    load_balancer_type,
+  load_balancer_type,
 };
 ```
 

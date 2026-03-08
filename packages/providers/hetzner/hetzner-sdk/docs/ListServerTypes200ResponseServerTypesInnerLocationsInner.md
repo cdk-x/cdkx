@@ -1,14 +1,14 @@
 # ListServerTypes200ResponseServerTypesInnerLocationsInner
 
-A [Location](#tag/locations) (containing only id and name) and Server Type specific metadata. 
+A [Location](#tag/locations) (containing only id and name) and Server Type specific metadata.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**id** | **number** | ID of the [Location](#tag/locations). | [default to undefined]
-**name** | **string** | Name of the [Location](#tag/locations). | [default to undefined]
-**deprecation** | [**DeprecationInfo**](DeprecationInfo.md) |  | [default to undefined]
+| Name            | Type                                      | Description                             | Notes                  |
+| --------------- | ----------------------------------------- | --------------------------------------- | ---------------------- |
+| **id**          | **number**                                | ID of the [Location](#tag/locations).   | [default to undefined] |
+| **name**        | **string**                                | Name of the [Location](#tag/locations). | [default to undefined] |
+| **deprecation** | [**DeprecationInfo**](DeprecationInfo.md) |                                         | [default to undefined] |
 
 ## Example
 
@@ -16,9 +16,9 @@ Name | Type | Description | Notes
 import { ListServerTypes200ResponseServerTypesInnerLocationsInner } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListServerTypes200ResponseServerTypesInnerLocationsInner = {
-    id,
-    name,
-    deprecation,
+  id,
+  name,
+  deprecation,
 };
 ```
 

@@ -1,11 +1,10 @@
 # ActionResponse
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**action** | [**Action**](Action.md) |  | [default to undefined]
+| Name       | Type                    | Description | Notes                  |
+| ---------- | ----------------------- | ----------- | ---------------------- |
+| **action** | [**Action**](Action.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ActionResponse } from '@cdkx-io/hetzner-sdk';
 
 const instance: ActionResponse = {
-    action,
+  action,
 };
 ```
 

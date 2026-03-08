@@ -1,12 +1,11 @@
 # ChangeLoadbalancerDnsPtrRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ip** | **string** | Public IP address for which the reverse DNS entry should be set. | [default to undefined]
-**dns_ptr** | **string** | Hostname to set as a reverse DNS PTR entry. | [default to undefined]
+| Name        | Type       | Description                                                      | Notes                  |
+| ----------- | ---------- | ---------------------------------------------------------------- | ---------------------- |
+| **ip**      | **string** | Public IP address for which the reverse DNS entry should be set. | [default to undefined] |
+| **dns_ptr** | **string** | Hostname to set as a reverse DNS PTR entry.                      | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ChangeLoadbalancerDnsPtrRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeLoadbalancerDnsPtrRequest = {
-    ip,
-    dns_ptr,
+  ip,
+  dns_ptr,
 };
 ```
 

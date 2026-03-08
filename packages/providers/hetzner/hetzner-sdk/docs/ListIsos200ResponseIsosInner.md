@@ -1,16 +1,15 @@
 # ListIsos200ResponseIsosInner
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**id** | **number** | ID of the [ISO](#tag/isos). | [default to undefined]
-**name** | **string** | Unique identifier of the ISO. Only set for public ISOs. | [default to undefined]
-**description** | **string** | Description of the ISO. | [default to undefined]
-**type** | **string** | Type of the ISO. | [default to undefined]
-**deprecation** | [**DeprecationInfo**](DeprecationInfo.md) |  | [default to undefined]
-**architecture** | **string** | CPU architecture compatible with the ISO.  Null indicates no restriction on the architecture (wildcard).  | [default to undefined]
+| Name             | Type                                      | Description                                                                                             | Notes                  |
+| ---------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **id**           | **number**                                | ID of the [ISO](#tag/isos).                                                                             | [default to undefined] |
+| **name**         | **string**                                | Unique identifier of the ISO. Only set for public ISOs.                                                 | [default to undefined] |
+| **description**  | **string**                                | Description of the ISO.                                                                                 | [default to undefined] |
+| **type**         | **string**                                | Type of the ISO.                                                                                        | [default to undefined] |
+| **deprecation**  | [**DeprecationInfo**](DeprecationInfo.md) |                                                                                                         | [default to undefined] |
+| **architecture** | **string**                                | CPU architecture compatible with the ISO. Null indicates no restriction on the architecture (wildcard). | [default to undefined] |
 
 ## Example
 
@@ -18,12 +17,12 @@ Name | Type | Description | Notes
 import { ListIsos200ResponseIsosInner } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListIsos200ResponseIsosInner = {
-    id,
-    name,
-    description,
-    type,
-    deprecation,
-    architecture,
+  id,
+  name,
+  description,
+  type,
+  deprecation,
+  architecture,
 };
 ```
 

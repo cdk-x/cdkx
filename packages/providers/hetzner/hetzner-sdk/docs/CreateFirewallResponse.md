@@ -1,12 +1,11 @@
 # CreateFirewallResponse
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**firewall** | [**FirewallResponse**](FirewallResponse.md) |  | [optional] [default to undefined]
-**actions** | [**Array&lt;Action&gt;**](Action.md) |  | [optional] [default to undefined]
+| Name         | Type                                        | Description | Notes                             |
+| ------------ | ------------------------------------------- | ----------- | --------------------------------- |
+| **firewall** | [**FirewallResponse**](FirewallResponse.md) |             | [optional] [default to undefined] |
+| **actions**  | [**Array&lt;Action&gt;**](Action.md)        |             | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { CreateFirewallResponse } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreateFirewallResponse = {
-    firewall,
-    actions,
+  firewall,
+  actions,
 };
 ```
 

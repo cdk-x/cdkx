@@ -1,11 +1,10 @@
 # ChangeProtectionRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**_delete** | **boolean** | Delete protection setting.  If true, prevents the [Network](#tag/networks) from being deleted.  | [optional] [default to undefined]
+| Name         | Type        | Description                                                                                   | Notes                             |
+| ------------ | ----------- | --------------------------------------------------------------------------------------------- | --------------------------------- |
+| **\_delete** | **boolean** | Delete protection setting. If true, prevents the [Network](#tag/networks) from being deleted. | [optional] [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ChangeProtectionRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeProtectionRequest = {
-    _delete,
+  _delete,
 };
 ```
 

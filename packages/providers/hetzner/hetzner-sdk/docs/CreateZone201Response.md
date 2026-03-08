@@ -1,12 +1,11 @@
 # CreateZone201Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**zone** | [**Zone**](Zone.md) |  | [default to undefined]
-**action** | [**Action**](Action.md) |  | [default to undefined]
+| Name       | Type                    | Description | Notes                  |
+| ---------- | ----------------------- | ----------- | ---------------------- |
+| **zone**   | [**Zone**](Zone.md)     |             | [default to undefined] |
+| **action** | [**Action**](Action.md) |             | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { CreateZone201Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreateZone201Response = {
-    zone,
-    action,
+  zone,
+  action,
 };
 ```
 

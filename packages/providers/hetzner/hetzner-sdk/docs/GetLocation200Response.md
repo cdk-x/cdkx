@@ -1,11 +1,10 @@
 # GetLocation200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**location** | [**ListFloatingIps200ResponseFloatingIpsInnerHomeLocation**](ListFloatingIps200ResponseFloatingIpsInnerHomeLocation.md) |  | [default to undefined]
+| Name         | Type                                                                                                                    | Description | Notes                  |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **location** | [**ListFloatingIps200ResponseFloatingIpsInnerHomeLocation**](ListFloatingIps200ResponseFloatingIpsInnerHomeLocation.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetLocation200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetLocation200Response = {
-    location,
+  location,
 };
 ```
 

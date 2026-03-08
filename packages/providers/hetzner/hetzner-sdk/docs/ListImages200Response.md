@@ -1,12 +1,11 @@
 # ListImages200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**images** | [**Array&lt;ListImages200ResponseImagesInner&gt;**](ListImages200ResponseImagesInner.md) |  | [default to undefined]
-**meta** | [**ListMeta**](ListMeta.md) |  | [default to undefined]
+| Name       | Type                                                                                     | Description | Notes                  |
+| ---------- | ---------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **images** | [**Array&lt;ListImages200ResponseImagesInner&gt;**](ListImages200ResponseImagesInner.md) |             | [default to undefined] |
+| **meta**   | [**ListMeta**](ListMeta.md)                                                              |             | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ListImages200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListImages200Response = {
-    images,
-    meta,
+  images,
+  meta,
 };
 ```
 

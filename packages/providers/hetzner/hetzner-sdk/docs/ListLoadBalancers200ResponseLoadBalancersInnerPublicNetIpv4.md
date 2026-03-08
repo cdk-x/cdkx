@@ -4,10 +4,10 @@ IP address (v4).
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ip** | **string** | IP address (v4) of this Load Balancer. | [optional] [default to undefined]
-**dns_ptr** | **string** | Reverse DNS PTR entry for the IPv4 address of this Load Balancer. | [optional] [default to undefined]
+| Name        | Type       | Description                                                       | Notes                             |
+| ----------- | ---------- | ----------------------------------------------------------------- | --------------------------------- |
+| **ip**      | **string** | IP address (v4) of this Load Balancer.                            | [optional] [default to undefined] |
+| **dns_ptr** | **string** | Reverse DNS PTR entry for the IPv4 address of this Load Balancer. | [optional] [default to undefined] |
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { ListLoadBalancers200ResponseLoadBalancersInnerPublicNetIpv4 } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListLoadBalancers200ResponseLoadBalancersInnerPublicNetIpv4 = {
-    ip,
-    dns_ptr,
+  ip,
+  dns_ptr,
 };
 ```
 

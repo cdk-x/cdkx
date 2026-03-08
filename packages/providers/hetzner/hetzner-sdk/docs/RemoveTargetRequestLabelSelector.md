@@ -4,9 +4,9 @@ Configuration for label selector targets, required if type is `label_selector`.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**selector** | **string** | Label selector. | [default to undefined]
+| Name         | Type       | Description     | Notes                  |
+| ------------ | ---------- | --------------- | ---------------------- |
+| **selector** | **string** | Label selector. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { RemoveTargetRequestLabelSelector } from '@cdkx-io/hetzner-sdk';
 
 const instance: RemoveTargetRequestLabelSelector = {
-    selector,
+  selector,
 };
 ```
 

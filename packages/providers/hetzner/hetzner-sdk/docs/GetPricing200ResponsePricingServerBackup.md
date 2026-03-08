@@ -4,9 +4,9 @@ Price of [Server](#tag/servers) backups.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**percentage** | **string** | Price increase of the [Server](#tag/servers) base price in percentage. | [default to undefined]
+| Name           | Type       | Description                                                            | Notes                  |
+| -------------- | ---------- | ---------------------------------------------------------------------- | ---------------------- |
+| **percentage** | **string** | Price increase of the [Server](#tag/servers) base price in percentage. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { GetPricing200ResponsePricingServerBackup } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingServerBackup = {
-    percentage,
+  percentage,
 };
 ```
 

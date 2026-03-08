@@ -1,11 +1,10 @@
 # ResizeVolumeRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**size** | **number** | New Volume size in GB (must be greater than current size). | [default to undefined]
+| Name     | Type       | Description                                                | Notes                  |
+| -------- | ---------- | ---------------------------------------------------------- | ---------------------- |
+| **size** | **number** | New Volume size in GB (must be greater than current size). | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ResizeVolumeRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ResizeVolumeRequest = {
-    size,
+  size,
 };
 ```
 

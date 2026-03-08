@@ -1,11 +1,10 @@
 # CreateServerRequestFirewallsInner
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**firewall** | **number** | ID of the Firewall. | [default to undefined]
+| Name         | Type       | Description         | Notes                  |
+| ------------ | ---------- | ------------------- | ---------------------- |
+| **firewall** | **number** | ID of the Firewall. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { CreateServerRequestFirewallsInner } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreateServerRequestFirewallsInner = {
-    firewall,
+  firewall,
 };
 ```
 

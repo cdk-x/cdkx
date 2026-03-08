@@ -1,13 +1,12 @@
 # CreateVolume201Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**volume** | [**ListVolumes200ResponseVolumesInner**](ListVolumes200ResponseVolumesInner.md) |  | [default to undefined]
-**action** | [**Action**](Action.md) |  | [default to undefined]
-**next_actions** | [**Array&lt;Action&gt;**](Action.md) |  | [default to undefined]
+| Name             | Type                                                                            | Description | Notes                  |
+| ---------------- | ------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **volume**       | [**ListVolumes200ResponseVolumesInner**](ListVolumes200ResponseVolumesInner.md) |             | [default to undefined] |
+| **action**       | [**Action**](Action.md)                                                         |             | [default to undefined] |
+| **next_actions** | [**Array&lt;Action&gt;**](Action.md)                                            |             | [default to undefined] |
 
 ## Example
 
@@ -15,9 +14,9 @@ Name | Type | Description | Notes
 import { CreateVolume201Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreateVolume201Response = {
-    volume,
-    action,
-    next_actions,
+  volume,
+  action,
+  next_actions,
 };
 ```
 

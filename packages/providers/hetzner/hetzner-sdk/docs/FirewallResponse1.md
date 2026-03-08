@@ -1,11 +1,10 @@
 # FirewallResponse1
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**firewall** | [**FirewallResponse**](FirewallResponse.md) |  | [default to undefined]
+| Name         | Type                                        | Description | Notes                  |
+| ------------ | ------------------------------------------- | ----------- | ---------------------- |
+| **firewall** | [**FirewallResponse**](FirewallResponse.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { FirewallResponse1 } from '@cdkx-io/hetzner-sdk';
 
 const instance: FirewallResponse1 = {
-    firewall,
+  firewall,
 };
 ```
 

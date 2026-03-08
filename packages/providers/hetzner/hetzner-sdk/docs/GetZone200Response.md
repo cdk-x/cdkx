@@ -1,11 +1,10 @@
 # GetZone200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**zone** | [**Zone**](Zone.md) |  | [default to undefined]
+| Name     | Type                | Description | Notes                  |
+| -------- | ------------------- | ----------- | ---------------------- |
+| **zone** | [**Zone**](Zone.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetZone200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetZone200Response = {
-    zone,
+  zone,
 };
 ```
 

@@ -1,12 +1,12 @@
 # RRSetProtection
 
-Protection of the [RRSet](#tag/zone-rrsets). 
+Protection of the [RRSet](#tag/zone-rrsets).
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**change** | **boolean** | Prevent the Resource from being changed. | [default to undefined]
+| Name       | Type        | Description                              | Notes                  |
+| ---------- | ----------- | ---------------------------------------- | ---------------------- |
+| **change** | **boolean** | Prevent the Resource from being changed. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { RRSetProtection } from '@cdkx-io/hetzner-sdk';
 
 const instance: RRSetProtection = {
-    change,
+  change,
 };
 ```
 

@@ -1,12 +1,11 @@
 # CreateCertificateResponse
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**certificate** | [**Certificate**](Certificate.md) |  | [default to undefined]
-**action** | [**ActionNullable**](ActionNullable.md) |  | [optional] [default to undefined]
+| Name            | Type                                    | Description | Notes                             |
+| --------------- | --------------------------------------- | ----------- | --------------------------------- |
+| **certificate** | [**Certificate**](Certificate.md)       |             | [default to undefined]            |
+| **action**      | [**ActionNullable**](ActionNullable.md) |             | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { CreateCertificateResponse } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreateCertificateResponse = {
-    certificate,
-    action,
+  certificate,
+  action,
 };
 ```
 

@@ -1,11 +1,10 @@
 # DetachFromNetworkRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**network** | **number** | ID of an existing network to detach the Server from. | [default to undefined]
+| Name        | Type       | Description                                          | Notes                  |
+| ----------- | ---------- | ---------------------------------------------------- | ---------------------- |
+| **network** | **number** | ID of an existing network to detach the Server from. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { DetachFromNetworkRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: DetachFromNetworkRequest = {
-    network,
+  network,
 };
 ```
 

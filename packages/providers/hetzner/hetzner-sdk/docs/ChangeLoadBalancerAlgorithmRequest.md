@@ -1,11 +1,10 @@
 # ChangeLoadBalancerAlgorithmRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**type** | **string** | Algorithm of the Load Balancer. | [default to undefined]
+| Name     | Type       | Description                     | Notes                  |
+| -------- | ---------- | ------------------------------- | ---------------------- |
+| **type** | **string** | Algorithm of the Load Balancer. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ChangeLoadBalancerAlgorithmRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeLoadBalancerAlgorithmRequest = {
-    type,
+  type,
 };
 ```
 

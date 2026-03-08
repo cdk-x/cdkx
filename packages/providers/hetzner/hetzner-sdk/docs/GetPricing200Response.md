@@ -1,11 +1,10 @@
 # GetPricing200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**pricing** | [**GetPricing200ResponsePricing**](GetPricing200ResponsePricing.md) |  | [default to undefined]
+| Name        | Type                                                                | Description | Notes                  |
+| ----------- | ------------------------------------------------------------------- | ----------- | ---------------------- |
+| **pricing** | [**GetPricing200ResponsePricing**](GetPricing200ResponsePricing.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetPricing200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetPricing200Response = {
-    pricing,
+  pricing,
 };
 ```
 

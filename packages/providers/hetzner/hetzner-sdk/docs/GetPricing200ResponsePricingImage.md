@@ -4,9 +4,9 @@ Price of [Images](#tag/images).
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**price_per_gb_month** | [**GetPricing200ResponsePricingImagePricePerGbMonth**](GetPricing200ResponsePricingImagePricePerGbMonth.md) |  | [default to undefined]
+| Name                   | Type                                                                                                        | Description | Notes                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **price_per_gb_month** | [**GetPricing200ResponsePricingImagePricePerGbMonth**](GetPricing200ResponsePricingImagePricePerGbMonth.md) |             | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { GetPricing200ResponsePricingImage } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingImage = {
-    price_per_gb_month,
+  price_per_gb_month,
 };
 ```
 

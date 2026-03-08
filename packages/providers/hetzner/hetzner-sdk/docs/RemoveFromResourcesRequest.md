@@ -1,11 +1,10 @@
 # RemoveFromResourcesRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**remove_from** | [**Array&lt;FirewallResource&gt;**](FirewallResource.md) | Resources to remove the [Firewall](#tag/firewalls) from. | [default to undefined]
+| Name            | Type                                                     | Description                                              | Notes                  |
+| --------------- | -------------------------------------------------------- | -------------------------------------------------------- | ---------------------- |
+| **remove_from** | [**Array&lt;FirewallResource&gt;**](FirewallResource.md) | Resources to remove the [Firewall](#tag/firewalls) from. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { RemoveFromResourcesRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: RemoveFromResourcesRequest = {
-    remove_from,
+  remove_from,
 };
 ```
 

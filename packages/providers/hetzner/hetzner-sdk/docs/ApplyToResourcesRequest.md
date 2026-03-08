@@ -1,11 +1,10 @@
 # ApplyToResourcesRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**apply_to** | [**Array&lt;FirewallResource&gt;**](FirewallResource.md) | Resources to apply the [Firewall](#tag/firewalls) to.  Extends existing resources.  | [default to undefined]
+| Name         | Type                                                     | Description                                                                       | Notes                  |
+| ------------ | -------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------- |
+| **apply_to** | [**Array&lt;FirewallResource&gt;**](FirewallResource.md) | Resources to apply the [Firewall](#tag/firewalls) to. Extends existing resources. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ApplyToResourcesRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ApplyToResourcesRequest = {
-    apply_to,
+  apply_to,
 };
 ```
 

@@ -1,12 +1,11 @@
 # AttachVolumeRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**server** | **number** | ID of the Server the Volume will be attached to. | [default to undefined]
-**automount** | **boolean** | Auto-mount the Volume after attaching it. | [optional] [default to undefined]
+| Name          | Type        | Description                                      | Notes                             |
+| ------------- | ----------- | ------------------------------------------------ | --------------------------------- |
+| **server**    | **number**  | ID of the Server the Volume will be attached to. | [default to undefined]            |
+| **automount** | **boolean** | Auto-mount the Volume after attaching it.        | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { AttachVolumeRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: AttachVolumeRequest = {
-    server,
-    automount,
+  server,
+  automount,
 };
 ```
 

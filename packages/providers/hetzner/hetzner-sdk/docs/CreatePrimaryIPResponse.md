@@ -1,12 +1,11 @@
 # CreatePrimaryIPResponse
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**primary_ip** | [**PrimaryIP**](PrimaryIP.md) |  | [default to undefined]
-**action** | [**Action**](Action.md) |  | [optional] [default to undefined]
+| Name           | Type                          | Description | Notes                             |
+| -------------- | ----------------------------- | ----------- | --------------------------------- |
+| **primary_ip** | [**PrimaryIP**](PrimaryIP.md) |             | [default to undefined]            |
+| **action**     | [**Action**](Action.md)       |             | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { CreatePrimaryIPResponse } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreatePrimaryIPResponse = {
-    primary_ip,
-    action,
+  primary_ip,
+  action,
 };
 ```
 

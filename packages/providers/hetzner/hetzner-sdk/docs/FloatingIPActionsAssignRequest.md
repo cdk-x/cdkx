@@ -1,11 +1,10 @@
 # FloatingIPActionsAssignRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**server** | **number** | [Server](#tag/servers) the [Floating IP](#tag/floating-ips) is assigned to.  &#x60;null&#x60; if not assigned.  | [default to undefined]
+| Name       | Type       | Description                                                                                                   | Notes                  |
+| ---------- | ---------- | ------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **server** | **number** | [Server](#tag/servers) the [Floating IP](#tag/floating-ips) is assigned to. &#x60;null&#x60; if not assigned. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { FloatingIPActionsAssignRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: FloatingIPActionsAssignRequest = {
-    server,
+  server,
 };
 ```
 

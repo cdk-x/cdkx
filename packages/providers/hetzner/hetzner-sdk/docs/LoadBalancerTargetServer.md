@@ -4,9 +4,9 @@ Server where the traffic should be routed to. Only present for target type \"ser
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**id** | **number** | ID of the Server. | [default to undefined]
+| Name   | Type       | Description       | Notes                  |
+| ------ | ---------- | ----------------- | ---------------------- |
+| **id** | **number** | ID of the Server. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { LoadBalancerTargetServer } from '@cdkx-io/hetzner-sdk';
 
 const instance: LoadBalancerTargetServer = {
-    id,
+  id,
 };
 ```
 

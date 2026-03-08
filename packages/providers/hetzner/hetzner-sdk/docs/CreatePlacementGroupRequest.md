@@ -1,13 +1,12 @@
 # CreatePlacementGroupRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**name** | **string** | Name of the Placement Group. | [default to undefined]
-**labels** | **{ [key: string]: string; }** | User-defined labels (&#x60;key/value&#x60; pairs) for the Resource. For more information, see \&quot;[Labels](#description/labels)\&quot;.  | [optional] [default to undefined]
-**type** | **string** | Define the Placement Group Type. | [default to undefined]
+| Name       | Type                           | Description                                                                                                                                | Notes                             |
+| ---------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| **name**   | **string**                     | Name of the Placement Group.                                                                                                               | [default to undefined]            |
+| **labels** | **{ [key: string]: string; }** | User-defined labels (&#x60;key/value&#x60; pairs) for the Resource. For more information, see \&quot;[Labels](#description/labels)\&quot;. | [optional] [default to undefined] |
+| **type**   | **string**                     | Define the Placement Group Type.                                                                                                           | [default to undefined]            |
 
 ## Example
 
@@ -15,9 +14,9 @@ Name | Type | Description | Notes
 import { CreatePlacementGroupRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreatePlacementGroupRequest = {
-    name,
-    labels,
-    type,
+  name,
+  labels,
+  type,
 };
 ```
 

@@ -1,11 +1,10 @@
 # ChangeZonePrimaryNameserversRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**primary_nameservers** | [**Array&lt;PrimaryZoneAllOfPrimaryNameserversInner&gt;**](PrimaryZoneAllOfPrimaryNameserversInner.md) | Primary nameservers of the [Zone](#tag/zones). | [default to undefined]
+| Name                    | Type                                                                                                   | Description                                    | Notes                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------- | ---------------------- |
+| **primary_nameservers** | [**Array&lt;PrimaryZoneAllOfPrimaryNameserversInner&gt;**](PrimaryZoneAllOfPrimaryNameserversInner.md) | Primary nameservers of the [Zone](#tag/zones). | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ChangeZonePrimaryNameserversRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeZonePrimaryNameserversRequest = {
-    primary_nameservers,
+  primary_nameservers,
 };
 ```
 

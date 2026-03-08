@@ -1,12 +1,11 @@
 # EnableServerRescueRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**type** | **string** | Type of rescue system to boot. | [optional] [default to TypeEnum_Linux64]
-**ssh_keys** | **Array&lt;number&gt;** | Array of SSH key IDs which should be injected into the rescue system. | [optional] [default to undefined]
+| Name         | Type                    | Description                                                           | Notes                                    |
+| ------------ | ----------------------- | --------------------------------------------------------------------- | ---------------------------------------- |
+| **type**     | **string**              | Type of rescue system to boot.                                        | [optional] [default to TypeEnum_Linux64] |
+| **ssh_keys** | **Array&lt;number&gt;** | Array of SSH key IDs which should be injected into the rescue system. | [optional] [default to undefined]        |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { EnableServerRescueRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: EnableServerRescueRequest = {
-    type,
-    ssh_keys,
+  type,
+  ssh_keys,
 };
 ```
 

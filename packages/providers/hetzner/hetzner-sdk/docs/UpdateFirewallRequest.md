@@ -1,12 +1,11 @@
 # UpdateFirewallRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**name** | **string** | Name of the [Firewall](#tag/firewalls).  Limited to a maximum of 128 characters.  Must be unique per Project.  | [optional] [default to undefined]
-**labels** | **{ [key: string]: string; }** | User-defined labels (&#x60;key/value&#x60; pairs) for the Resource.  Note that the set of [Labels](#description/labels) provided in the request will overwrite the existing one.  For more information, see \&quot;[Labels](#description/labels)\&quot;.  | [optional] [default to undefined]
+| Name       | Type                           | Description                                                                                                                                                                                                                                            | Notes                             |
+| ---------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| **name**   | **string**                     | Name of the [Firewall](#tag/firewalls). Limited to a maximum of 128 characters. Must be unique per Project.                                                                                                                                            | [optional] [default to undefined] |
+| **labels** | **{ [key: string]: string; }** | User-defined labels (&#x60;key/value&#x60; pairs) for the Resource. Note that the set of [Labels](#description/labels) provided in the request will overwrite the existing one. For more information, see \&quot;[Labels](#description/labels)\&quot;. | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { UpdateFirewallRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: UpdateFirewallRequest = {
-    name,
-    labels,
+  name,
+  labels,
 };
 ```
 

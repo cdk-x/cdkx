@@ -1,13 +1,12 @@
 # GetActions4xxResponseError
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**code** | **string** | Error code for machines. | [default to undefined]
-**message** | **string** | Error message for humans. | [default to undefined]
-**details** | **object** | Details about the error. | [optional] [default to undefined]
+| Name        | Type       | Description               | Notes                             |
+| ----------- | ---------- | ------------------------- | --------------------------------- |
+| **code**    | **string** | Error code for machines.  | [default to undefined]            |
+| **message** | **string** | Error message for humans. | [default to undefined]            |
+| **details** | **object** | Details about the error.  | [optional] [default to undefined] |
 
 ## Example
 
@@ -15,9 +14,9 @@ Name | Type | Description | Notes
 import { GetActions4xxResponseError } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetActions4xxResponseError = {
-    code,
-    message,
-    details,
+  code,
+  message,
+  details,
 };
 ```
 

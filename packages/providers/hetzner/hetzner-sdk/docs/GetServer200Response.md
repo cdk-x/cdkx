@@ -1,11 +1,10 @@
 # GetServer200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**server** | [**ListServers200ResponseServersInner**](ListServers200ResponseServersInner.md) |  | [optional] [default to undefined]
+| Name       | Type                                                                            | Description | Notes                             |
+| ---------- | ------------------------------------------------------------------------------- | ----------- | --------------------------------- |
+| **server** | [**ListServers200ResponseServersInner**](ListServers200ResponseServersInner.md) |             | [optional] [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetServer200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetServer200Response = {
-    server,
+  server,
 };
 ```
 

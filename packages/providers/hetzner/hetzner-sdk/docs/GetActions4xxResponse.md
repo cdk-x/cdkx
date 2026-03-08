@@ -1,11 +1,10 @@
 # GetActions4xxResponse
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**error** | [**GetActions4xxResponseError**](GetActions4xxResponseError.md) |  | [default to undefined]
+| Name      | Type                                                            | Description | Notes                  |
+| --------- | --------------------------------------------------------------- | ----------- | ---------------------- |
+| **error** | [**GetActions4xxResponseError**](GetActions4xxResponseError.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetActions4xxResponse } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetActions4xxResponse = {
-    error,
+  error,
 };
 ```
 

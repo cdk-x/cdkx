@@ -1,12 +1,11 @@
 # CreateServerImage201Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**image** | [**ListImages200ResponseImagesInner**](ListImages200ResponseImagesInner.md) |  | [optional] [default to undefined]
-**action** | [**Action**](Action.md) |  | [optional] [default to undefined]
+| Name       | Type                                                                        | Description | Notes                             |
+| ---------- | --------------------------------------------------------------------------- | ----------- | --------------------------------- |
+| **image**  | [**ListImages200ResponseImagesInner**](ListImages200ResponseImagesInner.md) |             | [optional] [default to undefined] |
+| **action** | [**Action**](Action.md)                                                     |             | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { CreateServerImage201Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreateServerImage201Response = {
-    image,
-    action,
+  image,
+  action,
 };
 ```
 

@@ -1,12 +1,11 @@
 # FirewallResponseAppliedToInnerAppliedToResourcesInner
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**type** | **string** | Type of resource. | [optional] [default to undefined]
-**server** | [**FirewallResponseAppliedToInnerServer**](FirewallResponseAppliedToInnerServer.md) |  | [optional] [default to undefined]
+| Name       | Type                                                                                | Description       | Notes                             |
+| ---------- | ----------------------------------------------------------------------------------- | ----------------- | --------------------------------- |
+| **type**   | **string**                                                                          | Type of resource. | [optional] [default to undefined] |
+| **server** | [**FirewallResponseAppliedToInnerServer**](FirewallResponseAppliedToInnerServer.md) |                   | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { FirewallResponseAppliedToInnerAppliedToResourcesInner } from '@cdkx-io/hetzner-sdk';
 
 const instance: FirewallResponseAppliedToInnerAppliedToResourcesInner = {
-    type,
-    server,
+  type,
+  server,
 };
 ```
 

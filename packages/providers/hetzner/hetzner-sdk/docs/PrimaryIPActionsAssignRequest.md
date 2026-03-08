@@ -1,12 +1,11 @@
 # PrimaryIPActionsAssignRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**assignee_type** | **string** | Type of resource assigning the Primary IP to. | [default to undefined]
-**assignee_id** | **number** | ID of a resource of type &#x60;assignee_type&#x60;. | [default to undefined]
+| Name              | Type       | Description                                         | Notes                  |
+| ----------------- | ---------- | --------------------------------------------------- | ---------------------- |
+| **assignee_type** | **string** | Type of resource assigning the Primary IP to.       | [default to undefined] |
+| **assignee_id**   | **number** | ID of a resource of type &#x60;assignee_type&#x60;. | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { PrimaryIPActionsAssignRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: PrimaryIPActionsAssignRequest = {
-    assignee_type,
-    assignee_id,
+  assignee_type,
+  assignee_id,
 };
 ```
 

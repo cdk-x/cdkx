@@ -1,11 +1,10 @@
 # SetZoneRrsetRecordsRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**records** | [**Array&lt;ModelRecord&gt;**](ModelRecord.md) | Records to set in the [RRSet](#tag/zone-rrsets).  Must not be empty and must only contain distinct record values.  | [default to undefined]
+| Name        | Type                                           | Description                                                                                                      | Notes                  |
+| ----------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **records** | [**Array&lt;ModelRecord&gt;**](ModelRecord.md) | Records to set in the [RRSet](#tag/zone-rrsets). Must not be empty and must only contain distinct record values. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { SetZoneRrsetRecordsRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: SetZoneRrsetRecordsRequest = {
-    records,
+  records,
 };
 ```
 

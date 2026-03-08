@@ -1,12 +1,11 @@
 # CreateLoadBalancer201Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**load_balancer** | [**ListLoadBalancers200ResponseLoadBalancersInner**](ListLoadBalancers200ResponseLoadBalancersInner.md) |  | [default to undefined]
-**action** | [**Action**](Action.md) |  | [default to undefined]
+| Name              | Type                                                                                                    | Description | Notes                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **load_balancer** | [**ListLoadBalancers200ResponseLoadBalancersInner**](ListLoadBalancers200ResponseLoadBalancersInner.md) |             | [default to undefined] |
+| **action**        | [**Action**](Action.md)                                                                                 |             | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { CreateLoadBalancer201Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreateLoadBalancer201Response = {
-    load_balancer,
-    action,
+  load_balancer,
+  action,
 };
 ```
 

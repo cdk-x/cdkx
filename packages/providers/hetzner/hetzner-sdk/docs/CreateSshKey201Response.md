@@ -1,11 +1,10 @@
 # CreateSshKey201Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ssh_key** | [**ListSshKeys200ResponseSshKeysInner**](ListSshKeys200ResponseSshKeysInner.md) |  | [default to undefined]
+| Name        | Type                                                                            | Description | Notes                  |
+| ----------- | ------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **ssh_key** | [**ListSshKeys200ResponseSshKeysInner**](ListSshKeys200ResponseSshKeysInner.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { CreateSshKey201Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreateSshKey201Response = {
-    ssh_key,
+  ssh_key,
 };
 ```
 

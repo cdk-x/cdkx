@@ -1,11 +1,10 @@
 # GetZoneRrset200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**rrset** | [**RRSet**](RRSet.md) |  | [default to undefined]
+| Name      | Type                  | Description | Notes                  |
+| --------- | --------------------- | ----------- | ---------------------- |
+| **rrset** | [**RRSet**](RRSet.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetZoneRrset200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetZoneRrset200Response = {
-    rrset,
+  rrset,
 };
 ```
 

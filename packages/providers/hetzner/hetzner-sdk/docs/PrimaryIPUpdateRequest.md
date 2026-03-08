@@ -1,13 +1,12 @@
 # PrimaryIPUpdateRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**name** | **string** | Name of the Resource. Must be unique per Project. | [optional] [default to undefined]
-**labels** | **{ [key: string]: string; }** | User-defined labels (&#x60;key/value&#x60; pairs) for the Resource.  Note that the set of [Labels](#description/labels) provided in the request will overwrite the existing one.  For more information, see \&quot;[Labels](#description/labels)\&quot;.  | [optional] [default to undefined]
-**auto_delete** | **boolean** | Auto deletion state.  If enabled the [Primary IP](#tag/primary-ips) will be deleted once the assigned resource gets deleted.  | [optional] [default to false]
+| Name            | Type                           | Description                                                                                                                                                                                                                                            | Notes                             |
+| --------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| **name**        | **string**                     | Name of the Resource. Must be unique per Project.                                                                                                                                                                                                      | [optional] [default to undefined] |
+| **labels**      | **{ [key: string]: string; }** | User-defined labels (&#x60;key/value&#x60; pairs) for the Resource. Note that the set of [Labels](#description/labels) provided in the request will overwrite the existing one. For more information, see \&quot;[Labels](#description/labels)\&quot;. | [optional] [default to undefined] |
+| **auto_delete** | **boolean**                    | Auto deletion state. If enabled the [Primary IP](#tag/primary-ips) will be deleted once the assigned resource gets deleted.                                                                                                                            | [optional] [default to false]     |
 
 ## Example
 
@@ -15,9 +14,9 @@ Name | Type | Description | Notes
 import { PrimaryIPUpdateRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: PrimaryIPUpdateRequest = {
-    name,
-    labels,
-    auto_delete,
+  name,
+  labels,
+  auto_delete,
 };
 ```
 

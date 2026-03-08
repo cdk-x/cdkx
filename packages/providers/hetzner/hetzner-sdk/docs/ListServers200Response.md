@@ -1,12 +1,11 @@
 # ListServers200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**servers** | [**Array&lt;ListServers200ResponseServersInner&gt;**](ListServers200ResponseServersInner.md) |  | [default to undefined]
-**meta** | [**ListMeta**](ListMeta.md) |  | [default to undefined]
+| Name        | Type                                                                                         | Description | Notes                  |
+| ----------- | -------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **servers** | [**Array&lt;ListServers200ResponseServersInner&gt;**](ListServers200ResponseServersInner.md) |             | [default to undefined] |
+| **meta**    | [**ListMeta**](ListMeta.md)                                                                  |             | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ListServers200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListServers200Response = {
-    servers,
-    meta,
+  servers,
+  meta,
 };
 ```
 

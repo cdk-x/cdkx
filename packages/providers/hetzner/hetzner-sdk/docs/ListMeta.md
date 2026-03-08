@@ -1,11 +1,10 @@
 # ListMeta
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**pagination** | [**ListMetaPagination**](ListMetaPagination.md) |  | [default to undefined]
+| Name           | Type                                            | Description | Notes                  |
+| -------------- | ----------------------------------------------- | ----------- | ---------------------- |
+| **pagination** | [**ListMetaPagination**](ListMetaPagination.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ListMeta } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListMeta = {
-    pagination,
+  pagination,
 };
 ```
 

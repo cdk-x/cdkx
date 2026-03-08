@@ -1,11 +1,10 @@
 # SetRulesRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**rules** | [**Array&lt;Rule&gt;**](Rule.md) | Array of rules.  Rules are limited to 50 entries per [Firewall](#tag/firewalls) and [500 effective rules](https://docs.hetzner.com/cloud/firewalls/overview#limits).  Existing rules will be replaced.  | [default to undefined]
+| Name      | Type                             | Description                                                                                                                                                                                          | Notes                  |
+| --------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **rules** | [**Array&lt;Rule&gt;**](Rule.md) | Array of rules. Rules are limited to 50 entries per [Firewall](#tag/firewalls) and [500 effective rules](https://docs.hetzner.com/cloud/firewalls/overview#limits). Existing rules will be replaced. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { SetRulesRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: SetRulesRequest = {
-    rules,
+  rules,
 };
 ```
 

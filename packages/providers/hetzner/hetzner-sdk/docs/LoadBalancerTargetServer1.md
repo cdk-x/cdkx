@@ -4,9 +4,9 @@ Configuration for type Server, only valid and required if type is `server`.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**id** | **number** | ID of the Server. | [default to undefined]
+| Name   | Type       | Description       | Notes                  |
+| ------ | ---------- | ----------------- | ---------------------- |
+| **id** | **number** | ID of the Server. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { LoadBalancerTargetServer1 } from '@cdkx-io/hetzner-sdk';
 
 const instance: LoadBalancerTargetServer1 = {
-    id,
+  id,
 };
 ```
 
