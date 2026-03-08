@@ -15,6 +15,7 @@
       "options": {
         "commands": [
           "nx release version prerelease --preid=alpha --git-commit=false --git-tag=false --git-push=false",
+          "nx run-many -t build",
           "nx run-many -t publish-local"
         ]
       }
