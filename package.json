@@ -51,6 +51,7 @@
     "packages/*",
     "packages/providers/*",
     "packages/tools/*",
-    "examples/*"
+    "examples/*",
+    "packages/providers/hetzner/hetzner-sdk"
   ]
 }

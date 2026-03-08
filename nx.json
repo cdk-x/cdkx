@@ -70,7 +70,8 @@
           "@cdkx-io/engine",
           "@cdkx-io/testing",
           "@cdkx-io/logger",
-          "@cdkx-io/hetzner"
+          "@cdkx-io/hetzner",
+          "@cdkx-io/hetzner-sdk"
         ],
         "projectsRelationship": "fixed",
         "releaseTag": {
