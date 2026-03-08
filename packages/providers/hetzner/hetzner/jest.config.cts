@@ -10,7 +10,7 @@ swcJestConfig.swcrc = false;
 
 module.exports = {
   displayName: '@cdkx-io/hetzner',
-  preset: '../../../jest.preset.js',
+  preset: '../../../../jest.preset.js',
   testEnvironment: 'node',
   transform: {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],

@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerNetworkAttachment",
+  "description": "Attaches a Server to a Network via the attach_to_network action.",
+  "typeName": "Hetzner::Compute::NetworkAttachment",
+  "domain": "Compute",
+  "additionalProperties": false,
+  "properties": {
+    "serverId": {
+      "type": "integer",
+      "description": "ID of the Server to attach to the Network."
+    },
+    "networkId": {
+      "type": "integer",
+      "description": "ID of the Network to attach the Server to."
+    },
+    "ip": {
+      "type": "string",
+      "description": "IP to assign to the Server. If not provided, an IP will be auto-assigned."
+    },
+    "aliasIps": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Additional IPs to assign to the Server."
+    },
+    "ipRange": {
+      "type": "string",
+      "description": "Subnet CIDR to auto-assign IP from. Must be a subnet of the Network."
+    }
+  },
+  "required": ["serverId", "networkId"],
+  "createOnlyProperties": [
+    "/properties/serverId",
+    "/properties/networkId",
+    "/properties/ip",
+    "/properties/aliasIps",
+    "/properties/ipRange"
+  ],
+  "primaryIdentifier": ["/properties/serverId", "/properties/networkId"],
+  "api": {
+    "createPath": "/servers/{serverId}/actions/attach_to_network",
+    "deletePath": "/servers/{serverId}/actions/detach_from_network",
+    "responseBodyKey": null,
+    "compositeIdProps": ["serverId", "networkId"]
+  }
+}
