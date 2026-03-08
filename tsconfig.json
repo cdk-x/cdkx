@@ -13,9 +13,6 @@
       "path": "./packages/testing"
     },
     {
-      "path": "./packages/providers/hetzner"
-    },
-    {
       "path": "./packages/tools/spec-to-cdkx"
     },
     {
@@ -25,7 +22,10 @@
       "path": "./packages/logger"
     },
     {
-      "path": "./packages/providers/hetzner/hetzner-sdk"
+      "path": "./packages/providers/hetzner/hetzner-runtime"
+    },
+    {
+      "path": "./packages/providers/hetzner/hetzner"
     }
   ]
 }
