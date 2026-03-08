@@ -67,17 +67,10 @@
     },
     "groups": {
       "core": {
-        "projects": [
-          "@cdkx-io/core",
-          "@cdkx-io/engine",
-          "@cdkx-io/testing",
-          "@cdkx-io/logger",
-          "@cdkx-io/hetzner",
-          "@cdkx-io/hetzner-sdk"
-        ],
+        "projects": ["@cdkx-io/core", "@cdkx-io/testing", "@cdkx-io/logger"],
         "projectsRelationship": "fixed",
         "releaseTag": {
-          "pattern": "core-v{version}"
+          "pattern": "{projectName}-v{version}"
         },
         "version": {
           "updateDependents": "never"
@@ -92,7 +85,7 @@
         "projects": ["@cdkx-io/cli"],
         "projectsRelationship": "fixed",
         "releaseTag": {
-          "pattern": "cli-v{version}"
+          "pattern": "{projectName}-v{version}"
         },
         "version": {
           "updateDependents": "never"
@@ -103,11 +96,22 @@
           }
         }
       },
+      "providers": {
+        "projects": ["@cdkx-io/hetzner", "@cdkx-io/hetzner-sdk"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "{projectName}-v{version}" },
+        "version": { "updateDependents": "auto" }
+      },
+      "engine": {
+        "projects": ["@cdkx-io/engine"],
+        "projectsRelationship": "independent",
+        "version": { "updateDependents": "never" }
+      },
       "tools": {
         "projects": ["@cdkx-io/spec-to-cdkx"],
-        "projectsRelationship": "fixed",
+        "projectsRelationship": "independent",
         "releaseTag": {
-          "pattern": "tools-v{version}"
+          "pattern": "{projectName}-v{version}"
         },
         "version": {
           "updateDependents": "never"
