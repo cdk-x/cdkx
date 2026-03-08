@@ -49,9 +49,7 @@
   },
   "workspaces": [
     "packages/*",
-    "packages/providers/*",
     "packages/tools/*",
-    "examples/*",
-    "packages/providers/hetzner/hetzner-sdk"
+    "packages/providers/hetzner/*"
   ]
 }
