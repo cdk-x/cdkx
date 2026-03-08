@@ -94,6 +94,7 @@ function asRecord(v: unknown): Record<string, unknown> {
  * Auto-generated from JSON Schema files.
  */
 export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
+
   // ─── Security: Certificate ─────────────────────────────────────────
   [HetznerResourceType.Security.Certificate]: {
     createPath: '/certificates',
@@ -105,12 +106,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
     extractOutputs: (response) => ({
       certificateId: asRecord(asRecord(response)['certificate'])['id'],
     }),
-    createOnlyProps: new Set([
-      'type',
-      'certificate',
-      'privateKey',
-      'domainNames',
-    ]),
+    createOnlyProps: new Set(['type', 'certificate', 'privateKey', 'domainNames']),
   },
 
   // ─── Security: Firewall ────────────────────────────────────────────
@@ -152,16 +148,18 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
     extractOutputs: (response) => ({
       loadBalancerId: asRecord(asRecord(response)['load_balancer'])['id'],
     }),
-    createOnlyProps: new Set([
-      'loadBalancerType',
-      'algorithm',
-      'services',
-      'targets',
-      'publicInterface',
-      'networkId',
-      'networkZone',
-      'location',
-    ]),
+    createOnlyProps: new Set(['loadBalancerType', 'algorithm', 'services', 'targets', 'publicInterface', 'networkId', 'networkZone', 'location']),
+  },
+
+  // ─── Compute: NetworkAttachment ────────────────────────────────────
+  [HetznerResourceType.Compute.NetworkAttachment]: {
+    createPath: '/servers/{serverId}/actions/attach_to_network',
+    deletePath: '/servers/{serverId}/actions/detach_from_network',
+    extractPhysicalId: (_response, properties) => String(properties['serverId'] ?? '') + ':' + String(properties['networkId'] ?? ''),
+    extractOutputs: () => ({}),
+    createOnlyProps: new Set(['serverId', 'networkId', 'ip', 'aliasIps', 'ipRange']),
+    isActionResource: true,
+    parentIdProp: 'serverId',
   },
 
   // ─── Networking: Network ───────────────────────────────────────────
@@ -211,10 +209,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
   [HetznerResourceType.Networking.Route]: {
     createPath: '/networks/{networkId}/actions/add_route',
     deletePath: '/networks/{networkId}/actions/delete_route',
-    extractPhysicalId: (_response, properties) =>
-      String(properties['networkId'] ?? '') +
-      ':' +
-      String(properties['destination'] ?? ''),
+    extractPhysicalId: (_response, properties) => String(properties['networkId'] ?? '') + ':' + String(properties['destination'] ?? ''),
     extractOutputs: () => ({}),
     createOnlyProps: new Set(['networkId', 'destination', 'gateway']),
     isActionResource: true,
@@ -232,21 +227,7 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
     extractOutputs: (response) => ({
       serverId: asRecord(asRecord(response)['server'])['id'],
     }),
-    createOnlyProps: new Set([
-      'location',
-      'datacenter',
-      'serverType',
-      'startAfterCreate',
-      'image',
-      'placementGroup',
-      'sshKeys',
-      'volumes',
-      'networks',
-      'firewalls',
-      'userData',
-      'automount',
-      'publicNet',
-    ]),
+    createOnlyProps: new Set(['location', 'datacenter', 'serverType', 'startAfterCreate', 'image', 'placementGroup', 'sshKeys', 'volumes', 'networks', 'firewalls', 'userData', 'automount', 'publicNet']),
   },
 
   // ─── Security: SshKey ──────────────────────────────────────────────
@@ -265,18 +246,9 @@ export const RESOURCE_REGISTRY: Record<string, ResourceConfig> = {
   [HetznerResourceType.Networking.Subnet]: {
     createPath: '/networks/{networkId}/actions/add_subnet',
     deletePath: '/networks/{networkId}/actions/delete_subnet',
-    extractPhysicalId: (_response, properties) =>
-      String(properties['networkId'] ?? '') +
-      ':' +
-      String(properties['ipRange'] ?? ''),
+    extractPhysicalId: (_response, properties) => String(properties['networkId'] ?? '') + ':' + String(properties['ipRange'] ?? ''),
     extractOutputs: () => ({}),
-    createOnlyProps: new Set([
-      'networkId',
-      'type',
-      'networkZone',
-      'ipRange',
-      'vswitchId',
-    ]),
+    createOnlyProps: new Set(['networkId', 'type', 'networkZone', 'ipRange', 'vswitchId']),
     isActionResource: true,
     parentIdProp: 'networkId',
   },

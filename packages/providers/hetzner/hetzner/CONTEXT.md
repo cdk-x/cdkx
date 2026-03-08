@@ -3,7 +3,7 @@
 This file captures the full design, architecture, and implementation details of
 `@cdkx-io/hetzner` for future AI-assisted sessions. It is auto-loaded by OpenCode.
 
-> **Maintenance rule:** whenever code in `packages/providers/hetzner` is
+> **Maintenance rule:** whenever code in `packages/providers/hetzner/hetzner` is
 > modified — classes, interfaces, file structure, conventions, or design
 > decisions — this file must be updated in the same change to stay accurate.
 
@@ -40,7 +40,7 @@ spec-to-cdkx generate \
   --registry-output src/lib/generated/resource-registry.generated.ts
 ```
 
-from the project root (`packages/providers/hetzner/`). Reads schemas from
+from the project root (`packages/providers/hetzner/hetzner/`). Reads schemas from
 `schemas/v1/` and writes:
 
 - `src/lib/generated/resources.generated.ts` — L1 constructs (interfaces, enums, classes)
@@ -362,7 +362,7 @@ test counts and coverage summary. Total adapter tests: **47** (12 + 7 + 28).
 Exercises a realistic Hetzner network topology: 1 `HtzNetwork` + 2 `HtzSubnet`s +
 2 `HtzRoute`s + 1 `HtzLoadBalancer` = **6 resources** in a single stack.
 
-**Permanent output:** `packages/providers/hetzner/cdkx.out/` — files are written
+**Permanent output:** `packages/providers/hetzner/hetzner/cdkx.out/` — files are written
 by the test and **not cleaned up**, so they can be inspected after the test run.
 
 **Run:** `yarn nx test @cdkx-io/hetzner`
@@ -411,7 +411,7 @@ addition specific to this package:
 ## File map
 
 ```
-packages/providers/hetzner/
+packages/providers/hetzner/hetzner/
 ├── package.json                        name: @cdkx-io/hetzner (no "type" field — CommonJS)
 │                                       dependencies: @cdkx-io/core, constructs, tslib
 │                                       peerDependencies: @cdkx-io/engine
@@ -470,7 +470,7 @@ packages/providers/hetzner/
 Also written by tests (gitignored):
 
 ```
-packages/providers/hetzner/cdkx.out/
+packages/providers/hetzner/hetzner/cdkx.out/
 ├── manifest.json                       cloud assembly manifest
 └── HetznerNetworkStack.json            synthesized stack template
 ```

@@ -74,13 +74,18 @@ export class HetznerAdapter implements ProviderAdapter {
     const config = this.requireConfig(resource.type);
 
     const path = config.isActionResource
-      ? this.substituteNetworkId(config.createPath, resource.properties)
+      ? this.substitutePathParam(
+          config.createPath,
+          resource.properties,
+          config.parentIdProp!,
+        )
       : config.createPath;
 
     // For action resources the body is the full properties minus the parent ID.
+    // Apply createBodyMapping if provided (e.g., networkId -> network).
     // For regular resources the body is the full properties object.
     const body = config.isActionResource
-      ? this.omitParentId(resource.properties, config.parentIdProp)
+      ? this.buildActionBody(resource.properties, config.parentIdProp)
       : resource.properties;
 
     const response = await this.client.post<WithAction>(
@@ -190,7 +195,11 @@ export class HetznerAdapter implements ProviderAdapter {
     const config = this.requireConfig(resource.type);
 
     if (config.isActionResource) {
-      await this.deleteActionResource(resource, config.deletePath as string);
+      await this.deleteActionResource(
+        resource,
+        config.deletePath as string,
+        config.parentIdProp!,
+      );
       return;
     }
 
@@ -281,23 +290,24 @@ export class HetznerAdapter implements ProviderAdapter {
     return resource.physicalId;
   }
 
-  private substituteNetworkId(
+  private substitutePathParam(
     template: string,
     properties: Record<string, unknown>,
+    paramName: string,
   ): string {
-    const networkId = properties['networkId'];
-    if (networkId === undefined || networkId === null) {
+    const value = properties[paramName];
+    if (value === undefined || value === null) {
       throw new Error(
-        `Action resource path template '${template}' requires 'networkId' in ` +
-          `properties, but it was not found.`,
+        `Action resource path template '${template}' requires '${paramName}' in properties.`,
       );
     }
-    return template.replace('{networkId}', String(networkId));
+    return template.replace(`{${paramName}}`, String(value));
   }
 
-  private omitParentId(
+  private buildActionBody(
     properties: Record<string, unknown>,
     parentIdProp: string | undefined,
+    bodyMapping?: Record<string, string>,
   ): Record<string, unknown> {
     if (parentIdProp === undefined) {
       return properties;
@@ -305,7 +315,8 @@ export class HetznerAdapter implements ProviderAdapter {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(properties)) {
       if (key !== parentIdProp) {
-        result[key] = value;
+        const mappedKey = bodyMapping?.[key] ?? key;
+        result[mappedKey] = value;
       }
     }
     return result;
@@ -338,22 +349,26 @@ export class HetznerAdapter implements ProviderAdapter {
   private async deleteActionResource(
     resource: ManifestResource,
     pathTemplate: string,
+    parentIdProp: string,
+    bodyMapping?: Record<string, string>,
   ): Promise<void> {
-    const networkId = resource.properties['networkId'];
-    if (networkId === undefined || networkId === null) {
+    const parentId = resource.properties[parentIdProp];
+    if (parentId === undefined || parentId === null) {
       throw new Error(
         `Cannot delete action resource '${resource.logicalId}': ` +
-          `'networkId' is required in properties to resolve the delete path.`,
+          `'${parentIdProp}' is required in properties to resolve the delete path.`,
       );
     }
 
-    const path = pathTemplate.replace('{networkId}', String(networkId));
+    const path = pathTemplate.replace(`{${parentIdProp}}`, String(parentId));
 
-    // Build the delete action body from properties, excluding networkId
+    // Build the delete action body from properties, excluding parentIdProp
+    // Apply bodyMapping if provided (e.g., networkId -> network)
     const body: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(resource.properties)) {
-      if (key !== 'networkId') {
-        body[key] = value;
+      if (key !== parentIdProp) {
+        const mappedKey = bodyMapping?.[key] ?? key;
+        body[mappedKey] = value;
       }
     }
 

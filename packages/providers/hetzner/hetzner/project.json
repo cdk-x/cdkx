@@ -1,7 +1,7 @@
 {
   "name": "@cdkx-io/hetzner",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/providers/hetzner/src",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/providers/hetzner/hetzner/src",
   "projectType": "library",
   "tags": [],
   "targets": {
@@ -23,10 +23,10 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "packages/providers/hetzner/dist",
-        "main": "packages/providers/hetzner/src/index.ts",
-        "tsConfig": "packages/providers/hetzner/tsconfig.lib.json",
-        "rootDir": "packages/providers/hetzner/src"
+        "outputPath": "packages/providers/hetzner/hetzner/dist",
+        "main": "packages/providers/hetzner/hetzner/src/index.ts",
+        "tsConfig": "packages/providers/hetzner/hetzner/tsconfig.lib.json",
+        "rootDir": "packages/providers/hetzner/hetzner/src"
       }
     },
     "codegen": {
