@@ -10,28 +10,13 @@
         "storage": "tmp/local-registry/storage"
       }
     },
-    "release-alpha": {
+    "release-local": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nx release --specifier=prerelease --preid=alpha {args}"
-      }
-    },
-    "release-beta": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "nx release --specifier=prerelease --preid=beta {args}"
-      }
-    },
-    "release-rc": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "nx release --specifier=prerelease --preid=rc {args}"
-      }
-    },
-    "release-stable": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "nx release {args}"
+        "commands": [
+          "nx release version prerelease --preid=alpha --git-commit=false --git-tag=false --git-push=false",
+          "nx run-many -t publish-local"
+        ]
       }
     }
   }
