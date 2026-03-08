@@ -1,24 +1,31 @@
 {
   "name": "@cdkx-io/hetzner-sdk",
-  "version": "0.0.1",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "default": "./dist/index.js"
-    }
+  "version": "1.0.0",
+  "description": "OpenAPI client for @cdkx-io/hetzner-sdk",
+  "author": "OpenAPI-Generator Contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GIT_USER_ID/GIT_REPO_ID.git"
   },
-  "files": [
-    "dist",
-    "!**/*.tsbuildinfo"
+  "keywords": [
+    "axios",
+    "typescript",
+    "openapi-client",
+    "openapi-generator",
+    "@cdkx-io/hetzner-sdk"
   ],
-  "dependencies": {
-    "tslib": "^2.8.1"
+  "license": "Unlicense",
+  "main": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
   },
-  "publishConfig": {
-    "access": "public"
+  "dependencies": {
+    "axios": "^1.13.5"
+  },
+  "devDependencies": {
+    "@types/node": "12.11.5 - 12.20.42",
+    "typescript": "^4.0 || ^5.0"
   }
 }
