@@ -23,6 +23,9 @@
     },
     {
       "path": "./packages/logger"
+    },
+    {
+      "path": "./packages/providers/hetzner/hetzner-sdk"
     }
   ]
 }
