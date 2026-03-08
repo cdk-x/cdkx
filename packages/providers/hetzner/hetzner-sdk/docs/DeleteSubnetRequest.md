@@ -1,11 +1,10 @@
 # DeleteSubnetRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ip_range** | **string** | IP range in CIDR block notation of the subnet to delete. | [default to undefined]
+| Name         | Type       | Description                                              | Notes                  |
+| ------------ | ---------- | -------------------------------------------------------- | ---------------------- |
+| **ip_range** | **string** | IP range in CIDR block notation of the subnet to delete. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { DeleteSubnetRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: DeleteSubnetRequest = {
-    ip_range,
+  ip_range,
 };
 ```
 

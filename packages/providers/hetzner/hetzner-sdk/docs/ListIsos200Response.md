@@ -1,12 +1,11 @@
 # ListIsos200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**isos** | [**Array&lt;ListIsos200ResponseIsosInner&gt;**](ListIsos200ResponseIsosInner.md) |  | [default to undefined]
-**meta** | [**ListMeta**](ListMeta.md) |  | [default to undefined]
+| Name     | Type                                                                             | Description | Notes                  |
+| -------- | -------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **isos** | [**Array&lt;ListIsos200ResponseIsosInner&gt;**](ListIsos200ResponseIsosInner.md) |             | [default to undefined] |
+| **meta** | [**ListMeta**](ListMeta.md)                                                      |             | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ListIsos200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListIsos200Response = {
-    isos,
-    meta,
+  isos,
+  meta,
 };
 ```
 

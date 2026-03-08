@@ -4,9 +4,9 @@ IP target where the traffic should be routed to. It is only possible to use the 
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ip** | **string** | IP of a server that belongs to the same customer (public IPv4/IPv6) or private IP in a subnet type vswitch. | [default to undefined]
+| Name   | Type       | Description                                                                                                 | Notes                  |
+| ------ | ---------- | ----------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **ip** | **string** | IP of a server that belongs to the same customer (public IPv4/IPv6) or private IP in a subnet type vswitch. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { LoadBalancerTargetIP } from '@cdkx-io/hetzner-sdk';
 
 const instance: LoadBalancerTargetIP = {
-    ip,
+  ip,
 };
 ```
 

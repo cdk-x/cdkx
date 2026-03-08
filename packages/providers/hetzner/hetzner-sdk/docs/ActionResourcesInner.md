@@ -1,12 +1,11 @@
 # ActionResourcesInner
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**id** | **number** | ID of the Resource. | [default to undefined]
-**type** | **string** | Type of the Resource. | [default to undefined]
+| Name     | Type       | Description           | Notes                  |
+| -------- | ---------- | --------------------- | ---------------------- |
+| **id**   | **number** | ID of the Resource.   | [default to undefined] |
+| **type** | **string** | Type of the Resource. | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ActionResourcesInner } from '@cdkx-io/hetzner-sdk';
 
 const instance: ActionResourcesInner = {
-    id,
-    type,
+  id,
+  type,
 };
 ```
 

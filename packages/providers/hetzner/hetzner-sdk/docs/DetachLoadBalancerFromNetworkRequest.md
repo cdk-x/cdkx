@@ -1,11 +1,10 @@
 # DetachLoadBalancerFromNetworkRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**network** | **number** | ID of an existing network to detach the Load Balancer from. | [default to undefined]
+| Name        | Type       | Description                                                 | Notes                  |
+| ----------- | ---------- | ----------------------------------------------------------- | ---------------------- |
+| **network** | **number** | ID of an existing network to detach the Load Balancer from. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { DetachLoadBalancerFromNetworkRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: DetachLoadBalancerFromNetworkRequest = {
-    network,
+  network,
 };
 ```
 

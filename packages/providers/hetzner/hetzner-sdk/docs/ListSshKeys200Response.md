@@ -1,12 +1,11 @@
 # ListSshKeys200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ssh_keys** | [**Array&lt;ListSshKeys200ResponseSshKeysInner&gt;**](ListSshKeys200ResponseSshKeysInner.md) |  | [default to undefined]
-**meta** | [**ListMeta**](ListMeta.md) |  | [default to undefined]
+| Name         | Type                                                                                         | Description | Notes                  |
+| ------------ | -------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **ssh_keys** | [**Array&lt;ListSshKeys200ResponseSshKeysInner&gt;**](ListSshKeys200ResponseSshKeysInner.md) |             | [default to undefined] |
+| **meta**     | [**ListMeta**](ListMeta.md)                                                                  |             | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ListSshKeys200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListSshKeys200Response = {
-    ssh_keys,
-    meta,
+  ssh_keys,
+  meta,
 };
 ```
 

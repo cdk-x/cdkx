@@ -4,9 +4,9 @@ Algorithm of the Load Balancer.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**type** | **string** | Type of the algorithm. | [default to undefined]
+| Name     | Type       | Description            | Notes                  |
+| -------- | ---------- | ---------------------- | ---------------------- |
+| **type** | **string** | Type of the algorithm. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { ListLoadBalancers200ResponseLoadBalancersInnerAlgorithm } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListLoadBalancers200ResponseLoadBalancersInnerAlgorithm = {
-    type,
+  type,
 };
 ```
 

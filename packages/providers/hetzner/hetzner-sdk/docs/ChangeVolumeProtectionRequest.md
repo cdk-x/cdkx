@@ -1,11 +1,10 @@
 # ChangeVolumeProtectionRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**_delete** | **boolean** | If true, prevents the Volume from being deleted. | [optional] [default to undefined]
+| Name         | Type        | Description                                      | Notes                             |
+| ------------ | ----------- | ------------------------------------------------ | --------------------------------- |
+| **\_delete** | **boolean** | If true, prevents the Volume from being deleted. | [optional] [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ChangeVolumeProtectionRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeVolumeProtectionRequest = {
-    _delete,
+  _delete,
 };
 ```
 

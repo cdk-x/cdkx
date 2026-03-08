@@ -1,11 +1,10 @@
 # CertificateResponse
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**certificate** | [**Certificate**](Certificate.md) |  | [default to undefined]
+| Name            | Type                              | Description | Notes                  |
+| --------------- | --------------------------------- | ----------- | ---------------------- |
+| **certificate** | [**Certificate**](Certificate.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { CertificateResponse } from '@cdkx-io/hetzner-sdk';
 
 const instance: CertificateResponse = {
-    certificate,
+  certificate,
 };
 ```
 

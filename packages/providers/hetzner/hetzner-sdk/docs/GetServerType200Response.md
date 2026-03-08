@@ -1,11 +1,10 @@
 # GetServerType200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**server_type** | [**ListServerTypes200ResponseServerTypesInner**](ListServerTypes200ResponseServerTypesInner.md) |  | [default to undefined]
+| Name            | Type                                                                                            | Description | Notes                  |
+| --------------- | ----------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **server_type** | [**ListServerTypes200ResponseServerTypesInner**](ListServerTypes200ResponseServerTypesInner.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetServerType200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetServerType200Response = {
-    server_type,
+  server_type,
 };
 ```
 

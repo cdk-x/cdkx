@@ -1,11 +1,10 @@
 # ChangeZoneRrsetTtlRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ttl** | **number** | Time To Live (TTL) of the [RRSet](#tag/zone-rrsets).  Must be in between 60s and 2147483647s.  If not set, the [Zone\&#39;s](#tag/zones) Default TTL is used.  | [default to undefined]
+| Name    | Type       | Description                                                                                                                                                 | Notes                  |
+| ------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **ttl** | **number** | Time To Live (TTL) of the [RRSet](#tag/zone-rrsets). Must be in between 60s and 2147483647s. If not set, the [Zone\&#39;s](#tag/zones) Default TTL is used. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ChangeZoneRrsetTtlRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeZoneRrsetTtlRequest = {
-    ttl,
+  ttl,
 };
 ```
 

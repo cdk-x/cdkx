@@ -1,11 +1,10 @@
 # ChangeIPRangeRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ip_range** | **string** | IP range of the [Network](#tag/networks).  Uses CIDR notation.  Must span all included subnets. Must be one of the private IPv4 ranges of RFC1918.  Minimum network size is /24. We highly recommend that you pick a larger [Network](#tag/networks) with a /16 netmask.  | [default to undefined]
+| Name         | Type       | Description                                                                                                                                                                                                                                                           | Notes                  |
+| ------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **ip_range** | **string** | IP range of the [Network](#tag/networks). Uses CIDR notation. Must span all included subnets. Must be one of the private IPv4 ranges of RFC1918. Minimum network size is /24. We highly recommend that you pick a larger [Network](#tag/networks) with a /16 netmask. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ChangeIPRangeRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeIPRangeRequest = {
-    ip_range,
+  ip_range,
 };
 ```
 

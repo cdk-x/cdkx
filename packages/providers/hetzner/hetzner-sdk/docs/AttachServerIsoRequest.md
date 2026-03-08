@@ -1,11 +1,10 @@
 # AttachServerIsoRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**iso** | **string** | ID or name of ISO to attach to the Server as listed in GET &#x60;/isos&#x60;. | [default to undefined]
+| Name    | Type       | Description                                                                   | Notes                  |
+| ------- | ---------- | ----------------------------------------------------------------------------- | ---------------------- |
+| **iso** | **string** | ID or name of ISO to attach to the Server as listed in GET &#x60;/isos&#x60;. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { AttachServerIsoRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: AttachServerIsoRequest = {
-    iso,
+  iso,
 };
 ```
 

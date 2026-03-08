@@ -1,12 +1,11 @@
 # CertificatesResponse
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**certificates** | [**Array&lt;Certificate&gt;**](Certificate.md) |  | [default to undefined]
-**meta** | [**ListMeta**](ListMeta.md) |  | [default to undefined]
+| Name             | Type                                           | Description | Notes                  |
+| ---------------- | ---------------------------------------------- | ----------- | ---------------------- |
+| **certificates** | [**Array&lt;Certificate&gt;**](Certificate.md) |             | [default to undefined] |
+| **meta**         | [**ListMeta**](ListMeta.md)                    |             | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { CertificatesResponse } from '@cdkx-io/hetzner-sdk';
 
 const instance: CertificatesResponse = {
-    certificates,
-    meta,
+  certificates,
+  meta,
 };
 ```
 

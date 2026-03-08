@@ -1,12 +1,11 @@
 # CreatePlacementGroupResponse
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**placement_group** | [**PlacementGroup**](PlacementGroup.md) |  | [default to undefined]
-**action** | [**ActionNullable**](ActionNullable.md) |  | [optional] [default to undefined]
+| Name                | Type                                    | Description | Notes                             |
+| ------------------- | --------------------------------------- | ----------- | --------------------------------- |
+| **placement_group** | [**PlacementGroup**](PlacementGroup.md) |             | [default to undefined]            |
+| **action**          | [**ActionNullable**](ActionNullable.md) |             | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { CreatePlacementGroupResponse } from '@cdkx-io/hetzner-sdk';
 
 const instance: CreatePlacementGroupResponse = {
-    placement_group,
-    action,
+  placement_group,
+  action,
 };
 ```
 

@@ -1,11 +1,10 @@
 # GetDatacenter200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**datacenter** | [**ListDatacenters200ResponseDatacentersInner**](ListDatacenters200ResponseDatacentersInner.md) |  | [default to undefined]
+| Name           | Type                                                                                            | Description | Notes                  |
+| -------------- | ----------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **datacenter** | [**ListDatacenters200ResponseDatacentersInner**](ListDatacenters200ResponseDatacentersInner.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetDatacenter200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetDatacenter200Response = {
-    datacenter,
+  datacenter,
 };
 ```
 

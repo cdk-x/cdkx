@@ -1,12 +1,11 @@
 # ListFloatingIps200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**floating_ips** | [**Array&lt;ListFloatingIps200ResponseFloatingIpsInner&gt;**](ListFloatingIps200ResponseFloatingIpsInner.md) |  | [default to undefined]
-**meta** | [**ListMeta**](ListMeta.md) |  | [default to undefined]
+| Name             | Type                                                                                                         | Description | Notes                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ | ----------- | ---------------------- |
+| **floating_ips** | [**Array&lt;ListFloatingIps200ResponseFloatingIpsInner&gt;**](ListFloatingIps200ResponseFloatingIpsInner.md) |             | [default to undefined] |
+| **meta**         | [**ListMeta**](ListMeta.md)                                                                                  |             | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ListFloatingIps200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListFloatingIps200Response = {
-    floating_ips,
-    meta,
+  floating_ips,
+  meta,
 };
 ```
 

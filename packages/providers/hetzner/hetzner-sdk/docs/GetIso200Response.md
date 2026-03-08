@@ -1,11 +1,10 @@
 # GetIso200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**iso** | [**ListIsos200ResponseIsosInner**](ListIsos200ResponseIsosInner.md) |  | [default to undefined]
+| Name    | Type                                                                | Description | Notes                  |
+| ------- | ------------------------------------------------------------------- | ----------- | ---------------------- |
+| **iso** | [**ListIsos200ResponseIsosInner**](ListIsos200ResponseIsosInner.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetIso200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetIso200Response = {
-    iso,
+  iso,
 };
 ```
 

@@ -1,12 +1,11 @@
 # RebuildServerRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**image** | **string** | ID or name of Image to rebuilt from. | [default to undefined]
-**user_data** | **string** | Cloud-Init user data to use during Server rebuild. This field is limited to 32KiB. If not specified, the Server\&#39;s previous user_data value will be re-used (if any was set). | [optional] [default to undefined]
+| Name          | Type       | Description                                                                                                                                                                       | Notes                             |
+| ------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| **image**     | **string** | ID or name of Image to rebuilt from.                                                                                                                                              | [default to undefined]            |
+| **user_data** | **string** | Cloud-Init user data to use during Server rebuild. This field is limited to 32KiB. If not specified, the Server\&#39;s previous user_data value will be re-used (if any was set). | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { RebuildServerRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: RebuildServerRequest = {
-    image,
-    user_data,
+  image,
+  user_data,
 };
 ```
 

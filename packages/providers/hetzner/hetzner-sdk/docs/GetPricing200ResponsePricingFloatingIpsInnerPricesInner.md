@@ -1,12 +1,11 @@
 # GetPricing200ResponsePricingFloatingIpsInnerPricesInner
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**location** | **string** | Name of the [Location](#tag/locations) the price is for. | [default to undefined]
-**price_monthly** | [**ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPriceMonthly**](ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPriceMonthly.md) |  | [default to undefined]
+| Name              | Type                                                                                                                                                                  | Description                                              | Notes                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------- |
+| **location**      | **string**                                                                                                                                                            | Name of the [Location](#tag/locations) the price is for. | [default to undefined] |
+| **price_monthly** | [**ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPriceMonthly**](ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPriceMonthly.md) |                                                          | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { GetPricing200ResponsePricingFloatingIpsInnerPricesInner } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingFloatingIpsInnerPricesInner = {
-    location,
-    price_monthly,
+  location,
+  price_monthly,
 };
 ```
 

@@ -1,11 +1,10 @@
 # PlacementGroupResponse
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**placement_group** | [**PlacementGroup**](PlacementGroup.md) |  | [default to undefined]
+| Name                | Type                                    | Description | Notes                  |
+| ------------------- | --------------------------------------- | ----------- | ---------------------- |
+| **placement_group** | [**PlacementGroup**](PlacementGroup.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { PlacementGroupResponse } from '@cdkx-io/hetzner-sdk';
 
 const instance: PlacementGroupResponse = {
-    placement_group,
+  placement_group,
 };
 ```
 

@@ -1,11 +1,10 @@
 # GetVolume200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**volume** | [**ListVolumes200ResponseVolumesInner**](ListVolumes200ResponseVolumesInner.md) |  | [default to undefined]
+| Name       | Type                                                                            | Description | Notes                  |
+| ---------- | ------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **volume** | [**ListVolumes200ResponseVolumesInner**](ListVolumes200ResponseVolumesInner.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetVolume200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetVolume200Response = {
-    volume,
+  volume,
 };
 ```
 

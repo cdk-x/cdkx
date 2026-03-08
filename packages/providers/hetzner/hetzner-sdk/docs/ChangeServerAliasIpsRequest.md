@@ -1,12 +1,11 @@
 # ChangeServerAliasIpsRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**network** | **number** | ID of an existing Network already attached to the Server. | [default to undefined]
-**alias_ips** | **Array&lt;string&gt;** | New alias IPs to set for this Server. | [default to undefined]
+| Name          | Type                    | Description                                               | Notes                  |
+| ------------- | ----------------------- | --------------------------------------------------------- | ---------------------- |
+| **network**   | **number**              | ID of an existing Network already attached to the Server. | [default to undefined] |
+| **alias_ips** | **Array&lt;string&gt;** | New alias IPs to set for this Server.                     | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ChangeServerAliasIpsRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeServerAliasIpsRequest = {
-    network,
-    alias_ips,
+  network,
+  alias_ips,
 };
 ```
 

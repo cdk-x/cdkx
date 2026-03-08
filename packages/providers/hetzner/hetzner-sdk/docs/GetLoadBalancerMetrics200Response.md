@@ -1,11 +1,10 @@
 # GetLoadBalancerMetrics200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**metrics** | [**GetLoadBalancerMetrics200ResponseMetrics**](GetLoadBalancerMetrics200ResponseMetrics.md) |  | [default to undefined]
+| Name        | Type                                                                                        | Description | Notes                  |
+| ----------- | ------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **metrics** | [**GetLoadBalancerMetrics200ResponseMetrics**](GetLoadBalancerMetrics200ResponseMetrics.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetLoadBalancerMetrics200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetLoadBalancerMetrics200Response = {
-    metrics,
+  metrics,
 };
 ```
 

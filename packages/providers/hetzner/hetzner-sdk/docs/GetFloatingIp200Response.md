@@ -1,11 +1,10 @@
 # GetFloatingIp200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**floating_ip** | [**ListFloatingIps200ResponseFloatingIpsInner**](ListFloatingIps200ResponseFloatingIpsInner.md) |  | [default to undefined]
+| Name            | Type                                                                                            | Description | Notes                  |
+| --------------- | ----------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **floating_ip** | [**ListFloatingIps200ResponseFloatingIpsInner**](ListFloatingIps200ResponseFloatingIpsInner.md) |             | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetFloatingIp200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetFloatingIp200Response = {
-    floating_ip,
+  floating_ip,
 };
 ```
 

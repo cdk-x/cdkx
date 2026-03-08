@@ -1,12 +1,12 @@
 # ActionResponse1
 
-Response for a created [Action](#description/actions).  Make sure to wait for the [Action](#description/actions) completion to ensure your changes are applied. 
+Response for a created [Action](#description/actions). Make sure to wait for the [Action](#description/actions) completion to ensure your changes are applied.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**action** | [**Action**](Action.md) |  | [default to undefined]
+| Name       | Type                    | Description | Notes                  |
+| ---------- | ----------------------- | ----------- | ---------------------- |
+| **action** | [**Action**](Action.md) |             | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { ActionResponse1 } from '@cdkx-io/hetzner-sdk';
 
 const instance: ActionResponse1 = {
-    action,
+  action,
 };
 ```
 

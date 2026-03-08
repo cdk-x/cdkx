@@ -4,10 +4,10 @@ If issuance or renewal reports `failed`, this property contains information abou
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**code** | **string** |  | [optional] [default to undefined]
-**message** | **string** |  | [optional] [default to undefined]
+| Name        | Type       | Description | Notes                             |
+| ----------- | ---------- | ----------- | --------------------------------- |
+| **code**    | **string** |             | [optional] [default to undefined] |
+| **message** | **string** |             | [optional] [default to undefined] |
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { CertificateStatusError } from '@cdkx-io/hetzner-sdk';
 
 const instance: CertificateStatusError = {
-    code,
-    message,
+  code,
+  message,
 };
 ```
 

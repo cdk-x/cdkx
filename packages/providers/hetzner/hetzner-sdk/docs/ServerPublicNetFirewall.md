@@ -1,12 +1,11 @@
 # ServerPublicNetFirewall
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**id** | **number** | ID of the [Firewall](#tag/firewalls). | [optional] [default to undefined]
-**status** | **string** | Status of the Firewall on the Server. | [optional] [default to undefined]
+| Name       | Type       | Description                           | Notes                             |
+| ---------- | ---------- | ------------------------------------- | --------------------------------- |
+| **id**     | **number** | ID of the [Firewall](#tag/firewalls). | [optional] [default to undefined] |
+| **status** | **string** | Status of the Firewall on the Server. | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ServerPublicNetFirewall } from '@cdkx-io/hetzner-sdk';
 
 const instance: ServerPublicNetFirewall = {
-    id,
-    status,
+  id,
+  status,
 };
 ```
 

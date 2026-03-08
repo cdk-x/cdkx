@@ -1,11 +1,10 @@
 # GetLoadBalancerMetrics200ResponseMetricsTimeSeriesValue
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**values** | **Array&lt;Array&lt;GetLoadBalancerMetrics200ResponseMetricsTimeSeriesValueValuesInnerInner&gt;&gt;** | Metrics Timestamps with values. | [default to undefined]
+| Name       | Type                                                                                                  | Description                     | Notes                  |
+| ---------- | ----------------------------------------------------------------------------------------------------- | ------------------------------- | ---------------------- |
+| **values** | **Array&lt;Array&lt;GetLoadBalancerMetrics200ResponseMetricsTimeSeriesValueValuesInnerInner&gt;&gt;** | Metrics Timestamps with values. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetLoadBalancerMetrics200ResponseMetricsTimeSeriesValue } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetLoadBalancerMetrics200ResponseMetricsTimeSeriesValue = {
-    values,
+  values,
 };
 ```
 

@@ -1,0 +1,9 @@
+{
+  "name": "@cdkx-io/hetzner-runtime",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/providers/hetzner/hetzner-runtime/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project @cdkx-io/hetzner-runtime --web",
+  "targets": {}
+}

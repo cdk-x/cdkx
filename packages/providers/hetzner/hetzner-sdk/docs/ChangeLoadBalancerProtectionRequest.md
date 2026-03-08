@@ -1,11 +1,10 @@
 # ChangeLoadBalancerProtectionRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**_delete** | **boolean** | If true, prevents the Load Balancer from being deleted. | [optional] [default to undefined]
+| Name         | Type        | Description                                             | Notes                             |
+| ------------ | ----------- | ------------------------------------------------------- | --------------------------------- |
+| **\_delete** | **boolean** | If true, prevents the Load Balancer from being deleted. | [optional] [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ChangeLoadBalancerProtectionRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeLoadBalancerProtectionRequest = {
-    _delete,
+  _delete,
 };
 ```
 

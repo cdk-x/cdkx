@@ -4,9 +4,9 @@ Configuration for label selector targets, only valid and required if type is `la
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**selector** | **string** | Label selector. | [default to undefined]
+| Name         | Type       | Description     | Notes                  |
+| ------------ | ---------- | --------------- | ---------------------- |
+| **selector** | **string** | Label selector. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { LoadBalancerTargetLabelSelector1 } from '@cdkx-io/hetzner-sdk';
 
 const instance: LoadBalancerTargetLabelSelector1 = {
-    selector,
+  selector,
 };
 ```
 

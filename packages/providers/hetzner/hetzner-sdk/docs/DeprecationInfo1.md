@@ -1,13 +1,13 @@
 # DeprecationInfo1
 
-This field is deprecated.  Use the `deprecation` object in the `locations` field instead (`.locations[].deprecation`). 
+This field is deprecated. Use the `deprecation` object in the `locations` field instead (`.locations[].deprecation`).
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**unavailable_after** | **string** | Date of the deprecated resource removal.  Once this date is reached, the resource will not be returned by resource type \&quot;list\&quot; endpoint, and the resource can not be used to create new resources. For example, if this is an image, you can not create new servers with this image after the mentioned date.  | [default to undefined]
-**announced** | **string** | Date of the deprecation announcement.  | [default to undefined]
+| Name                  | Type       | Description                                                                                                                                                                                                                                                                                                              | Notes                  |
+| --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
+| **unavailable_after** | **string** | Date of the deprecated resource removal. Once this date is reached, the resource will not be returned by resource type \&quot;list\&quot; endpoint, and the resource can not be used to create new resources. For example, if this is an image, you can not create new servers with this image after the mentioned date. | [default to undefined] |
+| **announced**         | **string** | Date of the deprecation announcement.                                                                                                                                                                                                                                                                                    | [default to undefined] |
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { DeprecationInfo1 } from '@cdkx-io/hetzner-sdk';
 
 const instance: DeprecationInfo1 = {
-    unavailable_after,
-    announced,
+  unavailable_after,
+  announced,
 };
 ```
 

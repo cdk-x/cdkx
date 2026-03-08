@@ -4,10 +4,10 @@ Protection configuration for the Server.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**_delete** | **boolean** | If true, prevents the Server from being deleted. | [default to undefined]
-**rebuild** | **boolean** | If true, prevents the Server from being rebuilt. | [default to undefined]
+| Name         | Type        | Description                                      | Notes                  |
+| ------------ | ----------- | ------------------------------------------------ | ---------------------- |
+| **\_delete** | **boolean** | If true, prevents the Server from being deleted. | [default to undefined] |
+| **rebuild**  | **boolean** | If true, prevents the Server from being rebuilt. | [default to undefined] |
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { ListServers200ResponseServersInnerProtection } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInnerProtection = {
-    _delete,
-    rebuild,
+  _delete,
+  rebuild,
 };
 ```
 

@@ -1,12 +1,11 @@
 # ChangeServerDnsPtrRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ip** | **string** | Primary IP address for which the reverse DNS entry should be set. | [default to undefined]
-**dns_ptr** | **string** | Hostname to set as a reverse DNS PTR entry, reset to original value if &#x60;null&#x60;. | [default to undefined]
+| Name        | Type       | Description                                                                              | Notes                  |
+| ----------- | ---------- | ---------------------------------------------------------------------------------------- | ---------------------- |
+| **ip**      | **string** | Primary IP address for which the reverse DNS entry should be set.                        | [default to undefined] |
+| **dns_ptr** | **string** | Hostname to set as a reverse DNS PTR entry, reset to original value if &#x60;null&#x60;. | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ChangeServerDnsPtrRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ChangeServerDnsPtrRequest = {
-    ip,
-    dns_ptr,
+  ip,
+  dns_ptr,
 };
 ```
 

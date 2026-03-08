@@ -4,9 +4,9 @@ Label selector used to determine targets. Only present for target type \"label_s
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**selector** | **string** | Label selector. | [default to undefined]
+| Name         | Type       | Description     | Notes                  |
+| ------------ | ---------- | --------------- | ---------------------- |
+| **selector** | **string** | Label selector. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { LoadBalancerTargetLabelSelector } from '@cdkx-io/hetzner-sdk';
 
 const instance: LoadBalancerTargetLabelSelector = {
-    selector,
+  selector,
 };
 ```
 

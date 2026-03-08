@@ -1,12 +1,11 @@
 # ListFloatingIps200ResponseFloatingIpsInnerDnsPtrInner
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ip** | **string** | Single IPv4 or IPv6 address to create pointer for.  | [default to undefined]
-**dns_ptr** | **string** | Domain Name to point to.  PTR record content used for reverse DNS.  | [default to undefined]
+| Name        | Type       | Description                                                       | Notes                  |
+| ----------- | ---------- | ----------------------------------------------------------------- | ---------------------- |
+| **ip**      | **string** | Single IPv4 or IPv6 address to create pointer for.                | [default to undefined] |
+| **dns_ptr** | **string** | Domain Name to point to. PTR record content used for reverse DNS. | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ListFloatingIps200ResponseFloatingIpsInnerDnsPtrInner } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListFloatingIps200ResponseFloatingIpsInnerDnsPtrInner = {
-    ip,
-    dns_ptr,
+  ip,
+  dns_ptr,
 };
 ```
 

@@ -1,11 +1,10 @@
 # DeleteLoadBalancerServiceRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**listen_port** | **number** | The listen port of the service you want to delete. | [default to undefined]
+| Name            | Type       | Description                                        | Notes                  |
+| --------------- | ---------- | -------------------------------------------------- | ---------------------- |
+| **listen_port** | **number** | The listen port of the service you want to delete. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { DeleteLoadBalancerServiceRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: DeleteLoadBalancerServiceRequest = {
-    listen_port,
+  listen_port,
 };
 ```
 

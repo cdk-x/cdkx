@@ -4,9 +4,9 @@ Price of [Volumes](#tag/volumes).
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**price_per_gb_month** | [**GetPricing200ResponsePricingVolumePricePerGbMonth**](GetPricing200ResponsePricingVolumePricePerGbMonth.md) |  | [default to undefined]
+| Name                   | Type                                                                                                          | Description | Notes                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- | ----------- | ---------------------- |
+| **price_per_gb_month** | [**GetPricing200ResponsePricingVolumePricePerGbMonth**](GetPricing200ResponsePricingVolumePricePerGbMonth.md) |             | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { GetPricing200ResponsePricingVolume } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingVolume = {
-    price_per_gb_month,
+  price_per_gb_month,
 };
 ```
 

@@ -1,13 +1,13 @@
 # EnableServerRescue201Response
 
-The `root_password` key in the reply contains the root password that can be used to access the booted rescue system. 
+The `root_password` key in the reply contains the root password that can be used to access the booted rescue system.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**root_password** | **string** | Password that will be set for this Server once the Action succeeds. | [optional] [default to undefined]
-**action** | [**Action**](Action.md) |  | [optional] [default to undefined]
+| Name              | Type                    | Description                                                         | Notes                             |
+| ----------------- | ----------------------- | ------------------------------------------------------------------- | --------------------------------- |
+| **root_password** | **string**              | Password that will be set for this Server once the Action succeeds. | [optional] [default to undefined] |
+| **action**        | [**Action**](Action.md) |                                                                     | [optional] [default to undefined] |
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { EnableServerRescue201Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: EnableServerRescue201Response = {
-    root_password,
-    action,
+  root_password,
+  action,
 };
 ```
 

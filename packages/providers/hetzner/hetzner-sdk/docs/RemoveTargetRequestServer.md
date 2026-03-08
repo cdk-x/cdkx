@@ -4,9 +4,9 @@ Configuration for type Server, required if type is `server`.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**id** | **number** | ID of the Server. | [default to undefined]
+| Name   | Type       | Description       | Notes                  |
+| ------ | ---------- | ----------------- | ---------------------- |
+| **id** | **number** | ID of the Server. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { RemoveTargetRequestServer } from '@cdkx-io/hetzner-sdk';
 
 const instance: RemoveTargetRequestServer = {
-    id,
+  id,
 };
 ```
 

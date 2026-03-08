@@ -4,10 +4,10 @@ Error message for the Action if an error occurred, otherwise null.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**code** | **string** | Fixed error code for machines. | [default to undefined]
-**message** | **string** | Error message for humans. | [default to undefined]
+| Name        | Type       | Description                    | Notes                  |
+| ----------- | ---------- | ------------------------------ | ---------------------- |
+| **code**    | **string** | Fixed error code for machines. | [default to undefined] |
+| **message** | **string** | Error message for humans.      | [default to undefined] |
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { ActionError } from '@cdkx-io/hetzner-sdk';
 
 const instance: ActionError = {
-    code,
-    message,
+  code,
+  message,
 };
 ```
 

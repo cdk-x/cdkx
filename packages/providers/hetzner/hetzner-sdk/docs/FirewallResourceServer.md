@@ -1,12 +1,12 @@
 # FirewallResourceServer
 
-[Server](#tag/servers) the [Firewall](#tag/firewalls) is applied to.  Only set for `type` `server`, otherwise `null`. 
+[Server](#tag/servers) the [Firewall](#tag/firewalls) is applied to. Only set for `type` `server`, otherwise `null`.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**id** | **number** | ID of the [Server](#tag/servers). | [default to undefined]
+| Name   | Type       | Description                       | Notes                  |
+| ------ | ---------- | --------------------------------- | ---------------------- |
+| **id** | **number** | ID of the [Server](#tag/servers). | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { FirewallResourceServer } from '@cdkx-io/hetzner-sdk';
 
 const instance: FirewallResourceServer = {
-    id,
+  id,
 };
 ```
 

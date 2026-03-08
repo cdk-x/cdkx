@@ -1,12 +1,11 @@
 # LoadBalancerTargetHealthStatusInner
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**listen_port** | **number** |  | [optional] [default to undefined]
-**status** | **string** |  | [optional] [default to undefined]
+| Name            | Type       | Description | Notes                             |
+| --------------- | ---------- | ----------- | --------------------------------- |
+| **listen_port** | **number** |             | [optional] [default to undefined] |
+| **status**      | **string** |             | [optional] [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { LoadBalancerTargetHealthStatusInner } from '@cdkx-io/hetzner-sdk';
 
 const instance: LoadBalancerTargetHealthStatusInner = {
-    listen_port,
-    status,
+  listen_port,
+  status,
 };
 ```
 

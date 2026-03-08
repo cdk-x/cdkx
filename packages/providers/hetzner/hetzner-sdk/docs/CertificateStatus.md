@@ -1,14 +1,14 @@
 # CertificateStatus
 
-Current status of a type `managed` Certificate, always *null* for type `uploaded` Certificates.
+Current status of a type `managed` Certificate, always _null_ for type `uploaded` Certificates.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**issuance** | **string** | Status of the issuance process of the Certificate. | [optional] [default to undefined]
-**renewal** | **string** | Status of the renewal process of the Certificate. | [optional] [default to undefined]
-**error** | [**CertificateStatusError**](CertificateStatusError.md) |  | [optional] [default to undefined]
+| Name         | Type                                                    | Description                                        | Notes                             |
+| ------------ | ------------------------------------------------------- | -------------------------------------------------- | --------------------------------- |
+| **issuance** | **string**                                              | Status of the issuance process of the Certificate. | [optional] [default to undefined] |
+| **renewal**  | **string**                                              | Status of the renewal process of the Certificate.  | [optional] [default to undefined] |
+| **error**    | [**CertificateStatusError**](CertificateStatusError.md) |                                                    | [optional] [default to undefined] |
 
 ## Example
 
@@ -16,9 +16,9 @@ Name | Type | Description | Notes
 import { CertificateStatus } from '@cdkx-io/hetzner-sdk';
 
 const instance: CertificateStatus = {
-    issuance,
-    renewal,
-    error,
+  issuance,
+  renewal,
+  error,
 };
 ```
 

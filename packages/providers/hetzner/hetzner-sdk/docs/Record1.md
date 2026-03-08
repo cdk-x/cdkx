@@ -1,13 +1,13 @@
 # Record1
 
-Record of a [RRSet](#tag/zone-rrsets).  The `value` is used to identify the record in an [RRSet](#tag/zone-rrsets). 
+Record of a [RRSet](#tag/zone-rrsets). The `value` is used to identify the record in an [RRSet](#tag/zone-rrsets).
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**value** | **string** | Value of the record to update.  | [default to undefined]
-**comment** | **string** | New comment for the record.  | [default to undefined]
+| Name        | Type       | Description                    | Notes                  |
+| ----------- | ---------- | ------------------------------ | ---------------------- |
+| **value**   | **string** | Value of the record to update. | [default to undefined] |
+| **comment** | **string** | New comment for the record.    | [default to undefined] |
 
 ## Example
 
@@ -15,8 +15,8 @@ Name | Type | Description | Notes
 import { Record1 } from '@cdkx-io/hetzner-sdk';
 
 const instance: Record1 = {
-    value,
-    comment,
+  value,
+  comment,
 };
 ```
 

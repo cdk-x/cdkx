@@ -1,11 +1,10 @@
 # ImportZoneZonefileRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**zonefile** | **string** | Zone file to import.  See [Zone file import](#tag/zones/zone-file-import) for more details.  | [default to undefined]
+| Name         | Type       | Description                                                                                | Notes                  |
+| ------------ | ---------- | ------------------------------------------------------------------------------------------ | ---------------------- |
+| **zonefile** | **string** | Zone file to import. See [Zone file import](#tag/zones/zone-file-import) for more details. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { ImportZoneZonefileRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: ImportZoneZonefileRequest = {
-    zonefile,
+  zonefile,
 };
 ```
 

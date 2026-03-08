@@ -4,9 +4,9 @@ Configuration for an IP target. It is only possible to use the (Public or vSwitc
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**ip** | **string** | IP of a server that belongs to the same customer (public IPv4/IPv6) or private IP in a subnet type vswitch. | [default to undefined]
+| Name   | Type       | Description                                                                                                 | Notes                  |
+| ------ | ---------- | ----------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **ip** | **string** | IP of a server that belongs to the same customer (public IPv4/IPv6) or private IP in a subnet type vswitch. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { LoadBalancerTargetIP1 } from '@cdkx-io/hetzner-sdk';
 
 const instance: LoadBalancerTargetIP1 = {
-    ip,
+  ip,
 };
 ```
 

@@ -1,11 +1,10 @@
 # AddToPlacementGroupRequest
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**placement_group** | **number** | ID of Placement Group the Server should be added to. | [default to undefined]
+| Name                | Type       | Description                                          | Notes                  |
+| ------------------- | ---------- | ---------------------------------------------------- | ---------------------- |
+| **placement_group** | **number** | ID of Placement Group the Server should be added to. | [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { AddToPlacementGroupRequest } from '@cdkx-io/hetzner-sdk';
 
 const instance: AddToPlacementGroupRequest = {
-    placement_group,
+  placement_group,
 };
 ```
 

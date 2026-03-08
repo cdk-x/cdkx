@@ -1,13 +1,12 @@
 # FirewallResource
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**type** | **string** | Type of the resource. | [default to undefined]
-**server** | [**FirewallResourceServer**](FirewallResourceServer.md) |  | [optional] [default to undefined]
-**label_selector** | [**FirewallResponseAppliedToInnerLabelSelector**](FirewallResponseAppliedToInnerLabelSelector.md) |  | [optional] [default to undefined]
+| Name               | Type                                                                                              | Description           | Notes                             |
+| ------------------ | ------------------------------------------------------------------------------------------------- | --------------------- | --------------------------------- |
+| **type**           | **string**                                                                                        | Type of the resource. | [default to undefined]            |
+| **server**         | [**FirewallResourceServer**](FirewallResourceServer.md)                                           |                       | [optional] [default to undefined] |
+| **label_selector** | [**FirewallResponseAppliedToInnerLabelSelector**](FirewallResponseAppliedToInnerLabelSelector.md) |                       | [optional] [default to undefined] |
 
 ## Example
 
@@ -15,9 +14,9 @@ Name | Type | Description | Notes
 import { FirewallResource } from '@cdkx-io/hetzner-sdk';
 
 const instance: FirewallResource = {
-    type,
-    server,
-    label_selector,
+  type,
+  server,
+  label_selector,
 };
 ```
 

@@ -1,11 +1,10 @@
 # GetImage200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**image** | [**ListImages200ResponseImagesInner**](ListImages200ResponseImagesInner.md) |  | [optional] [default to undefined]
+| Name      | Type                                                                        | Description | Notes                             |
+| --------- | --------------------------------------------------------------------------- | ----------- | --------------------------------- |
+| **image** | [**ListImages200ResponseImagesInner**](ListImages200ResponseImagesInner.md) |             | [optional] [default to undefined] |
 
 ## Example
 
@@ -13,7 +12,7 @@ Name | Type | Description | Notes
 import { GetImage200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: GetImage200Response = {
-    image,
+  image,
 };
 ```
 

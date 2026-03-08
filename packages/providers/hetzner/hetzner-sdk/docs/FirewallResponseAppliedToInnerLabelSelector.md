@@ -1,12 +1,12 @@
 # FirewallResponseAppliedToInnerLabelSelector
 
-[Label Selector](#description/label-selector) the [Firewall](#tag/firewalls) is applied to.  Only set for `type` `label_selector`, otherwise `null`. 
+[Label Selector](#description/label-selector) the [Firewall](#tag/firewalls) is applied to. Only set for `type` `label_selector`, otherwise `null`.
 
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**selector** | **string** | The selector. | [default to undefined]
+| Name         | Type       | Description   | Notes                  |
+| ------------ | ---------- | ------------- | ---------------------- |
+| **selector** | **string** | The selector. | [default to undefined] |
 
 ## Example
 
@@ -14,7 +14,7 @@ Name | Type | Description | Notes
 import { FirewallResponseAppliedToInnerLabelSelector } from '@cdkx-io/hetzner-sdk';
 
 const instance: FirewallResponseAppliedToInnerLabelSelector = {
-    selector,
+  selector,
 };
 ```
 

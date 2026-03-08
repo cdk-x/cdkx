@@ -1,12 +1,11 @@
 # ListNetworks200Response
 
-
 ## Properties
 
-Name | Type | Description | Notes
------------- | ------------- | ------------- | -------------
-**networks** | [**Array&lt;ListNetworks200ResponseNetworksInner&gt;**](ListNetworks200ResponseNetworksInner.md) |  | [default to undefined]
-**meta** | [**ListMeta**](ListMeta.md) |  | [default to undefined]
+| Name         | Type                                                                                             | Description | Notes                  |
+| ------------ | ------------------------------------------------------------------------------------------------ | ----------- | ---------------------- |
+| **networks** | [**Array&lt;ListNetworks200ResponseNetworksInner&gt;**](ListNetworks200ResponseNetworksInner.md) |             | [default to undefined] |
+| **meta**     | [**ListMeta**](ListMeta.md)                                                                      |             | [default to undefined] |
 
 ## Example
 
@@ -14,8 +13,8 @@ Name | Type | Description | Notes
 import { ListNetworks200Response } from '@cdkx-io/hetzner-sdk';
 
 const instance: ListNetworks200Response = {
-    networks,
-    meta,
+  networks,
+  meta,
 };
 ```
 
