@@ -28,6 +28,13 @@
         "command": "prettier --check \"{projectRoot}/src/**/*.{ts,json,md}\"",
         "cwd": "{workspaceRoot}"
       }
+    },
+    "codegen": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate -i https://docs.hetzner.cloud/cloud.spec.json -g typescript-axios -o /local/packages/providers/hetzner/hetzner-sdk --additional-properties=npmName=@cdkx-io/hetzner-sdk --global-property=generateDocs=false ",
+        "cwd": "{workspaceRoot}"
+      }
     }
   }
 }

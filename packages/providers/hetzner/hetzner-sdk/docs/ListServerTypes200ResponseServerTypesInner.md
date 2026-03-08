@@ -1,0 +1,46 @@
+# ListServerTypes200ResponseServerTypesInner
+
+
+## Properties
+
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**id** | **number** | ID of the Server type. | [default to undefined]
+**name** | **string** | Unique identifier of the Server type. | [default to undefined]
+**description** | **string** | Description of the Server type. | [default to undefined]
+**cores** | **number** | Number of cpu cores a Server of this type will have. | [default to undefined]
+**memory** | **number** | Memory a Server of this type will have in GB. | [default to undefined]
+**disk** | **number** | Disk size a Server of this type will have in GB. | [default to undefined]
+**deprecated** | **boolean** | This field is deprecated. Use the deprecation object instead. | [default to undefined]
+**prices** | [**Array&lt;ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInner&gt;**](ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInner.md) | Price per [Location](#tag/locations). | [default to undefined]
+**storage_type** | **string** | Type of Server boot drive. Local has higher speed. Network has better availability. | [default to undefined]
+**cpu_type** | **string** | Type of cpu. | [default to undefined]
+**category** | **string** | Category of Server Type. | [optional] [default to undefined]
+**architecture** | **string** | CPU architecture of the Server Type.  | [default to undefined]
+**deprecation** | [**DeprecationInfo1**](DeprecationInfo1.md) |  | [optional] [default to undefined]
+**locations** | [**Array&lt;ListServerTypes200ResponseServerTypesInnerLocationsInner&gt;**](ListServerTypes200ResponseServerTypesInnerLocationsInner.md) | Supported [Location](#tag/locations) and per [Location](#tag/locations) details for the [Server Type](#tag/server-types).  A [Server Type](#tag/server-types) is:  - only supported in the [Location](#tag/locations) that are listed.  - deprecated in the [Location](#tag/locations) when the &#x60;deprecation&#x60; property is set.  - unavailable in the [Location](#tag/locations) when the &#x60;deprecation.unavailable_after&#x60; date is in the past.  | [default to undefined]
+
+## Example
+
+```typescript
+import { ListServerTypes200ResponseServerTypesInner } from '@cdkx-io/hetzner-sdk';
+
+const instance: ListServerTypes200ResponseServerTypesInner = {
+    id,
+    name,
+    description,
+    cores,
+    memory,
+    disk,
+    deprecated,
+    prices,
+    storage_type,
+    cpu_type,
+    category,
+    architecture,
+    deprecation,
+    locations,
+};
+```
+
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
