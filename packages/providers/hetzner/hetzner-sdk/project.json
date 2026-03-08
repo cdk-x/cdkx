@@ -1,0 +1,33 @@
+{
+  "name": "@cdkx-io/hetzner-sdk",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/providers/hetzner/hetzner-sdk/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/providers/hetzner/hetzner-sdk/dist",
+        "main": "packages/providers/hetzner/hetzner-sdk/src/index.ts",
+        "tsConfig": "packages/providers/hetzner/hetzner-sdk/tsconfig.lib.json",
+        "rootDir": "packages/providers/hetzner/hetzner-sdk/src"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}
