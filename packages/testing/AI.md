@@ -39,7 +39,12 @@ Use `SynthHelpers.synthSnapshot()` — it synthesizes, reads the stack JSON, and
 removes the output directory automatically.
 
 ```ts
-import { TestApp, TestStack, TestProvider, SynthHelpers } from '@cdkx-io/testing';
+import {
+  TestApp,
+  TestStack,
+  TestProvider,
+  SynthHelpers,
+} from '@cdkx-io/testing';
 import { ProviderResource } from '@cdkx-io/core';
 
 describe('MyResource', () => {
@@ -292,7 +297,7 @@ that the logical ID maps to the correct construct location.
 
 ## Coding conventions
 
-See `packages/core/CONTEXT.md` for the authoritative coding conventions — this
+See `packages/core/AI.md` for the authoritative coding conventions — this
 package follows them identically.
 
 ---
@@ -305,7 +310,7 @@ packages/testing/
 │                                  peerDependencies: @cdkx-io/core, tslib
 │                                  devDependencies: @cdkx-io/core
 ├── project.json                   Nx project configuration
-├── CONTEXT.md                     ← this file
+├── AI.md                     ← this file
 └── src/
     ├── index.ts                   public barrel — re-exports all of src/lib/
     └── lib/
