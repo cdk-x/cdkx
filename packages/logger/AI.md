@@ -436,7 +436,7 @@ Part of the `core` release group in `nx.json` — lock-stepped with `@cdkx-io/co
 
 ## Coding conventions
 
-See `packages/core/CONTEXT.md` for the authoritative coding conventions. This
+See `packages/core/AI.md` for the authoritative coding conventions. This
 package follows them identically:
 
 - Everything OOP — no standalone `export function`
@@ -458,7 +458,7 @@ packages/logger/
 ├── tsconfig.spec.json
 ├── eslint.config.mjs
 ├── jest.config.cts
-├── CONTEXT.md                    ← this file
+├── AI.md                    ← this file
 └── src/
     ├── index.ts                  public barrel — exports types, logger, sanitizers
     └── lib/
@@ -498,7 +498,7 @@ Also written at runtime (gitignored):
 ### Phase 3: Modify ProviderAdapter interface
 
 - Add optional method `setLogger?(logger: Logger): void` to the interface
-- Document in `packages/engine/CONTEXT.md`
+- Document in `packages/engine/AI.md`
 
 ### Phase 4: Integrate in @cdkx-io/hetzner
 
@@ -517,7 +517,7 @@ Also written at runtime (gitignored):
 
 ### Phase 6: Documentation
 
-- Update `packages/engine/CONTEXT.md` with logger integration
-- Update `packages/providers/hetzner/CONTEXT.md` with logger integration
-- Update `packages/cli/CONTEXT.md` with logger creation
+- Update `packages/engine/AI.md` with logger integration
+- Update `packages/providers/hetzner/AI.md` with logger integration
+- Update `packages/cli/AI.md` with logger creation
 - Update `.opencode/rules/conventions.md` with logging conventions
