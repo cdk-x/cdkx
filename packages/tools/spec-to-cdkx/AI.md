@@ -105,7 +105,7 @@ const { version } = require('../package.json') as { version: string };
 ### BaseCommand
 
 All commands extend `BaseCommand` (`src/lib/base-command.ts`) — same pattern as
-`@cdkx-io/cli`. See that CONTEXT.md for the full convention (private constructor,
+`@cdkx-io/cli`. See that AI.md for the full convention (private constructor,
 `static create(deps?)` factory, `run()` + `fail()` error handling).
 
 ---
@@ -561,7 +561,7 @@ packages/tools/spec-to-cdkx/
 ├── tsconfig.json
 ├── tsconfig.lib.json                       esbuild build config
 ├── tsconfig.spec.json                      jest config (references: [])
-├── CONTEXT.md                              ← this file
+├── AI.md                              ← this file
 ├── src/
 │   ├── index.ts                            public barrel (exports ApiSpec, RegistryGenerator, RegistryGeneratorOptions)
 │   ├── main.ts                             CLI entry point (banner + addCommand)
