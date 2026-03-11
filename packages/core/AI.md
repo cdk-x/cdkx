@@ -544,7 +544,7 @@ resource's props contain such a token, the engine knows:
 
 This design keeps L1 constructs simple (no `addDependency()` calls needed) and
 makes dependency management a concern of the engine, not the constructs layer.
-The engine CONTEXT.md must document how it scans tokens and builds the
+The engine AI.md must document how it scans tokens and builds the
 dependency graph.
 
 ---
@@ -655,7 +655,7 @@ Serialises `ResourceSpec[]` to engine JSON. Output keyed by `providerType`.
 ```
 
 Only `api` metadata is written (not `createProps`, `enums`, etc. — those are
-compile-time only). Future engine CONTEXT.md must document how it reads this file.
+compile-time only). Future engine AI.md must document how it reads this file.
 
 ### `tsconfig.scripts.json` (provider packages only)
 
@@ -680,7 +680,7 @@ handles `.js`→`.ts` import remapping correctly. Add `tsx` to workspace root de
 ```
 packages/core/
 ├── package.json                         name: @cdkx-io/core (no "type" field — CommonJS)
-├── CONTEXT.md                           ← this file
+├── AI.md                           ← this file
 ├── src/
 │   ├── index.ts                         public barrel — exports everything
 │   └── lib/
