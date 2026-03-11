@@ -107,7 +107,7 @@ HetznerResourceType.Networking.Network; // 'Hetzner::Networking::Network'
 HetznerResourceType.Compute.Server; // 'Hetzner::Compute::Server'
 ```
 
-See `@cdkx-io/spec-to-cdkx/CONTEXT.md` for the full code generation design.
+See `@cdkx-io/spec-to-cdkx/AI.md` for the full code generation design.
 
 ---
 
@@ -399,7 +399,7 @@ written on first run; update with `--updateSnapshot` if resources change.
 
 ## Coding conventions
 
-See `packages/core/CONTEXT.md` for the authoritative coding conventions. One
+See `packages/core/AI.md` for the authoritative coding conventions. One
 addition specific to this package:
 
 | Rule             | Detail                                        |
@@ -423,7 +423,7 @@ packages/providers/hetzner/hetzner/
 ├── tsconfig.scripts.json               tsconfig for future scripts/ (IDE support)
 ├── eslint.config.mjs
 ├── jest.config.cts
-├── CONTEXT.md                          ← this file
+├── AI.md                          ← this file
 ├── README.md
 ├── schemas/
 │   └── v1/
