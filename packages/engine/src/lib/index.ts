@@ -5,3 +5,5 @@ export * from './adapter';
 export * from './assembly';
 export * from './planner';
 export * from './engine';
+export * from './deploy-lock';
+export * from './plugins';
