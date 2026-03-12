@@ -7,6 +7,7 @@ import {
   CloudAssemblyReader,
   DeploymentPlanner,
   DeploymentEngine,
+  DeployLock,
   EventBus,
   type AssemblyStack,
   type DeploymentPlan,
@@ -23,7 +24,6 @@ import {
   readConfig as defaultReadConfig,
 } from '../../lib/cdkx-config.js';
 import { AdapterRegistry } from '../../lib/adapter-registry/index.js';
-import { DeployLock } from '../../lib/deploy-lock/index.js';
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
