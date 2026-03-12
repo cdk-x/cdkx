@@ -26,3 +26,6 @@ export * from './lib/app';
 // Resource abstractions: L1 ProviderResource and L2 Resource base
 export * from './lib/provider-resource';
 export * from './lib/resource';
+
+// Runtime: provider runtime, resource handler, context, logger
+export * from './lib/runtime';
