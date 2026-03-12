@@ -18,7 +18,8 @@
   "dependencies": {
     "@cdkx-io/core": "*",
     "@cdkx-io/logger": "*",
-    "tslib": "^2.8.1"
+    "tslib": "^2.8.1",
+    "js-yaml": "4.1.1"
   },
   "publishConfig": {
     "access": "public"
