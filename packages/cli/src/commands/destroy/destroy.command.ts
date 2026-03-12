@@ -15,7 +15,7 @@ import {
   ResourceStatus,
   StackStatus,
 } from '@cdkx-io/engine';
-import { HetznerAdapterFactory } from '@cdkx-io/hetzner';
+import { HetznerRuntimeAdapterFactory } from '@cdkx-io/hetzner-runtime';
 import { LoggerFactory } from '@cdkx-io/logger';
 import { BaseCommand } from '../../lib/base-command';
 import {
@@ -44,7 +44,7 @@ function defaultCreateLock(stateDir: string): DeployLock {
 }
 
 const defaultRegistry = new AdapterRegistry().register(
-  new HetznerAdapterFactory(),
+  new HetznerRuntimeAdapterFactory(),
 );
 
 // ─── Event formatting ─────────────────────────────────────────────────────────
