@@ -10,9 +10,9 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "packages/providers/hetzner/hetzner-sdk/dist",
-        "main": "packages/providers/hetzner/hetzner-sdk/src/index.ts",
+        "main": "packages/providers/hetzner/hetzner-sdk/index.ts",
         "tsConfig": "packages/providers/hetzner/hetzner-sdk/tsconfig.lib.json",
-        "rootDir": "packages/providers/hetzner/hetzner-sdk/src"
+        "rootDir": "packages/providers/hetzner/hetzner-sdk"
       }
     },
     "format": {
