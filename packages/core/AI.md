@@ -454,6 +454,134 @@ writing the output entry.
 
 ---
 
+## Runtime abstractions (`src/lib/runtime/`)
+
+The runtime module defines the **provider-agnostic abstractions** that provider
+packages use to implement deployment handlers. These abstractions are consumed
+by the engine bridge (`RuntimeAdapter` in `@cdkx-io/engine`) and implemented by
+provider runtime packages (e.g. `@cdkx-io/hetzner-runtime`).
+
+**Key design principle:** total decoupling. Providers know nothing about the
+engine, and all dependencies (logger, SDK) are injected via `RuntimeContext`.
+
+### `RuntimeLogger` (`src/lib/runtime/runtime-logger.ts`)
+
+Logger interface decoupled from `@cdkx-io/logger`. Provider packages depend on
+this interface — not the concrete `LoggerImpl` class. `LoggerImpl` from
+`@cdkx-io/logger` satisfies this interface structurally (no adapter needed).
+
+```ts
+interface RuntimeLogger {
+  debug(type: string, data: Record<string, unknown>): void;
+  info(type: string, data: Record<string, unknown>): void;
+  warn(type: string, data: Record<string, unknown>): void;
+  error(type: string, data: Record<string, unknown>, error?: Error): void;
+  child(context: Record<string, unknown>): RuntimeLogger;
+}
+```
+
+### `RuntimeContext<TSdk>` (`src/lib/runtime/runtime-context.ts`)
+
+Abstract context object passed to every `ResourceHandler` method. Carries the
+provider SDK and a logger. Provider packages subclass this to expose a typed SDK
+(e.g. `HetznerRuntimeContext`).
+
+```ts
+abstract class RuntimeContext<TSdk = unknown> {
+  abstract readonly sdk: TSdk;
+  abstract readonly logger: RuntimeLogger;
+}
+```
+
+**Why no `EventBus` or `StateStore`?** The engine already has its own EventBus and
+state management. Handlers return results; the engine manages state transitions.
+Adding these to the context would couple providers to engine internals.
+
+### `ResourceHandler<TProps, TState, TSdk>` (`src/lib/runtime/resource-handler.ts`)
+
+Abstract base class for per-resource-type deployment logic. Each resource type
+gets its own handler subclass.
+
+```ts
+abstract class ResourceHandler<TProps, TState, TSdk> {
+  abstract create(ctx: RuntimeContext<TSdk>, props: TProps): Promise<TState>;
+  abstract update(
+    ctx: RuntimeContext<TSdk>,
+    props: TProps,
+    state: TState,
+  ): Promise<TState>;
+  abstract delete(ctx: RuntimeContext<TSdk>, state: TState): Promise<void>;
+  abstract get(ctx: RuntimeContext<TSdk>, props: TProps): Promise<TState>;
+  protected assertExists<T>(value: T | undefined | null, msg?: string): T;
+}
+```
+
+**Type parameters:**
+
+| Param    | Description                                                              |
+| -------- | ------------------------------------------------------------------------ |
+| `TProps` | Typed create/update properties (e.g. `HetznerNetworkProps`)              |
+| `TState` | Return type from create/get — includes `physicalId` and provider outputs |
+| `TSdk`   | The SDK type injected via `RuntimeContext` (e.g. `HetznerSdk`)           |
+
+**`assertExists<T>()`** — convenience guard for nullable values. Throws if
+`undefined` or `null`. Used by handlers to unwrap API responses.
+
+### `ProviderRuntime<TSdk>` (`src/lib/runtime/provider-runtime.ts`)
+
+Abstract base class for provider runtimes. Manages a registry of
+`ResourceHandler` instances keyed by resource type string. Provider packages
+extend this to register their handlers in the constructor.
+
+```ts
+abstract class ProviderRuntime<TSdk = unknown> {
+  protected handlers: Record<string, ResourceHandler<unknown, unknown, TSdk>>;
+
+  abstract listResourceTypes(): string[];
+  register<TProps, TState>(
+    type: string,
+    handler: ResourceHandler<TProps, TState, TSdk>,
+  ): void;
+  getHandler<TProps, TState>(
+    type: string,
+  ): ResourceHandler<TProps, TState, TSdk>; // throws if not found
+}
+```
+
+**Usage pattern:**
+
+```ts
+class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
+  constructor() {
+    super();
+    this.register(
+      HetznerResourceType.Networking.Network,
+      new HetznerNetworkHandler(),
+    );
+    // ... register more handlers
+  }
+  listResourceTypes() {
+    return Object.keys(this.handlers);
+  }
+}
+```
+
+### Runtime module — design decisions
+
+1. **`RuntimeLogger` in core, not `@cdkx-io/logger`:** avoids coupling provider
+   packages to the concrete logger. Both engine and providers depend on core
+   (which they already do), so the interface lives here.
+2. **No pre/post operation hooks on `ProviderRuntime`:** removed as YAGNI — the
+   engine handles lifecycle logging via its own EventBus subscription.
+3. **No `any` in `ProviderRuntime`:** `handlers` map uses `unknown` generics.
+   The `register()` and `getHandler()` methods use `as unknown as ...` casts
+   internally — safe because runtime types are opaque to the container.
+4. **`@cdkx-io/core` does not depend on `@cdkx-io/logger`:** the `@cdkx-io/logger`
+   dependency was removed from `packages/core/package.json` when the runtime
+   module was added.
+
+---
+
 ## Coding conventions
 
 | Rule                            | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
