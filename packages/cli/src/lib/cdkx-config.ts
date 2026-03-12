@@ -1,16 +1,8 @@
 import { readFileSync } from 'fs';
+import { type CdkxConfig } from '@cdkx-io/core';
 
-/**
- * Shape of the `cdkx.json` configuration file.
- *
- * Used by `synth`, `deploy`, and future `destroy` commands.
- */
-export interface CdkxConfig {
-  /** Shell command to run the user's compiled app (e.g. `node app.js`). */
-  app: string;
-  /** Output directory for synthesis artifacts (default: `'cdkx.out'`). */
-  output?: string;
-}
+// Re-export CdkxConfig so existing CLI consumers don't break
+export { type CdkxConfig } from '@cdkx-io/core';
 
 /**
  * Read and parse a `cdkx.json` file from the given absolute path.
