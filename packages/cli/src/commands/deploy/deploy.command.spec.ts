@@ -4,8 +4,8 @@ import type {
   DeploymentPlan,
   DeploymentEngineOptions,
 } from '@cdkx-io/engine';
+import { DeployLock } from '@cdkx-io/engine';
 import { AdapterRegistry } from '../../lib/adapter-registry/index.js';
-import { DeployLock } from '../../lib/deploy-lock/index.js';
 
 // ─── Minimal stubs ────────────────────────────────────────────────────────────
 
@@ -359,7 +359,7 @@ describe('DeployCommand — execution', () => {
   });
 
   it('exits with code 1 when acquire() throws LockError', async () => {
-    const { LockError } = await import('../../lib/deploy-lock/index.js');
+    const { LockError } = await import('@cdkx-io/engine');
     const lockData = {
       pid: 9999,
       startedAt: '2026-01-01T00:00:00.000Z',
