@@ -4,6 +4,38 @@
   "sourceRoot": "packages/providers/hetzner/hetzner-runtime/src",
   "projectType": "library",
   "tags": [],
-  "// targets": "to see all targets run: nx show project @cdkx-io/hetzner-runtime --web",
-  "targets": {}
+  "targets": {
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/providers/hetzner/hetzner-runtime/dist",
+        "main": "packages/providers/hetzner/hetzner-runtime/src/index.ts",
+        "tsConfig": "packages/providers/hetzner/hetzner-runtime/tsconfig.lib.json",
+        "rootDir": "packages/providers/hetzner/hetzner-runtime/src"
+      }
+    },
+    "publish-local": {
+      "dependsOn": ["build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["npm publish --registry http://localhost:4873"],
+        "cwd": "{projectRoot}/dist"
+      }
+    }
+  }
 }
