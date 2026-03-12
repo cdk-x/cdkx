@@ -3,9 +3,9 @@ import type {
   DeploymentPlan,
   DeploymentResult,
 } from '@cdkx-io/engine';
+import { DeployLock } from '@cdkx-io/engine';
 import { DestroyCommand, type DestroyCommandDeps } from './destroy.command.js';
 import { AdapterRegistry } from '../../lib/adapter-registry/index.js';
-import { DeployLock } from '../../lib/deploy-lock/index.js';
 
 // Mock adapter registry with 'test' provider
 function makeRegistry(): AdapterRegistry {
