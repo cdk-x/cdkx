@@ -97,7 +97,11 @@
         }
       },
       "providers": {
-        "projects": ["@cdkx-io/hetzner", "@cdkx-io/hetzner-sdk"],
+        "projects": [
+          "@cdkx-io/hetzner",
+          "@cdkx-io/hetzner-runtime",
+          "@cdkx-io/hetzner-sdk"
+        ],
         "projectsRelationship": "independent",
         "releaseTag": {
           "pattern": "{projectName}-v{version}"
