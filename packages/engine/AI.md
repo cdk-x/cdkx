@@ -74,7 +74,10 @@ CloudAssemblyReader          reads manifest.json + stack JSON files
            ├── EngineStateManager  tracks + persists all state transitions
            ├── EventBus            emits EngineEvent on every transition
            └── ProviderAdapter (interface)
-                └── HetznerAdapter   (in @cdkx-io/hetzner — implemented)
+                ├── RuntimeAdapter<TSdk>    generic bridge to handler-based runtimes
+                │    └── ProviderRuntime<TSdk>  (from @cdkx-io/core — handler registry)
+                │         └── ResourceHandler   (one per resource type)
+                ├── HetznerAdapter   (in @cdkx-io/hetzner — low-level HTTP adapter)
                 └── KubernetesAdapter (future)
 ```
 
@@ -328,6 +331,73 @@ returns the actual provider-assigned value.
 
 `validate()` is optional. If present it is called before the deployment loop
 and should throw without making API calls if the resource configuration is invalid.
+
+---
+
+## RuntimeAdapter
+
+Generic bridge that adapts a handler-based `ProviderRuntime` (from `@cdkx-io/core`)
+to the `ProviderAdapter` interface consumed by `DeploymentEngine`. Provider runtime
+packages (e.g. `@cdkx-io/hetzner-runtime`) instantiate this class instead of
+implementing `ProviderAdapter` from scratch.
+
+```ts
+interface RuntimeResourceConfig {
+  physicalIdKey: string; // key in handler state that holds the physical ID
+  createOnlyProps?: ReadonlySet<string>; // props that cannot be changed after creation
+}
+
+interface RuntimeAdapterOptions<TSdk> {
+  runtime: ProviderRuntime<TSdk>;
+  context: RuntimeContext<TSdk>;
+  resourceConfigs: Record<string, RuntimeResourceConfig>;
+}
+
+class RuntimeAdapter<TSdk> implements ProviderAdapter {
+  constructor(options: RuntimeAdapterOptions<TSdk>);
+
+  setLogger(logger: RuntimeLogger): void;
+  create(resource: ManifestResource): Promise<CreateResult>;
+  update(resource: ManifestResource): Promise<UpdateResult>;
+  delete(resource: ManifestResource): Promise<void>;
+  validate(resource: ManifestResource): Promise<void>;
+  getOutput(resource: ManifestResource, attr: string): Promise<unknown>;
+  getCreateOnlyProps(type: string): ReadonlySet<string>;
+}
+```
+
+### State bridging strategy
+
+The adapter translates between the engine's flat `physicalId` + `outputs` model
+and the handler's typed state object:
+
+- **`create()`** — calls `handler.create(ctx, props)`. Extracts `physicalId` from
+  the returned state using `resourceConfig.physicalIdKey`. Returns the entire state
+  as `CreateResult.outputs` so the engine persists it in `ResourceState.outputs`.
+- **`update()`** — calls `handler.get(ctx, props)` to reconstruct current state
+  (since the engine only stores flat outputs, not the typed handler state), then
+  calls `handler.update(ctx, props, currentState)`. Returns new state as
+  `UpdateResult.outputs`.
+- **`delete()`** — calls `handler.get(ctx, props)` to reconstruct state, then
+  calls `handler.delete(ctx, state)`.
+- **`getOutput()`** — calls `handler.get(ctx, props)` and returns `state[attr]`.
+- **`validate()`** — verifies the resource type is registered in the runtime
+  (calls `runtime.getHandler(type)`, which throws if not found).
+- **`getCreateOnlyProps()`** — returns `resourceConfig.createOnlyProps ?? new Set()`.
+
+### Logger injection
+
+`setLogger(logger)` is called by the engine when a logger is provided. The adapter
+casts through the `readonly` modifier to update the context's logger reference:
+`(this.context as { logger: RuntimeLogger }).logger = logger`. This works because
+`readonly` is a TypeScript compile-time-only check.
+
+### `update()` signature
+
+The engine calls `adapter.update(resource, patch)` but `RuntimeAdapter.update()`
+drops the `patch` parameter — TypeScript allows implementing an interface method
+with fewer parameters. Handlers always receive the full desired props; they
+determine what changed internally.
 
 ---
 
@@ -772,9 +842,11 @@ const engine = new DeploymentEngine({
 - `{ ref, attr }` token contract → defined by `ResourceAttribute` in `@cdkx-io/core`
 - `outputKeys` in manifest → populated by `Stack.getOutputs()` + `JsonSynthesizer`
 
-The engine does **not** depend on `@cdkx-io/core` at runtime — it only needs to
-understand the JSON file formats, not the TypeScript construct classes. This keeps
-the engine lightweight and provider-agnostic.
+The engine depends on `@cdkx-io/core` at runtime for the `RuntimeAdapter` bridge
+class, which imports `ProviderRuntime`, `RuntimeContext`, and `RuntimeLogger` from
+core. It also consumes the cloud assembly JSON file formats (manifest, stack
+templates, `{ ref, attr }` tokens) but does not import construct classes (`App`,
+`Stack`, `ProviderResource`).
 
 ---
 
@@ -846,8 +918,13 @@ packages/engine/
         │   └── index.ts
         ├── adapter/
         │   ├── provider-adapter.ts   interfaces ProviderAdapter, ManifestResource,
-        │   │                         CreateResult, UpdateResult
-        │   └── index.ts
+        │   │                         CreateResult, UpdateResult, ProviderAdapterFactory
+        │   ├── runtime-adapter.ts    class RuntimeAdapter<TSdk> — bridges ProviderRuntime
+        │   │                         to ProviderAdapter; RuntimeAdapterOptions,
+        │   │                         RuntimeResourceConfig interfaces
+        │   ├── runtime-adapter.spec.ts  17 tests (create, update, delete, getOutput,
+        │   │                            validate, setLogger, getCreateOnlyProps)
+        │   └── index.ts              re-exports all adapter types incl. RuntimeAdapter
         ├── assembly/
         │   ├── assembly-types.ts     interfaces AssemblyOutput, AssemblyResource, AssemblyStack
         │   ├── cloud-assembly-reader.ts  class CloudAssemblyReader + CloudAssemblyReaderDeps
