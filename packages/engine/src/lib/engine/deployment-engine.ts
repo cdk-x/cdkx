@@ -192,12 +192,20 @@ export class DeploymentEngine {
     if (options.adapters !== undefined) {
       this.adapters = options.adapters;
     } else {
-      // Load adapters dynamically based on providers found in assembly
+      // Load adapters dynamically based on providers found in resources
       const stacks = this.readAssembly();
-      const providerIds = [...new Set(stacks.map((s) => s.provider))];
+      const providerIds = new Set<string>();
+
+      // Collect all providers from resources across all stacks
+      for (const stack of stacks) {
+        for (const resource of stack.resources) {
+          providerIds.add(resource.provider);
+        }
+      }
+
       const pluginManager = new PluginManager();
       this.adapters = pluginManager.buildAdapters(
-        providerIds,
+        [...providerIds],
         options.env ?? process.env,
       );
     }
@@ -389,16 +397,6 @@ export class DeploymentEngine {
     stack: AssemblyStack,
     resourceWaves: string[][],
   ): Promise<StackDeploymentResult> {
-    const adapter = this.adapters[stack.provider];
-    if (adapter === undefined) {
-      return {
-        stackId: stack.id,
-        success: false,
-        resources: [],
-        error: `No adapter registered for provider '${stack.provider}'.`,
-      };
-    }
-
     // Determine whether this stack already exists in loaded state.
     const isUpdate = this.stateManager.getStackState(stack.id) !== undefined;
 
@@ -415,7 +413,7 @@ export class DeploymentEngine {
     // from the new assembly. Only runs when prior state exists.
     let reconciledCount = 0;
     try {
-      reconciledCount = await this.reconcileStack(stack, adapter);
+      reconciledCount = await this.reconcileStack(stack, this.adapters);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       this.stateManager.transitionStack(
@@ -441,7 +439,13 @@ export class DeploymentEngine {
     // parallel; waves execute sequentially to respect dependencies.
     for (const wave of resourceWaves) {
       const wavePromises = wave.map((logicalId) =>
-        this.deployResource(stack, logicalId, resourceById, adapter, isUpdate),
+        this.deployResource(
+          stack,
+          logicalId,
+          resourceById,
+          this.adapters,
+          isUpdate,
+        ),
       );
 
       const waveResults = await Promise.allSettled(wavePromises);
@@ -467,7 +471,7 @@ export class DeploymentEngine {
             stack,
             createdInOrder,
             resourceById,
-            adapter,
+            this.adapters,
             isUpdate,
           );
 
@@ -490,15 +494,42 @@ export class DeploymentEngine {
         const result = settled.value;
         resourceResults.push(result);
 
+        // If resource failed (but didn't throw), mark stack as failed
+        if (!result.success) {
+          // Wait for all other resources in this wave to settle before rolling back.
+          await Promise.allSettled(wavePromises);
+
+          await this.rollback(
+            stack,
+            createdInOrder,
+            resourceById,
+            this.adapters,
+            isUpdate,
+          );
+
+          const rollbackComplete = isUpdate
+            ? StackStatus.UPDATE_ROLLBACK_COMPLETE
+            : StackStatus.ROLLBACK_COMPLETE;
+
+          this.stateManager.transitionStack(stack.id, rollbackComplete, {
+            reason: `Resource '${logicalId}' failed: ${result.error}`,
+          });
+
+          return {
+            stackId: stack.id,
+            success: false,
+            resources: resourceResults,
+            error: `Resource '${logicalId}' failed: ${result.error}`,
+          };
+        }
+
         // Track flags and createdInOrder in wave order.
-        if (result.success) {
-          if (result.physicalId !== undefined && !result.wasSkipped) {
-            if (result.wasCreated) {
-              anyCreated = true;
-              createdInOrder.push(logicalId);
-            } else if (result.wasUpdated) {
-              anyUpdated = true;
-            }
+        if (result.physicalId !== undefined && !result.wasSkipped) {
+          if (result.wasCreated) {
+            anyCreated = true;
+            createdInOrder.push(logicalId);
+          } else if (result.wasUpdated) {
+            anyUpdated = true;
           }
         }
       }
@@ -542,7 +573,7 @@ export class DeploymentEngine {
     stack: AssemblyStack,
     logicalId: string,
     resourceById: Map<string, AssemblyResource>,
-    adapter: ProviderAdapter,
+    adapters: Record<string, ProviderAdapter>,
     isUpdate: boolean,
   ): Promise<
     ResourceDeploymentResult & {
@@ -558,6 +589,16 @@ export class DeploymentEngine {
         logicalId,
         success: false,
         error: 'Resource not found in assembly',
+      };
+    }
+
+    // Get the adapter for this resource's provider
+    const adapter = adapters[resource.provider];
+    if (adapter === undefined) {
+      return {
+        logicalId,
+        success: false,
+        error: `No adapter registered for provider '${resource.provider}'.`,
       };
     }
 
@@ -628,7 +669,7 @@ export class DeploymentEngine {
             type: resource.type,
             properties: resolvedProperties,
             stackId: stack.id,
-            provider: stack.provider,
+            provider: resource.provider,
             physicalId: existingState.physicalId,
           },
           filteredPatch,
@@ -680,7 +721,7 @@ export class DeploymentEngine {
         type: resource.type,
         properties: resolvedProperties,
         stackId: stack.id,
-        provider: stack.provider,
+        provider: resource.provider,
       });
 
       this.stateManager.transitionResource(
@@ -730,7 +771,7 @@ export class DeploymentEngine {
    */
   private async reconcileStack(
     stack: AssemblyStack,
-    adapter: ProviderAdapter,
+    adapters: Record<string, ProviderAdapter>,
   ): Promise<number> {
     const prevState = this.stateManager.getStackState(stack.id);
     if (prevState === undefined) return 0;
@@ -762,6 +803,16 @@ export class DeploymentEngine {
     for (const [logicalId, resourceState] of toDelete) {
       const resourceType = resourceState.type ?? 'unknown';
 
+      // Extract provider from resource type
+      const providerId = resourceType.split('::')[0].toLowerCase();
+      const adapter = adapters[providerId];
+
+      if (adapter === undefined) {
+        throw new Error(
+          `No adapter registered for provider '${providerId}' (resource type '${resourceType}').`,
+        );
+      }
+
       this.stateManager.transitionResource(
         stack.id,
         logicalId,
@@ -776,7 +827,7 @@ export class DeploymentEngine {
           properties: resourceState.properties,
           physicalId: resourceState.physicalId,
           stackId: stack.id,
-          provider: stack.provider,
+          provider: providerId,
         });
 
         this.stateManager.transitionResource(
@@ -913,7 +964,7 @@ export class DeploymentEngine {
       string,
       { logicalId: string; type: string; properties: Record<string, unknown> }
     >,
-    adapter: ProviderAdapter,
+    adapters: Record<string, ProviderAdapter>,
     isUpdate: boolean,
   ): Promise<void> {
     this.stateManager.transitionStack(
@@ -940,6 +991,21 @@ export class DeploymentEngine {
       )
         continue;
 
+      // Extract provider from resource type
+      const providerId = resource.type.split('::')[0].toLowerCase();
+      const adapter = adapters[providerId];
+
+      if (adapter === undefined) {
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          resource.type,
+          ResourceStatus.DELETE_FAILED,
+          { reason: `No adapter registered for provider '${providerId}'.` },
+        );
+        continue;
+      }
+
       this.stateManager.transitionResource(
         stack.id,
         logicalId,
@@ -956,7 +1022,7 @@ export class DeploymentEngine {
           // tokens (e.g. networkId for action resources).
           properties: resourceState.properties,
           stackId: stack.id,
-          provider: stack.provider,
+          provider: providerId,
           physicalId: resourceState.physicalId,
         });
 
@@ -1215,16 +1281,6 @@ export class DeploymentEngine {
     stack: AssemblyStack,
     reversedResourceWaves: string[][],
   ): Promise<StackDeploymentResult> {
-    const adapter = this.adapters[stack.provider];
-    if (adapter === undefined) {
-      return {
-        stackId: stack.id,
-        success: false,
-        resources: [],
-        error: `No adapter registered for provider '${stack.provider}'.`,
-      };
-    }
-
     try {
       // Transition stack to DELETE_IN_PROGRESS.
       this.stateManager.transitionStack(
@@ -1250,7 +1306,7 @@ export class DeploymentEngine {
               } as ResourceDeploymentResult;
             }
 
-            return await this.destroyResource(stack, resource, adapter);
+            return await this.destroyResource(stack, resource, this.adapters);
           }),
         );
 
@@ -1326,13 +1382,13 @@ export class DeploymentEngine {
    *
    * @param stack - The stack containing the resource.
    * @param resource - The resource to destroy.
-   * @param adapter - The provider adapter.
+   * @param adapters - Map of provider adapters keyed by provider ID.
    * @returns A result indicating success or failure.
    */
   private async destroyResource(
     stack: AssemblyStack,
     resource: AssemblyResource,
-    adapter: ProviderAdapter,
+    adapters: Record<string, ProviderAdapter>,
   ): Promise<ResourceDeploymentResult> {
     const resourceState = this.stateManager.getResourceState(
       stack.id,
@@ -1358,6 +1414,16 @@ export class DeploymentEngine {
       };
     }
 
+    // Get the adapter for this resource's provider
+    const adapter = adapters[resource.provider];
+    if (adapter === undefined) {
+      return {
+        logicalId: resource.logicalId,
+        success: false,
+        error: `No adapter registered for provider '${resource.provider}'.`,
+      };
+    }
+
     try {
       // Transition to DELETE_IN_PROGRESS.
       this.stateManager.transitionResource(
@@ -1373,7 +1439,7 @@ export class DeploymentEngine {
         type: resource.type,
         properties: resourceState.properties,
         stackId: stack.id,
-        provider: stack.provider,
+        provider: resource.provider,
         physicalId: resourceState.physicalId,
       });
 
