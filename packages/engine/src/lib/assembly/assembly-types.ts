@@ -17,6 +17,8 @@ export interface AssemblyResource {
   readonly logicalId: string;
   /** Resource type string (e.g. `'Hetzner::Compute::Server'`). */
   readonly type: string;
+  /** Provider identifier (e.g. `'hetzner'`, `'ansible'`). Derived from type prefix. */
+  readonly provider: string;
   /**
    * Resolved properties as synthesized. May contain `{ ref, attr }` tokens
    * for cross-resource references — the planner resolves these at deploy time.
@@ -47,10 +49,6 @@ export interface AssemblyResource {
 export interface AssemblyStack {
   /** Artifact ID — the key in `manifest.json`'s `artifacts` map. */
   readonly id: string;
-  /** Provider identifier (e.g. `'hetzner'`, `'kubernetes'`). */
-  readonly provider: string;
-  /** Deployment target metadata from `Provider.getEnvironment()`. */
-  readonly environment: Record<string, unknown>;
   /** File name of the stack template (e.g. `'HetznerStack.json'`). */
   readonly templateFile: string;
   /** Human-readable display name. */
