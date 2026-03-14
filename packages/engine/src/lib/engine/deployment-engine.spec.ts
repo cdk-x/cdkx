@@ -41,18 +41,18 @@ function makeStack(
   resources: {
     logicalId: string;
     type?: string;
+    provider?: string;
     properties?: Record<string, unknown>;
   }[],
   dependencies: string[] = [],
 ): AssemblyStack {
   return {
     id,
-    provider: 'test',
-    environment: {},
     templateFile: `${id}.json`,
     resources: resources.map((r) => ({
       logicalId: r.logicalId,
       type: r.type ?? 'test::Resource',
+      provider: r.provider ?? 'test',
       properties: r.properties ?? {},
     })),
     outputs: {},
@@ -563,7 +563,7 @@ describe('DeploymentEngine', () => {
   // ─── Missing adapter ──────────────────────────────────────────────────────────
 
   describe('missing provider adapter', () => {
-    it('returns failure when no adapter is registered for the stack provider', async () => {
+    it('returns failure when no adapter is registered for a resource provider', async () => {
       const engine = new DeploymentEngine({
         adapters: {}, // no adapters registered
         assemblyDir: '/fake/assembly',
@@ -579,8 +579,14 @@ describe('DeploymentEngine', () => {
       const plan = makePlan(['S'], { S: ['Res1'] });
       const result = await engine.deploy(stacks, plan);
 
+      // Should fail - no adapter for the resource provider
       expect(result.success).toBe(false);
-      expect(result.stacks[0].error).toContain(
+      expect(result.stacks[0].success).toBe(false);
+      // Error should be in the first resource
+      expect(result.stacks[0].resources.length).toBeGreaterThan(0);
+      const resourceResult = result.stacks[0].resources[0];
+      expect(resourceResult.success).toBe(false);
+      expect(resourceResult.error).toContain(
         "No adapter registered for provider 'test'",
       );
     });
