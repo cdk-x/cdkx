@@ -6,6 +6,7 @@ import { EventBus } from '../events/event-bus';
 import { EngineEvent } from '../events/engine-event';
 import { EngineStateManager } from '../state/engine-state-manager';
 import { StatePersistence } from '../state/state-persistence';
+import { DeployLock } from '../deploy-lock';
 import type {
   ProviderAdapter,
   ManifestResource,
@@ -15,6 +16,23 @@ import type {
 import type { AssemblyStack } from '../assembly/assembly-types';
 import type { DeploymentPlan } from '../planner/deployment-plan';
 import type { EngineState } from '../state/engine-state';
+
+// ─── Test Helpers ─────────────────────────────────────────────────────────────
+
+function makeMockDeployLock(): DeployLock {
+  return new DeployLock('/fake/state', {
+    mkdirSync: () => undefined,
+    writeFileSync: () => undefined,
+    readFileSync: () => {
+      throw new Error('not found');
+    },
+    existsSync: () => false,
+    unlinkSync: () => undefined,
+    isProcessAlive: () => false,
+    getPid: () => 12345,
+    getHostname: () => 'test-host',
+  });
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -92,6 +110,7 @@ function makeEngine(
     stateDir: '/fake/state',
     stateManager,
     eventBus: bus,
+    deployLock: makeMockDeployLock(),
   });
 }
 
@@ -173,6 +192,7 @@ function makeEngineWithPriorState(
     stateDir: '/fake/state',
     stateManager,
     eventBus,
+    deployLock: makeMockDeployLock(),
   });
 }
 
@@ -236,6 +256,7 @@ function makeEngineWithPriorStateAndProps(
     stateDir: '/fake/state',
     stateManager,
     eventBus,
+    deployLock: makeMockDeployLock(),
   });
 }
 
@@ -551,6 +572,7 @@ describe('DeploymentEngine', () => {
           new EventBus<EngineEvent>(),
           makeNullPersistence(),
         ),
+        deployLock: makeMockDeployLock(),
       });
 
       const stacks = [makeStack('S', [{ logicalId: 'Res1' }])];
@@ -725,6 +747,7 @@ describe('DeploymentEngine', () => {
         stateDir: '/fake/state',
         stateManager,
         eventBus: bus,
+        deployLock: makeMockDeployLock(),
       });
 
       const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
@@ -1473,6 +1496,7 @@ describe('DeploymentEngine', () => {
         stateDir: '/fake/state',
         stateManager,
         eventBus: bus,
+        deployLock: makeMockDeployLock(),
       });
 
       const stacks = [
@@ -1939,6 +1963,7 @@ describe('DeploymentEngine', () => {
         stateManager,
         eventBus,
         logger: mockLogger as any,
+        deployLock: makeMockDeployLock(),
       });
 
       // Emit a sample event
@@ -1991,6 +2016,7 @@ describe('DeploymentEngine', () => {
         stateManager,
         eventBus,
         logger: mockLogger as any,
+        deployLock: makeMockDeployLock(),
       });
 
       eventBus.emit({
@@ -2039,6 +2065,7 @@ describe('DeploymentEngine', () => {
         stateManager,
         eventBus,
         logger: mockLogger as any,
+        deployLock: makeMockDeployLock(),
       });
 
       eventBus.emit({
@@ -2086,6 +2113,7 @@ describe('DeploymentEngine', () => {
         stateManager,
         eventBus,
         logger: mockLogger as any,
+        deployLock: makeMockDeployLock(),
       });
 
       eventBus.emit({
@@ -2128,6 +2156,7 @@ describe('DeploymentEngine', () => {
         stateManager,
         eventBus,
         logger: mockLogger as any,
+        deployLock: makeMockDeployLock(),
       });
 
       eventBus.emit({
@@ -2162,6 +2191,7 @@ describe('DeploymentEngine', () => {
         stateDir: '/fake',
         stateManager,
         eventBus,
+        deployLock: makeMockDeployLock(),
       });
 
       // Subscribe to the bus directly to verify events are emitted
