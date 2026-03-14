@@ -221,19 +221,20 @@ export class ProviderResource extends Construct {
     // Lazily import to avoid circular dependencies at module load time.
     // App and Stack are higher-level constructs that depend on ProviderResource,
     // so we resolve them at call time rather than at import time.
-    const { App } = require('../app/app');
-    const { Stack } = require('../stack/stack');
+    const { ResolverPipeline } = require('../resolvables/resolver-pipeline');
 
-    const stack = Stack.of(this);
-    const app = App.of(this);
+    // Use a generic resolver pipeline (not tied to a specific provider)
+    // since each resource now knows its own provider
+    const pipeline = ResolverPipeline.withBuiltins();
 
-    const pipeline = app.getResolverPipeline(stack.provider);
+    // Extract provider from typeName for the resolver context
+    const providerId = this.type.split('::')[0].toLowerCase();
 
     const resolvedProperties = pipeline.resolve(
       [],
       this.renderProperties(),
       this,
-      stack.provider.identifier,
+      providerId,
     );
 
     const sanitizedProperties = pipeline.sanitize(resolvedProperties);
@@ -251,6 +252,7 @@ export class ProviderResource extends Construct {
 
     const entry: Record<string, unknown> = {
       type: this.type,
+      provider: providerId,
       properties: sanitizedProperties,
       metadata: {
         'cdkx:path': this.node.path,
