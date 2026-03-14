@@ -29,17 +29,6 @@ export interface StackArtifact {
   /** Artifact type discriminator — always `'cdkx:stack'` for stack artifacts. */
   readonly type: ArtifactType;
 
-  /** Provider identifier (e.g. `'kubernetes'`, `'hetzner'`). From `Provider.identifier`. */
-  readonly provider: string;
-
-  /**
-   * Provider-specific deployment target metadata.
-   * Populated from `Provider.getEnvironment()`. Contains non-sensitive information
-   * that the runtime engine needs to know WHERE to deploy (e.g. cluster name,
-   * datacenter, project ID). Never contains credentials.
-   */
-  readonly environment: Record<string, unknown>;
-
   /** Stack-level properties used by the runtime engine. */
   readonly properties: {
     /** Output file name (e.g. `'HetznerStack.json'`, `'KubernetesStack.json'`). */
@@ -79,12 +68,6 @@ export interface CloudAssemblyManifest {
 export interface AddArtifactOptions {
   /** Unique artifact ID within the assembly. Used as the key in `artifacts`. */
   readonly id: string;
-
-  /** Provider identifier. */
-  readonly provider: string;
-
-  /** Provider environment metadata from `Provider.getEnvironment()`. */
-  readonly environment: Record<string, unknown>;
 
   /** Output file name. */
   readonly templateFile: string;
@@ -141,8 +124,6 @@ export class CloudAssemblyBuilder {
     }
     const artifact: StackArtifact = {
       type: 'cdkx:stack',
-      provider: options.provider,
-      environment: options.environment,
       properties: { templateFile: options.templateFile },
       ...(options.displayName !== undefined
         ? { displayName: options.displayName }
