@@ -22,7 +22,6 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { App, Stack } from '@cdkx-io/core';
 import { SynthHelpers } from '@cdkx-io/testing';
-import { HetznerProvider } from '../../src/lib/provider/index';
 import {
   HtzNetwork,
   HtzSubnet,
@@ -62,9 +61,7 @@ let lbLogicalId: string;
 // ---------------------------------------------------------------------------
 beforeAll(() => {
   const app = new App({ outdir: OUTDIR });
-  const stack = new Stack(app, 'HetznerNetworkStack', {
-    provider: new HetznerProvider(),
-  });
+  const stack = new Stack(app, 'HetznerNetworkStack', {});
 
   // ── Network ──────────────────────────────────────────────────────────────
   const network = new HtzNetwork(stack, 'AppNetwork', {
@@ -166,10 +163,6 @@ describe('manifest', () => {
 
   it('has artifact key HetznerNetworkStack', () => {
     expect(manifest.artifacts['HetznerNetworkStack']).toBeDefined();
-  });
-
-  it('artifact provider is hetzner', () => {
-    expect(manifest.artifacts['HetznerNetworkStack'].provider).toBe('hetzner');
   });
 
   it('artifact templateFile points to the stack JSON', () => {
