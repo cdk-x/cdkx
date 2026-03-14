@@ -4,6 +4,10 @@ import { EventBus } from '../events/event-bus';
 import { EngineEvent } from '../events/engine-event';
 import { EngineStateManager } from '../state/engine-state-manager';
 import { StatePersistence } from '../state/state-persistence';
+import { DeployLock } from '../deploy-lock';
+import { CloudAssemblyReader } from '../assembly/cloud-assembly-reader';
+import { DeploymentPlanner } from '../planner/deployment-planner';
+import { PluginManager } from '../plugins/plugin-manager';
 import type { ProviderAdapter } from '../adapter/provider-adapter';
 import type {
   AssemblyStack,
@@ -15,6 +19,14 @@ import {
   type BlockedDelete,
 } from './reconcile-validation-error';
 import type { Logger } from '@cdkx-io/logger';
+
+// ─── Output Handler types ─────────────────────────────────────────────────────
+
+/**
+ * Handler for outputting deployment events.
+ * Used by the engine to output formatted deployment status to console or remote.
+ */
+export type OutputHandler = (event: EngineEvent) => void;
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -61,15 +73,9 @@ export interface DeploymentResult {
  */
 export interface DeploymentEngineOptions {
   /**
-   * Map from provider identifier (e.g. `'hetzner'`) to the adapter that
-   * handles that provider's API calls.
-   */
-  readonly adapters: Record<string, ProviderAdapter>;
-
-  /**
    * Absolute path to the cloud assembly output directory.
    * Contains `manifest.json` and stack template files.
-   * Read by `CloudAssemblyReader` — the engine itself does not write here.
+   * The engine reads the assembly from this directory.
    */
   readonly assemblyDir: string;
 
@@ -80,6 +86,27 @@ export interface DeploymentEngineOptions {
    * directory rather than alongside the committed assembly output.
    */
   readonly stateDir: string;
+
+  /**
+   * Optional map from provider identifier to adapter.
+   * If not provided, the engine will automatically load adapters using
+   * the PluginManager based on providers found in the assembly.
+   */
+  readonly adapters?: Record<string, ProviderAdapter>;
+
+  /**
+   * Optional environment variables for provider adapter configuration.
+   * Passed to adapter factories when adapters are loaded dynamically.
+   * Default: `process.env`
+   */
+  readonly env?: NodeJS.ProcessEnv;
+
+  /**
+   * Optional output handler for receiving formatted deployment events.
+   * Used by the CLI to receive events for remote transmission (e.g., WebSocket).
+   * When not provided, the engine handles console output internally.
+   */
+  readonly outputHandler?: OutputHandler;
 
   /**
    * Optional pre-built `EngineStateManager`. If not provided, a new one
@@ -98,9 +125,17 @@ export interface DeploymentEngineOptions {
    * Optional logger for capturing all deployment events.
    * The engine subscribes the logger to the internal `EventBus` on construction,
    * logging every state transition (stack and resource) with structured event data.
-   * If not provided, no file logging occurs (the CLI still receives events).
+   * If not provided, a default logger with console output is created.
    */
   readonly logger?: Logger;
+
+  /**
+   * Optional DeployLock instance for preventing concurrent deployments.
+   * If not provided, a new DeployLock is created and acquire() is called.
+   * Pass a mock for testing to avoid file system operations.
+   * Pass null to disable locking entirely (useful for tests).
+   */
+  readonly deployLock?: DeployLock | null;
 }
 
 // ─── DeploymentEngine ─────────────────────────────────────────────────────────
@@ -130,10 +165,17 @@ export interface DeploymentEngineOptions {
 export class DeploymentEngine {
   private readonly stateManager: EngineStateManager;
   private readonly eventBus: EventBus<EngineEvent>;
+  private readonly adapters: Record<string, ProviderAdapter>;
+  private readonly deployLock: DeployLock;
 
   constructor(private readonly options: DeploymentEngineOptions) {
+    // Acquire deploy lock to prevent concurrent deployments
+    this.deployLock = options.deployLock ?? new DeployLock(options.stateDir);
+    this.deployLock.acquire();
+
     this.eventBus = options.eventBus ?? new EventBus<EngineEvent>();
 
+    // Set up state manager
     if (options.stateManager !== undefined) {
       this.stateManager = options.stateManager;
     } else {
@@ -146,17 +188,53 @@ export class DeploymentEngine {
       );
     }
 
+    // Load adapters - either use provided ones or load dynamically via PluginManager
+    if (options.adapters !== undefined) {
+      this.adapters = options.adapters;
+    } else {
+      // Load adapters dynamically based on providers found in assembly
+      const stacks = this.readAssembly();
+      const providerIds = [...new Set(stacks.map((s) => s.provider))];
+      const pluginManager = new PluginManager();
+      this.adapters = pluginManager.buildAdapters(
+        providerIds,
+        options.env ?? process.env,
+      );
+    }
+
+    // Subscribe output handler if provided (for remote/CLI integration)
+    if (options.outputHandler !== undefined) {
+      this.eventBus.subscribe(options.outputHandler);
+    }
+
     // Subscribe the logger to the EventBus if provided.
     if (options.logger !== undefined) {
       this.subscribeLogger(options.logger);
 
       // Propagate logger to all adapters that support it.
-      for (const adapter of Object.values(options.adapters)) {
+      for (const adapter of Object.values(this.adapters)) {
         if (adapter.setLogger !== undefined) {
           adapter.setLogger(options.logger);
         }
       }
     }
+  }
+
+  /**
+   * Reads the cloud assembly from the configured assemblyDir.
+   * Used internally when adapters are loaded dynamically.
+   */
+  private readAssembly(): AssemblyStack[] {
+    const reader = new CloudAssemblyReader(this.options.assemblyDir);
+    return reader.read();
+  }
+
+  /**
+   * Creates a deployment plan from the assembly stacks.
+   */
+  private createPlan(stacks: AssemblyStack[]): DeploymentPlan {
+    const planner = new DeploymentPlanner();
+    return planner.plan(stacks);
   }
 
   /**
@@ -181,9 +259,9 @@ export class DeploymentEngine {
         level = 'error';
       } else if (status.endsWith('ROLLBACK_IN_PROGRESS')) {
         level = 'warn';
-      } else if (status.endsWith('_IN_PROGRESS') || status === 'NO_CHANGES') {
+      } else if (status.endsWith('_IN_PROGRESS')) {
         level = 'debug';
-      } else if (status.endsWith('_COMPLETE')) {
+      } else if (status.endsWith('_COMPLETE') || status === 'NO_CHANGES') {
         level = 'info';
       }
 
@@ -226,23 +304,35 @@ export class DeploymentEngine {
   }
 
   /**
-   * Execute the deployment described by `plan` for the given `stacks`.
+   * Execute deployment of the cloud assembly.
+   *
+   * If no stacks and plan are provided, the engine reads the assembly
+   * from `assemblyDir` and creates the deployment plan automatically.
    *
    * Stacks are deployed in `plan.stackOrder`. Resources within each stack
    * are deployed in `plan.resourceOrders[stackId]`.
    */
+  public async deploy(): Promise<DeploymentResult>;
   public async deploy(
     stacks: AssemblyStack[],
     plan: DeploymentPlan,
+  ): Promise<DeploymentResult>;
+  public async deploy(
+    stacks?: AssemblyStack[],
+    plan?: DeploymentPlan,
   ): Promise<DeploymentResult> {
+    // If no stacks provided, read assembly and create plan internally
+    const actualStacks = stacks ?? this.readAssembly();
+    const actualPlan = plan ?? this.createPlan(actualStacks);
+
     const stackById = new Map<string, AssemblyStack>(
-      stacks.map((s) => [s.id, s]),
+      actualStacks.map((s) => [s.id, s]),
     );
 
     const stackResults: StackDeploymentResult[] = [];
 
     // Deploy stacks wave by wave (parallel within each wave).
-    for (const wave of plan.stackWaves) {
+    for (const wave of actualPlan.stackWaves) {
       const waveResults = await Promise.allSettled(
         wave.map(async (stackId) => {
           const stack = stackById.get(stackId);
@@ -258,7 +348,7 @@ export class DeploymentEngine {
 
           return await this.deployStack(
             stack,
-            plan.resourceWaves[stackId] ?? [],
+            actualPlan.resourceWaves[stackId] ?? [],
           );
         }),
       );
@@ -283,11 +373,13 @@ export class DeploymentEngine {
             resources: [],
             error: `Unhandled error: ${error}`,
           });
+          this.deployLock.release();
           return { success: false, stacks: stackResults };
         }
       }
     }
 
+    this.deployLock.release();
     return { success: true, stacks: stackResults };
   }
 
@@ -297,7 +389,7 @@ export class DeploymentEngine {
     stack: AssemblyStack,
     resourceWaves: string[][],
   ): Promise<StackDeploymentResult> {
-    const adapter = this.options.adapters[stack.provider];
+    const adapter = this.adapters[stack.provider];
     if (adapter === undefined) {
       return {
         stackId: stack.id,
@@ -1033,26 +1125,35 @@ export class DeploymentEngine {
   // ─── Destroy ──────────────────────────────────────────────────────────────────
 
   /**
-   * Destroys all resources in the given stacks in reverse dependency order.
+   * Destroys all resources in the cloud assembly.
+   *
+   * If no stacks and plan are provided, the engine reads the assembly
+   * from `assemblyDir` and creates the destruction plan automatically.
+   *
    * Stacks are processed in reverse wave order (last wave first), and within
    * each stack, resources are deleted in reverse wave order as well.
-   *
-   * @param stacks - The stacks to destroy (from the assembly).
-   * @param plan - The deployment plan (used to determine reverse order).
-   * @returns A result indicating success or failure.
    */
+  public async destroy(): Promise<DeploymentResult>;
   public async destroy(
     stacks: AssemblyStack[],
     plan: DeploymentPlan,
+  ): Promise<DeploymentResult>;
+  public async destroy(
+    stacks?: AssemblyStack[],
+    plan?: DeploymentPlan,
   ): Promise<DeploymentResult> {
+    // If no stacks provided, read assembly and create plan internally
+    const actualStacks = stacks ?? this.readAssembly();
+    const actualPlan = plan ?? this.createPlan(actualStacks);
+
     const stackById = new Map<string, AssemblyStack>(
-      stacks.map((s) => [s.id, s]),
+      actualStacks.map((s) => [s.id, s]),
     );
 
     const stackResults: StackDeploymentResult[] = [];
 
     // Destroy stacks in reverse wave order (last wave first).
-    const reversedStackWaves = [...plan.stackWaves].reverse();
+    const reversedStackWaves = [...actualPlan.stackWaves].reverse();
 
     for (const wave of reversedStackWaves) {
       const waveResults = await Promise.allSettled(
@@ -1068,7 +1169,7 @@ export class DeploymentEngine {
           }
 
           // Get resource waves in reverse order for this stack.
-          const resourceWaves = plan.resourceWaves[stackId] ?? [];
+          const resourceWaves = actualPlan.resourceWaves[stackId] ?? [];
           const reversedResourceWaves = [...resourceWaves].reverse();
 
           return await this.destroyStack(stack, reversedResourceWaves);
@@ -1093,11 +1194,13 @@ export class DeploymentEngine {
             resources: [],
             error: `Unhandled error: ${error}`,
           });
+          this.deployLock.release();
           return { success: false, stacks: stackResults };
         }
       }
     }
 
+    this.deployLock.release();
     return { success: true, stacks: stackResults };
   }
 
@@ -1112,7 +1215,7 @@ export class DeploymentEngine {
     stack: AssemblyStack,
     reversedResourceWaves: string[][],
   ): Promise<StackDeploymentResult> {
-    const adapter = this.options.adapters[stack.provider];
+    const adapter = this.adapters[stack.provider];
     if (adapter === undefined) {
       return {
         stackId: stack.id,
