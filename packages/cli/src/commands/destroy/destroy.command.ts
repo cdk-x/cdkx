@@ -4,48 +4,38 @@ import { resolve, isAbsolute, dirname, join } from 'path';
 import { existsSync as fsExistsSync } from 'fs';
 import { createInterface } from 'readline';
 import {
-  CloudAssemblyReader,
-  DeploymentPlanner,
   DeploymentEngine,
-  DeployLock,
-  EventBus,
-  type AssemblyStack,
-  type DeploymentPlan,
-  type DeploymentEngineOptions,
   type EngineEvent,
+  type OutputHandler,
   ResourceStatus,
   StackStatus,
 } from '@cdkx-io/engine';
-import { HetznerRuntimeAdapterFactory } from '@cdkx-io/hetzner-runtime';
 import { LoggerFactory } from '@cdkx-io/logger';
 import { BaseCommand } from '../../lib/base-command';
 import {
   type CdkxConfig,
   readConfig as defaultReadConfig,
 } from '../../lib/cdkx-config.js';
-import { AdapterRegistry } from '../../lib/adapter-registry/index.js';
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
-function defaultReadAssembly(outdir: string): AssemblyStack[] {
-  return new CloudAssemblyReader(outdir).read();
+function defaultReadConfigWrapper(path: string): CdkxConfig {
+  return defaultReadConfig(path);
 }
 
-function defaultPlanDeployment(stacks: AssemblyStack[]): DeploymentPlan {
-  return new DeploymentPlanner().plan(stacks);
-}
+async function defaultPromptUser(message: string): Promise<boolean> {
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
 
-function defaultCreateEngine(opts: DeploymentEngineOptions): DeploymentEngine {
-  return new DeploymentEngine(opts);
+  return new Promise((resolve) => {
+    rl.question(message, (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+    });
+  });
 }
-
-function defaultCreateLock(stateDir: string): DeployLock {
-  return new DeployLock(stateDir);
-}
-
-const defaultRegistry = new AdapterRegistry().register(
-  new HetznerRuntimeAdapterFactory(),
-);
 
 // ─── Event formatting ─────────────────────────────────────────────────────────
 
@@ -54,40 +44,10 @@ function pad(s: string, width: number): string {
   return s + ' '.repeat(Math.max(0, width - s.length));
 }
 
-interface ColWidths {
-  stack: number;
-  type: number;
-  id: number;
-}
-
-/**
- * Computes column widths from the assembly data (before destroy starts).
- * This allows immediate event printing with correct alignment.
- */
-function computeColWidthsFromAssembly(stacks: AssemblyStack[]): ColWidths {
-  let stack = 0;
-  let type = 'cdkx::stack'.length; // stack-level events use this type
-  let id = 0;
-
-  for (const s of stacks) {
-    // Stack ID appears in the stackId column and as logicalResourceId for stack-level events
-    if (s.id.length > stack) stack = s.id.length;
-    if (s.id.length > id) id = s.id.length;
-
-    // Resource types and logical IDs
-    for (const r of s.resources) {
-      if (r.type.length > type) type = r.type.length;
-      if (r.logicalId.length > id) id = r.logicalId.length;
-    }
-  }
-
-  return { stack, type, id };
-}
-
-function renderEvent(event: EngineEvent, widths: ColWidths): string {
-  const stack = pad(event.stackId, widths.stack);
-  const type = pad(event.resourceType, widths.type);
-  const id = pad(event.logicalResourceId, widths.id);
+function renderEvent(event: EngineEvent): string {
+  const stack = pad(event.stackId, 20);
+  const type = pad(event.resourceType, 35);
+  const id = pad(event.logicalResourceId, 35);
 
   let status: string;
   const s = event.resourceStatus;
@@ -111,57 +71,40 @@ function renderEvent(event: EngineEvent, widths: ColWidths): string {
     status = chalk.dim(s);
   }
 
-  return `${stack}  ${type}  ${id}  ${status}`;
+  let line = `${stack}  ${type}  ${id}  ${status}`;
+  if (event.resourceStatusReason) {
+    line += `  ${chalk.dim(`(${event.resourceStatusReason})`)}`;
+  }
+  return line;
 }
 
-// ─── User confirmation ────────────────────────────────────────────────────────
-
-async function defaultPromptUser(message: string): Promise<boolean> {
-  const rl = createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise((resolve) => {
-    rl.question(message, (answer) => {
-      rl.close();
-      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-    });
-  });
-}
-
-// ─── Command ──────────────────────────────────────────────────────────────────
+// ─── DestroyCommandDeps ───────────────────────────────────────────────────────
 
 export interface DestroyCommandDeps {
   existsSync?: typeof fsExistsSync;
   readConfig?: typeof defaultReadConfig;
-  readAssembly?: typeof defaultReadAssembly;
-  planDeployment?: typeof defaultPlanDeployment;
-  createEngine?: typeof defaultCreateEngine;
-  createLock?: typeof defaultCreateLock;
-  registry?: AdapterRegistry;
   promptUser?: typeof defaultPromptUser;
 }
 
+// ─── DestroyCommand ───────────────────────────────────────────────────────────
+
+/**
+ * Implements the `cdkx destroy` command.
+ *
+ * Reads the cloud assembly, confirms with the user, and delegates all
+ * destruction work to the DeploymentEngine. The engine handles provider
+ * loading, state management, locking, and file logging. The CLI handles
+ * console output via outputHandler.
+ */
 export class DestroyCommand extends BaseCommand {
   private readonly existsSync: typeof fsExistsSync;
   private readonly readConfig: typeof defaultReadConfig;
-  private readonly readAssembly: typeof defaultReadAssembly;
-  private readonly planDeployment: typeof defaultPlanDeployment;
-  private readonly createEngine: typeof defaultCreateEngine;
-  private readonly createLock: typeof defaultCreateLock;
-  private readonly registry: AdapterRegistry;
   private readonly promptUser: typeof defaultPromptUser;
 
   private constructor(deps: DestroyCommandDeps = {}) {
     super();
     this.existsSync = deps.existsSync ?? fsExistsSync;
-    this.readConfig = deps.readConfig ?? defaultReadConfig;
-    this.readAssembly = deps.readAssembly ?? defaultReadAssembly;
-    this.planDeployment = deps.planDeployment ?? defaultPlanDeployment;
-    this.createEngine = deps.createEngine ?? defaultCreateEngine;
-    this.createLock = deps.createLock ?? defaultCreateLock;
-    this.registry = deps.registry ?? defaultRegistry;
+    this.readConfig = deps.readConfig ?? defaultReadConfigWrapper;
     this.promptUser = deps.promptUser ?? defaultPromptUser;
   }
 
@@ -225,37 +168,16 @@ export class DestroyCommand extends BaseCommand {
       ? outdir
       : resolve(configDir, outdir);
 
-    // State directory — always .cdkx/ next to cdkx.json. Kept separate from
-    // the assembly outdir so state lives in a gitignored local directory.
+    // State directory — always .cdkx/ next to cdkx.json.
     const stateDir = join(configDir, '.cdkx');
 
-    // 4. Read the cloud assembly.
-    const stacks = this.readAssembly(absoluteOutdir);
-
-    if (stacks.length === 0) {
-      this.fail(
-        `No stacks found in cloud assembly at '${absoluteOutdir}'.\n` +
-          `Run 'cdkx synth' first to generate the deployment manifests.`,
-      );
-    }
-
-    // 5. Build the deployment plan (we'll reverse it for destruction).
-    const plan = this.planDeployment(stacks);
-
-    // 6. Build adapters from the registry (fails fast if a token is missing).
-    const providerIds = [...new Set(stacks.map((s) => s.provider))];
-    const adapters = this.registry.build(providerIds, process.env);
-
-    // 7. Confirm destruction (unless --force is set).
+    // 4. Confirm destruction (unless --force is set).
     if (!options.force) {
       console.log(
         chalk.yellow(
-          '⚠️  WARNING: This will destroy all resources in the following stacks:',
+          '⚠️  WARNING: This will destroy all resources in the cloud assembly.',
         ),
       );
-      for (const stack of stacks) {
-        console.log(chalk.yellow(`  - ${stack.id} (${stack.provider})`));
-      }
       console.log();
 
       const confirmed = await this.promptUser(
@@ -268,41 +190,31 @@ export class DestroyCommand extends BaseCommand {
       }
     }
 
-    // 8. Compute column widths upfront from the assembly data.
-    const widths = computeColWidthsFromAssembly(stacks);
+    // 5. Create the engine with file logging and console output handler.
+    const logger = LoggerFactory.createEngineLogger({
+      logDir: stateDir,
+    });
 
-    // 9. Acquire the deploy lock — prevents concurrent operations.
-    const lock = this.createLock(stateDir);
-    lock.acquire();
+    // Output handler for console display
+    const outputHandler: OutputHandler = (event) => {
+      console.log(renderEvent(event));
+    };
 
-    try {
-      // 10. Create the engine with an event bus for streaming progress.
-      const eventBus = new EventBus<EngineEvent>();
-      const logger = LoggerFactory.createEngineLogger({ logDir: stateDir });
-      const engine = this.createEngine({
-        adapters,
-        assemblyDir: absoluteOutdir,
-        stateDir,
-        eventBus,
-        logger,
-      });
+    const engine = new DeploymentEngine({
+      assemblyDir: absoluteOutdir,
+      stateDir,
+      logger,
+      outputHandler,
+    });
 
-      // 11. Stream events immediately as they happen.
-      engine.subscribe((event) => {
-        console.log(renderEvent(event, widths));
-      });
+    // 6. Destroy all stacks.
+    const result = await engine.destroy();
 
-      // 12. Destroy all stacks (reverse order).
-      const result = await engine.destroy(stacks, plan);
-
-      if (!result.success) {
-        this.fail('Destroy failed — see above for details.');
-      }
-
-      console.log(chalk.green('✔') + ' All resources destroyed');
-    } finally {
-      lock.release();
+    if (!result.success) {
+      this.fail('Destroy failed — see above for details.');
     }
+
+    console.log(chalk.green('✔') + ' All resources destroyed');
   }
 }
 
