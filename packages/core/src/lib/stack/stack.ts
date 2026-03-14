@@ -1,20 +1,16 @@
 import { Construct, IConstruct } from 'constructs';
-import { Provider } from '../provider/provider';
-import { IStackSynthesizer, IStackRef } from '../synthesizer/synthesizer';
+import {
+  IStackSynthesizer,
+  IStackRef,
+  JsonSynthesizer,
+} from '../synthesizer/synthesizer';
 import { ProviderResource } from '../provider-resource/provider-resource';
 import { StackOutput } from '../stack-output/stack-output';
 
 export interface StackProps {
   /**
-   * The provider that this stack targets.
-   * Determines the resolver pipeline, the default synthesizer, and the
-   * `provider` identifier written to `manifest.json`.
-   */
-  readonly provider: Provider;
-
-  /**
-   * Override the synthesizer used to produce this stack's output file.
-   * If not set, uses the synthesizer returned by `provider.getSynthesizer()`.
+   * The synthesizer used to produce this stack's output file.
+   * If not set, uses `JsonSynthesizer`.
    */
   readonly synthesizer?: IStackSynthesizer;
 
@@ -32,17 +28,18 @@ export interface StackProps {
 }
 
 /**
- * A Stack is a deployment unit targeting a single provider.
+ * A Stack is a deployment unit containing resources from one or more providers.
  *
- * Each Stack produces one output artifact (JSON or YAML) in `cdkx.out/`.
- * The provider determines the resolver pipeline and the default synthesizer.
+ * Each Stack produces one output artifact (JSON) in `cdkx.out/`.
+ * Resources within a stack can target different providers (multi-provider stack).
  *
- * Multiple stacks with different providers can coexist under the same `App`:
+ * Multiple stacks can coexist under the same `App`:
  *
  * @example
  * const app = new App();
- * const k8s = new Stack(app, 'k8s-stack', { provider: new KubernetesProvider(...) });
- * const hetzner = new Stack(app, 'hetzner-stack', { provider: new HetznerProvider(...) });
+ * const stack = new Stack(app, 'my-stack');
+ * new HtzServer(stack, 'Server', { ... });
+ * new AnsibleConfig(stack, 'Config', { ... });
  * app.synth();
  */
 export class Stack extends Construct implements IStackRef {
@@ -69,9 +66,6 @@ export class Stack extends Construct implements IStackRef {
     );
   }
 
-  /** The provider this stack targets. */
-  public readonly provider: Provider;
-
   /**
    * The artifact ID for this stack.
    * Derived from the construct node path — used as the output file name stem
@@ -92,33 +86,16 @@ export class Stack extends Construct implements IStackRef {
    */
   public readonly stackName: string;
 
-  constructor(scope: Construct, id: string, props: StackProps) {
+  constructor(scope: Construct, id: string, props: StackProps = {}) {
     super(scope, id);
-    this.provider = props.provider;
     this.description = props.description;
     this.stackName = props.stackName ?? id;
 
     // Build artifact ID from the node path, replacing '/' with '-' and stripping leading '-'
     this.artifactId = this.node.path.replace(/\//g, '-').replace(/^-+/, '');
 
-    this.synthesizer = props.synthesizer ?? props.provider.getSynthesizer();
+    this.synthesizer = props.synthesizer ?? new JsonSynthesizer();
     this.synthesizer.bind(this);
-  }
-
-  /**
-   * The provider identifier string — delegates to `provider.identifier`.
-   * Used by `IStackRef` without needing to expose the full `Provider` object.
-   */
-  public get providerIdentifier(): string {
-    return this.provider.identifier;
-  }
-
-  /**
-   * Provider-specific deployment target metadata — delegates to `provider.getEnvironment()`.
-   * Written into `manifest.json` so the runtime engine knows where to deploy.
-   */
-  public get environment(): Record<string, unknown> {
-    return this.provider.getEnvironment();
   }
 
   /**
@@ -160,13 +137,15 @@ export class Stack extends Construct implements IStackRef {
    *
    * Used by the `JsonSynthesizer` to resolve output token values (e.g.
    * `IResolvable` tokens like `ResourceAttribute`) at synthesis time.
-   * Delegates to `App.getResolverPipeline(provider).resolve(...)`.
+   * Delegates to `App.getResolverPipeline().resolve(...)`.
    */
   public resolveOutputValue(value: unknown): unknown {
     // Lazily import to avoid circular dependencies at module load time.
     const { App } = require('../app/app');
+    const { ResolverPipeline } = require('../resolvables/resolver-pipeline');
     const app = App.of(this);
-    const pipeline = app.getResolverPipeline(this.provider);
-    return pipeline.resolve([], value, this, this.provider.identifier);
+    // Use a generic resolver pipeline for output resolution
+    const pipeline = app.getResolverPipeline(ResolverPipeline.withBuiltins());
+    return pipeline.resolve([], value, this, 'generic');
   }
 }
