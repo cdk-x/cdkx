@@ -21,7 +21,7 @@ import {
   ResolveContext,
 } from '../../src/lib/resolvables/resolvables';
 import { MANIFEST_VERSION } from '../../src/lib/assembly/cloud-assembly';
-import { TestProvider, SynthHelpers, TestResources } from '../helpers';
+import { SynthHelpers, TestResources } from '../helpers';
 
 // ---------------------------------------------------------------------------
 // 1. Basic single-stack synthesis
@@ -36,7 +36,7 @@ describe('Single stack — basic synthesis', () => {
 
   it('writes the stack JSON file to disk', () => {
     const app = new App({ outdir });
-    const stack = new Stack(app, 'MyStack', { provider: new TestProvider() });
+    const stack = new Stack(app, 'MyStack', {});
     TestResources.resource(stack);
 
     app.synth();
@@ -46,7 +46,7 @@ describe('Single stack — basic synthesis', () => {
 
   it('stack JSON contains the correct resource shape', () => {
     const app = new App({ outdir });
-    const stack = new Stack(app, 'MyStack', { provider: new TestProvider() });
+    const stack = new Stack(app, 'MyStack', {});
     const resource = TestResources.resource(stack, 'Server');
 
     app.synth();
@@ -65,7 +65,7 @@ describe('Single stack — basic synthesis', () => {
 
   it('writes manifest.json to disk', () => {
     const app = new App({ outdir });
-    new Stack(app, 'MyStack', { provider: new TestProvider() });
+    new Stack(app, 'MyStack', {});
     app.synth();
 
     expect(fs.existsSync(path.join(outdir, 'manifest.json'))).toBe(true);
@@ -73,7 +73,7 @@ describe('Single stack — basic synthesis', () => {
 
   it('manifest.json has the correct version and stack entry', () => {
     const app = new App({ outdir });
-    new Stack(app, 'MyStack', { provider: new TestProvider('hetzner') });
+    new Stack(app, 'MyStack', {});
     app.synth();
 
     const manifest = SynthHelpers.readJson(
@@ -84,8 +84,6 @@ describe('Single stack — basic synthesis', () => {
         string,
         {
           type: string;
-          provider: string;
-          environment: Record<string, unknown>;
           properties: { templateFile: string };
           displayName?: string;
         }
@@ -96,8 +94,6 @@ describe('Single stack — basic synthesis', () => {
     expect(Object.keys(manifest.artifacts)).toHaveLength(1);
     expect(manifest.artifacts['MyStack']).toEqual({
       type: 'cdkx:stack',
-      provider: 'hetzner',
-      environment: {},
       properties: { templateFile: 'MyStack.json' },
       displayName: 'MyStack',
     });
@@ -105,7 +101,7 @@ describe('Single stack — basic synthesis', () => {
 
   it('empty stack produces an empty resources object', () => {
     const app = new App({ outdir });
-    new Stack(app, 'Empty', { provider: new TestProvider() });
+    new Stack(app, 'Empty', {});
     app.synth();
 
     const content = SynthHelpers.readJson(path.join(outdir, 'Empty.json'));
@@ -126,7 +122,7 @@ describe('stackName', () => {
 
   it('manifest displayName defaults to the construct id when stackName is not provided', () => {
     const app = new App({ outdir });
-    new Stack(app, 'MyStack', { provider: new TestProvider() });
+    new Stack(app, 'MyStack', {});
     app.synth();
 
     const manifest = SynthHelpers.readJson(
@@ -140,7 +136,6 @@ describe('stackName', () => {
   it('manifest displayName uses stackName when provided', () => {
     const app = new App({ outdir });
     new Stack(app, 'MyStack', {
-      provider: new TestProvider(),
       stackName: 'Production Stack',
     });
     app.synth();
@@ -164,7 +159,6 @@ describe('stackName', () => {
   it('output file name is always derived from the construct id, not stackName', () => {
     const app = new App({ outdir });
     new Stack(app, 'MyStack', {
-      provider: new TestProvider(),
       stackName: 'Production Stack',
     });
     app.synth();
@@ -189,8 +183,8 @@ describe('Multiple stacks', () => {
 
   it('writes a separate JSON file for each stack', () => {
     const app = new App({ outdir });
-    const s1 = new Stack(app, 'StackA', { provider: new TestProvider() });
-    const s2 = new Stack(app, 'StackB', { provider: new TestProvider() });
+    const s1 = new Stack(app, 'StackA', {});
+    const s2 = new Stack(app, 'StackB', {});
     TestResources.resource(s1, 'R1');
     TestResources.resource(s2, 'R2');
     app.synth();
@@ -201,8 +195,8 @@ describe('Multiple stacks', () => {
 
   it('manifest lists all stacks', () => {
     const app = new App({ outdir });
-    new Stack(app, 'StackA', { provider: new TestProvider() });
-    new Stack(app, 'StackB', { provider: new TestProvider() });
+    new Stack(app, 'StackA', {});
+    new Stack(app, 'StackB', {});
     app.synth();
 
     const manifest = SynthHelpers.readJson(
@@ -218,8 +212,8 @@ describe('Multiple stacks', () => {
 
   it('each stack file contains only its own resources', () => {
     const app = new App({ outdir });
-    const s1 = new Stack(app, 'StackA', { provider: new TestProvider() });
-    const s2 = new Stack(app, 'StackB', { provider: new TestProvider() });
+    const s1 = new Stack(app, 'StackA', {});
+    const s2 = new Stack(app, 'StackB', {});
     new ProviderResource(s1, 'Res', {
       type: 'test::Resource',
       properties: { owner: 'stack-a' },
@@ -254,7 +248,7 @@ describe('Lazy token resolution', () => {
 
   it('resolves a Lazy value at synthesis time', () => {
     const app = new App({ outdir });
-    const stack = new Stack(app, 'S', { provider: new TestProvider() });
+    const stack = new Stack(app, 'S', {});
 
     let computed = false;
     new ProviderResource(stack, 'R', {
@@ -281,7 +275,7 @@ describe('Lazy token resolution', () => {
 
   it('resolves a Lazy that references a value set after construction', () => {
     const app = new App({ outdir });
-    const stack = new Stack(app, 'S', { provider: new TestProvider() });
+    const stack = new Stack(app, 'S', {});
 
     let lateValue = 0;
     new ProviderResource(stack, 'R', {
@@ -300,7 +294,7 @@ describe('Lazy token resolution', () => {
 
   it('uses TestResources.resourceWithLazy helper', () => {
     const app = new App({ outdir });
-    const stack = new Stack(app, 'S', { provider: new TestProvider() });
+    const stack = new Stack(app, 'S', {});
     TestResources.resourceWithLazy(stack);
     app.synth();
 
@@ -331,7 +325,7 @@ describe('IResolvable token resolution', () => {
     }
 
     const app = new App({ outdir });
-    const stack = new Stack(app, 'S', { provider: new TestProvider() });
+    const stack = new Stack(app, 'S', {});
     new ProviderResource(stack, 'R', {
       type: 'test::Resource',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -356,7 +350,7 @@ describe('IResolvable token resolution', () => {
     }
 
     const app = new App({ outdir });
-    const stack = new Stack(app, 'S', { provider: new TestProvider() });
+    const stack = new Stack(app, 'S', {});
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lazy = Lazy.any({ produce: () => new NameToken() as any });
     new ProviderResource(stack, 'R', {
@@ -382,17 +376,16 @@ describe('IResolvable token resolution', () => {
     }
 
     const app = new App({ outdir });
-    const stack = new Stack(app, 'S', {
-      provider: new TestProvider('kubernetes'),
-    });
+    const stack = new Stack(app, 'S', {});
     new ProviderResource(stack, 'R', {
-      type: 'test::Resource',
+      type: 'Kubernetes::Resource::Deployment',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       properties: { x: new ProviderSpyToken() as any },
     });
 
     app.synth();
 
+    // Provider is now extracted from the resource type (Provider::Domain::Resource)
     expect(capturedProvider).toBe('kubernetes');
   });
 });
@@ -410,7 +403,7 @@ describe('Null and undefined stripping during synthesis', () => {
 
   it('strips null property values from the output', () => {
     const app = new App({ outdir });
-    const stack = new Stack(app, 'S', { provider: new TestProvider() });
+    const stack = new Stack(app, 'S', {});
     TestResources.resourceWithNull(stack);
     app.synth();
 
@@ -435,7 +428,7 @@ describe('Unresolved token detection', () => {
       }
 
       const app = new App({ outdir });
-      const stack = new Stack(app, 'S', { provider: new TestProvider() });
+      const stack = new Stack(app, 'S', {});
       new ProviderResource(stack, 'R', {
         type: 'test::Resource',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -463,9 +456,7 @@ describe('Visual synth output', () => {
     const app = new App({ outdir });
 
     // ── Stack A — cross-resource references and null stripping ─────────────
-    const stackA = new Stack(app, 'StackA', {
-      provider: new TestProvider('provider-a'),
-    });
+    const stackA = new Stack(app, 'StackA', {});
 
     // Source resource — another resource will reference its logicalId
     const source = TestResources.resource(stackA, 'Source');
@@ -485,9 +476,7 @@ describe('Visual synth output', () => {
     TestResources.resourceWithNull(stackA, 'WithNull');
 
     // ── Stack B — lazy resolution ───────────────────────────────────────────
-    const stackB = new Stack(app, 'StackB', {
-      provider: new TestProvider('provider-b'),
-    });
+    const stackB = new Stack(app, 'StackB', {});
 
     // Lazy resource — value resolved at synthesis time
     TestResources.resourceWithLazy(stackB, 'WithLazy');

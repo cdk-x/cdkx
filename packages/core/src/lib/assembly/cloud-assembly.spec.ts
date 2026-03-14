@@ -53,8 +53,6 @@ describe('CloudAssemblyBuilder', () => {
         builder.addArtifact({
           id: 'stack-a',
           templateFile: 'stack-a.json',
-          provider: 'test',
-          environment: {},
         }),
       ).not.toThrow();
     });
@@ -64,15 +62,11 @@ describe('CloudAssemblyBuilder', () => {
       builder.addArtifact({
         id: 'stack-a',
         templateFile: 'stack-a.json',
-        provider: 'test',
-        environment: {},
       });
       expect(() =>
         builder.addArtifact({
           id: 'stack-a',
           templateFile: 'stack-a-2.json',
-          provider: 'test',
-          environment: {},
         }),
       ).toThrow("Duplicate artifact ID 'stack-a'");
     });
@@ -85,8 +79,6 @@ describe('CloudAssemblyBuilder', () => {
       builder.addArtifact({
         id: 'my-stack',
         templateFile: 'my-stack.json',
-        provider: 'test',
-        environment: {},
       });
       builder.buildAssembly();
 
@@ -101,8 +93,6 @@ describe('CloudAssemblyBuilder', () => {
       builder.addArtifact({
         id: 'stack-x',
         templateFile: 'stack-x.json',
-        provider: 'hetzner',
-        environment: { project: 'my-project', datacenter: 'nbg1' },
         displayName: 'My Stack',
       });
       builder.buildAssembly();
@@ -115,8 +105,6 @@ describe('CloudAssemblyBuilder', () => {
       expect(Object.keys(manifest.artifacts)).toHaveLength(1);
       expect(manifest.artifacts['stack-x']).toEqual({
         type: 'cdkx:stack',
-        provider: 'hetzner',
-        environment: { project: 'my-project', datacenter: 'nbg1' },
         properties: { templateFile: 'stack-x.json' },
         displayName: 'My Stack',
       });
@@ -129,8 +117,6 @@ describe('CloudAssemblyBuilder', () => {
       builder.addArtifact({
         id: 'stack-y',
         templateFile: 'stack-y.json',
-        provider: 'test',
-        environment: {},
       });
       builder.buildAssembly();
 
@@ -147,14 +133,10 @@ describe('CloudAssemblyBuilder', () => {
       builder.addArtifact({
         id: 'a',
         templateFile: 'a.json',
-        provider: 'test',
-        environment: {},
       });
       builder.addArtifact({
         id: 'b',
         templateFile: 'b.json',
-        provider: 'test',
-        environment: {},
       });
       const assembly = builder.buildAssembly();
 
@@ -179,15 +161,11 @@ describe('CloudAssembly', () => {
     builder.addArtifact({
       id: 'stack-a',
       templateFile: 'stack-a.json',
-      provider: 'test',
-      environment: {},
       displayName: 'Stack A',
     });
     builder.addArtifact({
       id: 'stack-b',
       templateFile: 'stack-b.yaml',
-      provider: 'k8s',
-      environment: {},
     });
     return { assembly: builder.buildAssembly(), outdir };
   }
