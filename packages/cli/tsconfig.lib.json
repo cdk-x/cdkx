@@ -14,10 +14,10 @@
   "include": ["src/**/*.ts"],
   "references": [
     {
-      "path": "../logger/tsconfig.lib.json"
+      "path": "../core/tsconfig.lib.json"
     },
     {
-      "path": "../providers/hetzner/hetzner/tsconfig.lib.json"
+      "path": "../logger/tsconfig.lib.json"
     },
     {
       "path": "../engine/tsconfig.lib.json"
