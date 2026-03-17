@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { JsonSynthesizer, IStackRef, ISynthesisSession } from './synthesizer';
 import { CloudAssemblyBuilder } from '../assembly/cloud-assembly';
-import { makeApp, makeStack, TestProvider } from '../../../test/helpers';
+import { makeApp, makeStack } from '../../../test/helpers';
 import { ProviderResource } from '../provider-resource/provider-resource';
 
 function tmpDir(): string {
