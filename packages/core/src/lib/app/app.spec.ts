@@ -118,8 +118,7 @@ describe('App', () => {
         },
       };
       const app = new App({ resolvers: [globalResolver] });
-      const stack = makeStack(app);
-      const pipeline = app.getResolverPipeline(stack.provider);
+      const pipeline = app.getResolverPipeline(new TestProvider('test'));
       pipeline.resolve([], 'trigger', {}, 'test');
       expect(resolved).toContain('global');
     });
@@ -146,11 +145,9 @@ describe('App', () => {
         synthesize: jest.fn(),
       };
       new Stack(app, 'S1', {
-        provider: new TestProvider(),
         synthesizer: mockSynth,
       });
       new Stack(app, 'S2', {
-        provider: new TestProvider(),
         synthesizer: mockSynth,
       });
       app.synth();
@@ -177,7 +174,6 @@ describe('App', () => {
       new Construct(app, 'PlainNode');
       // Also add a real Stack to confirm synth IS called for stacks
       new Stack(app, 'S', {
-        provider: new TestProvider(),
         synthesizer: mockSynth,
       });
       app.synth();
@@ -192,7 +188,6 @@ describe('App', () => {
         synthesize: (session) => capturedSessions.push(session),
       };
       new Stack(app, 'S', {
-        provider: new TestProvider(),
         synthesizer: captureSynth,
       });
       app.synth();

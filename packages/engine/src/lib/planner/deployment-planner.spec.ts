@@ -15,15 +15,19 @@ function makeStack(
 ): AssemblyStack {
   return {
     id,
-    provider: 'test',
-    environment: {},
     templateFile: `${id}.json`,
-    resources: resources.map((r) => ({
-      logicalId: r.logicalId,
-      type: r.type ?? 'test::Resource',
-      properties: r.properties ?? {},
-      ...(r.dependsOn !== undefined ? { dependsOn: r.dependsOn } : {}),
-    })),
+    resources: resources.map((r) => {
+      const type = r.type ?? 'test::Resource';
+      // Extract provider from typeName (format: "Provider::Domain::Resource")
+      const provider = type.split('::')[0].toLowerCase();
+      return {
+        logicalId: r.logicalId,
+        type,
+        provider,
+        properties: r.properties ?? {},
+        ...(r.dependsOn !== undefined ? { dependsOn: r.dependsOn } : {}),
+      };
+    }),
     outputs: {},
     outputKeys: [],
     dependencies,

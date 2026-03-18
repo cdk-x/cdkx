@@ -19,8 +19,6 @@ export interface CloudAssemblyReaderDeps {
 
 interface ManifestArtifact {
   type: string;
-  provider: string;
-  environment: Record<string, unknown>;
   properties: { templateFile: string };
   displayName?: string;
   outputKeys?: string[];
@@ -35,6 +33,7 @@ interface ManifestJson {
 
 interface TemplateResourceEntry {
   type: string;
+  provider?: string;
   properties?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   dependsOn?: string[];
@@ -175,8 +174,6 @@ export class CloudAssemblyReader {
 
       const stack: AssemblyStack = {
         id: stackId,
-        provider: artifact.provider,
-        environment: artifact.environment,
         templateFile: artifact.properties.templateFile,
         ...(artifact.displayName !== undefined
           ? { displayName: artifact.displayName }
@@ -193,9 +190,14 @@ export class CloudAssemblyReader {
   private parseResources(template: StackTemplate): AssemblyResource[] {
     const resourceMap = template.resources ?? {};
     return Object.entries(resourceMap).map(([logicalId, entry]) => {
+      // Extract provider from type if not explicitly set (backward compat)
+      const providerId =
+        entry.provider ?? entry.type.split('::')[0].toLowerCase();
+
       const resource: AssemblyResource = {
         logicalId,
         type: entry.type,
+        provider: providerId,
         properties: entry.properties ?? {},
         ...(entry.metadata !== undefined ? { metadata: entry.metadata } : {}),
         ...(entry.dependsOn !== undefined && entry.dependsOn.length > 0

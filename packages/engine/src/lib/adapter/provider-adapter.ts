@@ -1,3 +1,5 @@
+import type { Logger } from '@cdkx-io/logger';
+
 /**
  * Represents a single resource as the engine reads it from a stack template
  * JSON file. Properties may still contain unresolved `{ ref, attr }` tokens
@@ -92,6 +94,20 @@ export interface UpdateResult {
  * interface — it has no compile-time dependency on any concrete adapter.
  */
 export interface ProviderAdapter {
+  /**
+   * Set a logger instance for the adapter to use for HTTP request/response logging.
+   * Called by the engine when a logger is provided in DeploymentEngineOptions.
+   *
+   * The logger should be used to log HTTP requests and responses with appropriate
+   * event types:
+   * - `provider.http.request` for outgoing requests
+   * - `provider.http.response` for successful responses
+   * - `provider.http.error` for failed requests
+   *
+   * @param logger - The logger instance to use.
+   */
+  setLogger?(logger: Logger): void;
+
   /**
    * Create the resource in the target provider and return its physical ID and
    * any output attributes.

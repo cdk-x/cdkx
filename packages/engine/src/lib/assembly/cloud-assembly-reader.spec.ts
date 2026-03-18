@@ -9,8 +9,6 @@ function makeManifest(
   artifacts: Record<
     string,
     {
-      provider?: string;
-      environment?: Record<string, unknown>;
       templateFile: string;
       displayName?: string;
       outputKeys?: string[];
@@ -21,8 +19,6 @@ function makeManifest(
     string,
     {
       type: string;
-      provider: string;
-      environment: Record<string, unknown>;
       properties: { templateFile: string };
       displayName?: string;
       outputKeys?: string[];
@@ -31,8 +27,6 @@ function makeManifest(
   for (const [id, a] of Object.entries(artifacts)) {
     full[id] = {
       type: 'cdkx:stack',
-      provider: a.provider ?? 'test',
-      environment: a.environment ?? {},
       properties: { templateFile: a.templateFile },
       ...(a.displayName !== undefined ? { displayName: a.displayName } : {}),
       ...(a.outputKeys !== undefined ? { outputKeys: a.outputKeys } : {}),
@@ -129,10 +123,8 @@ describe('CloudAssemblyReader', () => {
         const files: Record<string, string> = {
           [`${OUTDIR}/manifest.json`]: makeManifest({
             EmptyStack: {
-              provider: 'hetzner',
               templateFile: 'EmptyStack.json',
               displayName: 'EmptyStack',
-              environment: { datacenter: 'nbg1' },
             },
           }),
           [`${OUTDIR}/EmptyStack.json`]: makeTemplate(),
@@ -146,14 +138,6 @@ describe('CloudAssemblyReader', () => {
 
       it('populates stack id correctly', () => {
         expect(stacks[0].id).toBe('EmptyStack');
-      });
-
-      it('populates provider correctly', () => {
-        expect(stacks[0].provider).toBe('hetzner');
-      });
-
-      it('populates environment correctly', () => {
-        expect(stacks[0].environment).toEqual({ datacenter: 'nbg1' });
       });
 
       it('populates templateFile correctly', () => {
@@ -348,12 +332,10 @@ describe('CloudAssemblyReader', () => {
         const files: Record<string, string> = {
           [`${OUTDIR}/manifest.json`]: makeManifest({
             StackA: {
-              provider: 'hetzner',
               templateFile: 'StackA.json',
               outputKeys: ['NetworkId'],
             },
             StackB: {
-              provider: 'hetzner',
               templateFile: 'StackB.json',
             },
           }),

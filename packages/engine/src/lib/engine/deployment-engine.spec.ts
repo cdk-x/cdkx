@@ -6,6 +6,7 @@ import { EventBus } from '../events/event-bus';
 import { EngineEvent } from '../events/engine-event';
 import { EngineStateManager } from '../state/engine-state-manager';
 import { StatePersistence } from '../state/state-persistence';
+import { DeployLock } from '../deploy-lock';
 import type {
   ProviderAdapter,
   ManifestResource,
@@ -16,6 +17,23 @@ import type { AssemblyStack } from '../assembly/assembly-types';
 import type { DeploymentPlan } from '../planner/deployment-plan';
 import type { EngineState } from '../state/engine-state';
 
+// ─── Test Helpers ─────────────────────────────────────────────────────────────
+
+function makeMockDeployLock(): DeployLock {
+  return new DeployLock('/fake/state', {
+    mkdirSync: () => undefined,
+    writeFileSync: () => undefined,
+    readFileSync: () => {
+      throw new Error('not found');
+    },
+    existsSync: () => false,
+    unlinkSync: () => undefined,
+    isProcessAlive: () => false,
+    getPid: () => 12345,
+    getHostname: () => 'test-host',
+  });
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeStack(
@@ -23,18 +41,18 @@ function makeStack(
   resources: {
     logicalId: string;
     type?: string;
+    provider?: string;
     properties?: Record<string, unknown>;
   }[],
   dependencies: string[] = [],
 ): AssemblyStack {
   return {
     id,
-    provider: 'test',
-    environment: {},
     templateFile: `${id}.json`,
     resources: resources.map((r) => ({
       logicalId: r.logicalId,
       type: r.type ?? 'test::Resource',
+      provider: r.provider ?? 'test',
       properties: r.properties ?? {},
     })),
     outputs: {},
@@ -92,6 +110,7 @@ function makeEngine(
     stateDir: '/fake/state',
     stateManager,
     eventBus: bus,
+    deployLock: makeMockDeployLock(),
   });
 }
 
@@ -173,6 +192,7 @@ function makeEngineWithPriorState(
     stateDir: '/fake/state',
     stateManager,
     eventBus,
+    deployLock: makeMockDeployLock(),
   });
 }
 
@@ -236,6 +256,7 @@ function makeEngineWithPriorStateAndProps(
     stateDir: '/fake/state',
     stateManager,
     eventBus,
+    deployLock: makeMockDeployLock(),
   });
 }
 
@@ -542,7 +563,7 @@ describe('DeploymentEngine', () => {
   // ─── Missing adapter ──────────────────────────────────────────────────────────
 
   describe('missing provider adapter', () => {
-    it('returns failure when no adapter is registered for the stack provider', async () => {
+    it('returns failure when no adapter is registered for a resource provider', async () => {
       const engine = new DeploymentEngine({
         adapters: {}, // no adapters registered
         assemblyDir: '/fake/assembly',
@@ -551,14 +572,21 @@ describe('DeploymentEngine', () => {
           new EventBus<EngineEvent>(),
           makeNullPersistence(),
         ),
+        deployLock: makeMockDeployLock(),
       });
 
       const stacks = [makeStack('S', [{ logicalId: 'Res1' }])];
       const plan = makePlan(['S'], { S: ['Res1'] });
       const result = await engine.deploy(stacks, plan);
 
+      // Should fail - no adapter for the resource provider
       expect(result.success).toBe(false);
-      expect(result.stacks[0].error).toContain(
+      expect(result.stacks[0].success).toBe(false);
+      // Error should be in the first resource
+      expect(result.stacks[0].resources.length).toBeGreaterThan(0);
+      const resourceResult = result.stacks[0].resources[0];
+      expect(resourceResult.success).toBe(false);
+      expect(resourceResult.error).toContain(
         "No adapter registered for provider 'test'",
       );
     });
@@ -725,6 +753,7 @@ describe('DeploymentEngine', () => {
         stateDir: '/fake/state',
         stateManager,
         eventBus: bus,
+        deployLock: makeMockDeployLock(),
       });
 
       const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
@@ -1473,6 +1502,7 @@ describe('DeploymentEngine', () => {
         stateDir: '/fake/state',
         stateManager,
         eventBus: bus,
+        deployLock: makeMockDeployLock(),
       });
 
       const stacks = [
@@ -1862,6 +1892,327 @@ describe('DeploymentEngine', () => {
       // The networkId in rollback must be the resolved integer (42), NOT the
       // { ref, attr } token.
       expect(subnetDelete?.properties['networkId']).toBe(42);
+    });
+  });
+
+  // ─── Logger integration ───────────────────────────────────────────────────────
+
+  describe('logger integration', () => {
+    it('subscribes the logger to the event bus when provided', () => {
+      const loggedEvents: Array<{
+        level: string;
+        type: string;
+        stackId: string;
+        resourceId: string;
+        data: Record<string, unknown>;
+      }> = [];
+
+      const mockLogger = {
+        debug: (
+          type: string,
+          data: {
+            stackId: string;
+            resourceId: string;
+            data: Record<string, unknown>;
+          },
+        ) => {
+          loggedEvents.push({ level: 'debug', type, ...data });
+        },
+        info: (
+          type: string,
+          data: {
+            stackId: string;
+            resourceId: string;
+            data: Record<string, unknown>;
+          },
+        ) => {
+          loggedEvents.push({ level: 'info', type, ...data });
+        },
+        warn: (
+          type: string,
+          data: {
+            stackId: string;
+            resourceId: string;
+            data: Record<string, unknown>;
+          },
+        ) => {
+          loggedEvents.push({ level: 'warn', type, ...data });
+        },
+        error: (
+          type: string,
+          data: {
+            stackId: string;
+            resourceId: string;
+            data: Record<string, unknown>;
+          },
+        ) => {
+          loggedEvents.push({ level: 'error', type, ...data });
+        },
+        child: () => mockLogger,
+      };
+
+      const eventBus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(eventBus, persistence);
+      const fullAdapter: ProviderAdapter = {
+        create: () => Promise.resolve({ physicalId: 'res-1' }),
+        update: () => Promise.resolve({}),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        eventBus,
+        logger: mockLogger as any,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // Emit a sample event
+      eventBus.emit({
+        timestamp: new Date(),
+        stackId: 'TestStack',
+        logicalResourceId: 'TestResource',
+        resourceType: 'test::Resource',
+        resourceStatus: ResourceStatus.CREATE_IN_PROGRESS,
+      });
+
+      expect(loggedEvents).toHaveLength(1);
+      expect(loggedEvents[0]).toMatchObject({
+        level: 'debug', // _IN_PROGRESS → debug
+        type: 'engine.state.resource.transition',
+        stackId: 'TestStack',
+        resourceId: 'TestResource',
+        data: {
+          resourceType: 'test::Resource',
+          resourceStatus: ResourceStatus.CREATE_IN_PROGRESS,
+        },
+      });
+    });
+
+    it('maps CREATE_COMPLETE to info level', () => {
+      const loggedEvents: Array<{ level: string }> = [];
+      const mockLogger = {
+        debug: () => loggedEvents.push({ level: 'debug' }),
+        info: () => loggedEvents.push({ level: 'info' }),
+        warn: () => loggedEvents.push({ level: 'warn' }),
+        error: () => loggedEvents.push({ level: 'error' }),
+        child: () => mockLogger,
+      };
+
+      const eventBus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(eventBus, persistence);
+      const fullAdapter: ProviderAdapter = {
+        create: () => Promise.resolve({ physicalId: 'res-1' }),
+        update: () => Promise.resolve({}),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake',
+        stateDir: '/fake',
+        stateManager,
+        eventBus,
+        logger: mockLogger as any,
+        deployLock: makeMockDeployLock(),
+      });
+
+      eventBus.emit({
+        timestamp: new Date(),
+        stackId: 'S',
+        logicalResourceId: 'R',
+        resourceType: 'test::Resource',
+        resourceStatus: ResourceStatus.CREATE_COMPLETE,
+      });
+
+      expect(loggedEvents).toHaveLength(1);
+      expect(loggedEvents[0].level).toBe('info');
+    });
+
+    it('maps CREATE_FAILED to error level and includes error object', () => {
+      const loggedEvents: Array<{
+        level: string;
+        error?: Error;
+      }> = [];
+
+      const mockLogger = {
+        debug: () => loggedEvents.push({ level: 'debug' }),
+        info: () => loggedEvents.push({ level: 'info' }),
+        warn: () => loggedEvents.push({ level: 'warn' }),
+        error: (_type: string, _data: unknown, error?: Error) => {
+          loggedEvents.push({ level: 'error', error });
+        },
+        child: () => mockLogger,
+      };
+
+      const eventBus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(eventBus, persistence);
+      const fullAdapter: ProviderAdapter = {
+        create: () => Promise.resolve({ physicalId: 'res-1' }),
+        update: () => Promise.resolve({}),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake',
+        stateDir: '/fake',
+        stateManager,
+        eventBus,
+        logger: mockLogger as any,
+        deployLock: makeMockDeployLock(),
+      });
+
+      eventBus.emit({
+        timestamp: new Date(),
+        stackId: 'S',
+        logicalResourceId: 'R',
+        resourceType: 'test::Resource',
+        resourceStatus: ResourceStatus.CREATE_FAILED,
+        resourceStatusReason: 'API error: resource limit exceeded',
+      });
+
+      expect(loggedEvents).toHaveLength(1);
+      expect(loggedEvents[0].level).toBe('error');
+      expect(loggedEvents[0].error).toBeInstanceOf(Error);
+      expect(loggedEvents[0].error?.message).toBe(
+        'API error: resource limit exceeded',
+      );
+    });
+
+    it('maps ROLLBACK_IN_PROGRESS to warn level', () => {
+      const loggedEvents: Array<{ level: string }> = [];
+      const mockLogger = {
+        debug: () => loggedEvents.push({ level: 'debug' }),
+        info: () => loggedEvents.push({ level: 'info' }),
+        warn: () => loggedEvents.push({ level: 'warn' }),
+        error: () => loggedEvents.push({ level: 'error' }),
+        child: () => mockLogger,
+      };
+
+      const eventBus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(eventBus, persistence);
+      const fullAdapter: ProviderAdapter = {
+        create: () => Promise.resolve({ physicalId: 'res-1' }),
+        update: () => Promise.resolve({}),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake',
+        stateDir: '/fake',
+        stateManager,
+        eventBus,
+        logger: mockLogger as any,
+        deployLock: makeMockDeployLock(),
+      });
+
+      eventBus.emit({
+        timestamp: new Date(),
+        stackId: 'S',
+        logicalResourceId: 'S',
+        resourceType: 'cdkx::stack',
+        resourceStatus: StackStatus.ROLLBACK_IN_PROGRESS,
+      });
+
+      expect(loggedEvents).toHaveLength(1);
+      expect(loggedEvents[0].level).toBe('warn');
+    });
+
+    it('uses "engine.state.stack.transition" type for stack events', () => {
+      const loggedEvents: Array<{ type: string }> = [];
+      const mockLogger = {
+        debug: (type: string) => loggedEvents.push({ type }),
+        info: (type: string) => loggedEvents.push({ type }),
+        warn: (type: string) => loggedEvents.push({ type }),
+        error: (type: string) => loggedEvents.push({ type }),
+        child: () => mockLogger,
+      };
+
+      const eventBus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(eventBus, persistence);
+      const fullAdapter: ProviderAdapter = {
+        create: () => Promise.resolve({ physicalId: 'res-1' }),
+        update: () => Promise.resolve({}),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake',
+        stateDir: '/fake',
+        stateManager,
+        eventBus,
+        logger: mockLogger as any,
+        deployLock: makeMockDeployLock(),
+      });
+
+      eventBus.emit({
+        timestamp: new Date(),
+        stackId: 'S',
+        logicalResourceId: 'S',
+        resourceType: 'cdkx::stack',
+        resourceStatus: StackStatus.CREATE_IN_PROGRESS,
+      });
+
+      expect(loggedEvents).toHaveLength(1);
+      expect(loggedEvents[0].type).toBe('engine.state.stack.transition');
+    });
+
+    it('does not log when logger is not provided', () => {
+      const events: EngineEvent[] = [];
+      const eventBus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(eventBus, persistence);
+      const fullAdapter: ProviderAdapter = {
+        create: () => Promise.resolve({ physicalId: 'res-1' }),
+        update: () => Promise.resolve({}),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      // No logger provided
+      new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake',
+        stateDir: '/fake',
+        stateManager,
+        eventBus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // Subscribe to the bus directly to verify events are emitted
+      eventBus.subscribe((event) => events.push(event));
+
+      eventBus.emit({
+        timestamp: new Date(),
+        stackId: 'S',
+        logicalResourceId: 'R',
+        resourceType: 'test::Resource',
+        resourceStatus: ResourceStatus.CREATE_COMPLETE,
+      });
+
+      // Event was emitted, but no logger was called (no error thrown)
+      expect(events).toHaveLength(1);
     });
   });
 });
