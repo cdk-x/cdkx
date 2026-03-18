@@ -48,15 +48,6 @@ export interface IStackRef {
   /** The artifact ID — used as the output file name (without extension). */
   readonly artifactId: string;
 
-  /** The provider identifier (e.g. `'kubernetes'`, `'hetzner'`). */
-  readonly providerIdentifier: string;
-
-  /**
-   * Provider-specific deployment target metadata.
-   * Populated from `Provider.getEnvironment()`.
-   */
-  readonly environment: Record<string, unknown>;
-
   /** Human-readable display name (typically the construct node path). */
   readonly displayName: string;
 
@@ -135,8 +126,6 @@ export class JsonSynthesizer implements IStackSynthesizer {
 
     session.assembly.addArtifact({
       id: this.stack.artifactId,
-      provider: this.stack.providerIdentifier,
-      environment: this.stack.environment,
       templateFile: fileName,
       displayName: this.stack.displayName,
       outputKeys:

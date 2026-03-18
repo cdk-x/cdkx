@@ -1,0 +1,33 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    {
+      "path": "../hetzner-sdk/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../engine/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../core/tsconfig.lib.json"
+    }
+  ],
+  "exclude": [
+    "jest.config.ts",
+    "jest.config.cts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "test/**/*"
+  ]
+}

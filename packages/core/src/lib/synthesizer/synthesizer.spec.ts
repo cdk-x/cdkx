@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { JsonSynthesizer, IStackRef, ISynthesisSession } from './synthesizer';
 import { CloudAssemblyBuilder } from '../assembly/cloud-assembly';
-import { makeApp, makeStack, TestProvider } from '../../../test/helpers';
+import { makeApp, makeStack } from '../../../test/helpers';
 import { ProviderResource } from '../provider-resource/provider-resource';
 
 function tmpDir(): string {
@@ -18,13 +18,9 @@ function makeSession(outdir: string): ISynthesisSession {
 function makeStackRef(
   artifactId: string,
   resources: ProviderResource[] = [],
-  providerIdentifier = 'test',
-  environment: Record<string, unknown> = {},
 ): IStackRef {
   return {
     artifactId,
-    providerIdentifier,
-    environment,
     displayName: `App/${artifactId}`,
     getProviderResources: () => resources,
     getOutputs: () => [],
@@ -47,7 +43,7 @@ describe('JsonSynthesizer', () => {
     it('writes a .json file named after the artifactId', () => {
       const outdir = tmpDir();
       const app = makeApp(outdir);
-      const stack = makeStack(app, 'TestStack', new TestProvider());
+      const stack = makeStack(app, 'TestStack');
       const session = makeSession(outdir);
 
       stack.synthesizer.synthesize(session);
@@ -59,7 +55,7 @@ describe('JsonSynthesizer', () => {
     it('produces a JSON object keyed by logical ID, one entry per resource', () => {
       const outdir = tmpDir();
       const app = makeApp(outdir);
-      const stack = makeStack(app, 'MyStack', new TestProvider());
+      const stack = makeStack(app, 'MyStack');
       const r1 = new ProviderResource(stack, 'Res1', {
         type: 'test::TypeA',
         properties: { name: 'a' },
@@ -96,7 +92,7 @@ describe('JsonSynthesizer', () => {
     it('produces an empty resources object when the stack has no resources', () => {
       const outdir = tmpDir();
       const app = makeApp(outdir);
-      const stack = makeStack(app, 'EmptyStack', new TestProvider());
+      const stack = makeStack(app, 'EmptyStack');
       const session = makeSession(outdir);
       stack.synthesizer.synthesize(session);
 
@@ -110,7 +106,7 @@ describe('JsonSynthesizer', () => {
     it('registers the artifact in the CloudAssemblyBuilder', () => {
       const outdir = tmpDir();
       const app = makeApp(outdir);
-      const stack = makeStack(app, 'RegStack', new TestProvider());
+      const stack = makeStack(app, 'RegStack');
       const session = makeSession(outdir);
       stack.synthesizer.synthesize(session);
 
@@ -118,7 +114,6 @@ describe('JsonSynthesizer', () => {
       const artifact = assembly.getStack('RegStack');
       expect(artifact).toBeDefined();
       expect(artifact?.properties.templateFile).toBe('RegStack.json');
-      expect(artifact?.provider).toBe('test');
       fs.rmSync(outdir, { recursive: true });
     });
 
@@ -128,7 +123,7 @@ describe('JsonSynthesizer', () => {
         `cdkx-new-${Math.random().toString(36).slice(2)}`,
       );
       const app = makeApp(outdir);
-      const stack = makeStack(app, 'S', new TestProvider());
+      const stack = makeStack(app, 'S');
       const session = makeSession(outdir);
       stack.synthesizer.synthesize(session);
 

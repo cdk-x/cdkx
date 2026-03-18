@@ -1,6 +1,5 @@
 import { App } from '../app/app';
 import { Stack } from '../stack/stack';
-import { Provider } from '../provider/provider';
 import { ProviderResource } from './provider-resource';
 import { RemovalPolicy } from '../removal-policy';
 import { ProviderDeletionPolicy } from './provider-resource-policy';
@@ -8,17 +7,13 @@ import { Lazy } from '../resolvables/lazy';
 import { IResolvable } from '../resolvables/resolvables';
 import { PropertyValue } from '../constants';
 
-class TestProvider extends Provider {
-  public readonly identifier = 'test';
-}
-
 describe('ProviderResource', () => {
   let app: App;
   let stack: Stack;
 
   beforeEach(() => {
     app = new App({ outdir: '/tmp/cdkx-test-provider-resource' });
-    stack = new Stack(app, 'TestStack', { provider: new TestProvider() });
+    stack = new Stack(app, 'TestStack');
   });
 
   describe('isProviderResource()', () => {

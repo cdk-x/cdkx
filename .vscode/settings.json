@@ -6,6 +6,8 @@
     "engine",
     "testing",
     "hetzner",
+    "hetzner-sdk",
+    "hetzner-runtime",
     "spec-to-cdkx"
   ],
   "editor.formatOnSave": true,

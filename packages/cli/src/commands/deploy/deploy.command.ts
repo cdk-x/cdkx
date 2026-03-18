@@ -3,47 +3,24 @@ import chalk from 'chalk';
 import { resolve, isAbsolute, dirname, join } from 'path';
 import { existsSync as fsExistsSync } from 'fs';
 import {
-  CloudAssemblyReader,
-  DeploymentPlanner,
   DeploymentEngine,
-  EventBus,
-  type AssemblyStack,
-  type DeploymentPlan,
-  type DeploymentEngineOptions,
   type EngineEvent,
+  type OutputHandler,
   ResourceStatus,
   StackStatus,
 } from '@cdkx-io/engine';
-import { HetznerAdapterFactory } from '@cdkx-io/hetzner';
+import { LoggerFactory } from '@cdkx-io/logger';
 import { BaseCommand } from '../../lib/base-command.js';
 import {
   type CdkxConfig,
   readConfig as defaultReadConfig,
 } from '../../lib/cdkx-config.js';
-import { AdapterRegistry } from '../../lib/adapter-registry/index.js';
-import { DeployLock } from '../../lib/deploy-lock/index.js';
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
-function defaultReadAssembly(outdir: string): AssemblyStack[] {
-  return new CloudAssemblyReader(outdir).read();
+function defaultReadConfigWrapper(path: string): CdkxConfig {
+  return defaultReadConfig(path);
 }
-
-function defaultPlanDeployment(stacks: AssemblyStack[]): DeploymentPlan {
-  return new DeploymentPlanner().plan(stacks);
-}
-
-function defaultCreateEngine(opts: DeploymentEngineOptions): DeploymentEngine {
-  return new DeploymentEngine(opts);
-}
-
-function defaultCreateLock(stateDir: string): DeployLock {
-  return new DeployLock(stateDir);
-}
-
-const defaultRegistry = new AdapterRegistry().register(
-  new HetznerAdapterFactory(),
-);
 
 // ─── Event formatting ─────────────────────────────────────────────────────────
 
@@ -61,41 +38,11 @@ function statusColor(status: ResourceStatus | StackStatus): string {
   return chalk.cyan(s); // *_IN_PROGRESS
 }
 
-interface ColWidths {
-  stack: number;
-  type: number;
-  id: number;
-}
-
-/**
- * Computes column widths from the assembly data (before deployment starts).
- * This allows immediate event printing with correct alignment.
- */
-function computeColWidthsFromAssembly(stacks: AssemblyStack[]): ColWidths {
-  let stack = 0;
-  let type = 'cdkx::stack'.length; // stack-level events use this type
-  let id = 0;
-
-  for (const s of stacks) {
-    // Stack ID appears in the stackId column and as logicalResourceId for stack-level events
-    if (s.id.length > stack) stack = s.id.length;
-    if (s.id.length > id) id = s.id.length;
-
-    // Resource types and logical IDs
-    for (const r of s.resources) {
-      if (r.type.length > type) type = r.type.length;
-      if (r.logicalId.length > id) id = r.logicalId.length;
-    }
-  }
-
-  return { stack, type, id };
-}
-
-function renderEvent(event: EngineEvent, widths: ColWidths): string {
+function renderEvent(event: EngineEvent): string {
   const parts = [
-    chalk.white(pad(event.stackId, widths.stack)),
-    chalk.dim(pad(event.resourceType, widths.type)),
-    pad(event.logicalResourceId, widths.id),
+    chalk.white(pad(event.stackId, 20)),
+    chalk.dim(pad(event.resourceType, 35)),
+    pad(event.logicalResourceId, 35),
     statusColor(event.resourceStatus),
   ];
   if (event.resourceStatusReason) {
@@ -109,12 +56,6 @@ function renderEvent(event: EngineEvent, widths: ColWidths): string {
 export interface DeployCommandDeps {
   existsSync?: (path: string) => boolean;
   readConfig?: (path: string) => CdkxConfig;
-  readAssembly?: (outdir: string) => AssemblyStack[];
-  planDeployment?: (stacks: AssemblyStack[]) => DeploymentPlan;
-  createEngine?: (opts: DeploymentEngineOptions) => DeploymentEngine;
-  /** Factory that creates a `DeployLock` for the given `stateDir`. */
-  createLock?: (stateDir: string) => DeployLock;
-  registry?: AdapterRegistry;
 }
 
 // ─── DeployCommand ────────────────────────────────────────────────────────────
@@ -122,33 +63,18 @@ export interface DeployCommandDeps {
 /**
  * Implements the `cdkx deploy` command.
  *
- * Reads the cloud assembly produced by `cdkx synth`, builds a deployment
- * plan, and drives the deployment loop via `DeploymentEngine`. Progress is
- * streamed to stdout as engine events arrive.
- *
- * A deploy lock (`.cdkx/deploy.lock`) is acquired before the deployment
- * starts and released in a `finally` block, preventing concurrent deployments.
+ * Reads the cloud assembly and delegates all deployment work to the
+ * DeploymentEngine. The engine handles provider loading, state management,
+ * locking, and file logging. The CLI handles console output via outputHandler.
  */
 export class DeployCommand extends BaseCommand {
   private readonly existsSync: (path: string) => boolean;
   private readonly readConfig: (path: string) => CdkxConfig;
-  private readonly readAssembly: (outdir: string) => AssemblyStack[];
-  private readonly planDeployment: (stacks: AssemblyStack[]) => DeploymentPlan;
-  private readonly createEngine: (
-    opts: DeploymentEngineOptions,
-  ) => DeploymentEngine;
-  private readonly createLock: (stateDir: string) => DeployLock;
-  private readonly registry: AdapterRegistry;
 
   private constructor(deps: DeployCommandDeps = {}) {
     super();
     this.existsSync = deps.existsSync ?? fsExistsSync;
-    this.readConfig = deps.readConfig ?? defaultReadConfig;
-    this.readAssembly = deps.readAssembly ?? defaultReadAssembly;
-    this.planDeployment = deps.planDeployment ?? defaultPlanDeployment;
-    this.createEngine = deps.createEngine ?? defaultCreateEngine;
-    this.createLock = deps.createLock ?? defaultCreateLock;
-    this.registry = deps.registry ?? defaultRegistry;
+    this.readConfig = deps.readConfig ?? defaultReadConfigWrapper;
   }
 
   static create(deps?: DeployCommandDeps): Command {
@@ -194,80 +120,38 @@ export class DeployCommand extends BaseCommand {
     }
 
     // 3. Resolve output directory — relative paths are resolved from the
-    // config file's directory, so `cdkx deploy --config /path/to/cdkx.json`
-    // picks up the assembly written next to that config file.
+    // config file's directory.
     const configDir = dirname(configPath);
     const outdir = options.output ?? config.output ?? 'cdkx.out';
     const absoluteOutdir = isAbsolute(outdir)
       ? outdir
       : resolve(configDir, outdir);
 
-    // State directory — always .cdkx/ next to cdkx.json. Kept separate from
-    // the assembly outdir so state lives in a gitignored local directory.
+    // State directory — always .cdkx/ next to cdkx.json.
     const stateDir = join(configDir, '.cdkx');
 
-    // 4. Read the cloud assembly.
-    const stacks = this.readAssembly(absoluteOutdir);
+    // 4. Create the engine with file logging and console output handler.
+    const logger = LoggerFactory.createEngineLogger({
+      logDir: stateDir,
+    });
 
-    if (stacks.length === 0) {
-      this.fail(
-        `No stacks found in cloud assembly at '${absoluteOutdir}'.\n` +
-          `Run 'cdkx synth' first to generate the deployment manifests.`,
-      );
-    }
+    // Output handler for console display
+    const outputHandler: OutputHandler = (event) => {
+      console.log(renderEvent(event));
+    };
 
-    // 5. Build the deployment plan.
-    const plan = this.planDeployment(stacks);
+    const engine = new DeploymentEngine({
+      assemblyDir: absoluteOutdir,
+      stateDir,
+      logger,
+      outputHandler,
+    });
 
-    // 6. Build adapters from the registry (fails fast if a token is missing).
-    const providerIds = [...new Set(stacks.map((s) => s.provider))];
-    const adapters = this.registry.build(providerIds, process.env);
+    // 5. Deploy.
+    const result = await engine.deploy();
 
-    // 7. Compute column widths upfront from the assembly data.
-    const widths = computeColWidthsFromAssembly(stacks);
-
-    // 8. Acquire the deploy lock — prevents concurrent deployments.
-    const lock = this.createLock(stateDir);
-    lock.acquire();
-
-    try {
-      // 9. Create the engine with an event bus for streaming progress.
-      const eventBus = new EventBus<EngineEvent>();
-      const engine = this.createEngine({
-        adapters,
-        assemblyDir: absoluteOutdir,
-        stateDir,
-        eventBus,
-      });
-
-      // Track stacks that emitted NO_CHANGES to decide the final message.
-      const noChangeStacks = new Set<string>();
-
-      // 10. Stream events immediately as they happen.
-      engine.subscribe((event) => {
-        if (event.resourceStatus === StackStatus.NO_CHANGES) {
-          noChangeStacks.add(event.stackId);
-        }
-        console.log(renderEvent(event, widths));
-      });
-
-      // 11. Deploy.
-      const result = await engine.deploy(stacks, plan);
-
-      if (!result.success) {
-        this.fail('Deployment failed — see above for details.');
-      }
-
-      const allNoOp =
-        noChangeStacks.size > 0 && noChangeStacks.size === stacks.length;
-
-      if (allNoOp) {
-        console.log(chalk.dim('No changes — all stacks are up-to-date'));
-      } else {
-        console.log(chalk.green('✔') + ' Deployment complete');
-      }
-    } finally {
-      lock.release();
+    if (!result.success) {
+      this.fail('Deployment failed — see above for details.');
     }
   }
 }

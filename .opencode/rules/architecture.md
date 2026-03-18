@@ -31,14 +31,14 @@ The workflow has two phases:
 
 ## Package map
 
-| Package               | Location                       | Role                                                            |
-| --------------------- | ------------------------------ | --------------------------------------------------------------- |
-| `@cdkx-io/core`         | `packages/core/`               | Construct primitives, synthesis pipeline, cloud assembly format |
-| `@cdkx-io/engine`       | `packages/engine/`             | Deployment runtime — reads manifests, resolves tokens, deploys  |
-| `@cdkx-io/testing`      | `packages/testing/`            | Shared test helpers (app/stack factories, synth utilities)      |
-| `@cdkx-io/cli`          | `packages/cli/`                | CLI binary (`cdkx synth`, `cdkx deploy`) — imports engine       |
-| `@cdkx-io/hetzner`      | `packages/providers/hetzner/`  | Hetzner Cloud provider + generated L1 constructs                |
-| `@cdkx-io/spec-to-cdkx` | `packages/tools/spec-to-cdkx/` | Code generator: JSON Schema → TypeScript L1 constructs          |
+| Package                 | Location                              | Role                                                            |
+| ----------------------- | ------------------------------------- | --------------------------------------------------------------- |
+| `@cdkx-io/core`         | `packages/core/`                      | Construct primitives, synthesis pipeline, cloud assembly format |
+| `@cdkx-io/engine`       | `packages/engine/`                    | Deployment runtime — reads manifests, resolves tokens, deploys  |
+| `@cdkx-io/testing`      | `packages/testing/`                   | Shared test helpers (app/stack factories, synth utilities)      |
+| `@cdkx-io/cli`          | `packages/cli/`                       | CLI binary (`cdkx synth`, `cdkx deploy`) — imports engine       |
+| `@cdkx-io/hetzner`      | `packages/providers/hetzner/hetzner/` | Hetzner Cloud provider + generated L1 constructs                |
+| `@cdkx-io/spec-to-cdkx` | `packages/tools/spec-to-cdkx/`        | Code generator: JSON Schema → TypeScript L1 constructs          |
 
 ---
 
@@ -342,11 +342,11 @@ CLI.
 Managed via `nx release` in `nx.json`. Groups version independently of each
 other.
 
-| Group   | Packages                                                           | Tag pattern        | Notes             |
-| ------- | ------------------------------------------------------------------ | ------------------ | ----------------- |
+| Group   | Packages                                                                   | Tag pattern        | Notes             |
+| ------- | -------------------------------------------------------------------------- | ------------------ | ----------------- |
 | `core`  | `@cdkx-io/core`, `@cdkx-io/engine`, `@cdkx-io/testing`, `@cdkx-io/hetzner` | `core-v{version}`  | Lock-step (fixed) |
-| `cli`   | `@cdkx-io/cli`                                                       | `cli-v{version}`   | Independent       |
-| `tools` | `@cdkx-io/spec-to-cdkx`                                              | `tools-v{version}` | Independent       |
+| `cli`   | `@cdkx-io/cli`                                                             | `cli-v{version}`   | Independent       |
+| `tools` | `@cdkx-io/spec-to-cdkx`                                                    | `tools-v{version}` | Independent       |
 
 - `updateDependents: "never"` — releasing `core` does not auto-bump `cli`
   (CLI bundles core via esbuild, no runtime dep).

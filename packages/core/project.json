@@ -28,6 +28,14 @@
         "tsConfig": "packages/core/tsconfig.lib.json",
         "rootDir": "packages/core/src"
       }
+    },
+    "publish-local": {
+      "dependsOn": ["build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["npm publish --registry http://localhost:4873"],
+        "cwd": "{projectRoot}/dist"
+      }
     }
   }
 }

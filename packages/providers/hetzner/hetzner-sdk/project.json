@@ -1,0 +1,50 @@
+{
+  "name": "@cdkx-io/hetzner-sdk",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/providers/hetzner/hetzner-sdk/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/providers/hetzner/hetzner-sdk/dist",
+        "main": "packages/providers/hetzner/hetzner-sdk/index.ts",
+        "tsConfig": "packages/providers/hetzner/hetzner-sdk/tsconfig.lib.json",
+        "rootDir": "packages/providers/hetzner/hetzner-sdk"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write \"{projectRoot}/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check \"{projectRoot}/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "codegen": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate -i https://docs.hetzner.cloud/cloud.spec.json -g typescript-axios -o /local/packages/providers/hetzner/hetzner-sdk --additional-properties=npmName=@cdkx-io/hetzner-sdk --global-property=generateDocs=false &&  nx run @cdkx-io/hetzner-sdk:format --write && nx run @cdkx-io/hetzner-sdk:lint --fix "
+        ],
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  },
+  "publish-local": {
+    "dependsOn": ["build"],
+    "executor": "nx:run-commands",
+    "options": {
+      "commands": ["npm publish --registry http://localhost:4873"],
+      "cwd": "{projectRoot}/dist"
+    }
+  }
+}
