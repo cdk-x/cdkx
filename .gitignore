@@ -59,4 +59,7 @@ packages/cli/dist-fixtures
 .nx/polygraph
 
 # examples — local test apps (not part of the repo)
-examples/
+examples/.claude/settings.local.json
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
