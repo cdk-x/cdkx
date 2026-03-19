@@ -17,12 +17,8 @@
   ],
   "dependencies": {
     "@cdkx-io/core": "*",
-    "@cdkx-io/logger": "*",
     "constructs": "^10.4.2",
     "tslib": "^2.8.1"
-  },
-  "peerDependencies": {
-    "@cdkx-io/engine": "*"
   },
   "devDependencies": {
     "@cdkx-io/engine": "*",
