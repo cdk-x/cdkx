@@ -162,6 +162,14 @@ export interface ResourceSchema {
   createOnlyProperties: string[];
 
   /**
+   * Names of properties that form the primary identifier (physical ID).
+   * Derived from `primaryIdentifier` JSON pointers in the schema.
+   * - Single element: simple ID (e.g., ["networkId"])
+   * - Multiple elements: composite ID (e.g., ["networkId", "ipRange"])
+   */
+  primaryIdentifier: string[];
+
+  /**
    * Provider API configuration, if the schema declares an `api` block.
    * Used by `RegistryGenerator` to emit `RESOURCE_REGISTRY` entries.
    */
@@ -280,6 +288,9 @@ export class SchemaReader {
         ),
         createOnlyProperties: SchemaReader.extractPropNames(
           schema.createOnlyProperties ?? [],
+        ),
+        primaryIdentifier: SchemaReader.extractPropNames(
+          schema.primaryIdentifier ?? [],
         ),
         required: schema.required ?? [],
         definitions: localDefs,
