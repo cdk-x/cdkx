@@ -43,6 +43,7 @@ from the project root (`packages/providers/hetzner/hetzner/`). Reads schemas fro
 `schemas/v1/` and writes:
 
 - `src/lib/generated/resources.generated.ts` — L1 constructs (interfaces, enums, classes)
+- `src/lib/generated/runtime-config.generated.ts` — Runtime configuration for the deployment runtime (auto-generated from `primaryIdentifier` and `createOnlyProperties`)
 
 **When to re-run codegen:** whenever any `schemas/v1/*.schema.json` file is added,
 modified, or removed.
@@ -106,6 +107,29 @@ HetznerResourceType.Compute.Server; // 'Hetzner::Compute::Server'
 ```
 
 See `@cdkx-io/spec-to-cdkx/AI.md` for the full code generation design.
+
+---
+
+## Generated Runtime Config (`runtime-config.generated.ts`)
+
+Auto-generated runtime configuration consumed by `@cdkx-io/hetzner-runtime`.
+
+```ts
+import { RUNTIME_CONFIGS, RuntimeResourceConfig } from '@cdkx-io/hetzner';
+
+// RUNTIME_CONFIGS maps resource type → runtime configuration
+RUNTIME_CONFIGS['Hetzner::Networking::Network'];
+// { physicalIdKey: 'networkId', createOnlyProps: Set { 'ipRange' } }
+```
+
+**Generated from:**
+
+- `primaryIdentifier` → determines `physicalIdKey`
+  - Single element (e.g., `["/properties/networkId"]`): use property name (`"networkId"`)
+  - Multiple elements (e.g., `["/properties/networkId", "/properties/ipRange"]`): use `"physicalId"` (composite ID)
+- `createOnlyProperties` → determines `createOnlyProps` Set
+
+**Used by:** `HetznerRuntimeAdapterFactory` in `@cdkx-io/hetzner-runtime` to configure the `RuntimeAdapter`.
 
 ---
 
