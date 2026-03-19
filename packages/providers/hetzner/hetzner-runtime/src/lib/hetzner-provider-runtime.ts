@@ -4,6 +4,7 @@ import {
   HetznerNetworkHandler,
   HetznerSubnetHandler,
   HetznerRouteHandler,
+  HetznerCertificateHandler,
 } from './handlers';
 
 /**
@@ -19,6 +20,10 @@ export class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
     this.register('Hetzner::Networking::Network', new HetznerNetworkHandler());
     this.register('Hetzner::Networking::Subnet', new HetznerSubnetHandler());
     this.register('Hetzner::Networking::Route', new HetznerRouteHandler());
+    this.register(
+      'Hetzner::Security::Certificate',
+      new HetznerCertificateHandler(),
+    );
   }
 
   listResourceTypes(): string[] {
