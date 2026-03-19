@@ -1,6 +1,10 @@
 import { ProviderRuntime } from '@cdkx-io/core';
 import { HetznerSdk } from './hetzner-sdk-facade';
-import { HetznerNetworkHandler, HetznerSubnetHandler } from './handlers';
+import {
+  HetznerNetworkHandler,
+  HetznerSubnetHandler,
+  HetznerRouteHandler,
+} from './handlers';
 
 /**
  * Hetzner Cloud provider runtime.
@@ -14,6 +18,7 @@ export class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
     super();
     this.register('Hetzner::Networking::Network', new HetznerNetworkHandler());
     this.register('Hetzner::Networking::Subnet', new HetznerSubnetHandler());
+    this.register('Hetzner::Networking::Route', new HetznerRouteHandler());
   }
 
   listResourceTypes(): string[] {

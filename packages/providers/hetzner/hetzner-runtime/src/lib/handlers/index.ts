@@ -3,3 +3,6 @@ export type { HetznerNetworkProps, HetznerNetworkState } from './network';
 
 export { HetznerSubnetHandler } from './subnet';
 export type { HetznerSubnetProps, HetznerSubnetState } from './subnet';
+
+export { HetznerRouteHandler } from './route';
+export type { HetznerRouteProps, HetznerRouteState } from './route';
