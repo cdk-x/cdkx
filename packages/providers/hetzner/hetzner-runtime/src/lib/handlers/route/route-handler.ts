@@ -1,0 +1,151 @@
+import { ResourceHandler, RuntimeContext } from '@cdkx-io/core';
+import { HetznerSdk } from '../../hetzner-sdk-facade';
+
+/**
+ * Deserialized properties for a Hetzner Route resource.
+ * Keys match the cdkx schema (camelCase).
+ */
+export interface HetznerRouteProps {
+  readonly networkId: number;
+  readonly destination: string;
+  readonly gateway: string;
+}
+
+/**
+ * Persisted state for a Hetzner Route resource.
+ * Returned by {@link HetznerRouteHandler.create} and
+ * {@link HetznerRouteHandler.get}. Stored by the engine in
+ * `ResourceState.outputs`.
+ */
+export interface HetznerRouteState {
+  readonly physicalId: string;
+  readonly networkId: number;
+  readonly destination: string;
+  readonly gateway: string;
+}
+
+/**
+ * Handler for `Hetzner::Networking::Route` resources.
+ * Manages routes via the Hetzner Cloud Network Actions API.
+ * Routes are identified by a composite physicalId: `${networkId}/${destination}`
+ * since they don't have their own unique ID in the Hetzner API.
+ */
+export class HetznerRouteHandler extends ResourceHandler<
+  HetznerRouteProps,
+  HetznerRouteState,
+  HetznerSdk
+> {
+  async create(
+    ctx: RuntimeContext<HetznerSdk>,
+    props: HetznerRouteProps,
+  ): Promise<HetznerRouteState> {
+    ctx.logger.info('provider.handler.route.create', {
+      networkId: props.networkId,
+      destination: props.destination,
+      gateway: props.gateway,
+    });
+
+    await ctx.sdk.networkActions.addNetworkRoute(props.networkId, {
+      destination: props.destination,
+      gateway: props.gateway,
+    });
+
+    // The action response doesn't contain the route details directly.
+    // We need to fetch the network and find the route by its destination.
+    const networkResponse = await ctx.sdk.networks.getNetwork(props.networkId);
+    const network = this.assertExists(
+      networkResponse.data.network,
+      `Hetzner network not found: ${props.networkId}`,
+    );
+
+    const routes = network.routes ?? [];
+    const route = routes.find((r) => r.destination === props.destination);
+
+    if (!route) {
+      throw new Error(
+        `Route not found in network ${props.networkId} after creation`,
+      );
+    }
+
+    const destination = this.assertExists(
+      route.destination,
+      'Route destination is missing from API response',
+    );
+
+    const gateway = this.assertExists(
+      route.gateway,
+      'Route gateway is missing from API response',
+    );
+
+    return {
+      physicalId: `${props.networkId}/${destination}`,
+      networkId: props.networkId,
+      destination: destination,
+      gateway: gateway,
+    };
+  }
+
+  async update(): Promise<HetznerRouteState> {
+    throw new Error(
+      'HetznerRouteHandler.update: Routes cannot be updated. ' +
+        'All properties are create-only. To modify a route, delete and recreate it.',
+    );
+  }
+
+  async delete(
+    ctx: RuntimeContext<HetznerSdk>,
+    state: HetznerRouteState,
+  ): Promise<void> {
+    ctx.logger.info('provider.handler.route.delete', {
+      physicalId: state.physicalId,
+    });
+
+    await ctx.sdk.networkActions.deleteNetworkRoute(state.networkId, {
+      destination: state.destination,
+      gateway: state.gateway,
+    });
+  }
+
+  async get(
+    ctx: RuntimeContext<HetznerSdk>,
+    props: HetznerRouteProps,
+  ): Promise<HetznerRouteState> {
+    ctx.logger.debug('provider.handler.route.get', {
+      networkId: props.networkId,
+      destination: props.destination,
+    });
+
+    const response = await ctx.sdk.networks.getNetwork(props.networkId);
+
+    const network = this.assertExists(
+      response.data.network,
+      `Hetzner network not found: ${props.networkId}`,
+    );
+
+    const routes = network.routes ?? [];
+    const route = routes.find((r) => r.destination === props.destination);
+
+    if (!route) {
+      throw new Error(
+        `Route not found in network ${props.networkId} with destination ${props.destination}`,
+      );
+    }
+
+    const destination = this.assertExists(
+      route.destination,
+      'Route destination is missing from API response',
+    );
+
+    const gateway = this.assertExists(
+      route.gateway,
+      'Route gateway is missing from API response',
+    );
+
+    return {
+      physicalId: `${props.networkId}/${destination}`,
+      networkId: props.networkId,
+      destination: destination,
+      gateway: gateway,
+    };
+  }
+}
