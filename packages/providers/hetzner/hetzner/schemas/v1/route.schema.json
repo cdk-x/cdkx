@@ -25,11 +25,5 @@
     "/properties/destination",
     "/properties/gateway"
   ],
-  "primaryIdentifier": ["/properties/networkId", "/properties/destination"],
-  "api": {
-    "createPath": "/networks/{networkId}/actions/add_route",
-    "deletePath": "/networks/{networkId}/actions/delete_route",
-    "responseBodyKey": null,
-    "compositeIdProps": ["networkId", "destination"]
-  }
+  "primaryIdentifier": ["/properties/networkId", "/properties/destination"]
 }

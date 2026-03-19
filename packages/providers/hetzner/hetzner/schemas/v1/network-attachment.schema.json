@@ -36,11 +36,5 @@
     "/properties/aliasIps",
     "/properties/ipRange"
   ],
-  "primaryIdentifier": ["/properties/serverId", "/properties/networkId"],
-  "api": {
-    "createPath": "/servers/{serverId}/actions/attach_to_network",
-    "deletePath": "/servers/{serverId}/actions/detach_from_network",
-    "responseBodyKey": null,
-    "compositeIdProps": ["serverId", "networkId"]
-  }
+  "primaryIdentifier": ["/properties/serverId", "/properties/networkId"]
 }
