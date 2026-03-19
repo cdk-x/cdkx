@@ -42,15 +42,5 @@
   "required": ["type"],
   "createOnlyProperties": ["/properties/type", "/properties/homeLocation"],
   "readOnlyProperties": ["/properties/floatingIpId"],
-  "primaryIdentifier": ["/properties/floatingIpId"],
-  "api": {
-    "createPath": "/floating_ips",
-    "getPath": "/floating_ips/{id}",
-    "updatePath": "/floating_ips/{id}",
-    "deletePath": "/floating_ips/{id}",
-    "responseBodyKey": "floating_ip",
-    "outputAttrMap": {
-      "floatingIpId": "id"
-    }
-  }
+  "primaryIdentifier": ["/properties/floatingIpId"]
 }
