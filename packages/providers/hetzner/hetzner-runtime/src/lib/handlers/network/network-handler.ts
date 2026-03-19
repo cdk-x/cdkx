@@ -1,5 +1,5 @@
 import { ResourceHandler, RuntimeContext } from '@cdkx-io/core';
-import { HetznerSdk } from '../hetzner-sdk-facade';
+import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 /**
  * Deserialized properties for a Hetzner Network resource.
