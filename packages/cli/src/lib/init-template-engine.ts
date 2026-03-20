@@ -263,6 +263,10 @@ export class InitTemplateEngine {
       {
         name,
         targets: {
+          typecheck: {
+            executor: 'nx:run-commands',
+            options: { command: 'tsc --noEmit', cwd: '{projectRoot}' },
+          },
           synth: {
             executor: 'nx:run-commands',
             options: { command: 'cdkx synth', cwd: '{projectRoot}' },
