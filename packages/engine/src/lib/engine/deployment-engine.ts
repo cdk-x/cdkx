@@ -438,6 +438,9 @@ export class DeploymentEngine {
 
     const stackResults: StackDeploymentResult[] = [];
 
+    // Track stacks that ended in FAILED or SKIPPED so dependents can be skipped.
+    const failedOrSkipped = new Set<string>();
+
     // Deploy stacks wave by wave (parallel within each wave).
     for (const wave of actualPlan.stackWaves) {
       const waveResults = await Promise.allSettled(
@@ -453,19 +456,50 @@ export class DeploymentEngine {
             } as StackDeploymentResult;
           }
 
-          return await this.deployStack(
-            stack,
-            actualPlan.resourceWaves[stackId] ?? [],
+          // Skip this stack if any of its dependencies failed or were skipped.
+          const blockedBy = stack.dependencies.find((dep) =>
+            failedOrSkipped.has(dep),
           );
+          if (blockedBy !== undefined) {
+            const reason = `dependency ${blockedBy} failed`;
+            this.stateManager.initStack(stackId, { reason });
+            this.stateManager.transitionStack(stackId, StackStatus.SKIPPED, {
+              reason,
+            });
+            return {
+              stackId,
+              success: false,
+              resources: [],
+              error: reason,
+            } as StackDeploymentResult;
+          }
+
+          try {
+            return await this.deployStack(
+              stack,
+              actualPlan.resourceWaves[stackId] ?? [],
+            );
+          } catch (err: unknown) {
+            const message =
+              err instanceof Error ? err.message : String(err);
+            return {
+              stackId,
+              success: false,
+              resources: [],
+              error: message,
+            } as StackDeploymentResult;
+          }
         }),
       );
 
-      // Collect results and check for failures.
+      // Collect results. All stacks in the wave complete before we check failures.
+      let waveHadFailure = false;
       for (const settledResult of waveResults) {
         if (settledResult.status === 'fulfilled') {
           stackResults.push(settledResult.value);
           if (!settledResult.value.success) {
-            return { success: false, stacks: stackResults };
+            failedOrSkipped.add(settledResult.value.stackId);
+            waveHadFailure = true;
           }
         } else {
           // Rejection from Promise.allSettled — should not happen since
@@ -480,10 +514,19 @@ export class DeploymentEngine {
             resources: [],
             error: `Unhandled error: ${error}`,
           });
-          this.deployLock.release();
-          return { success: false, stacks: stackResults };
+          waveHadFailure = true;
         }
       }
+
+      // Continue to the next wave even on failure so that dependent stacks
+      // in subsequent waves can be recorded as SKIPPED.
+      void waveHadFailure;
+    }
+
+    // If any stack failed or was skipped, report overall failure.
+    if (failedOrSkipped.size > 0) {
+      this.deployLock.release();
+      return { success: false, stacks: stackResults };
     }
 
     // All stacks succeeded — delete the snapshot so the working directory
