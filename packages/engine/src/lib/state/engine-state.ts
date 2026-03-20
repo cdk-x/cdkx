@@ -30,6 +30,20 @@ export interface ResourceState {
   readonly properties: Record<string, unknown>;
 
   /**
+   * The resolved input properties that were last successfully applied to this
+   * resource (i.e. the properties at the time of the last `CREATE_COMPLETE` or
+   * `UPDATE_COMPLETE` transition).
+   *
+   * This is the rollback target for phase 2 (restore updated resources) and is
+   * written to the pre-deployment snapshot so that crash recovery can restore
+   * resources to their last known-good state.
+   *
+   * Stores **resolved** values — never raw `{ ref, attr }` tokens.
+   * `undefined` until the resource has successfully completed its first create.
+   */
+  readonly lastAppliedProperties?: Record<string, unknown>;
+
+  /**
    * Provider-returned output values for this resource.
    * Keyed by attribute name (e.g. `'networkId'`, `'serverId'`).
    * Populated from `CreateResult.outputs` after a successful CREATE_COMPLETE.
@@ -98,4 +112,11 @@ export interface TransitionResourceOptions {
    * Keyed by attribute name (e.g. `'networkId'`).
    */
   readonly outputs?: Record<string, unknown>;
+
+  /**
+   * The resolved input properties to record as the last successfully applied
+   * state. Should be supplied when transitioning to `CREATE_COMPLETE` or
+   * `UPDATE_COMPLETE`.
+   */
+  readonly lastAppliedProperties?: Record<string, unknown>;
 }

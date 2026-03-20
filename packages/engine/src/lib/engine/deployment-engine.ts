@@ -19,6 +19,7 @@ import {
   type BlockedDelete,
 } from './reconcile-validation-error';
 import type { Logger } from '@cdkx-io/logger';
+import type { StabilizeConfig } from '@cdkx-io/core';
 
 // ─── Output Handler types ─────────────────────────────────────────────────────
 
@@ -116,6 +117,14 @@ export interface DeploymentEngineOptions {
   readonly stateManager?: EngineStateManager;
 
   /**
+   * Optional `StatePersistence` instance used for snapshot operations
+   * (write before deployment, delete on success).
+   * When not provided alongside `stateManager`, a new instance is created
+   * from `stateDir`. Pass a mock in tests to observe or suppress snapshot I/O.
+   */
+  readonly persistence?: StatePersistence;
+
+  /**
    * Optional `EventBus` to subscribe to engine events.
    * If not provided, a new one is created internally.
    */
@@ -136,6 +145,14 @@ export interface DeploymentEngineOptions {
    * Pass null to disable locking entirely (useful for tests).
    */
   readonly deployLock?: DeployLock | null;
+
+  /**
+   * Optional stabilization configuration for resource readiness polling.
+   * Merged with defaults: `{ intervalMs: 5000, timeoutMs: 600_000 }`.
+   * Propagated to all adapters so that handlers can read it via
+   * `ctx.stabilizeConfig`.
+   */
+  readonly stabilize?: Partial<StabilizeConfig>;
 }
 
 // ─── DeploymentEngine ─────────────────────────────────────────────────────────
@@ -167,6 +184,32 @@ export class DeploymentEngine {
   private readonly eventBus: EventBus<EngineEvent>;
   private readonly adapters: Record<string, ProviderAdapter>;
   private readonly deployLock: DeployLock;
+  private readonly persistence: StatePersistence;
+
+  /**
+   * Resources updated in the current deployment run, in the order they reached
+   * `UPDATE_COMPLETE`. Used by rollback phase 2 to restore prior properties.
+   */
+  private readonly updatedInOrder: Array<{
+    logicalId: string;
+    stackId: string;
+  }> = [];
+
+  /**
+   * Resources deleted during reconcile in the current deployment run, captured
+   * with their prior properties and outputs. Populated in `reconcileStack()`
+   * before each `adapter.delete()` call.
+   * Used by rollback phase 3 to recreate reconcile-deleted resources.
+   */
+  private readonly reconciledDeletedInOrder: Array<{
+    logicalId: string;
+    stackId: string;
+    type: string;
+    provider: string;
+    physicalId: string | undefined;
+    priorProperties: Record<string, unknown>;
+    priorOutputs: Record<string, unknown>;
+  }> = [];
 
   constructor(private readonly options: DeploymentEngineOptions) {
     // Acquire deploy lock to prevent concurrent deployments
@@ -175,15 +218,18 @@ export class DeploymentEngine {
 
     this.eventBus = options.eventBus ?? new EventBus<EngineEvent>();
 
-    // Set up state manager
+    // Set up state manager and persistence
     if (options.stateManager !== undefined) {
       this.stateManager = options.stateManager;
+      this.persistence =
+        options.persistence ?? new StatePersistence(options.stateDir);
     } else {
-      const persistence = new StatePersistence(options.stateDir);
-      const loadedState = persistence.load() ?? undefined;
+      this.persistence =
+        options.persistence ?? new StatePersistence(options.stateDir);
+      const loadedState = this.persistence.load() ?? undefined;
       this.stateManager = new EngineStateManager(
         this.eventBus,
-        persistence,
+        this.persistence,
         loadedState,
       );
     }
@@ -226,6 +272,17 @@ export class DeploymentEngine {
         }
       }
     }
+
+    // Merge stabilize options with defaults and propagate to all adapters.
+    const stabilizeConfig: StabilizeConfig = {
+      intervalMs: options.stabilize?.intervalMs ?? 5000,
+      timeoutMs: options.stabilize?.timeoutMs ?? 600_000,
+    };
+    for (const adapter of Object.values(this.adapters)) {
+      if (adapter.setStabilizeConfig !== undefined) {
+        adapter.setStabilizeConfig(stabilizeConfig);
+      }
+    }
   }
 
   /**
@@ -251,6 +308,35 @@ export class DeploymentEngine {
    */
   public subscribe(handler: (event: EngineEvent) => void): () => void {
     return this.eventBus.subscribe(handler);
+  }
+
+  /**
+   * Returns the list of resources that reached `UPDATE_COMPLETE` in the
+   * current deployment run, in the order they were updated. Used by rollback
+   * phase 2 to restore updated resources to their prior properties.
+   */
+  public getUpdatedInOrder(): ReadonlyArray<{
+    logicalId: string;
+    stackId: string;
+  }> {
+    return this.updatedInOrder;
+  }
+
+  /**
+   * Returns the list of resources deleted during reconcile in the current
+   * deployment run, in deletion order. Used by rollback phase 3 to recreate
+   * reconcile-deleted resources.
+   */
+  public getReconciledDeletedInOrder(): ReadonlyArray<{
+    logicalId: string;
+    stackId: string;
+    type: string;
+    provider: string;
+    physicalId: string | undefined;
+    priorProperties: Record<string, unknown>;
+    priorOutputs: Record<string, unknown>;
+  }> {
+    return this.reconciledDeletedInOrder;
   }
 
   /**
@@ -329,9 +415,21 @@ export class DeploymentEngine {
     stacks?: AssemblyStack[],
     plan?: DeploymentPlan,
   ): Promise<DeploymentResult> {
+    // CRASH RECOVERY: if a snapshot exists from a previous interrupted run,
+    // skip forward deployment entirely and resume rollback from snapshot state.
+    if (this.persistence.snapshotExists()) {
+      const assemblyStacks = stacks ?? this.readAssembly();
+      return await this.resumeRollback(assemblyStacks);
+    }
+
     // If no stacks provided, read assembly and create plan internally
     const actualStacks = stacks ?? this.readAssembly();
     const actualPlan = plan ?? this.createPlan(actualStacks);
+
+    // Write a snapshot of the current known-good state before any mutations.
+    // On a first deployment this writes an empty state (no-op for rollback).
+    // The snapshot is deleted only after a fully successful deployment.
+    this.persistence.writeSnapshot(this.stateManager.getState());
 
     const stackById = new Map<string, AssemblyStack>(
       actualStacks.map((s) => [s.id, s]),
@@ -387,11 +485,155 @@ export class DeploymentEngine {
       }
     }
 
+    // All stacks succeeded — delete the snapshot so the working directory
+    // stays clean. Snapshot is preserved on failure for crash recovery.
+    this.persistence.deleteSnapshot();
+
     this.deployLock.release();
     return { success: true, stacks: stackResults };
   }
 
   // ─── Private helpers ───────────────────────────────────────────────────────
+
+  /**
+   * Resume a rollback from a leftover snapshot file.
+   *
+   * Called when `snapshotExists()` returns `true` at the start of `deploy()`,
+   * indicating that a previous run was interrupted before it could clean up.
+   * Diffs the current engine state against the snapshot to reconstruct what
+   * happened during the interrupted deployment, then runs all three rollback
+   * phases for each affected stack.
+   *
+   * The snapshot is deleted after rollback completes (full or partial).
+   */
+  private async resumeRollback(
+    assemblyStacks: AssemblyStack[],
+  ): Promise<DeploymentResult> {
+    const snapshot = this.persistence.readSnapshot();
+    if (snapshot === null) {
+      this.deployLock.release();
+      throw new Error(
+        'Crash recovery failed: snapshot file exists but could not be read. ' +
+          'Manual intervention may be required.',
+      );
+    }
+
+    const stackById = new Map(assemblyStacks.map((s) => [s.id, s]));
+    const stackResults: StackDeploymentResult[] = [];
+
+    for (const [stackId, snapshotStackState] of Object.entries(
+      snapshot.stacks,
+    )) {
+      const assemblyStack = stackById.get(stackId);
+      if (assemblyStack === undefined) {
+        stackResults.push({
+          stackId,
+          success: false,
+          resources: [],
+          error:
+            `Stack '${stackId}' found in snapshot but not in assembly; ` +
+            `cannot resume rollback. Manual intervention may be required.`,
+        });
+        continue;
+      }
+
+      const resourceById = new Map(
+        assemblyStack.resources.map((r) => [r.logicalId, r]),
+      );
+
+      const currentStackState = this.stateManager.getStackState(stackId);
+      const currentResources = currentStackState?.resources ?? {};
+      const snapshotResources = snapshotStackState.resources;
+      const snapshotResourceIds = new Set(Object.keys(snapshotResources));
+
+      // Phase 1: resources created during interrupted deployment.
+      // Present in current state as CREATE_COMPLETE but absent from snapshot.
+      const createdInOrder: string[][] = [];
+      const newlyCreated: string[] = [];
+      for (const [logicalId, resState] of Object.entries(currentResources)) {
+        if (
+          !snapshotResourceIds.has(logicalId) &&
+          resState.status === ResourceStatus.CREATE_COMPLETE
+        ) {
+          newlyCreated.push(logicalId);
+        }
+      }
+      if (newlyCreated.length > 0) {
+        createdInOrder.push(newlyCreated);
+      }
+
+      // Phase 2: resources updated during interrupted deployment.
+      // Present in both current and snapshot with differing lastAppliedProperties.
+      for (const [logicalId, resState] of Object.entries(currentResources)) {
+        const snapshotRes = snapshotResources[logicalId];
+        if (snapshotRes === undefined) continue;
+        const currentLap = resState.lastAppliedProperties ?? {};
+        const snapshotLap = snapshotRes.lastAppliedProperties ?? {};
+        if (JSON.stringify(currentLap) !== JSON.stringify(snapshotLap)) {
+          this.updatedInOrder.push({ logicalId, stackId });
+        }
+      }
+
+      // Phase 3: resources deleted during reconcile.
+      // Present in snapshot but absent from current state.
+      for (const [logicalId, snapshotRes] of Object.entries(
+        snapshotResources,
+      )) {
+        if (logicalId in currentResources) continue;
+        const provider = (snapshotRes.type ?? 'unknown')
+          .split('::')[0]
+          .toLowerCase();
+        this.reconciledDeletedInOrder.push({
+          logicalId,
+          stackId,
+          type: snapshotRes.type ?? 'unknown',
+          provider,
+          physicalId: snapshotRes.physicalId,
+          priorProperties:
+            snapshotRes.lastAppliedProperties ?? snapshotRes.properties,
+          priorOutputs: snapshotRes.outputs ?? {},
+        });
+      }
+
+      const isUpdate = currentStackState !== undefined;
+
+      // If the stack has no entry in the current state (e.g. a first deploy
+      // that was interrupted before any state was persisted), register it now
+      // so that rollback can transition it through its lifecycle states.
+      if (!isUpdate) {
+        this.stateManager.initStack(stackId);
+      }
+
+      const isPartial = await this.rollback(
+        assemblyStack,
+        createdInOrder,
+        resourceById,
+        this.adapters,
+        isUpdate,
+      );
+
+      const finalStatus = isPartial
+        ? StackStatus.ROLLBACK_PARTIAL
+        : isUpdate
+          ? StackStatus.UPDATE_ROLLBACK_COMPLETE
+          : StackStatus.ROLLBACK_COMPLETE;
+
+      this.stateManager.transitionStack(stackId, finalStatus, {
+        reason: 'Crash recovery: rollback resumed from snapshot',
+      });
+
+      stackResults.push({
+        stackId,
+        success: false,
+        resources: [],
+        error: 'Rollback resumed from snapshot after process crash',
+      });
+    }
+
+    this.persistence.deleteSnapshot();
+    this.deployLock.release();
+    return { success: false, stacks: stackResults };
+  }
 
   private async deployStack(
     stack: AssemblyStack,
@@ -430,7 +672,9 @@ export class DeploymentEngine {
     }
 
     const resourceById = new Map(stack.resources.map((r) => [r.logicalId, r]));
-    const createdInOrder: string[] = []; // track for rollback
+    // Wave-structured creation tracking: each sub-array is one deployment wave.
+    // Rollback iterates waves in reverse; resources within each wave in reverse.
+    const createdInOrder: string[][] = [];
     const resourceResults: ResourceDeploymentResult[] = [];
     let anyCreated = false;
     let anyUpdated = false;
@@ -444,11 +688,13 @@ export class DeploymentEngine {
           logicalId,
           resourceById,
           this.adapters,
-          isUpdate,
         ),
       );
 
       const waveResults = await Promise.allSettled(wavePromises);
+
+      // Resources created in the current wave (populated in wave order).
+      const waveCreated: string[] = [];
 
       // Collect results from this wave in wave order (not completion order)
       // to maintain deterministic createdInOrder for rollback.
@@ -464,10 +710,25 @@ export class DeploymentEngine {
 
           resourceResults.push({ logicalId, success: false, error: message });
 
+          // Collect any concurrently-created resources from this wave (j > i).
+          for (let j = i + 1; j < wave.length; j++) {
+            const s = waveResults[j];
+            if (
+              s.status === 'fulfilled' &&
+              s.value.wasCreated &&
+              s.value.physicalId !== undefined
+            ) {
+              waveCreated.push(wave[j]);
+            }
+          }
+          if (waveCreated.length > 0) {
+            createdInOrder.push([...waveCreated]);
+          }
+
           // Wait for all other resources in this wave to settle before rolling back.
           await Promise.allSettled(wavePromises);
 
-          await this.rollback(
+          const isPartial = await this.rollback(
             stack,
             createdInOrder,
             resourceById,
@@ -475,9 +736,11 @@ export class DeploymentEngine {
             isUpdate,
           );
 
-          const rollbackComplete = isUpdate
-            ? StackStatus.UPDATE_ROLLBACK_COMPLETE
-            : StackStatus.ROLLBACK_COMPLETE;
+          const rollbackComplete = isPartial
+            ? StackStatus.ROLLBACK_PARTIAL
+            : isUpdate
+              ? StackStatus.UPDATE_ROLLBACK_COMPLETE
+              : StackStatus.ROLLBACK_COMPLETE;
 
           this.stateManager.transitionStack(stack.id, rollbackComplete, {
             reason: `Resource '${logicalId}' failed: ${message}`,
@@ -496,10 +759,25 @@ export class DeploymentEngine {
 
         // If resource failed (but didn't throw), mark stack as failed
         if (!result.success) {
+          // Collect any concurrently-created resources from this wave (j > i).
+          for (let j = i + 1; j < wave.length; j++) {
+            const s = waveResults[j];
+            if (
+              s.status === 'fulfilled' &&
+              s.value.wasCreated &&
+              s.value.physicalId !== undefined
+            ) {
+              waveCreated.push(wave[j]);
+            }
+          }
+          if (waveCreated.length > 0) {
+            createdInOrder.push([...waveCreated]);
+          }
+
           // Wait for all other resources in this wave to settle before rolling back.
           await Promise.allSettled(wavePromises);
 
-          await this.rollback(
+          const isPartialFailure = await this.rollback(
             stack,
             createdInOrder,
             resourceById,
@@ -507,11 +785,13 @@ export class DeploymentEngine {
             isUpdate,
           );
 
-          const rollbackComplete = isUpdate
-            ? StackStatus.UPDATE_ROLLBACK_COMPLETE
-            : StackStatus.ROLLBACK_COMPLETE;
+          const rollbackCompleteStatus = isPartialFailure
+            ? StackStatus.ROLLBACK_PARTIAL
+            : isUpdate
+              ? StackStatus.UPDATE_ROLLBACK_COMPLETE
+              : StackStatus.ROLLBACK_COMPLETE;
 
-          this.stateManager.transitionStack(stack.id, rollbackComplete, {
+          this.stateManager.transitionStack(stack.id, rollbackCompleteStatus, {
             reason: `Resource '${logicalId}' failed: ${result.error}`,
           });
 
@@ -527,11 +807,17 @@ export class DeploymentEngine {
         if (result.physicalId !== undefined && !result.wasSkipped) {
           if (result.wasCreated) {
             anyCreated = true;
-            createdInOrder.push(logicalId);
+            waveCreated.push(logicalId);
           } else if (result.wasUpdated) {
             anyUpdated = true;
+            this.updatedInOrder.push({ logicalId, stackId: stack.id });
           }
         }
+      }
+
+      // Wave completed successfully — record as one wave entry for rollback.
+      if (waveCreated.length > 0) {
+        createdInOrder.push([...waveCreated]);
       }
     }
 
@@ -574,7 +860,6 @@ export class DeploymentEngine {
     logicalId: string,
     resourceById: Map<string, AssemblyResource>,
     adapters: Record<string, ProviderAdapter>,
-    isUpdate: boolean,
   ): Promise<
     ResourceDeploymentResult & {
       wasCreated?: boolean;
@@ -682,6 +967,7 @@ export class DeploymentEngine {
           ResourceStatus.UPDATE_COMPLETE,
           {
             properties: resolvedProperties,
+            lastAppliedProperties: resolvedProperties,
             ...(updateResult?.outputs !== undefined && {
               outputs: updateResult.outputs,
             }),
@@ -732,6 +1018,7 @@ export class DeploymentEngine {
         {
           physicalId: createResult.physicalId,
           outputs: createResult.outputs,
+          lastAppliedProperties: resolvedProperties,
         },
       );
 
@@ -812,6 +1099,18 @@ export class DeploymentEngine {
           `No adapter registered for provider '${providerId}' (resource type '${resourceType}').`,
         );
       }
+
+      // Capture prior state for rollback phase 3 before any mutation.
+      this.reconciledDeletedInOrder.push({
+        logicalId,
+        stackId: stack.id,
+        type: resourceType,
+        provider: providerId,
+        physicalId: resourceState.physicalId,
+        priorProperties:
+          resourceState.lastAppliedProperties ?? resourceState.properties,
+        priorOutputs: resourceState.outputs ?? {},
+      });
 
       this.stateManager.transitionResource(
         stack.id,
@@ -950,23 +1249,30 @@ export class DeploymentEngine {
   }
 
   /**
-   * Delete already-created resources in reverse creation order (rollback).
+   * Delete newly-created resources in reverse wave order (rollback phase 1).
+   * Within each wave, resources are deleted in reverse order.
+   *
    * Failures during rollback are swallowed — we log via the event bus but do
    * not propagate exceptions, so the rollback continues as far as possible.
    *
    * Only rolls back resources that were newly created in this run — resources
    * that were pre-existing (skipped during the create loop) are not deleted.
+   *
+   * @param createdInOrder - Wave-structured array from `deployStack()`. Each
+   *   sub-array contains the logical IDs created in one deployment wave, in
+   *   wave order. Rollback iterates waves in reverse; resources within each
+   *   wave in reverse.
    */
   private async rollback(
     stack: AssemblyStack,
-    createdInOrder: string[],
+    createdInOrder: string[][],
     resourceById: Map<
       string,
       { logicalId: string; type: string; properties: Record<string, unknown> }
     >,
     adapters: Record<string, ProviderAdapter>,
     isUpdate: boolean,
-  ): Promise<void> {
+  ): Promise<boolean> {
     this.stateManager.transitionStack(
       stack.id,
       isUpdate
@@ -974,63 +1280,171 @@ export class DeploymentEngine {
         : StackStatus.ROLLBACK_IN_PROGRESS,
     );
 
-    const reversed = [...createdInOrder].reverse();
+    // Phase 1: Delete newly-created resources in reverse wave order.
+    // Iterate waves in reverse order; within each wave, iterate in reverse.
+    for (const wave of [...createdInOrder].reverse()) {
+      for (const logicalId of [...wave].reverse()) {
+        const resource = resourceById.get(logicalId);
+        if (resource === undefined) continue;
 
-    for (const logicalId of reversed) {
-      const resource = resourceById.get(logicalId);
-      if (resource === undefined) continue;
+        // Skip pre-existing resources — don't delete what we didn't create.
+        const resourceState = this.stateManager.getResourceState(
+          stack.id,
+          logicalId,
+        );
+        if (
+          resourceState === undefined ||
+          resourceState.status !== ResourceStatus.CREATE_COMPLETE
+        )
+          continue;
 
-      // Skip pre-existing resources — don't delete what we didn't create.
-      const resourceState = this.stateManager.getResourceState(
-        stack.id,
-        logicalId,
-      );
-      if (
-        resourceState === undefined ||
-        resourceState.status !== ResourceStatus.CREATE_COMPLETE
-      )
-        continue;
+        // Extract provider from resource type
+        const providerId = resource.type.split('::')[0].toLowerCase();
+        const adapter = adapters[providerId];
 
-      // Extract provider from resource type
-      const providerId = resource.type.split('::')[0].toLowerCase();
-      const adapter = adapters[providerId];
+        if (adapter === undefined) {
+          this.stateManager.transitionResource(
+            stack.id,
+            logicalId,
+            resource.type,
+            ResourceStatus.DELETE_FAILED,
+            { reason: `No adapter registered for provider '${providerId}'.` },
+          );
+          continue;
+        }
 
-      if (adapter === undefined) {
         this.stateManager.transitionResource(
           stack.id,
           logicalId,
           resource.type,
-          ResourceStatus.DELETE_FAILED,
-          { reason: `No adapter registered for provider '${providerId}'.` },
+          ResourceStatus.DELETE_IN_PROGRESS,
         );
-        continue;
+
+        try {
+          await adapter.delete({
+            logicalId,
+            type: resource.type,
+            // Use the resolved properties stored at creation time, not the raw
+            // assembly properties which may still contain unresolved { ref, attr }
+            // tokens (e.g. networkId for action resources).
+            properties: resourceState.properties,
+            stackId: stack.id,
+            provider: providerId,
+            physicalId: resourceState.physicalId,
+          });
+
+          this.stateManager.transitionResource(
+            stack.id,
+            logicalId,
+            resource.type,
+            ResourceStatus.DELETE_COMPLETE,
+          );
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          this.stateManager.transitionResource(
+            stack.id,
+            logicalId,
+            resource.type,
+            ResourceStatus.DELETE_FAILED,
+            { reason: message },
+          );
+        }
       }
+    }
+
+    // Phase 2: Restore updated resources to their snapshot properties.
+    await this.rollbackPhase2(stack, resourceById, adapters);
+
+    // Phase 3: Recreate reconcile-deleted resources.
+    return await this.rollbackPhase3(stack, adapters);
+  }
+
+  /**
+   * Phase 2 rollback: restore updated resources to their snapshot properties.
+   *
+   * For each resource that was successfully updated in the current run (in
+   * `updatedInOrder`), compute a patch from the current
+   * `lastAppliedProperties` back to the snapshot's `lastAppliedProperties`
+   * and call `adapter.update()` to restore the prior state.
+   *
+   * If the restore patch is empty (properties already match the snapshot),
+   * the resource is skipped without an adapter call.
+   *
+   * Failures during restore are logged via resource status transitions but do
+   * not abort the remaining rollback steps.
+   */
+  private async rollbackPhase2(
+    stack: AssemblyStack,
+    resourceById: Map<
+      string,
+      { logicalId: string; type: string; properties: Record<string, unknown> }
+    >,
+    adapters: Record<string, ProviderAdapter>,
+  ): Promise<void> {
+    const snapshot = this.persistence.readSnapshot();
+    if (snapshot === null) return;
+
+    const snapshotStackState = snapshot.stacks[stack.id];
+    if (snapshotStackState === undefined) return;
+
+    // Iterate in reverse update order (last updated first).
+    const toRestore = [...this.updatedInOrder]
+      .filter((u) => u.stackId === stack.id)
+      .reverse();
+
+    for (const { logicalId } of toRestore) {
+      const snapshotResourceState = snapshotStackState.resources[logicalId];
+      const snapshotLastApplied = snapshotResourceState?.lastAppliedProperties;
+
+      // No prior applied properties in snapshot — cannot restore, skip.
+      if (snapshotLastApplied === undefined) continue;
+
+      const currentResourceState = this.stateManager.getResourceState(
+        stack.id,
+        logicalId,
+      );
+      if (currentResourceState === undefined) continue;
+
+      const currentLastApplied =
+        currentResourceState.lastAppliedProperties ?? {};
+      const patch = this.computePatch(currentLastApplied, snapshotLastApplied);
+
+      // Properties already match the snapshot — no restore needed.
+      if (patch === undefined) continue;
+
+      const resource = resourceById.get(logicalId);
+      if (resource === undefined) continue;
+
+      const providerId = resource.type.split('::')[0].toLowerCase();
+      const adapter = adapters[providerId];
+      if (adapter === undefined) continue;
 
       this.stateManager.transitionResource(
         stack.id,
         logicalId,
         resource.type,
-        ResourceStatus.DELETE_IN_PROGRESS,
+        ResourceStatus.UPDATE_ROLLBACK_IN_PROGRESS,
       );
 
       try {
-        await adapter.delete({
-          logicalId,
-          type: resource.type,
-          // Use the resolved properties stored at creation time, not the raw
-          // assembly properties which may still contain unresolved { ref, attr }
-          // tokens (e.g. networkId for action resources).
-          properties: resourceState.properties,
-          stackId: stack.id,
-          provider: providerId,
-          physicalId: resourceState.physicalId,
-        });
+        await adapter.update(
+          {
+            logicalId,
+            type: resource.type,
+            properties: snapshotLastApplied,
+            stackId: stack.id,
+            provider: providerId,
+            physicalId: currentResourceState.physicalId,
+          },
+          patch,
+        );
 
         this.stateManager.transitionResource(
           stack.id,
           logicalId,
           resource.type,
-          ResourceStatus.DELETE_COMPLETE,
+          ResourceStatus.UPDATE_ROLLBACK_COMPLETE,
+          { lastAppliedProperties: snapshotLastApplied },
         );
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -1038,11 +1452,138 @@ export class DeploymentEngine {
           stack.id,
           logicalId,
           resource.type,
-          ResourceStatus.DELETE_FAILED,
+          ResourceStatus.UPDATE_ROLLBACK_FAILED,
           { reason: message },
         );
       }
     }
+  }
+
+  /**
+   * Phase 3 rollback: recreate resources that were deleted during reconcile.
+   *
+   * Iterates `reconciledDeletedInOrder` in reverse deletion order (last deleted
+   * first). For each resource:
+   * - If any surviving resource in the new assembly holds a `{ ref }` token
+   *   pointing to this logicalId, the resource is skipped and the stack is
+   *   marked `ROLLBACK_PARTIAL`.
+   * - Otherwise, calls `adapter.create()` using the captured prior properties.
+   *   A failed recreate also marks the stack `ROLLBACK_PARTIAL`.
+   *
+   * Returns `true` when at least one resource was skipped or failed (partial
+   * rollback), `false` when all deleted resources were successfully recreated
+   * (or there were none to recreate).
+   */
+  private async rollbackPhase3(
+    stack: AssemblyStack,
+    adapters: Record<string, ProviderAdapter>,
+  ): Promise<boolean> {
+    const toRecreate = [...this.reconciledDeletedInOrder]
+      .filter((r) => r.stackId === stack.id)
+      .reverse();
+
+    if (toRecreate.length === 0) return false;
+
+    let isPartial = false;
+
+    for (const { logicalId, type, provider, priorProperties } of toRecreate) {
+      // Skip if any surviving assembly resource holds a { ref } token to this
+      // logicalId — recreating it would violate dependency ordering.
+      if (this.hasReferenceTo(stack.resources, logicalId)) {
+        isPartial = true;
+        continue;
+      }
+
+      const adapter = adapters[provider];
+      if (adapter === undefined) {
+        isPartial = true;
+        continue;
+      }
+
+      // Re-register the resource in state (it was removed after DELETE_COMPLETE).
+      this.stateManager.initResource(
+        stack.id,
+        logicalId,
+        type,
+        priorProperties,
+      );
+
+      try {
+        const createResult = await adapter.create({
+          logicalId,
+          type,
+          properties: priorProperties,
+          stackId: stack.id,
+          provider,
+        });
+
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          type,
+          ResourceStatus.CREATE_COMPLETE,
+          {
+            physicalId: createResult.physicalId,
+            ...(createResult.outputs !== undefined && {
+              outputs: createResult.outputs,
+            }),
+            lastAppliedProperties: priorProperties,
+          },
+        );
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          type,
+          ResourceStatus.CREATE_FAILED,
+          { reason: message },
+        );
+        isPartial = true;
+      }
+    }
+
+    return isPartial;
+  }
+
+  /**
+   * Returns `true` if any resource in `resources` contains a `{ ref, attr }`
+   * token anywhere in its properties that references `logicalId`.
+   */
+  private hasReferenceTo(
+    resources: AssemblyResource[],
+    logicalId: string,
+  ): boolean {
+    for (const resource of resources) {
+      if (this.valueHasRefTo(resource.properties, logicalId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Recursively walks `value` and returns `true` if any `{ ref, attr }` token
+   * has `ref === logicalId`.
+   */
+  private valueHasRefTo(value: unknown, logicalId: string): boolean {
+    if (value === null || value === undefined) return false;
+
+    if (this.isRefAttrToken(value)) {
+      return value.ref === logicalId;
+    }
+
+    if (Array.isArray(value)) {
+      return value.some((item) => this.valueHasRefTo(item, logicalId));
+    }
+
+    if (typeof value === 'object') {
+      return Object.values(value as Record<string, unknown>).some((v) =>
+        this.valueHasRefTo(v, logicalId),
+      );
+    }
+
+    return false;
   }
 
   /**

@@ -291,15 +291,5 @@
     "/properties/location"
   ],
   "readOnlyProperties": ["/properties/loadBalancerId"],
-  "primaryIdentifier": ["/properties/loadBalancerId"],
-  "api": {
-    "createPath": "/load_balancers",
-    "getPath": "/load_balancers/{id}",
-    "updatePath": "/load_balancers/{id}",
-    "deletePath": "/load_balancers/{id}",
-    "responseBodyKey": "load_balancer",
-    "outputAttrMap": {
-      "loadBalancerId": "id"
-    }
-  }
+  "primaryIdentifier": ["/properties/loadBalancerId"]
 }

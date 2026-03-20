@@ -1,0 +1,1 @@
+../skills/nx-workspace/SKILL.md

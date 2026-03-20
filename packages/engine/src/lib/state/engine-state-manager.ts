@@ -137,6 +137,9 @@ export class EngineStateManager {
       ...(options?.outputs !== undefined && {
         outputs: options.outputs,
       }),
+      ...(options?.lastAppliedProperties !== undefined && {
+        lastAppliedProperties: options.lastAppliedProperties,
+      }),
     };
 
     this.applyResourceTransition(

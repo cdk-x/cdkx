@@ -1,0 +1,1 @@
+../skills/nx-generate/SKILL.md

@@ -53,4 +53,12 @@ export enum StackStatus {
    * a first deploy when the stack contains no resources.
    */
   NO_CHANGES = 'NO_CHANGES',
+
+  // ── Partial rollback ──────────────────────────────────────────────────────
+  /**
+   * Rollback completed, but at least one reconcile-deleted resource could not
+   * be recreated (skipped due to surviving dependents or a recreate failure).
+   * Does not block future deployments — informational only.
+   */
+  ROLLBACK_PARTIAL = 'ROLLBACK_PARTIAL',
 }

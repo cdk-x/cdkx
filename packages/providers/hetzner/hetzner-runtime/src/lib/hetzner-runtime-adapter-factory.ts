@@ -5,6 +5,7 @@ import type {
 } from '@cdkx-io/engine';
 import { RuntimeAdapter } from '@cdkx-io/engine';
 import type { RuntimeLogger } from '@cdkx-io/core';
+import { RUNTIME_CONFIGS } from '@cdkx-io/hetzner';
 import { HetznerSdkFactory } from './hetzner-sdk-facade';
 import type {
   HetznerSdkOptions,
@@ -12,17 +13,6 @@ import type {
 } from './hetzner-sdk-facade';
 import { HetznerRuntimeContext } from './hetzner-runtime-context';
 import { HetznerProviderRuntime } from './hetzner-provider-runtime';
-
-// ─── Resource configs ─────────────────────────────────────────────────────────
-
-/**
- * Per-resource-type configuration mapping.
- * Keys are resource type strings; values tell the {@link RuntimeAdapter}
- * how to extract the physical ID from each handler's state object.
- */
-const RESOURCE_CONFIGS: Record<string, RuntimeResourceConfig> = {
-  'Hetzner::Networking::Network': { physicalIdKey: 'networkId' },
-};
 
 // ─── No-op logger ─────────────────────────────────────────────────────────────
 
@@ -67,7 +57,7 @@ export interface HetznerRuntimeAdapterFactoryDeps {
   /** Override the initial logger. Default: `new NoopLogger()`. */
   createLogger?: () => RuntimeLogger;
 
-  /** Override the resource configs map. Default: {@link RESOURCE_CONFIGS}. */
+  /** Override the resource configs map. Default: {@link RUNTIME_CONFIGS}. */
   resourceConfigs?: Record<string, RuntimeResourceConfig>;
 }
 
@@ -116,7 +106,7 @@ export class HetznerRuntimeAdapterFactory implements ProviderAdapterFactory {
       ? this.deps.createRuntime()
       : new HetznerProviderRuntime();
 
-    const resourceConfigs = this.deps.resourceConfigs ?? RESOURCE_CONFIGS;
+    const resourceConfigs = this.deps.resourceConfigs ?? RUNTIME_CONFIGS;
 
     return new RuntimeAdapter({
       runtime,
