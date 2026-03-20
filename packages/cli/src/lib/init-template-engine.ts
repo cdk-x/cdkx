@@ -60,6 +60,7 @@ export class InitTemplateEngine {
   }
 
   generate(context: InitContext): InitResult {
+    this.fs.mkdir(context.dir, { recursive: true });
     if (context.mode === 'existing') {
       return this.generateExisting(context);
     }
@@ -143,17 +144,45 @@ export class InitTemplateEngine {
   }
 
   private generateNx(context: InitContext): InitResult {
-    const { dir, name } = context;
-    const result = this.generateEmpty(context);
+    const { dir, name, force } = context;
+    const created: string[] = [];
+    const skipped: string[] = [];
 
+    // tsconfig.json — skip unless force
+    const tsconfigJson = `${dir}/tsconfig.json`;
+    if (!this.fs.exists(tsconfigJson) || force) {
+      this.fs.writeFile(tsconfigJson, this.tsconfigContent());
+      created.push(tsconfigJson);
+    } else {
+      skipped.push(tsconfigJson);
+    }
+
+    // src/main.ts — skip unless force
+    this.fs.mkdir(`${dir}/src`, { recursive: true });
+    const mainTs = `${dir}/src/main.ts`;
+    if (!this.fs.exists(mainTs) || force) {
+      this.fs.writeFile(mainTs, this.mainTsContent());
+      created.push(mainTs);
+    } else {
+      skipped.push(mainTs);
+    }
+
+    // package.json — always create
+    const packageJson = `${dir}/package.json`;
+    this.fs.writeFile(packageJson, this.packageJsonContent(name));
+    created.push(packageJson);
+
+    // cdkx.json — always create
+    const cdkxJson = `${dir}/cdkx.json`;
+    this.fs.writeFile(cdkxJson, this.cdkxJsonContent());
+    created.push(cdkxJson);
+
+    // project.json — always create
     const projectJson = `${dir}/project.json`;
     this.fs.writeFile(projectJson, this.projectJsonContent(name));
+    created.push(projectJson);
 
-    return {
-      created: [...result.created, projectJson],
-      skipped: [],
-      merged: [],
-    };
+    return { created, skipped, merged: [] };
   }
 
   private mergePackageJson(existing: Record<string, unknown>): unknown {
