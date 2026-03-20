@@ -2215,4 +2215,185 @@ describe('DeploymentEngine', () => {
       expect(events).toHaveLength(1);
     });
   });
+
+  // ─── Wave-aware rollback phase 1 ─────────────────────────────────────────────
+
+  describe('wave-aware rollback phase 1', () => {
+    function makePlanWithResourceWaves(
+      stackId: string,
+      resourceWaves: string[][],
+    ): DeploymentPlan {
+      return {
+        stackWaves: [[stackId]],
+        resourceWaves: { [stackId]: resourceWaves },
+      };
+    }
+
+    it('rolls back resources in reverse wave order across multiple waves', async () => {
+      const deletedIds: string[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'ResC') {
+            return Promise.reject(new Error('oops'));
+          }
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: (r: ManifestResource): Promise<void> => {
+          deletedIds.push(r.logicalId);
+          return Promise.resolve();
+        },
+      };
+
+      const engine = makeEngine(adapter);
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA' },
+          { logicalId: 'ResB' },
+          { logicalId: 'ResC' },
+        ]),
+      ];
+      // Wave 1: [ResA, ResB] both succeed; Wave 2: [ResC] fails.
+      const plan = makePlanWithResourceWaves('S', [['ResA', 'ResB'], ['ResC']]);
+      await engine.deploy(stacks, plan);
+
+      // ResA and ResB (wave 1) were created; ResC (wave 2) failed — not created.
+      // Rollback: reverse wave 2 (empty), then reverse wave 1 → [ResB, ResA].
+      expect(deletedIds).toEqual(['ResB', 'ResA']);
+    });
+
+    it('deletes resources within a wave in reverse order', async () => {
+      const deletedIds: string[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'ResD') {
+            return Promise.reject(new Error('oops'));
+          }
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: (r: ManifestResource): Promise<void> => {
+          deletedIds.push(r.logicalId);
+          return Promise.resolve();
+        },
+      };
+
+      const engine = makeEngine(adapter);
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA' },
+          { logicalId: 'ResB' },
+          { logicalId: 'ResC' },
+          { logicalId: 'ResD' },
+        ]),
+      ];
+      // Wave 1: [ResA, ResB, ResC, ResD] — ResD fails, ResA/B/C succeed.
+      const plan = makePlanWithResourceWaves('S', [
+        ['ResA', 'ResB', 'ResC', 'ResD'],
+      ]);
+      await engine.deploy(stacks, plan);
+
+      // Within wave 1, ResA, ResB, ResC were created; ResD failed.
+      // Rollback reverses within the wave: [ResC, ResB, ResA].
+      expect(deletedIds).toEqual(['ResC', 'ResB', 'ResA']);
+    });
+
+    it('rolls back wave 2 before wave 1 when wave 2 resource fails', async () => {
+      const deletedIds: string[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'ResC') {
+            return Promise.reject(new Error('oops'));
+          }
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: (r: ManifestResource): Promise<void> => {
+          deletedIds.push(r.logicalId);
+          return Promise.resolve();
+        },
+      };
+
+      const engine = makeEngine(adapter);
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA' },
+          { logicalId: 'ResB' },
+          { logicalId: 'ResC' },
+        ]),
+      ];
+      // Wave 1: [ResA], Wave 2: [ResB], Wave 3: [ResC] fails.
+      const plan = makePlanWithResourceWaves('S', [
+        ['ResA'],
+        ['ResB'],
+        ['ResC'],
+      ]);
+      await engine.deploy(stacks, plan);
+
+      // ResB (wave 2) must be deleted before ResA (wave 1).
+      const resBIndex = deletedIds.indexOf('ResB');
+      const resAIndex = deletedIds.indexOf('ResA');
+      expect(resBIndex).toBeLessThan(resAIndex);
+    });
+  });
+
+  // ─── updatedInOrder tracking ─────────────────────────────────────────────────
+
+  describe('updatedInOrder tracking', () => {
+    it('populates updatedInOrder for each resource that reaches UPDATE_COMPLETE', async () => {
+      const adapter: Partial<ProviderAdapter> = {
+        update: (): Promise<UpdateResult> => Promise.resolve({}),
+      };
+
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'old-a' },
+          },
+          {
+            logicalId: 'ResB',
+            physicalId: 'phys-B',
+            properties: { name: 'old-b' },
+          },
+        ],
+        adapter,
+      );
+
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA', properties: { name: 'new-a' } },
+          { logicalId: 'ResB', properties: { name: 'new-b' } },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      await engine.deploy(stacks, plan);
+
+      const updated = engine.getUpdatedInOrder();
+      expect(updated).toHaveLength(2);
+      expect(updated[0]).toEqual({ logicalId: 'ResA', stackId: 'S' });
+      expect(updated[1]).toEqual({ logicalId: 'ResB', stackId: 'S' });
+    });
+
+    it('does not add to updatedInOrder for created resources', async () => {
+      const engine = makeEngine(successAdapter('phys-001'));
+
+      const stacks = [makeStack('S', [{ logicalId: 'Res1' }])];
+      const plan = makePlan(['S'], { S: ['Res1'] });
+      await engine.deploy(stacks, plan);
+
+      expect(engine.getUpdatedInOrder()).toHaveLength(0);
+    });
+
+    it('does not add to updatedInOrder for skipped (no-change) resources', async () => {
+      const engine = makeEngineWithPriorState(
+        [{ logicalId: 'ResA', physicalId: 'phys-A' }],
+        {},
+      );
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      expect(engine.getUpdatedInOrder()).toHaveLength(0);
+    });
+  });
 });
