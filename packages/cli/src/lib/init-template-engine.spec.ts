@@ -133,3 +133,29 @@ describe('InitTemplateEngine — empty mode', () => {
     });
   });
 });
+
+describe('InitTemplateEngine.detectPackageManager', () => {
+  it('returns yarn when yarn.lock is present', () => {
+    const result = InitTemplateEngine.detectPackageManager(
+      '/project',
+      (p) => p === '/project/yarn.lock',
+    );
+    expect(result).toBe('yarn');
+  });
+
+  it('returns pnpm when pnpm-lock.yaml is present', () => {
+    const result = InitTemplateEngine.detectPackageManager(
+      '/project',
+      (p) => p === '/project/pnpm-lock.yaml',
+    );
+    expect(result).toBe('pnpm');
+  });
+
+  it('returns yarn by default when no lockfile is present', () => {
+    const result = InitTemplateEngine.detectPackageManager(
+      '/project',
+      () => false,
+    );
+    expect(result).toBe('yarn');
+  });
+});
