@@ -1,0 +1,30 @@
+{
+  "name": "hetzner-e2e",
+  "targets": {
+    "synth": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        { "projects": ["@cdkx-io/cli", "@cdkx-io/core", "@cdkx-io/hetzner"], "target": "build" }
+      ],
+      "options": {
+        "command": "cdkx synth",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["synth"],
+      "options": {
+        "command": "cdkx deploy",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "destroy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cdkx destroy",
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}

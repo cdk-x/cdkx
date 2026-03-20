@@ -1,0 +1,19 @@
+{
+  "name": "hetzner-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "synth": "cdkx synth",
+    "deploy": "cdkx deploy",
+    "destroy": "cdkx destroy"
+  },
+  "dependencies": {
+    "@cdkx-io/core": "*",
+    "@cdkx-io/hetzner": "*"
+  },
+  "devDependencies": {
+    "@cdkx-io/cli": "*",
+    "typescript": "^5.0.0",
+    "tsx": "^4.0.0"
+  }
+}
