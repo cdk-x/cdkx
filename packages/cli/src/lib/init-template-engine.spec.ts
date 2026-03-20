@@ -327,6 +327,92 @@ describe('InitTemplateEngine — existing mode', () => {
   });
 });
 
+describe('InitTemplateEngine — nx mode', () => {
+  function makeNxFs(): InitFileSystem & {
+    written: Record<string, string>;
+    dirs: string[];
+  } {
+    const written: Record<string, string> = {};
+    const dirs: string[] = [];
+    return {
+      written,
+      dirs,
+      exists: () => false,
+      mkdir: (path) => dirs.push(path),
+      writeFile: (path, content) => {
+        written[path] = content;
+      },
+      readFile: () => '',
+    };
+  }
+
+  describe('InitResult', () => {
+    it('creates 5 files: the 4 from empty mode plus project.json', () => {
+      const fs = makeNxFs();
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/ws/packages/infra',
+        name: 'infra',
+        mode: 'nx',
+      });
+
+      expect(result.created).toHaveLength(5);
+      expect(result.created).toEqual(
+        expect.arrayContaining([
+          '/ws/packages/infra/tsconfig.json',
+          '/ws/packages/infra/src/main.ts',
+          '/ws/packages/infra/package.json',
+          '/ws/packages/infra/cdkx.json',
+          '/ws/packages/infra/project.json',
+        ]),
+      );
+      expect(result.skipped).toHaveLength(0);
+      expect(result.merged).toHaveLength(0);
+    });
+  });
+
+  describe('project.json', () => {
+    it('generates project.json with synth, deploy, and destroy nx:run-commands targets', () => {
+      const fs = makeNxFs();
+      const engine = new InitTemplateEngine(fs);
+      engine.generate({ dir: '/ws/packages/infra', name: 'infra', mode: 'nx' });
+
+      const proj = JSON.parse(fs.written['/ws/packages/infra/project.json']);
+      expect(proj.name).toBe('infra');
+      expect(proj.targets.synth.executor).toBe('nx:run-commands');
+      expect(proj.targets.synth.options.command).toBe('cdkx synth');
+      expect(proj.targets.synth.options.cwd).toBe('{projectRoot}');
+      expect(proj.targets.deploy.executor).toBe('nx:run-commands');
+      expect(proj.targets.deploy.options.command).toBe('cdkx deploy');
+      expect(proj.targets.destroy.executor).toBe('nx:run-commands');
+      expect(proj.targets.destroy.options.command).toBe('cdkx destroy');
+    });
+  });
+});
+
+describe('InitTemplateEngine.detectMode', () => {
+  it('returns nx when nx.json is present', () => {
+    const result = InitTemplateEngine.detectMode(
+      '/project',
+      (p) => p === '/project/nx.json',
+    );
+    expect(result).toBe('nx');
+  });
+
+  it('returns existing when package.json is present but not nx.json', () => {
+    const result = InitTemplateEngine.detectMode(
+      '/project',
+      (p) => p === '/project/package.json',
+    );
+    expect(result).toBe('existing');
+  });
+
+  it('returns empty when neither nx.json nor package.json is present', () => {
+    const result = InitTemplateEngine.detectMode('/project', () => false);
+    expect(result).toBe('empty');
+  });
+});
+
 describe('InitTemplateEngine.detectPackageManager', () => {
   it('returns yarn when yarn.lock is present', () => {
     const result = InitTemplateEngine.detectPackageManager(
