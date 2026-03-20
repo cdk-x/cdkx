@@ -5,6 +5,9 @@ import { EngineState } from './engine-state';
 /** File name written inside `outdir`. */
 const STATE_FILE_NAME = 'engine-state.json';
 
+/** File name for the pre-deployment snapshot written alongside the state file. */
+const SNAPSHOT_FILE_NAME = 'engine-state.snapshot.json';
+
 /**
  * Persists and loads `EngineState` as a JSON file on disk.
  *
@@ -17,6 +20,7 @@ const STATE_FILE_NAME = 'engine-state.json';
  */
 export class StatePersistence {
   private readonly filePath: string;
+  private readonly snapshotPath: string;
 
   /**
    * @param stateDir — Absolute path to the directory where the engine state
@@ -29,6 +33,7 @@ export class StatePersistence {
     private readonly deps: StatePersistenceDeps = defaultDeps,
   ) {
     this.filePath = path.join(stateDir, STATE_FILE_NAME);
+    this.snapshotPath = path.join(stateDir, SNAPSHOT_FILE_NAME);
   }
 
   /**
@@ -61,6 +66,63 @@ export class StatePersistence {
   public get stateFilePath(): string {
     return this.filePath;
   }
+
+  /** The absolute path of the snapshot file managed by this instance. */
+  public get snapshotFilePath(): string {
+    return this.snapshotPath;
+  }
+
+  /**
+   * Writes a snapshot of the current engine state to
+   * `<stateDir>/engine-state.snapshot.json`.
+   *
+   * Called before any deployment mutations begin so that rollback phases 2 and
+   * 3 always have a known-good restore target. Safe to call when no prior state
+   * exists (first deployment) — writes the empty state without error.
+   */
+  public writeSnapshot(state: EngineState): void {
+    this.deps.mkdirSync(this.stateDir, { recursive: true });
+    this.deps.writeFileSync(
+      this.snapshotPath,
+      JSON.stringify(state, null, 2),
+      'utf8',
+    );
+  }
+
+  /**
+   * Reads and deserialises `engine-state.snapshot.json`.
+   *
+   * @returns The snapshot `EngineState`, or `null` if the snapshot does not exist.
+   */
+  public readSnapshot(): EngineState | null {
+    if (!this.deps.existsSync(this.snapshotPath)) {
+      return null;
+    }
+    const raw = this.deps.readFileSync(this.snapshotPath, 'utf8');
+    return JSON.parse(raw) as EngineState;
+  }
+
+  /**
+   * Deletes the snapshot file.
+   *
+   * Called after a fully successful deployment so that the working directory
+   * stays clean. Safe to call even if the snapshot does not exist.
+   */
+  public deleteSnapshot(): void {
+    if (this.deps.existsSync(this.snapshotPath)) {
+      this.deps.unlinkSync(this.snapshotPath);
+    }
+  }
+
+  /**
+   * Returns `true` if the snapshot file exists on disk.
+   *
+   * Used on engine startup to detect an interrupted deployment and decide
+   * whether to resume rollback instead of starting a new forward deployment.
+   */
+  public snapshotExists(): boolean {
+    return this.deps.existsSync(this.snapshotPath);
+  }
 }
 
 // ─── Dependency injection types ──────────────────────────────────────────────
@@ -70,6 +132,7 @@ export interface StatePersistenceDeps {
   writeFileSync: (p: string, data: string, encoding: BufferEncoding) => void;
   existsSync: (p: string) => boolean;
   readFileSync: (p: string, encoding: BufferEncoding) => string;
+  unlinkSync: (p: string) => void;
 }
 
 const defaultDeps: StatePersistenceDeps = {
@@ -77,4 +140,5 @@ const defaultDeps: StatePersistenceDeps = {
   writeFileSync: (p, data, encoding) => fs.writeFileSync(p, data, encoding),
   existsSync: (p) => fs.existsSync(p),
   readFileSync: (p, encoding) => fs.readFileSync(p, encoding),
+  unlinkSync: (p) => fs.unlinkSync(p),
 };

@@ -5,7 +5,10 @@ import { ResourceStatus } from '../states/resource-status';
 import { EventBus } from '../events/event-bus';
 import { EngineEvent } from '../events/engine-event';
 import { EngineStateManager } from '../state/engine-state-manager';
-import { StatePersistence } from '../state/state-persistence';
+import {
+  StatePersistence,
+  StatePersistenceDeps,
+} from '../state/state-persistence';
 import { DeployLock } from '../deploy-lock';
 import type {
   ProviderAdapter,
@@ -83,6 +86,7 @@ function makeNullPersistence(): StatePersistence {
       throw new Error('not found');
     },
     existsSync: () => false,
+    unlinkSync: () => undefined,
   });
 }
 
@@ -109,6 +113,7 @@ function makeEngine(
     assemblyDir: '/fake/assembly',
     stateDir: '/fake/state',
     stateManager,
+    persistence,
     eventBus: bus,
     deployLock: makeMockDeployLock(),
   });
@@ -191,6 +196,7 @@ function makeEngineWithPriorState(
     assemblyDir: '/fake/assembly',
     stateDir: '/fake/state',
     stateManager,
+    persistence,
     eventBus,
     deployLock: makeMockDeployLock(),
   });
@@ -255,6 +261,7 @@ function makeEngineWithPriorStateAndProps(
     assemblyDir: '/fake/assembly',
     stateDir: '/fake/state',
     stateManager,
+    persistence,
     eventBus,
     deployLock: makeMockDeployLock(),
   });
@@ -2394,6 +2401,171 @@ describe('DeploymentEngine', () => {
       await engine.deploy(stacks, plan);
 
       expect(engine.getUpdatedInOrder()).toHaveLength(0);
+    });
+  });
+
+  // ─── Snapshot lifecycle ───────────────────────────────────────────────────
+
+  describe('snapshot lifecycle', () => {
+    function makeTrackingPersistence(): {
+      persistence: StatePersistence;
+      snapshotWritten: boolean;
+      snapshotDeleted: boolean;
+    } {
+      const tracking = { snapshotWritten: false, snapshotDeleted: false };
+      let snapshotExists = false;
+
+      const deps: StatePersistenceDeps = {
+        mkdirSync: () => undefined,
+        writeFileSync: (_p, data) => {
+          if (_p.includes('snapshot')) {
+            tracking.snapshotWritten = true;
+            snapshotExists = true;
+          }
+          void data;
+        },
+        existsSync: (p) => (p.includes('snapshot') ? snapshotExists : false),
+        readFileSync: () => {
+          throw new Error('not found');
+        },
+        unlinkSync: (p) => {
+          if (p.includes('snapshot')) {
+            tracking.snapshotDeleted = true;
+            snapshotExists = false;
+          }
+        },
+      };
+
+      return {
+        persistence: new StatePersistence('/fake', deps),
+        ...tracking,
+        get snapshotWritten() {
+          return tracking.snapshotWritten;
+        },
+        get snapshotDeleted() {
+          return tracking.snapshotDeleted;
+        },
+      };
+    }
+
+    it('writes snapshot before any resource is created', async () => {
+      let snapshotWrittenBeforeCreate = false;
+      let snapshotWritten = false;
+
+      const deps: StatePersistenceDeps = {
+        mkdirSync: () => undefined,
+        writeFileSync: (_p) => {
+          if (_p.includes('snapshot')) snapshotWritten = true;
+        },
+        existsSync: () => false,
+        readFileSync: () => {
+          throw new Error('not found');
+        },
+        unlinkSync: () => undefined,
+      };
+
+      const persistence = new StatePersistence('/fake', deps);
+      const bus = new EventBus<EngineEvent>();
+      const stateManager = new EngineStateManager(bus, persistence);
+
+      const adapter: ProviderAdapter = {
+        create: async (resource): Promise<CreateResult> => {
+          snapshotWrittenBeforeCreate = snapshotWritten;
+          return { physicalId: `phys-${resource.logicalId}` };
+        },
+        update: () => Promise.reject(new Error('not implemented')),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: adapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      const stacks = [makeStack('S', [{ logicalId: 'Res1' }])];
+      const plan = makePlan(['S'], { S: ['Res1'] });
+      await engine.deploy(stacks, plan);
+
+      expect(snapshotWrittenBeforeCreate).toBe(true);
+    });
+
+    it('deletes snapshot after a fully successful deployment', async () => {
+      const tracking = makeTrackingPersistence();
+      const bus = new EventBus<EngineEvent>();
+      const stateManager = new EngineStateManager(bus, tracking.persistence);
+
+      const engine = new DeploymentEngine({
+        adapters: { test: { ...successAdapter('srv-001') } as ProviderAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence: tracking.persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      const stacks = [makeStack('S', [{ logicalId: 'Res1' }])];
+      const plan = makePlan(['S'], { S: ['Res1'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+      expect(tracking.snapshotWritten).toBe(true);
+      expect(tracking.snapshotDeleted).toBe(true);
+    });
+
+    it('does NOT delete snapshot after a failed deployment', async () => {
+      const tracking = makeTrackingPersistence();
+      const bus = new EventBus<EngineEvent>();
+      const stateManager = new EngineStateManager(bus, tracking.persistence);
+
+      const engine = new DeploymentEngine({
+        adapters: {
+          test: { ...failingAdapter('boom') } as ProviderAdapter,
+        },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence: tracking.persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      const stacks = [makeStack('S', [{ logicalId: 'Res1' }])];
+      const plan = makePlan(['S'], { S: ['Res1'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(false);
+      expect(tracking.snapshotWritten).toBe(true);
+      expect(tracking.snapshotDeleted).toBe(false);
+    });
+
+    it('writes snapshot on a normal (no prior state) deployment', async () => {
+      const tracking = makeTrackingPersistence();
+      const bus = new EventBus<EngineEvent>();
+      const stateManager = new EngineStateManager(bus, tracking.persistence);
+
+      const engine = new DeploymentEngine({
+        adapters: { test: { ...successAdapter('srv-001') } as ProviderAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence: tracking.persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      const stacks = [makeStack('S', [{ logicalId: 'Res1' }])];
+      const plan = makePlan(['S'], { S: ['Res1'] });
+      await engine.deploy(stacks, plan);
+
+      expect(tracking.snapshotWritten).toBe(true);
     });
   });
 });
