@@ -177,6 +177,27 @@ export class DeploymentEngine {
   private readonly adapters: Record<string, ProviderAdapter>;
   private readonly deployLock: DeployLock;
 
+  /**
+   * Resources updated in the current deployment run, in the order they reached
+   * `UPDATE_COMPLETE`. Used by rollback phase 2 to restore prior properties.
+   */
+  private readonly updatedInOrder: Array<{
+    logicalId: string;
+    stackId: string;
+  }> = [];
+
+  /**
+   * Resources deleted during reconcile in the current deployment run, captured
+   * with their prior properties and outputs. Stub — populated in a later slice.
+   * Used by rollback phase 3 to recreate reconcile-deleted resources.
+   */
+  private readonly reconciledDeletedInOrder: Array<{
+    logicalId: string;
+    stackId: string;
+    priorProperties: Record<string, unknown>;
+    priorOutputs: Record<string, unknown>;
+  }> = [];
+
   constructor(private readonly options: DeploymentEngineOptions) {
     // Acquire deploy lock to prevent concurrent deployments
     this.deployLock = options.deployLock ?? new DeployLock(options.stateDir);
@@ -271,6 +292,18 @@ export class DeploymentEngine {
    */
   public subscribe(handler: (event: EngineEvent) => void): () => void {
     return this.eventBus.subscribe(handler);
+  }
+
+  /**
+   * Returns the list of resources that reached `UPDATE_COMPLETE` in the
+   * current deployment run, in the order they were updated. Used by rollback
+   * phase 2 to restore updated resources to their prior properties.
+   */
+  public getUpdatedInOrder(): ReadonlyArray<{
+    logicalId: string;
+    stackId: string;
+  }> {
+    return this.updatedInOrder;
   }
 
   /**
@@ -450,7 +483,9 @@ export class DeploymentEngine {
     }
 
     const resourceById = new Map(stack.resources.map((r) => [r.logicalId, r]));
-    const createdInOrder: string[] = []; // track for rollback
+    // Wave-structured creation tracking: each sub-array is one deployment wave.
+    // Rollback iterates waves in reverse; resources within each wave in reverse.
+    const createdInOrder: string[][] = [];
     const resourceResults: ResourceDeploymentResult[] = [];
     let anyCreated = false;
     let anyUpdated = false;
@@ -470,6 +505,9 @@ export class DeploymentEngine {
 
       const waveResults = await Promise.allSettled(wavePromises);
 
+      // Resources created in the current wave (populated in wave order).
+      const waveCreated: string[] = [];
+
       // Collect results from this wave in wave order (not completion order)
       // to maintain deterministic createdInOrder for rollback.
       for (let i = 0; i < wave.length; i++) {
@@ -483,6 +521,21 @@ export class DeploymentEngine {
               : String(settled.reason);
 
           resourceResults.push({ logicalId, success: false, error: message });
+
+          // Collect any concurrently-created resources from this wave (j > i).
+          for (let j = i + 1; j < wave.length; j++) {
+            const s = waveResults[j];
+            if (
+              s.status === 'fulfilled' &&
+              s.value.wasCreated &&
+              s.value.physicalId !== undefined
+            ) {
+              waveCreated.push(wave[j]);
+            }
+          }
+          if (waveCreated.length > 0) {
+            createdInOrder.push([...waveCreated]);
+          }
 
           // Wait for all other resources in this wave to settle before rolling back.
           await Promise.allSettled(wavePromises);
@@ -516,6 +569,21 @@ export class DeploymentEngine {
 
         // If resource failed (but didn't throw), mark stack as failed
         if (!result.success) {
+          // Collect any concurrently-created resources from this wave (j > i).
+          for (let j = i + 1; j < wave.length; j++) {
+            const s = waveResults[j];
+            if (
+              s.status === 'fulfilled' &&
+              s.value.wasCreated &&
+              s.value.physicalId !== undefined
+            ) {
+              waveCreated.push(wave[j]);
+            }
+          }
+          if (waveCreated.length > 0) {
+            createdInOrder.push([...waveCreated]);
+          }
+
           // Wait for all other resources in this wave to settle before rolling back.
           await Promise.allSettled(wavePromises);
 
@@ -547,11 +615,17 @@ export class DeploymentEngine {
         if (result.physicalId !== undefined && !result.wasSkipped) {
           if (result.wasCreated) {
             anyCreated = true;
-            createdInOrder.push(logicalId);
+            waveCreated.push(logicalId);
           } else if (result.wasUpdated) {
             anyUpdated = true;
+            this.updatedInOrder.push({ logicalId, stackId: stack.id });
           }
         }
+      }
+
+      // Wave completed successfully — record as one wave entry for rollback.
+      if (waveCreated.length > 0) {
+        createdInOrder.push([...waveCreated]);
       }
     }
 
@@ -702,6 +776,7 @@ export class DeploymentEngine {
           ResourceStatus.UPDATE_COMPLETE,
           {
             properties: resolvedProperties,
+            lastAppliedProperties: resolvedProperties,
             ...(updateResult?.outputs !== undefined && {
               outputs: updateResult.outputs,
             }),
@@ -752,6 +827,7 @@ export class DeploymentEngine {
         {
           physicalId: createResult.physicalId,
           outputs: createResult.outputs,
+          lastAppliedProperties: resolvedProperties,
         },
       );
 
@@ -970,16 +1046,23 @@ export class DeploymentEngine {
   }
 
   /**
-   * Delete already-created resources in reverse creation order (rollback).
+   * Delete newly-created resources in reverse wave order (rollback phase 1).
+   * Within each wave, resources are deleted in reverse order.
+   *
    * Failures during rollback are swallowed — we log via the event bus but do
    * not propagate exceptions, so the rollback continues as far as possible.
    *
    * Only rolls back resources that were newly created in this run — resources
    * that were pre-existing (skipped during the create loop) are not deleted.
+   *
+   * @param createdInOrder - Wave-structured array from `deployStack()`. Each
+   *   sub-array contains the logical IDs created in one deployment wave, in
+   *   wave order. Rollback iterates waves in reverse; resources within each
+   *   wave in reverse.
    */
   private async rollback(
     stack: AssemblyStack,
-    createdInOrder: string[],
+    createdInOrder: string[][],
     resourceById: Map<
       string,
       { logicalId: string; type: string; properties: Record<string, unknown> }
@@ -994,73 +1077,74 @@ export class DeploymentEngine {
         : StackStatus.ROLLBACK_IN_PROGRESS,
     );
 
-    const reversed = [...createdInOrder].reverse();
+    // Iterate waves in reverse order; within each wave, iterate in reverse.
+    for (const wave of [...createdInOrder].reverse()) {
+      for (const logicalId of [...wave].reverse()) {
+        const resource = resourceById.get(logicalId);
+        if (resource === undefined) continue;
 
-    for (const logicalId of reversed) {
-      const resource = resourceById.get(logicalId);
-      if (resource === undefined) continue;
-
-      // Skip pre-existing resources — don't delete what we didn't create.
-      const resourceState = this.stateManager.getResourceState(
-        stack.id,
-        logicalId,
-      );
-      if (
-        resourceState === undefined ||
-        resourceState.status !== ResourceStatus.CREATE_COMPLETE
-      )
-        continue;
-
-      // Extract provider from resource type
-      const providerId = resource.type.split('::')[0].toLowerCase();
-      const adapter = adapters[providerId];
-
-      if (adapter === undefined) {
-        this.stateManager.transitionResource(
+        // Skip pre-existing resources — don't delete what we didn't create.
+        const resourceState = this.stateManager.getResourceState(
           stack.id,
           logicalId,
-          resource.type,
-          ResourceStatus.DELETE_FAILED,
-          { reason: `No adapter registered for provider '${providerId}'.` },
         );
-        continue;
-      }
+        if (
+          resourceState === undefined ||
+          resourceState.status !== ResourceStatus.CREATE_COMPLETE
+        )
+          continue;
 
-      this.stateManager.transitionResource(
-        stack.id,
-        logicalId,
-        resource.type,
-        ResourceStatus.DELETE_IN_PROGRESS,
-      );
+        // Extract provider from resource type
+        const providerId = resource.type.split('::')[0].toLowerCase();
+        const adapter = adapters[providerId];
 
-      try {
-        await adapter.delete({
-          logicalId,
-          type: resource.type,
-          // Use the resolved properties stored at creation time, not the raw
-          // assembly properties which may still contain unresolved { ref, attr }
-          // tokens (e.g. networkId for action resources).
-          properties: resourceState.properties,
-          stackId: stack.id,
-          provider: providerId,
-          physicalId: resourceState.physicalId,
-        });
+        if (adapter === undefined) {
+          this.stateManager.transitionResource(
+            stack.id,
+            logicalId,
+            resource.type,
+            ResourceStatus.DELETE_FAILED,
+            { reason: `No adapter registered for provider '${providerId}'.` },
+          );
+          continue;
+        }
 
         this.stateManager.transitionResource(
           stack.id,
           logicalId,
           resource.type,
-          ResourceStatus.DELETE_COMPLETE,
+          ResourceStatus.DELETE_IN_PROGRESS,
         );
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        this.stateManager.transitionResource(
-          stack.id,
-          logicalId,
-          resource.type,
-          ResourceStatus.DELETE_FAILED,
-          { reason: message },
-        );
+
+        try {
+          await adapter.delete({
+            logicalId,
+            type: resource.type,
+            // Use the resolved properties stored at creation time, not the raw
+            // assembly properties which may still contain unresolved { ref, attr }
+            // tokens (e.g. networkId for action resources).
+            properties: resourceState.properties,
+            stackId: stack.id,
+            provider: providerId,
+            physicalId: resourceState.physicalId,
+          });
+
+          this.stateManager.transitionResource(
+            stack.id,
+            logicalId,
+            resource.type,
+            ResourceStatus.DELETE_COMPLETE,
+          );
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
+          this.stateManager.transitionResource(
+            stack.id,
+            logicalId,
+            resource.type,
+            ResourceStatus.DELETE_FAILED,
+            { reason: message },
+          );
+        }
       }
     }
   }
