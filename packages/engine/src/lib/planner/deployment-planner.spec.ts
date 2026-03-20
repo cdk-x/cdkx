@@ -68,6 +68,19 @@ describe('DeploymentPlanner', () => {
       expect(flattenWaves(plan.stackWaves)).toEqual(['StackA', 'StackB']);
     });
 
+    it('places two independent stacks in the same wave', () => {
+      const plan = planner.plan([
+        makeStack('StackA', []),
+        makeStack('StackC', []),
+      ]);
+      // Both are independent — they must share a single wave so the engine
+      // can deploy them in parallel.
+      expect(plan.stackWaves).toHaveLength(1);
+      expect(plan.stackWaves[0]).toEqual(
+        expect.arrayContaining(['StackA', 'StackC']),
+      );
+    });
+
     it('puts dependency before dependent (A → B means A first)', () => {
       const plan = planner.plan([
         makeStack('StackB', [], ['StackA']),
