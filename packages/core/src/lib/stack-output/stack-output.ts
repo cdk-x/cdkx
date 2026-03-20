@@ -58,4 +58,22 @@ export class StackOutput extends Construct {
     this.value = props.value;
     this.description = props.description;
   }
+
+  /**
+   * Returns an `IResolvable` token that can be used as a resource property in
+   * another stack. At deploy time the engine substitutes the token with the
+   * real runtime value of this output after the source stack has deployed.
+   *
+   * Using `importValue()` in a consuming stack automatically infers a
+   * stack-level dependency — no manual `addDependency` call is required.
+   */
+  public importValue(): IResolvable {
+    // Lazy require to avoid circular dependency: stack-output ← stack ← stack-output
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Stack } =
+      require('../stack/stack') as typeof import('../stack/stack');
+    const artifactId = Stack.of(this).artifactId;
+    const key = this.outputKey;
+    return { resolve: () => ({ stackRef: artifactId, outputKey: key }) };
+  }
 }
