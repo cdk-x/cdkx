@@ -1,4 +1,5 @@
 import { RuntimeLogger, StabilizationTimeoutError } from '@cdkx-io/core';
+import { ServerType } from '@cdkx-io/hetzner';
 import { HetznerServerHandler } from './server-handler';
 import { HetznerRuntimeContext } from '../../hetzner-runtime-context';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
@@ -49,14 +50,14 @@ function stubSdk(overrides?: Partial<HetznerSdk['servers']>): HetznerSdk {
 
 const baseProps = {
   name: 'my-server',
-  serverType: 'cx22' as const,
+  serverType: ServerType.CX22,
   image: 'ubuntu-22.04',
 };
 
 const baseState = {
   serverId: 101,
   name: 'my-server',
-  serverType: 'cx22' as const,
+  serverType: ServerType.CX22,
   image: 'ubuntu-22.04',
   labels: {},
 };
@@ -92,7 +93,7 @@ describe('HetznerServerHandler', () => {
 
       await handler.create(ctx, {
         name: 'my-server',
-        serverType: 'cx22',
+        serverType: ServerType.CX22,
         image: 'ubuntu-22.04',
         startAfterCreate: true,
         sshKeys: ['my-key'],
