@@ -3077,4 +3077,279 @@ describe('DeploymentEngine', () => {
       expect(rollbackFailed).toBeDefined();
     });
   });
+
+  // ─── Rollback phase 3 — recreate reconcile-deleted resources ────────────────
+
+  describe('rollback phase 3 — recreate reconcile-deleted resources', () => {
+    it('populates reconciledDeletedInOrder during reconcile', async () => {
+      const persistence = makeNullPersistence();
+      const bus = new EventBus<EngineEvent>();
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'a' },
+                lastAppliedProperties: { name: 'a' },
+              },
+            },
+          },
+        },
+      };
+
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+      const fullAdapter: ProviderAdapter = {
+        create: (): Promise<CreateResult> =>
+          Promise.resolve({ physicalId: 'phys-new' }),
+        update: (): Promise<UpdateResult> => Promise.resolve({}),
+        delete: (): Promise<void> => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // New assembly: ResA removed, ResB added
+      const stacks = [makeStack('S', [{ logicalId: 'ResB' }])];
+      const plan = makePlan(['S'], { S: ['ResB'] });
+      await engine.deploy(stacks, plan);
+
+      const deleted = engine.getReconciledDeletedInOrder();
+      expect(deleted).toHaveLength(1);
+      expect(deleted[0].logicalId).toBe('ResA');
+      expect(deleted[0].type).toBe('test::Resource');
+      expect(deleted[0].provider).toBe('test');
+      expect(deleted[0].physicalId).toBe('phys-A');
+      expect(deleted[0].priorProperties).toEqual({ name: 'a' });
+    });
+
+    it('recreates a reconcile-deleted resource during rollback when it has no surviving dependents', async () => {
+      const createCalls: string[] = [];
+      const deleteCalls: string[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        create: (resource): Promise<CreateResult> => {
+          createCalls.push(resource.logicalId);
+          if (resource.logicalId === 'ResB') {
+            return Promise.reject(new Error('ResB failed'));
+          }
+          return Promise.resolve({ physicalId: `phys-${resource.logicalId}` });
+        },
+        delete: (resource): Promise<void> => {
+          deleteCalls.push(resource.logicalId);
+          return Promise.resolve();
+        },
+      };
+
+      const persistence = makeNullPersistence();
+      const bus = new EventBus<EngineEvent>();
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'a' },
+                lastAppliedProperties: { name: 'a' },
+              },
+            },
+          },
+        },
+      };
+
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+      const fullAdapter: ProviderAdapter = {
+        create:
+          adapter.create ??
+          (() => Promise.reject(new Error('not implemented'))),
+        update: () => Promise.resolve({}),
+        delete: adapter.delete ?? (() => Promise.resolve()),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // ResA removed from new assembly, ResB added (fails to create).
+      // ResB has no reference to ResA — phase 3 should recreate ResA.
+      const stacks = [
+        makeStack('S', [{ logicalId: 'ResB', properties: { name: 'b' } }]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResB'] });
+      await engine.deploy(stacks, plan);
+
+      // ResA was deleted during reconcile, then recreated during phase 3.
+      expect(deleteCalls).toContain('ResA');
+      expect(createCalls).toContain('ResA');
+    });
+
+    it('transitions stack to ROLLBACK_COMPLETE when all deleted resources are recreated', async () => {
+      const events: EngineEvent[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        create: (resource): Promise<CreateResult> => {
+          if (resource.logicalId === 'ResB') {
+            return Promise.reject(new Error('ResB failed'));
+          }
+          return Promise.resolve({ physicalId: `phys-${resource.logicalId}` });
+        },
+        delete: (): Promise<void> => Promise.resolve(),
+      };
+
+      const persistence = makeNullPersistence();
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'a' },
+                lastAppliedProperties: { name: 'a' },
+              },
+            },
+          },
+        },
+      };
+
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+      const fullAdapter: ProviderAdapter = {
+        create:
+          adapter.create ??
+          (() => Promise.reject(new Error('not implemented'))),
+        update: () => Promise.resolve({}),
+        delete: adapter.delete ?? (() => Promise.resolve()),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResB' }])];
+      const plan = makePlan(['S'], { S: ['ResB'] });
+      await engine.deploy(stacks, plan);
+
+      // Prior state exists → isUpdate = true → UPDATE_ROLLBACK_COMPLETE (not partial).
+      const stackEvent = events.find(
+        (e) =>
+          e.resourceType === 'cdkx::stack' &&
+          e.resourceStatus === StackStatus.UPDATE_ROLLBACK_COMPLETE,
+      );
+      expect(stackEvent).toBeDefined();
+    });
+
+    it('transitions stack to ROLLBACK_PARTIAL when a reconcile-deleted resource fails to recreate', async () => {
+      const events: EngineEvent[] = [];
+
+      // ResA: deleted during reconcile, then fails to recreate in phase 3.
+      // ResB: new resource that also fails, triggering rollback.
+      const adapter: Partial<ProviderAdapter> = {
+        create: (resource): Promise<CreateResult> => {
+          // Both ResA (phase 3 recreate) and ResB (forward) fail.
+          return Promise.reject(
+            new Error(`${resource.logicalId} create failed`),
+          );
+        },
+        delete: (): Promise<void> => Promise.resolve(),
+      };
+
+      const persistence = makeNullPersistence();
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'a' },
+                lastAppliedProperties: { name: 'a' },
+              },
+            },
+          },
+        },
+      };
+
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+      const fullAdapter: ProviderAdapter = {
+        create:
+          adapter.create ??
+          (() => Promise.reject(new Error('not implemented'))),
+        update: () => Promise.resolve({}),
+        delete: adapter.delete ?? (() => Promise.resolve()),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // ResA removed, ResB added (fails) → rollback → ResA recreate also fails.
+      const stacks = [makeStack('S', [{ logicalId: 'ResB' }])];
+      const plan = makePlan(['S'], { S: ['ResB'] });
+      await engine.deploy(stacks, plan);
+
+      const partialEvent = events.find(
+        (e) =>
+          e.resourceType === 'cdkx::stack' &&
+          e.resourceStatus === StackStatus.ROLLBACK_PARTIAL,
+      );
+      expect(partialEvent).toBeDefined();
+    });
+  });
+  // Note: the "skip when surviving resource holds a { ref } token" path in
+  // rollbackPhase3 is defensive — it cannot be triggered through normal deploy
+  // flow because validateReconcile() raises ReconcileValidationError before any
+  // reconcile delete occurs whenever a staying assembly resource references a
+  // resource scheduled for deletion. The hasReferenceTo guard exists as a
+  // safety net for future cross-stack or alternative-validation scenarios.
 });

@@ -197,12 +197,16 @@ export class DeploymentEngine {
 
   /**
    * Resources deleted during reconcile in the current deployment run, captured
-   * with their prior properties and outputs. Stub — populated in a later slice.
+   * with their prior properties and outputs. Populated in `reconcileStack()`
+   * before each `adapter.delete()` call.
    * Used by rollback phase 3 to recreate reconcile-deleted resources.
    */
   private readonly reconciledDeletedInOrder: Array<{
     logicalId: string;
     stackId: string;
+    type: string;
+    provider: string;
+    physicalId: string | undefined;
     priorProperties: Record<string, unknown>;
     priorOutputs: Record<string, unknown>;
   }> = [];
@@ -316,6 +320,23 @@ export class DeploymentEngine {
     stackId: string;
   }> {
     return this.updatedInOrder;
+  }
+
+  /**
+   * Returns the list of resources deleted during reconcile in the current
+   * deployment run, in deletion order. Used by rollback phase 3 to recreate
+   * reconcile-deleted resources.
+   */
+  public getReconciledDeletedInOrder(): ReadonlyArray<{
+    logicalId: string;
+    stackId: string;
+    type: string;
+    provider: string;
+    physicalId: string | undefined;
+    priorProperties: Record<string, unknown>;
+    priorOutputs: Record<string, unknown>;
+  }> {
+    return this.reconciledDeletedInOrder;
   }
 
   /**
@@ -561,7 +582,7 @@ export class DeploymentEngine {
           // Wait for all other resources in this wave to settle before rolling back.
           await Promise.allSettled(wavePromises);
 
-          await this.rollback(
+          const isPartial = await this.rollback(
             stack,
             createdInOrder,
             resourceById,
@@ -569,9 +590,11 @@ export class DeploymentEngine {
             isUpdate,
           );
 
-          const rollbackComplete = isUpdate
-            ? StackStatus.UPDATE_ROLLBACK_COMPLETE
-            : StackStatus.ROLLBACK_COMPLETE;
+          const rollbackComplete = isPartial
+            ? StackStatus.ROLLBACK_PARTIAL
+            : isUpdate
+              ? StackStatus.UPDATE_ROLLBACK_COMPLETE
+              : StackStatus.ROLLBACK_COMPLETE;
 
           this.stateManager.transitionStack(stack.id, rollbackComplete, {
             reason: `Resource '${logicalId}' failed: ${message}`,
@@ -608,7 +631,7 @@ export class DeploymentEngine {
           // Wait for all other resources in this wave to settle before rolling back.
           await Promise.allSettled(wavePromises);
 
-          await this.rollback(
+          const isPartialFailure = await this.rollback(
             stack,
             createdInOrder,
             resourceById,
@@ -616,11 +639,13 @@ export class DeploymentEngine {
             isUpdate,
           );
 
-          const rollbackComplete = isUpdate
-            ? StackStatus.UPDATE_ROLLBACK_COMPLETE
-            : StackStatus.ROLLBACK_COMPLETE;
+          const rollbackCompleteStatus = isPartialFailure
+            ? StackStatus.ROLLBACK_PARTIAL
+            : isUpdate
+              ? StackStatus.UPDATE_ROLLBACK_COMPLETE
+              : StackStatus.ROLLBACK_COMPLETE;
 
-          this.stateManager.transitionStack(stack.id, rollbackComplete, {
+          this.stateManager.transitionStack(stack.id, rollbackCompleteStatus, {
             reason: `Resource '${logicalId}' failed: ${result.error}`,
           });
 
@@ -930,6 +955,18 @@ export class DeploymentEngine {
         );
       }
 
+      // Capture prior state for rollback phase 3 before any mutation.
+      this.reconciledDeletedInOrder.push({
+        logicalId,
+        stackId: stack.id,
+        type: resourceType,
+        provider: providerId,
+        physicalId: resourceState.physicalId,
+        priorProperties:
+          resourceState.lastAppliedProperties ?? resourceState.properties,
+        priorOutputs: resourceState.outputs ?? {},
+      });
+
       this.stateManager.transitionResource(
         stack.id,
         logicalId,
@@ -1090,7 +1127,7 @@ export class DeploymentEngine {
     >,
     adapters: Record<string, ProviderAdapter>,
     isUpdate: boolean,
-  ): Promise<void> {
+  ): Promise<boolean> {
     this.stateManager.transitionStack(
       stack.id,
       isUpdate
@@ -1172,6 +1209,9 @@ export class DeploymentEngine {
 
     // Phase 2: Restore updated resources to their snapshot properties.
     await this.rollbackPhase2(stack, resourceById, adapters);
+
+    // Phase 3: Recreate reconcile-deleted resources.
+    return await this.rollbackPhase3(stack, adapters);
   }
 
   /**
@@ -1272,6 +1312,133 @@ export class DeploymentEngine {
         );
       }
     }
+  }
+
+  /**
+   * Phase 3 rollback: recreate resources that were deleted during reconcile.
+   *
+   * Iterates `reconciledDeletedInOrder` in reverse deletion order (last deleted
+   * first). For each resource:
+   * - If any surviving resource in the new assembly holds a `{ ref }` token
+   *   pointing to this logicalId, the resource is skipped and the stack is
+   *   marked `ROLLBACK_PARTIAL`.
+   * - Otherwise, calls `adapter.create()` using the captured prior properties.
+   *   A failed recreate also marks the stack `ROLLBACK_PARTIAL`.
+   *
+   * Returns `true` when at least one resource was skipped or failed (partial
+   * rollback), `false` when all deleted resources were successfully recreated
+   * (or there were none to recreate).
+   */
+  private async rollbackPhase3(
+    stack: AssemblyStack,
+    adapters: Record<string, ProviderAdapter>,
+  ): Promise<boolean> {
+    const toRecreate = [...this.reconciledDeletedInOrder]
+      .filter((r) => r.stackId === stack.id)
+      .reverse();
+
+    if (toRecreate.length === 0) return false;
+
+    let isPartial = false;
+
+    for (const { logicalId, type, provider, priorProperties } of toRecreate) {
+      // Skip if any surviving assembly resource holds a { ref } token to this
+      // logicalId — recreating it would violate dependency ordering.
+      if (this.hasReferenceTo(stack.resources, logicalId)) {
+        isPartial = true;
+        continue;
+      }
+
+      const adapter = adapters[provider];
+      if (adapter === undefined) {
+        isPartial = true;
+        continue;
+      }
+
+      // Re-register the resource in state (it was removed after DELETE_COMPLETE).
+      this.stateManager.initResource(
+        stack.id,
+        logicalId,
+        type,
+        priorProperties,
+      );
+
+      try {
+        const createResult = await adapter.create({
+          logicalId,
+          type,
+          properties: priorProperties,
+          stackId: stack.id,
+          provider,
+        });
+
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          type,
+          ResourceStatus.CREATE_COMPLETE,
+          {
+            physicalId: createResult.physicalId,
+            ...(createResult.outputs !== undefined && {
+              outputs: createResult.outputs,
+            }),
+            lastAppliedProperties: priorProperties,
+          },
+        );
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          type,
+          ResourceStatus.CREATE_FAILED,
+          { reason: message },
+        );
+        isPartial = true;
+      }
+    }
+
+    return isPartial;
+  }
+
+  /**
+   * Returns `true` if any resource in `resources` contains a `{ ref, attr }`
+   * token anywhere in its properties that references `logicalId`.
+   */
+  private hasReferenceTo(
+    resources: AssemblyResource[],
+    logicalId: string,
+  ): boolean {
+    for (const resource of resources) {
+      if (this.valueHasRefTo(resource.properties, logicalId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Recursively walks `value` and returns `true` if any `{ ref, attr }` token
+   * has `ref === logicalId`.
+   */
+  private valueHasRefTo(value: unknown, logicalId: string): boolean {
+    if (value === null || value === undefined) return false;
+
+    if (this.isRefAttrToken(value)) {
+      return value.ref === logicalId;
+    }
+
+    if (Array.isArray(value)) {
+      return value.some((item) => this.valueHasRefTo(item, logicalId));
+    }
+
+    if (typeof value === 'object') {
+      return Object.values(value as Record<string, unknown>).some((v) =>
+        this.valueHasRefTo(v, logicalId),
+      );
+    }
+
+    return false;
   }
 
   /**
