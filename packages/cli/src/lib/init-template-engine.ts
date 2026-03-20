@@ -63,6 +63,9 @@ export class InitTemplateEngine {
     if (context.mode === 'existing') {
       return this.generateExisting(context);
     }
+    if (context.mode === 'nx') {
+      return this.generateNx(context);
+    }
     return this.generateEmpty(context);
   }
 
@@ -139,6 +142,20 @@ export class InitTemplateEngine {
     return { created, skipped, merged };
   }
 
+  private generateNx(context: InitContext): InitResult {
+    const { dir, name } = context;
+    const result = this.generateEmpty(context);
+
+    const projectJson = `${dir}/project.json`;
+    this.fs.writeFile(projectJson, this.projectJsonContent(name));
+
+    return {
+      created: [...result.created, projectJson],
+      skipped: [],
+      merged: [],
+    };
+  }
+
   private mergePackageJson(existing: Record<string, unknown>): unknown {
     const existingScripts =
       (existing.scripts as Record<string, string> | undefined) ?? {};
@@ -207,6 +224,30 @@ export class InitTemplateEngine {
   private cdkxJsonContent(): string {
     return JSON.stringify(
       { app: 'npx tsx src/main.ts', output: 'cdkx.out' },
+      null,
+      2,
+    );
+  }
+
+  private projectJsonContent(name: string): string {
+    return JSON.stringify(
+      {
+        name,
+        targets: {
+          synth: {
+            executor: 'nx:run-commands',
+            options: { command: 'cdkx synth', cwd: '{projectRoot}' },
+          },
+          deploy: {
+            executor: 'nx:run-commands',
+            options: { command: 'cdkx deploy', cwd: '{projectRoot}' },
+          },
+          destroy: {
+            executor: 'nx:run-commands',
+            options: { command: 'cdkx destroy', cwd: '{projectRoot}' },
+          },
+        },
+      },
       null,
       2,
     );
