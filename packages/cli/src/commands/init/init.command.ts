@@ -29,7 +29,9 @@ function defaultInstallPackages(dir: string, pm: PackageManager): void {
     shell: true,
   });
   if (result.status !== 0) {
-    throw new Error(`${pm} install failed with exit code ${result.status ?? 1}`);
+    throw new Error(
+      `${pm} install failed with exit code ${result.status ?? 1}`,
+    );
   }
 }
 
@@ -85,6 +87,10 @@ export class InitCommand extends BaseCommand {
         '--package-manager <pm>',
         'Package manager to use: yarn, npm, or pnpm',
       )
+      .option(
+        '--force',
+        'Overwrite existing files (src/main.ts, tsconfig.json)',
+      )
       .option('--no-install', 'Skip package manager install step')
       .action(
         async (
@@ -93,6 +99,7 @@ export class InitCommand extends BaseCommand {
             name?: string;
             mode?: string;
             packageManager?: string;
+            force?: boolean;
             install: boolean;
           },
         ) => {
@@ -107,6 +114,7 @@ export class InitCommand extends BaseCommand {
       name?: string;
       mode?: string;
       packageManager?: string;
+      force?: boolean;
       install: boolean;
     },
   ): Promise<void> {
@@ -123,7 +131,7 @@ export class InitCommand extends BaseCommand {
       this.detectMode(dir, fs.exists.bind(fs));
 
     const engine = new InitTemplateEngine(fs);
-    const result = engine.generate({ dir, name, mode });
+    const result = engine.generate({ dir, name, mode, force: options.force });
 
     for (const file of result.created) {
       console.log(chalk.green('✔') + ` Created ${file}`);
