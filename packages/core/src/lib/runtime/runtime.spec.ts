@@ -2,6 +2,11 @@ import { RuntimeLogger } from './runtime-logger';
 import { RuntimeContext } from './runtime-context';
 import { ProviderRuntime } from './provider-runtime';
 import { ResourceHandler } from './resource-handler';
+import {
+  StabilizeConfig,
+  StabilizeStatus,
+  StabilizationTimeoutError,
+} from './stabilize';
 
 // ── Test doubles ────────────────────────────────────────────────
 
@@ -97,6 +102,20 @@ describe('RuntimeContext', () => {
     expect(ctx.sdk).toBe(stubSdk);
     expect(ctx.logger).toBe(logger);
   });
+
+  it('has default stabilizeConfig with engine defaults', () => {
+    const ctx = new TestContext(stubSdk, new NoopLogger());
+    expect(ctx.stabilizeConfig).toEqual({
+      intervalMs: 5000,
+      timeoutMs: 600_000,
+    });
+  });
+
+  it('allows stabilizeConfig to be overwritten', () => {
+    const ctx = new TestContext(stubSdk, new NoopLogger());
+    ctx.stabilizeConfig = { intervalMs: 100, timeoutMs: 1000 };
+    expect(ctx.stabilizeConfig).toEqual({ intervalMs: 100, timeoutMs: 1000 });
+  });
 });
 
 describe('ProviderRuntime', () => {
@@ -159,6 +178,76 @@ describe('ResourceHandler', () => {
   it('get returns state', async () => {
     const state = await handler.get(ctx, { name: 'hello' });
     expect(state).toEqual({ id: 'w-1', name: 'hello' });
+  });
+
+  describe('waitUntilStabilized', () => {
+    // Expose protected method via subclass
+    class StabilizingHandler extends WidgetHandler {
+      stabilize(
+        check: () => Promise<StabilizeStatus>,
+        config: StabilizeConfig,
+      ): Promise<void> {
+        return this.waitUntilStabilized(check, config);
+      }
+    }
+
+    let handler: StabilizingHandler;
+    const fastConfig: StabilizeConfig = { intervalMs: 1, timeoutMs: 5000 };
+
+    beforeEach(() => {
+      handler = new StabilizingHandler();
+    });
+
+    it('returns when check resolves ready on first call', async () => {
+      const check = jest.fn<Promise<StabilizeStatus>, []>().mockResolvedValue({
+        status: 'ready',
+      });
+      await expect(
+        handler.stabilize(check, fastConfig),
+      ).resolves.toBeUndefined();
+      expect(check).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns after pending then ready', async () => {
+      const check = jest
+        .fn<Promise<StabilizeStatus>, []>()
+        .mockResolvedValueOnce({ status: 'pending' })
+        .mockResolvedValue({ status: 'ready' });
+      await expect(
+        handler.stabilize(check, fastConfig),
+      ).resolves.toBeUndefined();
+      expect(check).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws immediately when check returns failed', async () => {
+      const check = jest.fn<Promise<StabilizeStatus>, []>().mockResolvedValue({
+        status: 'failed',
+        reason: 'disk error',
+      });
+      await expect(handler.stabilize(check, fastConfig)).rejects.toThrow(
+        'disk error',
+      );
+      expect(check).toHaveBeenCalledTimes(1);
+    });
+
+    it('throws StabilizationTimeoutError when timeoutMs is exceeded', async () => {
+      // timeoutMs: 0 means deadline is already reached after the first pending
+      const check = jest
+        .fn<Promise<StabilizeStatus>, []>()
+        .mockResolvedValue({ status: 'pending' });
+      await expect(
+        handler.stabilize(check, { intervalMs: 1, timeoutMs: 0 }),
+      ).rejects.toBeInstanceOf(StabilizationTimeoutError);
+    });
+
+    it('StabilizationTimeoutError message includes timeoutMs', async () => {
+      const check = jest
+        .fn<Promise<StabilizeStatus>, []>()
+        .mockResolvedValue({ status: 'pending' });
+      await expect(
+        handler.stabilize(check, { intervalMs: 1, timeoutMs: 0 }),
+      ).rejects.toThrow('0ms');
+    });
   });
 
   describe('assertExists', () => {

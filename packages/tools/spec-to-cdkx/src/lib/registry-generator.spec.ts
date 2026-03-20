@@ -14,6 +14,7 @@ function makeResource(overrides: Partial<ResourceSchema>): ResourceSchema {
     properties: {},
     readOnlyProperties: [],
     createOnlyProperties: [],
+    primaryIdentifier: [],
     required: [],
     definitions: {},
     localDefinitionNames: [],

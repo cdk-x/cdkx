@@ -16,3 +16,4 @@ export {
   type HetznerNetworkProps,
   type HetznerNetworkState,
 } from './lib/handlers';
+export { HetznerServerHandler, type HetznerServerState } from './lib/handlers';

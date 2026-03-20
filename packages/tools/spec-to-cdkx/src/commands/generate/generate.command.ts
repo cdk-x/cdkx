@@ -6,6 +6,7 @@ import { BaseCommand } from '../../lib/base-command.js';
 import { SchemaReader } from '../../lib/schema-reader.js';
 import { CodeGenerator } from '../../lib/code-generator.js';
 import { RegistryGenerator } from '../../lib/registry-generator.js';
+import { RuntimeConfigGenerator } from '../../lib/runtime-config-generator.js';
 
 // ---------------------------------------------------------------------------
 // Deps interface (for testing)
@@ -24,6 +25,9 @@ export interface GenerateCommandDeps {
 
   /** Generate resource registry source. Defaults to `RegistryGenerator.generate`. */
   generateRegistry?: typeof RegistryGenerator.generate;
+
+  /** Generate runtime config source. Defaults to `RuntimeConfigGenerator.generate`. */
+  generateRuntimeConfig?: typeof RuntimeConfigGenerator.generate;
 
   /** Write the output file. Defaults to `fs.writeFileSync`. */
   writeFile?: (filePath: string, content: string) => void;
@@ -82,6 +86,10 @@ export class GenerateCommand extends BaseCommand {
         '--registry-output <file>',
         'Output file path for the resource registry (optional)',
       )
+      .option(
+        '--runtime-config-output <file>',
+        'Output file path for the runtime config (optional)',
+      )
       .action(
         async (options: {
           prefix: string;
@@ -90,6 +98,7 @@ export class GenerateCommand extends BaseCommand {
           schemas: string;
           output: string;
           registryOutput?: string;
+          runtimeConfigOutput?: string;
         }) => {
           await this.run(() => this.execute(options));
         },
@@ -103,12 +112,15 @@ export class GenerateCommand extends BaseCommand {
     schemas: string;
     output: string;
     registryOutput?: string;
+    runtimeConfigOutput?: string;
   }): Promise<void> {
     const existsSync = this.deps.existsSync ?? fs.existsSync;
     const readSchemas = this.deps.readSchemas ?? SchemaReader.read;
     const generateCode = this.deps.generateCode ?? CodeGenerator.generate;
     const generateRegistry =
       this.deps.generateRegistry ?? RegistryGenerator.generate;
+    const generateRuntimeConfig =
+      this.deps.generateRuntimeConfig ?? RuntimeConfigGenerator.generate;
     const writeFile =
       this.deps.writeFile ??
       ((filePath: string, content: string) =>
@@ -174,6 +186,26 @@ export class GenerateCommand extends BaseCommand {
       log(
         chalk.green('✔') +
           ` Generated registry with ${registryCount} entries → ${chalk.dim(registryFile)}`,
+      );
+    }
+
+    // Optionally generate the runtime config.
+    if (options.runtimeConfigOutput) {
+      const runtimeConfigFile = path.resolve(
+        process.cwd(),
+        options.runtimeConfigOutput,
+      );
+      const runtimeConfigDir = path.dirname(runtimeConfigFile);
+      if (!existsSync(runtimeConfigDir)) {
+        fs.mkdirSync(runtimeConfigDir, { recursive: true });
+      }
+
+      const runtimeConfigSource = generateRuntimeConfig(resources);
+      writeFile(runtimeConfigFile, runtimeConfigSource);
+
+      log(
+        chalk.green('✔') +
+          ` Generated runtime config with ${resources.length} entries → ${chalk.dim(runtimeConfigFile)}`,
       );
     }
   }

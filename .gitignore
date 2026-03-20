@@ -60,3 +60,6 @@ packages/cli/dist-fixtures
 
 # examples — local test apps (not part of the repo)
 examples/
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json

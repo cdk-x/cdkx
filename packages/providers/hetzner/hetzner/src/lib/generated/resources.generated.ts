@@ -51,7 +51,7 @@ export const HetznerResourceType = {
   Storage: {
     /** `Hetzner::Storage::Volume` */
     Volume: 'Hetzner::Storage::Volume',
-  }
+  },
 } as const;
 
 // ==============================================================================
@@ -90,7 +90,6 @@ export enum NetworkZone {
   /** `ap-southeast` */
   AP_SOUTHEAST = 'ap-southeast',
 }
-
 
 // ==============================================================================
 // Security
@@ -186,7 +185,6 @@ export class HtzCertificate extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- Firewall ---
 /**
@@ -359,7 +357,6 @@ export class HtzFirewall extends ProviderResource {
   }
 }
 
-
 // --- SshKey ---
 /**
  * Props for {@link HtzSshKey}.
@@ -412,7 +409,6 @@ export class HtzSshKey extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // ==============================================================================
 // Networking
@@ -509,7 +505,6 @@ export class HtzFloatingIp extends ProviderResource {
   }
 }
 
-
 // --- Network ---
 /**
  * Props for {@link HtzNetwork}.
@@ -576,7 +571,6 @@ export class HtzNetwork extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- PrimaryIp ---
 /**
@@ -684,7 +678,6 @@ export class HtzPrimaryIp extends ProviderResource {
   }
 }
 
-
 // --- Route ---
 /**
  * Props for {@link HtzRoute}.
@@ -737,7 +730,6 @@ export class HtzRoute extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- Subnet ---
 /**
@@ -817,7 +809,6 @@ export class HtzSubnet extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // ==============================================================================
 // Compute
@@ -1166,7 +1157,6 @@ export class HtzLoadBalancer extends ProviderResource {
   }
 }
 
-
 // --- NetworkAttachment ---
 /**
  * Props for {@link HtzNetworkAttachment}.
@@ -1203,7 +1193,8 @@ export interface HetznerNetworkAttachment {
  */
 export class HtzNetworkAttachment extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::NetworkAttachment';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Compute::NetworkAttachment';
 
   public serverId: number | IResolvable;
   public networkId: number | IResolvable;
@@ -1233,7 +1224,6 @@ export class HtzNetworkAttachment extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- PlacementGroup ---
 /**
@@ -1271,7 +1261,8 @@ export interface HetznerPlacementGroup {
  */
 export class HtzPlacementGroup extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::PlacementGroup';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Compute::PlacementGroup';
 
   /**
    * The `id` attribute of this resource.
@@ -1308,7 +1299,6 @@ export class HtzPlacementGroup extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- Server ---
 /**
@@ -1534,7 +1524,6 @@ export class HtzServer extends ProviderResource {
   }
 }
 
-
 // ==============================================================================
 // Storage
 // ==============================================================================
@@ -1626,4 +1615,3 @@ export class HtzVolume extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-

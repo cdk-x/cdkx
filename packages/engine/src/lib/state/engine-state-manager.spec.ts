@@ -13,6 +13,7 @@ function makeNullPersistence(): StatePersistence {
     writeFileSync: () => undefined,
     existsSync: () => false,
     readFileSync: () => '{}',
+    unlinkSync: () => undefined,
   };
   return new StatePersistence('/fake/outdir', deps);
 }
@@ -119,6 +120,7 @@ describe('EngineStateManager', () => {
         writeFileSync: (_, data) => saved.push(JSON.parse(data)),
         existsSync: () => false,
         readFileSync: () => '{}',
+        unlinkSync: () => undefined,
       };
       const persistence = new StatePersistence('/out', deps);
 
@@ -523,6 +525,7 @@ describe('EngineStateManager', () => {
         writeFileSync: (_, data) => saved.push(data),
         existsSync: () => false,
         readFileSync: () => '{}',
+        unlinkSync: () => undefined,
       };
       const persistence = new StatePersistence('/out', deps);
       const bus = new EventBus<EngineEvent>();
@@ -563,6 +566,196 @@ describe('EngineStateManager', () => {
     });
   });
 
+  // ── lastAppliedProperties ─────────────────────────────────────────────────
+
+  describe('lastAppliedProperties', () => {
+    function setupWithResource(
+      bus?: EventBus<EngineEvent>,
+    ): EngineStateManager {
+      const manager = makeManager(bus);
+      manager.initStack(STACK_ID);
+      manager.initResource(STACK_ID, LOGICAL_ID, RESOURCE_TYPE, {
+        name: 'web',
+      });
+      return manager;
+    }
+
+    it('is undefined until CREATE_COMPLETE', () => {
+      const manager = setupWithResource();
+
+      expect(
+        manager.getResourceState(STACK_ID, LOGICAL_ID)?.lastAppliedProperties,
+      ).toBeUndefined();
+    });
+
+    it('is set when transitioning to CREATE_COMPLETE', () => {
+      const manager = setupWithResource();
+      manager.transitionResource(
+        STACK_ID,
+        LOGICAL_ID,
+        RESOURCE_TYPE,
+        ResourceStatus.CREATE_COMPLETE,
+        {
+          physicalId: '42',
+          lastAppliedProperties: { name: 'web', serverType: 'cx21' },
+        },
+      );
+
+      expect(
+        manager.getResourceState(STACK_ID, LOGICAL_ID)?.lastAppliedProperties,
+      ).toEqual({ name: 'web', serverType: 'cx21' });
+    });
+
+    it('is updated when transitioning to UPDATE_COMPLETE', () => {
+      const manager = setupWithResource();
+      manager.transitionResource(
+        STACK_ID,
+        LOGICAL_ID,
+        RESOURCE_TYPE,
+        ResourceStatus.CREATE_COMPLETE,
+        {
+          physicalId: '42',
+          lastAppliedProperties: { name: 'web' },
+        },
+      );
+      manager.transitionResource(
+        STACK_ID,
+        LOGICAL_ID,
+        RESOURCE_TYPE,
+        ResourceStatus.UPDATE_COMPLETE,
+        {
+          lastAppliedProperties: { name: 'web-v2', serverType: 'cx31' },
+        },
+      );
+
+      expect(
+        manager.getResourceState(STACK_ID, LOGICAL_ID)?.lastAppliedProperties,
+      ).toEqual({ name: 'web-v2', serverType: 'cx31' });
+    });
+
+    it('is preserved when transitioning to UPDATE_IN_PROGRESS', () => {
+      const manager = setupWithResource();
+      manager.transitionResource(
+        STACK_ID,
+        LOGICAL_ID,
+        RESOURCE_TYPE,
+        ResourceStatus.CREATE_COMPLETE,
+        {
+          physicalId: '42',
+          lastAppliedProperties: { name: 'web' },
+        },
+      );
+      manager.transitionResource(
+        STACK_ID,
+        LOGICAL_ID,
+        RESOURCE_TYPE,
+        ResourceStatus.UPDATE_IN_PROGRESS,
+      );
+
+      expect(
+        manager.getResourceState(STACK_ID, LOGICAL_ID)?.lastAppliedProperties,
+      ).toEqual({ name: 'web' });
+    });
+
+    it('is preserved when transitioning to DELETE_IN_PROGRESS', () => {
+      const manager = setupWithResource();
+      manager.transitionResource(
+        STACK_ID,
+        LOGICAL_ID,
+        RESOURCE_TYPE,
+        ResourceStatus.CREATE_COMPLETE,
+        {
+          physicalId: '42',
+          lastAppliedProperties: { name: 'web' },
+        },
+      );
+      manager.transitionResource(
+        STACK_ID,
+        LOGICAL_ID,
+        RESOURCE_TYPE,
+        ResourceStatus.DELETE_IN_PROGRESS,
+      );
+
+      expect(
+        manager.getResourceState(STACK_ID, LOGICAL_ID)?.lastAppliedProperties,
+      ).toEqual({ name: 'web' });
+    });
+
+    it('is serialised to and deserialised from persisted state', () => {
+      const saved: string[] = [];
+      const deps: StatePersistenceDeps = {
+        mkdirSync: () => undefined,
+        writeFileSync: (_, data) => saved.push(data),
+        existsSync: () => false,
+        readFileSync: () => '{}',
+        unlinkSync: () => undefined,
+      };
+      const persistence = new StatePersistence('/out', deps);
+      const manager = makeManager(undefined, persistence);
+      manager.initStack(STACK_ID);
+      manager.initResource(STACK_ID, LOGICAL_ID, RESOURCE_TYPE, {
+        name: 'web',
+      });
+      manager.transitionResource(
+        STACK_ID,
+        LOGICAL_ID,
+        RESOURCE_TYPE,
+        ResourceStatus.CREATE_COMPLETE,
+        {
+          physicalId: '1',
+          lastAppliedProperties: { name: 'web', serverType: 'cx21' },
+        },
+      );
+
+      const persisted = JSON.parse(saved[saved.length - 1]) as {
+        stacks: Record<
+          string,
+          {
+            resources: Record<
+              string,
+              { lastAppliedProperties?: Record<string, unknown> }
+            >;
+          }
+        >;
+      };
+      expect(
+        persisted.stacks[STACK_ID].resources[LOGICAL_ID].lastAppliedProperties,
+      ).toEqual({ name: 'web', serverType: 'cx21' });
+    });
+
+    it('loads without error from state files that lack lastAppliedProperties', () => {
+      const legacyState = JSON.stringify({
+        stacks: {
+          [STACK_ID]: {
+            status: 'CREATE_COMPLETE',
+            resources: {
+              [LOGICAL_ID]: {
+                status: 'CREATE_COMPLETE',
+                type: RESOURCE_TYPE,
+                physicalId: '7',
+                properties: { name: 'legacy' },
+              },
+            },
+          },
+        },
+      });
+      const deps: StatePersistenceDeps = {
+        mkdirSync: () => undefined,
+        writeFileSync: () => undefined,
+        existsSync: () => true,
+        readFileSync: () => legacyState,
+        unlinkSync: () => undefined,
+      };
+      const persistence = new StatePersistence('/out', deps);
+      const loaded = persistence.load();
+
+      expect(loaded).not.toBeNull();
+      expect(
+        loaded?.stacks[STACK_ID]?.resources[LOGICAL_ID]?.lastAppliedProperties,
+      ).toBeUndefined();
+    });
+  });
+
   // ── initResource stores type ───────────────────────────────────────────────
 
   describe('ResourceState.type', () => {
@@ -589,6 +782,7 @@ describe('EngineStateManager', () => {
         },
         existsSync: () => false,
         readFileSync: () => '{}',
+        unlinkSync: () => undefined,
       };
       const persistence = new StatePersistence('/out', deps);
       const manager = makeManager(undefined, persistence);
@@ -614,6 +808,7 @@ describe('EngineStateManager', () => {
         writeFileSync: (_, data) => saved.push(data),
         existsSync: () => false,
         readFileSync: () => '{}',
+        unlinkSync: () => undefined,
       };
       const persistence = new StatePersistence('/out', deps);
       const manager = makeManager(undefined, persistence);
