@@ -3345,13 +3345,51 @@ describe('DeploymentEngine', () => {
       );
       expect(partialEvent).toBeDefined();
     });
+
+    it('does not block a subsequent deployment when stack is in ROLLBACK_PARTIAL', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      // Prior state: stack left in ROLLBACK_PARTIAL from a previous run.
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.ROLLBACK_PARTIAL,
+            resources: {},
+          },
+        },
+      };
+
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+
+      const fullAdapter: ProviderAdapter = {
+        create: () => Promise.resolve({ physicalId: 'phys-new' }),
+        update: () => Promise.resolve({}),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // Deploy a fresh resource — should succeed despite prior ROLLBACK_PARTIAL.
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      const result = await engine.deploy(stacks, plan);
+
+      expect(result.success).toBe(true);
+    });
   });
-  // Note: the "skip when surviving resource holds a { ref } token" path in
-  // rollbackPhase3 is defensive — it cannot be triggered through normal deploy
-  // flow because validateReconcile() raises ReconcileValidationError before any
-  // reconcile delete occurs whenever a staying assembly resource references a
-  // resource scheduled for deletion. The hasReferenceTo guard exists as a
-  // safety net for future cross-stack or alternative-validation scenarios.
 
   // ─── Crash recovery ──────────────────────────────────────────────────────────
 
@@ -3588,6 +3626,97 @@ describe('DeploymentEngine', () => {
           e.resourceStatus === StackStatus.CREATE_COMPLETE,
       );
       expect(completeEvent).toBeDefined();
+    });
+
+    it('skips recreation and transitions to ROLLBACK_PARTIAL when surviving resource holds a { ref } token', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      // Snapshot: ResA was healthy before the interrupted deployment.
+      const snapshotState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'a' },
+                lastAppliedProperties: { name: 'a' },
+              },
+            },
+          },
+        },
+      };
+
+      // Current state: ResA was deleted during reconcile (absent).
+      // No resources were newly created during the interrupted deployment.
+      const currentState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.UPDATE_IN_PROGRESS,
+            resources: {},
+          },
+        },
+      };
+
+      const persistence = makeSnapshotPersistence({
+        snapshotState,
+        currentState,
+      });
+
+      const createCalls: string[] = [];
+      const fullAdapter: ProviderAdapter = {
+        create: (resource) => {
+          createCalls.push(resource.logicalId);
+          return Promise.resolve({ physicalId: `phys-${resource.logicalId}` });
+        },
+        update: () => Promise.resolve({}),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const stateManager = new EngineStateManager(
+        bus,
+        persistence,
+        currentState,
+      );
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // Assembly has ResB with a { ref } token pointing to ResA.
+      // Phase 3 detects this surviving dependency and skips ResA's recreation.
+      const stacks = [
+        makeStack('S', [
+          {
+            logicalId: 'ResB',
+            properties: { serverId: { ref: 'ResA', attr: 'id' } },
+          },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResB'] });
+      await engine.deploy(stacks, plan);
+
+      // ResA must NOT have been recreated — it was skipped.
+      expect(createCalls).not.toContain('ResA');
+
+      // Stack transitions to ROLLBACK_PARTIAL because the skip is unresolvable.
+      const partialEvent = events.find(
+        (e) =>
+          e.resourceType === 'cdkx::stack' &&
+          e.resourceStatus === StackStatus.ROLLBACK_PARTIAL,
+      );
+      expect(partialEvent).toBeDefined();
     });
   });
 });
