@@ -19,6 +19,7 @@ import {
   type BlockedDelete,
 } from './reconcile-validation-error';
 import type { Logger } from '@cdkx-io/logger';
+import type { StabilizeConfig } from '@cdkx-io/core';
 
 // ─── Output Handler types ─────────────────────────────────────────────────────
 
@@ -136,6 +137,14 @@ export interface DeploymentEngineOptions {
    * Pass null to disable locking entirely (useful for tests).
    */
   readonly deployLock?: DeployLock | null;
+
+  /**
+   * Optional stabilization configuration for resource readiness polling.
+   * Merged with defaults: `{ intervalMs: 5000, timeoutMs: 600_000 }`.
+   * Propagated to all adapters so that handlers can read it via
+   * `ctx.stabilizeConfig`.
+   */
+  readonly stabilize?: Partial<StabilizeConfig>;
 }
 
 // ─── DeploymentEngine ─────────────────────────────────────────────────────────
@@ -224,6 +233,17 @@ export class DeploymentEngine {
         if (adapter.setLogger !== undefined) {
           adapter.setLogger(options.logger);
         }
+      }
+    }
+
+    // Merge stabilize options with defaults and propagate to all adapters.
+    const stabilizeConfig: StabilizeConfig = {
+      intervalMs: options.stabilize?.intervalMs ?? 5000,
+      timeoutMs: options.stabilize?.timeoutMs ?? 600_000,
+    };
+    for (const adapter of Object.values(this.adapters)) {
+      if (adapter.setStabilizeConfig !== undefined) {
+        adapter.setStabilizeConfig(stabilizeConfig);
       }
     }
   }
