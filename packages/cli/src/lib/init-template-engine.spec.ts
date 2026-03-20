@@ -134,6 +134,199 @@ describe('InitTemplateEngine — empty mode', () => {
   });
 });
 
+describe('InitTemplateEngine — existing mode', () => {
+  const existingPkg = JSON.stringify({
+    name: 'my-app',
+    version: '1.2.3',
+    scripts: { build: 'tsc', test: 'jest' },
+    dependencies: { lodash: '^4.0.0' },
+    devDependencies: { prettier: '^3.0.0' },
+  });
+
+  function makeExistingFs(
+    overrides: Partial<InitFileSystem> = {},
+  ): InitFileSystem & { written: Record<string, string>; dirs: string[] } {
+    const written: Record<string, string> = {};
+    const dirs: string[] = [];
+    return {
+      written,
+      dirs,
+      exists: (p) => p === '/p/package.json',
+      mkdir: (path) => dirs.push(path),
+      writeFile: (path, content) => {
+        written[path] = content;
+      },
+      readFile: (p) => (p === '/p/package.json' ? existingPkg : ''),
+      ...overrides,
+    };
+  }
+
+  describe('InitResult', () => {
+    it('puts package.json in merged and not in created', () => {
+      const fs = makeExistingFs();
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'existing',
+      });
+
+      expect(result.merged).toContain('/p/package.json');
+      expect(result.created).not.toContain('/p/package.json');
+    });
+  });
+
+  describe('package.json merge — scripts', () => {
+    it('adds cdkx scripts without overwriting existing scripts', () => {
+      const fs = makeExistingFs();
+      const engine = new InitTemplateEngine(fs);
+      engine.generate({ dir: '/p', name: 'p', mode: 'existing' });
+
+      const pkg = JSON.parse(fs.written['/p/package.json']);
+      // existing scripts preserved
+      expect(pkg.scripts.build).toBe('tsc');
+      expect(pkg.scripts.test).toBe('jest');
+      // cdkx scripts added
+      expect(pkg.scripts.synth).toBe('cdkx synth');
+      expect(pkg.scripts.deploy).toBe('cdkx deploy');
+      expect(pkg.scripts.destroy).toBe('cdkx destroy');
+    });
+
+    it('does not overwrite a script that already exists with the same key', () => {
+      const conflictingPkg = JSON.stringify({
+        name: 'my-app',
+        scripts: { synth: 'my-custom-synth' },
+      });
+      const fs = makeExistingFs({
+        readFile: (p) => (p === '/p/package.json' ? conflictingPkg : ''),
+      });
+      const engine = new InitTemplateEngine(fs);
+      engine.generate({ dir: '/p', name: 'p', mode: 'existing' });
+
+      const pkg = JSON.parse(fs.written['/p/package.json']);
+      expect(pkg.scripts.synth).toBe('my-custom-synth');
+    });
+  });
+
+  describe('package.json merge — dependencies', () => {
+    it('adds @cdkx-io/core to dependencies without overwriting existing ones', () => {
+      const fs = makeExistingFs();
+      const engine = new InitTemplateEngine(fs);
+      engine.generate({ dir: '/p', name: 'p', mode: 'existing' });
+
+      const pkg = JSON.parse(fs.written['/p/package.json']);
+      expect(pkg.dependencies.lodash).toBe('^4.0.0');
+      expect(pkg.dependencies['@cdkx-io/core']).toBe('latest');
+    });
+
+    it('adds @cdkx-io/cli, typescript, tsx to devDependencies without overwriting existing ones', () => {
+      const fs = makeExistingFs();
+      const engine = new InitTemplateEngine(fs);
+      engine.generate({ dir: '/p', name: 'p', mode: 'existing' });
+
+      const pkg = JSON.parse(fs.written['/p/package.json']);
+      expect(pkg.devDependencies.prettier).toBe('^3.0.0');
+      expect(pkg.devDependencies['@cdkx-io/cli']).toBe('latest');
+      expect(pkg.devDependencies.typescript).toBeDefined();
+      expect(pkg.devDependencies.tsx).toBeDefined();
+    });
+  });
+
+  describe('cdkx.json', () => {
+    it('skips cdkx.json if it already exists and puts it in skipped', () => {
+      const fs = makeExistingFs({
+        exists: (p) => p === '/p/package.json' || p === '/p/cdkx.json',
+      });
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'existing',
+      });
+
+      expect(result.skipped).toContain('/p/cdkx.json');
+      expect(fs.written['/p/cdkx.json']).toBeUndefined();
+    });
+
+    it('creates cdkx.json if it does not exist', () => {
+      const fs = makeExistingFs();
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'existing',
+      });
+
+      expect(result.created).toContain('/p/cdkx.json');
+      expect(fs.written['/p/cdkx.json']).toBeDefined();
+    });
+  });
+
+  describe('src/main.ts and tsconfig.json', () => {
+    it('skips src/main.ts if it already exists', () => {
+      const fs = makeExistingFs({
+        exists: (p) => p === '/p/package.json' || p === '/p/src/main.ts',
+      });
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'existing',
+      });
+
+      expect(result.skipped).toContain('/p/src/main.ts');
+      expect(fs.written['/p/src/main.ts']).toBeUndefined();
+    });
+
+    it('skips tsconfig.json if it already exists', () => {
+      const fs = makeExistingFs({
+        exists: (p) => p === '/p/package.json' || p === '/p/tsconfig.json',
+      });
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'existing',
+      });
+
+      expect(result.skipped).toContain('/p/tsconfig.json');
+      expect(fs.written['/p/tsconfig.json']).toBeUndefined();
+    });
+
+    it('writes src/main.ts even if it exists when force is true', () => {
+      const fs = makeExistingFs({
+        exists: (p) => p === '/p/package.json' || p === '/p/src/main.ts',
+      });
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'existing',
+        force: true,
+      });
+
+      expect(result.created).toContain('/p/src/main.ts');
+      expect(fs.written['/p/src/main.ts']).toBeDefined();
+    });
+
+    it('writes tsconfig.json even if it exists when force is true', () => {
+      const fs = makeExistingFs({
+        exists: (p) => p === '/p/package.json' || p === '/p/tsconfig.json',
+      });
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'existing',
+        force: true,
+      });
+
+      expect(result.created).toContain('/p/tsconfig.json');
+      expect(fs.written['/p/tsconfig.json']).toBeDefined();
+    });
+  });
+});
+
 describe('InitTemplateEngine.detectPackageManager', () => {
   it('returns yarn when yarn.lock is present', () => {
     const result = InitTemplateEngine.detectPackageManager(
