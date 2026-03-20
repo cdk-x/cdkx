@@ -2,8 +2,8 @@ import { StackStatus } from './stack-status';
 import { ResourceStatus } from './resource-status';
 
 describe('StackStatus', () => {
-  it('has 16 values', () => {
-    expect(Object.keys(StackStatus)).toHaveLength(16);
+  it('has 17 values', () => {
+    expect(Object.keys(StackStatus)).toHaveLength(17);
   });
 
   describe('creation states', () => {

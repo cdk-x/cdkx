@@ -13,6 +13,7 @@ function makeNullPersistence(): StatePersistence {
     writeFileSync: () => undefined,
     existsSync: () => false,
     readFileSync: () => '{}',
+    unlinkSync: () => undefined,
   };
   return new StatePersistence('/fake/outdir', deps);
 }
@@ -119,6 +120,7 @@ describe('EngineStateManager', () => {
         writeFileSync: (_, data) => saved.push(JSON.parse(data)),
         existsSync: () => false,
         readFileSync: () => '{}',
+        unlinkSync: () => undefined,
       };
       const persistence = new StatePersistence('/out', deps);
 
@@ -523,6 +525,7 @@ describe('EngineStateManager', () => {
         writeFileSync: (_, data) => saved.push(data),
         existsSync: () => false,
         readFileSync: () => '{}',
+        unlinkSync: () => undefined,
       };
       const persistence = new StatePersistence('/out', deps);
       const bus = new EventBus<EngineEvent>();
@@ -685,6 +688,7 @@ describe('EngineStateManager', () => {
         writeFileSync: (_, data) => saved.push(data),
         existsSync: () => false,
         readFileSync: () => '{}',
+        unlinkSync: () => undefined,
       };
       const persistence = new StatePersistence('/out', deps);
       const manager = makeManager(undefined, persistence);
@@ -740,6 +744,7 @@ describe('EngineStateManager', () => {
         writeFileSync: () => undefined,
         existsSync: () => true,
         readFileSync: () => legacyState,
+        unlinkSync: () => undefined,
       };
       const persistence = new StatePersistence('/out', deps);
       const loaded = persistence.load();
@@ -777,6 +782,7 @@ describe('EngineStateManager', () => {
         },
         existsSync: () => false,
         readFileSync: () => '{}',
+        unlinkSync: () => undefined,
       };
       const persistence = new StatePersistence('/out', deps);
       const manager = makeManager(undefined, persistence);
@@ -802,6 +808,7 @@ describe('EngineStateManager', () => {
         writeFileSync: (_, data) => saved.push(data),
         existsSync: () => false,
         readFileSync: () => '{}',
+        unlinkSync: () => undefined,
       };
       const persistence = new StatePersistence('/out', deps);
       const manager = makeManager(undefined, persistence);

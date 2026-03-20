@@ -583,6 +583,7 @@ describe('DeploymentEngine', () => {
           new EventBus<EngineEvent>(),
           makeNullPersistence(),
         ),
+        persistence: makeNullPersistence(),
         deployLock: makeMockDeployLock(),
       });
 
@@ -724,6 +725,7 @@ describe('DeploymentEngine', () => {
           throw new Error('not found');
         },
         existsSync: () => false,
+        unlinkSync: () => undefined,
       });
 
       const priorState: EngineState = {
@@ -763,6 +765,7 @@ describe('DeploymentEngine', () => {
         assemblyDir: '/fake/assembly',
         stateDir: '/fake/state',
         stateManager,
+        persistence,
         eventBus: bus,
         deployLock: makeMockDeployLock(),
       });
@@ -1477,6 +1480,7 @@ describe('DeploymentEngine', () => {
           throw new Error('not found');
         },
         existsSync: () => false,
+        unlinkSync: () => undefined,
       });
 
       const priorState: EngineState = {
@@ -1512,6 +1516,7 @@ describe('DeploymentEngine', () => {
         assemblyDir: '/fake/assembly',
         stateDir: '/fake/state',
         stateManager,
+        persistence,
         eventBus: bus,
         deployLock: makeMockDeployLock(),
       });
@@ -2442,7 +2447,6 @@ describe('DeploymentEngine', () => {
 
       return {
         persistence: new StatePersistence('/fake', deps),
-        ...tracking,
         get snapshotWritten() {
           return tracking.snapshotWritten;
         },
