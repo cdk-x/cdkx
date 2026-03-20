@@ -57,6 +57,9 @@ packages/cli/dist-fixtures
 
 .nx/polygraph
 
+# TypeScript incremental build info
+*.tsbuildinfo
+
 # examples — local test apps (not part of the repo)
 examples/
 
