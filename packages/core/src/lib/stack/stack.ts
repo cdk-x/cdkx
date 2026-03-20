@@ -141,11 +141,13 @@ export class Stack extends Construct implements IStackRef {
    */
   public resolveOutputValue(value: unknown): unknown {
     // Lazily import to avoid circular dependencies at module load time.
-    const { App } = require('../app/app');
     const { ResolverPipeline } = require('../resolvables/resolver-pipeline');
-    const app = App.of(this);
-    // Use a generic resolver pipeline for output resolution
-    const pipeline = app.getResolverPipeline(ResolverPipeline.withBuiltins());
+    // Use the built-in resolver pipeline for output resolution.
+    // Output values may contain IResolvable tokens (e.g. ResourceAttribute)
+    // that must be resolved to plain { ref, attr } objects at synthesis time.
+    const pipeline = ResolverPipeline.withBuiltins() as InstanceType<
+      typeof ResolverPipeline
+    >;
     return pipeline.resolve([], value, this, 'generic');
   }
 }
