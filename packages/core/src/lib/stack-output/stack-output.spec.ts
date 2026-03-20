@@ -1,6 +1,8 @@
 import { Construct } from 'constructs';
 import { StackOutput } from './stack-output';
 import { IResolvable, ResolveContext } from '../resolvables/resolvables';
+import { Stack } from '../stack/stack';
+import { App } from '../app/app';
 
 /** Minimal resolvable token for tests. */
 class TestToken implements IResolvable {
@@ -77,6 +79,35 @@ describe('StackOutput', () => {
         description: 'The server IP address',
       });
       expect(output.description).toBe('The server IP address');
+    });
+  });
+
+  describe('importValue()', () => {
+    it('returns an IResolvable that resolves to { stackRef, outputKey }', () => {
+      const app = new App({ outdir: '/tmp/test-importvalue' });
+      const stack = new Stack(app, 'SourceStack', {});
+      const output = new StackOutput(stack, 'NetworkId', {
+        value: '10.0.0.0/16',
+      });
+
+      const token = output.importValue();
+      const resolved = token.resolve({} as ResolveContext);
+
+      expect(resolved).toEqual({
+        stackRef: 'SourceStack',
+        outputKey: 'NetworkId',
+      });
+    });
+
+    it('uses the stack artifactId (not the stack id) as stackRef', () => {
+      const app = new App({ outdir: '/tmp/test-importvalue-id' });
+      const stack = new Stack(app, 'MyStack', { stackName: 'human-name' });
+      const output = new StackOutput(stack, 'ServerId', { value: '42' });
+
+      const token = output.importValue();
+      const resolved = token.resolve({} as ResolveContext);
+
+      expect((resolved as { stackRef: string }).stackRef).toBe('MyStack');
     });
   });
 
