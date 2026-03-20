@@ -148,4 +148,98 @@ describe('InitCommand — metadata', () => {
     const opt = cmd.options.find((o) => o.long === '--name');
     expect(opt).toBeDefined();
   });
+
+  it('has --package-manager option', () => {
+    const cmd = InitCommand.create();
+    const opt = cmd.options.find((o) => o.long === '--package-manager');
+    expect(opt).toBeDefined();
+  });
+});
+
+describe('InitCommand — install step', () => {
+  let logSpy: jest.SpyInstance;
+  let exitSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    exitSpy = jest
+      .spyOn(process, 'exit')
+      .mockImplementation((() => undefined) as () => never);
+  });
+
+  afterEach(() => jest.restoreAllMocks());
+
+  function makeSilentFs(): InitCommandDeps['createFileSystem'] {
+    return () => ({
+      exists: () => false,
+      mkdir: () => undefined,
+      writeFile: () => undefined,
+      readFile: () => '',
+    });
+  }
+
+  it('calls installPackages with the detected package manager', async () => {
+    const installPackages = jest.fn();
+    const cmd = InitCommand.create({
+      createFileSystem: makeSilentFs(),
+      detectMode: () => 'empty',
+      detectPackageManager: () => 'yarn',
+      installPackages,
+    });
+    await cmd.parseAsync(['node', 'cdkx', '--no-install=false']);
+    expect(installPackages).toHaveBeenCalledWith(
+      expect.any(String),
+      'yarn',
+    );
+  });
+
+  it('calls installPackages with npm when --package-manager npm is passed', async () => {
+    const installPackages = jest.fn();
+    const cmd = InitCommand.create({
+      createFileSystem: makeSilentFs(),
+      detectMode: () => 'empty',
+      installPackages,
+    });
+    await cmd.parseAsync(['node', 'cdkx', '--package-manager', 'npm']);
+    expect(installPackages).toHaveBeenCalledWith(expect.any(String), 'npm');
+  });
+
+  it('does not call installPackages when --no-install is passed', async () => {
+    const installPackages = jest.fn();
+    const cmd = InitCommand.create({
+      createFileSystem: makeSilentFs(),
+      detectMode: () => 'empty',
+      installPackages,
+    });
+    await cmd.parseAsync(['node', 'cdkx', '--no-install']);
+    expect(installPackages).not.toHaveBeenCalled();
+  });
+
+  it('exits with code 1 and prints error when installPackages throws', async () => {
+    const cmd = InitCommand.create({
+      createFileSystem: makeSilentFs(),
+      detectMode: () => 'empty',
+      detectPackageManager: () => 'yarn',
+      installPackages: () => {
+        throw new Error('yarn install failed with exit code 1');
+      },
+    });
+    await cmd.parseAsync(['node', 'cdkx']);
+    expect(exitSpy).toHaveBeenCalledWith(1);
+  });
+
+  it('prints Running <pm> install... before calling installPackages', async () => {
+    const installPackages = jest.fn();
+    const cmd = InitCommand.create({
+      createFileSystem: makeSilentFs(),
+      detectMode: () => 'empty',
+      detectPackageManager: () => 'pnpm',
+      installPackages,
+    });
+    await cmd.parseAsync(['node', 'cdkx']);
+    const logs = (logSpy.mock.calls as string[][]).map((a) => a[0]);
+    const installLog = logs.find((l) => l.includes('pnpm install'));
+    expect(installLog).toBeDefined();
+  });
 });
