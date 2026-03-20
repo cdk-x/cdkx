@@ -371,6 +371,66 @@ describe('InitTemplateEngine — nx mode', () => {
     });
   });
 
+  describe('src/main.ts and tsconfig.json — skip without --force', () => {
+    it('skips src/main.ts if it already exists', () => {
+      const fs = makeNxFs();
+      fs.exists = (p) => p === '/ws/packages/infra/src/main.ts';
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/ws/packages/infra',
+        name: 'infra',
+        mode: 'nx',
+      });
+
+      expect(result.skipped).toContain('/ws/packages/infra/src/main.ts');
+      expect(fs.written['/ws/packages/infra/src/main.ts']).toBeUndefined();
+    });
+
+    it('skips tsconfig.json if it already exists', () => {
+      const fs = makeNxFs();
+      fs.exists = (p) => p === '/ws/packages/infra/tsconfig.json';
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/ws/packages/infra',
+        name: 'infra',
+        mode: 'nx',
+      });
+
+      expect(result.skipped).toContain('/ws/packages/infra/tsconfig.json');
+      expect(fs.written['/ws/packages/infra/tsconfig.json']).toBeUndefined();
+    });
+
+    it('overwrites src/main.ts when force is true', () => {
+      const fs = makeNxFs();
+      fs.exists = (p) => p === '/ws/packages/infra/src/main.ts';
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/ws/packages/infra',
+        name: 'infra',
+        mode: 'nx',
+        force: true,
+      });
+
+      expect(result.created).toContain('/ws/packages/infra/src/main.ts');
+      expect(fs.written['/ws/packages/infra/src/main.ts']).toBeDefined();
+    });
+
+    it('overwrites tsconfig.json when force is true', () => {
+      const fs = makeNxFs();
+      fs.exists = (p) => p === '/ws/packages/infra/tsconfig.json';
+      const engine = new InitTemplateEngine(fs);
+      const result = engine.generate({
+        dir: '/ws/packages/infra',
+        name: 'infra',
+        mode: 'nx',
+        force: true,
+      });
+
+      expect(result.created).toContain('/ws/packages/infra/tsconfig.json');
+      expect(fs.written['/ws/packages/infra/tsconfig.json']).toBeDefined();
+    });
+  });
+
   describe('project.json', () => {
     it('generates project.json with synth, deploy, and destroy nx:run-commands targets', () => {
       const fs = makeNxFs();
@@ -387,6 +447,28 @@ describe('InitTemplateEngine — nx mode', () => {
       expect(proj.targets.destroy.executor).toBe('nx:run-commands');
       expect(proj.targets.destroy.options.command).toBe('cdkx destroy');
     });
+  });
+});
+
+describe('InitTemplateEngine — directory creation', () => {
+  it('creates the target directory before writing files in empty mode', () => {
+    const ops: string[] = [];
+    const fs: InitFileSystem = {
+      exists: () => false,
+      mkdir: (path) => ops.push(`mkdir:${path}`),
+      writeFile: (path) => ops.push(`write:${path}`),
+      readFile: () => '',
+    };
+    new InitTemplateEngine(fs).generate({
+      dir: '/new/path',
+      name: 'p',
+      mode: 'empty',
+    });
+
+    const mkdirIndex = ops.indexOf('mkdir:/new/path');
+    const firstWriteIndex = ops.findIndex((o) => o.startsWith('write:'));
+    expect(mkdirIndex).toBeGreaterThanOrEqual(0);
+    expect(mkdirIndex).toBeLessThan(firstWriteIndex);
   });
 });
 
