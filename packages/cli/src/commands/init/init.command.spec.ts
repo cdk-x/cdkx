@@ -188,10 +188,7 @@ describe('InitCommand — install step', () => {
       installPackages,
     });
     await cmd.parseAsync(['node', 'cdkx', '--no-install=false']);
-    expect(installPackages).toHaveBeenCalledWith(
-      expect.any(String),
-      'yarn',
-    );
+    expect(installPackages).toHaveBeenCalledWith(expect.any(String), 'yarn');
   });
 
   it('calls installPackages with npm when --package-manager npm is passed', async () => {
