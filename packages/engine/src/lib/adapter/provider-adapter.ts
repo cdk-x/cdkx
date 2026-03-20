@@ -1,4 +1,5 @@
 import type { Logger } from '@cdkx-io/logger';
+import type { StabilizeConfig } from '@cdkx-io/core';
 
 /**
  * Represents a single resource as the engine reads it from a stack template
@@ -107,6 +108,14 @@ export interface ProviderAdapter {
    * @param logger - The logger instance to use.
    */
   setLogger?(logger: Logger): void;
+
+  /**
+   * Propagate the merged stabilization configuration from
+   * `DeploymentEngineOptions` to the adapter so that handlers can read it
+   * via `ctx.stabilizeConfig`.
+   * Called by the engine after adapters are constructed.
+   */
+  setStabilizeConfig?(config: StabilizeConfig): void;
 
   /**
    * Create the resource in the target provider and return its physical ID and

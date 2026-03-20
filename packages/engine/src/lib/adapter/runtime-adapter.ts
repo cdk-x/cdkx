@@ -3,6 +3,7 @@ import type {
   ProviderRuntime,
   RuntimeContext,
   RuntimeLogger,
+  StabilizeConfig,
 } from '@cdkx-io/core';
 import type {
   ProviderAdapter,
@@ -112,6 +113,14 @@ export class RuntimeAdapter<TSdk> implements ProviderAdapter {
     // context's logger reference so handlers see the engine-provided one.
     (this.context as { logger: RuntimeLogger }).logger =
       logger as unknown as RuntimeLogger;
+  }
+
+  /**
+   * Propagate the merged stabilization config from the engine to the
+   * runtime context so that handlers can read it via `ctx.stabilizeConfig`.
+   */
+  setStabilizeConfig(config: StabilizeConfig): void {
+    this.context.stabilizeConfig = config;
   }
 
   // ─── create ──────────────────────────────────────────────────────────────
