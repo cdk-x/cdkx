@@ -1098,6 +1098,7 @@ export class DeploymentEngine {
         : StackStatus.ROLLBACK_IN_PROGRESS,
     );
 
+    // Phase 1: Delete newly-created resources in reverse wave order.
     // Iterate waves in reverse order; within each wave, iterate in reverse.
     for (const wave of [...createdInOrder].reverse()) {
       for (const logicalId of [...wave].reverse()) {
@@ -1166,6 +1167,109 @@ export class DeploymentEngine {
             { reason: message },
           );
         }
+      }
+    }
+
+    // Phase 2: Restore updated resources to their snapshot properties.
+    await this.rollbackPhase2(stack, resourceById, adapters);
+  }
+
+  /**
+   * Phase 2 rollback: restore updated resources to their snapshot properties.
+   *
+   * For each resource that was successfully updated in the current run (in
+   * `updatedInOrder`), compute a patch from the current
+   * `lastAppliedProperties` back to the snapshot's `lastAppliedProperties`
+   * and call `adapter.update()` to restore the prior state.
+   *
+   * If the restore patch is empty (properties already match the snapshot),
+   * the resource is skipped without an adapter call.
+   *
+   * Failures during restore are logged via resource status transitions but do
+   * not abort the remaining rollback steps.
+   */
+  private async rollbackPhase2(
+    stack: AssemblyStack,
+    resourceById: Map<
+      string,
+      { logicalId: string; type: string; properties: Record<string, unknown> }
+    >,
+    adapters: Record<string, ProviderAdapter>,
+  ): Promise<void> {
+    const snapshot = this.persistence.readSnapshot();
+    if (snapshot === null) return;
+
+    const snapshotStackState = snapshot.stacks[stack.id];
+    if (snapshotStackState === undefined) return;
+
+    // Iterate in reverse update order (last updated first).
+    const toRestore = [...this.updatedInOrder]
+      .filter((u) => u.stackId === stack.id)
+      .reverse();
+
+    for (const { logicalId } of toRestore) {
+      const snapshotResourceState = snapshotStackState.resources[logicalId];
+      const snapshotLastApplied = snapshotResourceState?.lastAppliedProperties;
+
+      // No prior applied properties in snapshot — cannot restore, skip.
+      if (snapshotLastApplied === undefined) continue;
+
+      const currentResourceState = this.stateManager.getResourceState(
+        stack.id,
+        logicalId,
+      );
+      if (currentResourceState === undefined) continue;
+
+      const currentLastApplied =
+        currentResourceState.lastAppliedProperties ?? {};
+      const patch = this.computePatch(currentLastApplied, snapshotLastApplied);
+
+      // Properties already match the snapshot — no restore needed.
+      if (patch === undefined) continue;
+
+      const resource = resourceById.get(logicalId);
+      if (resource === undefined) continue;
+
+      const providerId = resource.type.split('::')[0].toLowerCase();
+      const adapter = adapters[providerId];
+      if (adapter === undefined) continue;
+
+      this.stateManager.transitionResource(
+        stack.id,
+        logicalId,
+        resource.type,
+        ResourceStatus.UPDATE_ROLLBACK_IN_PROGRESS,
+      );
+
+      try {
+        await adapter.update(
+          {
+            logicalId,
+            type: resource.type,
+            properties: snapshotLastApplied,
+            stackId: stack.id,
+            provider: providerId,
+            physicalId: currentResourceState.physicalId,
+          },
+          patch,
+        );
+
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          resource.type,
+          ResourceStatus.UPDATE_ROLLBACK_COMPLETE,
+          { lastAppliedProperties: snapshotLastApplied },
+        );
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.stateManager.transitionResource(
+          stack.id,
+          logicalId,
+          resource.type,
+          ResourceStatus.UPDATE_ROLLBACK_FAILED,
+          { reason: message },
+        );
       }
     }
   }

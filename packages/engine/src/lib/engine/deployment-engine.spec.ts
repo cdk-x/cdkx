@@ -212,6 +212,7 @@ function makeEngineWithPriorStateAndProps(
     type?: string;
     physicalId?: string;
     properties?: Record<string, unknown>;
+    lastAppliedProperties?: Record<string, unknown>;
     outputs?: Record<string, unknown>;
   }[],
   adapter: Partial<ProviderAdapter>,
@@ -232,6 +233,9 @@ function makeEngineWithPriorStateAndProps(
               type: r.type ?? 'test::Resource',
               physicalId: r.physicalId ?? `phys-${r.logicalId}`,
               properties: r.properties ?? {},
+              ...(r.lastAppliedProperties !== undefined
+                ? { lastAppliedProperties: r.lastAppliedProperties }
+                : {}),
               ...(r.outputs !== undefined ? { outputs: r.outputs } : {}),
             },
           ]),
@@ -2566,6 +2570,511 @@ describe('DeploymentEngine', () => {
       await engine.deploy(stacks, plan);
 
       expect(tracking.snapshotWritten).toBe(true);
+    });
+  });
+
+  // ─── Rollback phase 2 — restore updated resources ────────────────────────
+
+  describe('rollback phase 2 — restore updated resources', () => {
+    /**
+     * Build a persistence that stores the snapshot in memory so it can be
+     * returned by readSnapshot() during rollback.
+     */
+    function makeSnapshotCapturingPersistence(): StatePersistence {
+      let snapshotData: string | undefined;
+
+      const deps: StatePersistenceDeps = {
+        mkdirSync: () => undefined,
+        writeFileSync: (_p, data) => {
+          if (_p.includes('snapshot')) snapshotData = data;
+        },
+        existsSync: (p) =>
+          p.includes('snapshot') ? snapshotData !== undefined : false,
+        readFileSync: (p) => {
+          if (p.includes('snapshot') && snapshotData !== undefined) {
+            return snapshotData;
+          }
+          throw new Error('not found');
+        },
+        unlinkSync: () => undefined,
+      };
+
+      return new StatePersistence('/fake', deps);
+    }
+
+    it('restores an updated resource to its snapshot properties on rollback', async () => {
+      const updateCalls: { resource: ManifestResource; patch: unknown }[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (resource, patch): Promise<UpdateResult> => {
+          updateCalls.push({ resource, patch });
+          return Promise.resolve({});
+        },
+        create: (resource): Promise<CreateResult> => {
+          if (resource.logicalId === 'ResB') {
+            return Promise.reject(new Error('create failed'));
+          }
+          return Promise.resolve({ physicalId: `phys-${resource.logicalId}` });
+        },
+        delete: (): Promise<void> => Promise.resolve(),
+      };
+
+      const persistence = makeSnapshotCapturingPersistence();
+      const bus = new EventBus<EngineEvent>();
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'old-a' },
+                lastAppliedProperties: { name: 'old-a' },
+              },
+            },
+          },
+        },
+      };
+
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+
+      const fullAdapter: ProviderAdapter = {
+        create:
+          adapter.create ??
+          (() => Promise.reject(new Error('not implemented'))),
+        update:
+          adapter.update ??
+          (() => Promise.reject(new Error('not implemented'))),
+        delete: adapter.delete ?? (() => Promise.resolve()),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // ResA is updated (name changes), ResB is new and fails on create.
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA', properties: { name: 'new-a' } },
+          { logicalId: 'ResB', properties: { name: 'b' } },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      await engine.deploy(stacks, plan);
+
+      // Phase 2 should call update() once to restore ResA (the forward update
+      // also calls update(), so total = 2).
+      const restoreCall = updateCalls.find(
+        (c) =>
+          c.resource.logicalId === 'ResA' &&
+          (c.resource.properties as Record<string, unknown>)['name'] ===
+            'old-a',
+      );
+      expect(restoreCall).toBeDefined();
+      expect(restoreCall?.resource.properties).toEqual({ name: 'old-a' });
+    });
+
+    it('transitions resource to UPDATE_ROLLBACK_COMPLETE after successful restore', async () => {
+      const events: EngineEvent[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (): Promise<UpdateResult> => Promise.resolve({}),
+        create: (resource): Promise<CreateResult> => {
+          if (resource.logicalId === 'ResB') {
+            return Promise.reject(new Error('boom'));
+          }
+          return Promise.resolve({ physicalId: `phys-${resource.logicalId}` });
+        },
+        delete: (): Promise<void> => Promise.resolve(),
+      };
+
+      const persistence = makeSnapshotCapturingPersistence();
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'old-a' },
+                lastAppliedProperties: { name: 'old-a' },
+              },
+            },
+          },
+        },
+      };
+
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+      const fullAdapter: ProviderAdapter = {
+        create:
+          adapter.create ??
+          (() => Promise.reject(new Error('not implemented'))),
+        update:
+          adapter.update ??
+          (() => Promise.reject(new Error('not implemented'))),
+        delete: adapter.delete ?? (() => Promise.resolve()),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA', properties: { name: 'new-a' } },
+          { logicalId: 'ResB', properties: { name: 'b' } },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      await engine.deploy(stacks, plan);
+
+      const rollbackComplete = events.find(
+        (e) =>
+          e.logicalResourceId === 'ResA' &&
+          e.resourceStatus === ResourceStatus.UPDATE_ROLLBACK_COMPLETE,
+      );
+      expect(rollbackComplete).toBeDefined();
+    });
+
+    it('skips resource when snapshot has no lastAppliedProperties', async () => {
+      const updateCalls: { resource: ManifestResource }[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (resource): Promise<UpdateResult> => {
+          updateCalls.push({ resource });
+          return Promise.resolve({});
+        },
+        create: (resource): Promise<CreateResult> => {
+          if (resource.logicalId === 'ResB') {
+            return Promise.reject(new Error('boom'));
+          }
+          return Promise.resolve({ physicalId: `phys-${resource.logicalId}` });
+        },
+        delete: (): Promise<void> => Promise.resolve(),
+      };
+
+      // Prior state has no lastAppliedProperties — snapshot will lack it too.
+      const engine = makeEngineWithPriorStateAndProps(
+        [
+          {
+            logicalId: 'ResA',
+            physicalId: 'phys-A',
+            properties: { name: 'old-a' },
+          },
+        ],
+        adapter,
+      );
+
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA', properties: { name: 'new-a' } },
+          { logicalId: 'ResB', properties: { name: 'b' } },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      await engine.deploy(stacks, plan);
+
+      // Only the forward update call should exist; no rollback restore call.
+      const restoreCalls = updateCalls.filter(
+        (c) =>
+          c.resource.logicalId === 'ResA' &&
+          (c.resource.properties as Record<string, unknown>)['name'] ===
+            'old-a',
+      );
+      expect(restoreCalls).toHaveLength(0);
+    });
+
+    it('skips resource when current lastAppliedProperties already matches snapshot', async () => {
+      const updateCalls: ManifestResource[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (resource): Promise<UpdateResult> => {
+          updateCalls.push(resource);
+          return Promise.resolve({});
+        },
+        create: (resource): Promise<CreateResult> => {
+          if (resource.logicalId === 'ResB') {
+            return Promise.reject(new Error('boom'));
+          }
+          return Promise.resolve({ physicalId: `phys-${resource.logicalId}` });
+        },
+        delete: (): Promise<void> => Promise.resolve(),
+      };
+
+      const persistence = makeSnapshotCapturingPersistence();
+      const bus = new EventBus<EngineEvent>();
+
+      // Prior state: ResA with lastAppliedProperties = { name: 'old-a' }.
+      // New assembly: ResA with properties = { name: 'old-a' } — no change.
+      // But the adapter.update() will still be called for the forward pass
+      // only if properties differ from stored properties. Since they're the
+      // same here, ResA will be skipped entirely (not added to updatedInOrder).
+      // So there should be no phase 2 restore call at all.
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'old-a' },
+                lastAppliedProperties: { name: 'old-a' },
+              },
+            },
+          },
+        },
+      };
+
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+      const fullAdapter: ProviderAdapter = {
+        create:
+          adapter.create ??
+          (() => Promise.reject(new Error('not implemented'))),
+        update:
+          adapter.update ??
+          (() => Promise.reject(new Error('not implemented'))),
+        delete: adapter.delete ?? (() => Promise.resolve()),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      const stacks = [
+        makeStack('S', [
+          // ResA has same properties as prior — no update triggered.
+          { logicalId: 'ResA', properties: { name: 'old-a' } },
+          { logicalId: 'ResB', properties: { name: 'b' } },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      await engine.deploy(stacks, plan);
+
+      // ResA was never updated (skipped), so phase 2 should not restore it.
+      expect(updateCalls).toHaveLength(0);
+    });
+
+    it('continues restoring remaining resources when one restore fails', async () => {
+      const updateCalls: string[] = [];
+
+      let callIndex = 0;
+      const adapter: Partial<ProviderAdapter> = {
+        update: (resource): Promise<UpdateResult> => {
+          updateCalls.push(resource.logicalId);
+          callIndex++;
+          // ResB restore fails; ResA restore succeeds (called after in reverse order).
+          if (
+            resource.logicalId === 'ResB' &&
+            resource.properties['name'] === 'old-b'
+          ) {
+            return Promise.reject(new Error('restore failed'));
+          }
+          return Promise.resolve({});
+        },
+        create: (resource): Promise<CreateResult> => {
+          if (resource.logicalId === 'ResC') {
+            return Promise.reject(new Error('create boom'));
+          }
+          return Promise.resolve({ physicalId: `phys-${resource.logicalId}` });
+        },
+        delete: (): Promise<void> => Promise.resolve(),
+      };
+
+      const persistence = makeSnapshotCapturingPersistence();
+      const bus = new EventBus<EngineEvent>();
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'old-a' },
+                lastAppliedProperties: { name: 'old-a' },
+              },
+              ResB: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-B',
+                properties: { name: 'old-b' },
+                lastAppliedProperties: { name: 'old-b' },
+              },
+            },
+          },
+        },
+      };
+
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+      const fullAdapter: ProviderAdapter = {
+        create:
+          adapter.create ??
+          (() => Promise.reject(new Error('not implemented'))),
+        update:
+          adapter.update ??
+          (() => Promise.reject(new Error('not implemented'))),
+        delete: adapter.delete ?? (() => Promise.resolve()),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // ResA and ResB are updated (order: ResA first, ResB second).
+      // ResC fails on create → triggers rollback.
+      // Phase 2 restores in reverse: ResB first (fails), then ResA (succeeds).
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA', properties: { name: 'new-a' } },
+          { logicalId: 'ResB', properties: { name: 'new-b' } },
+          { logicalId: 'ResC', properties: { name: 'c' } },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB', 'ResC'] });
+      await engine.deploy(stacks, plan);
+
+      // Both ResB and ResA should have been attempted for restore (in reverse
+      // order), even though ResB's restore failed.
+      const restoreCallIds = updateCalls.filter(
+        (id) => id === 'ResA' || id === 'ResB',
+      );
+      // Forward updates: ResA, ResB. Restore attempts: ResB (fails), ResA.
+      // ResA restore call comes after ResB's forward and ResB's failed restore.
+      expect(restoreCallIds).toContain('ResB');
+      expect(restoreCallIds).toContain('ResA');
+
+      // ResA should be the last update call (restore succeeds after ResB fails).
+      const lastRestoreResA = updateCalls.lastIndexOf('ResA');
+      const lastRestoreResB = updateCalls.lastIndexOf('ResB');
+      expect(lastRestoreResA).toBeGreaterThan(lastRestoreResB);
+    });
+
+    it('transitions failing restore to UPDATE_ROLLBACK_FAILED', async () => {
+      const events: EngineEvent[] = [];
+
+      const adapter: Partial<ProviderAdapter> = {
+        update: (resource): Promise<UpdateResult> => {
+          // Fail only the rollback restore (when properties = old-a).
+          if (
+            resource.logicalId === 'ResA' &&
+            (resource.properties as Record<string, unknown>)['name'] === 'old-a'
+          ) {
+            return Promise.reject(new Error('restore failed'));
+          }
+          return Promise.resolve({});
+        },
+        create: (resource): Promise<CreateResult> => {
+          if (resource.logicalId === 'ResB') {
+            return Promise.reject(new Error('boom'));
+          }
+          return Promise.resolve({ physicalId: `phys-${resource.logicalId}` });
+        },
+        delete: (): Promise<void> => Promise.resolve(),
+      };
+
+      const persistence = makeSnapshotCapturingPersistence();
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'old-a' },
+                lastAppliedProperties: { name: 'old-a' },
+              },
+            },
+          },
+        },
+      };
+
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+      const fullAdapter: ProviderAdapter = {
+        create:
+          adapter.create ??
+          (() => Promise.reject(new Error('not implemented'))),
+        update:
+          adapter.update ??
+          (() => Promise.reject(new Error('not implemented'))),
+        delete: adapter.delete ?? (() => Promise.resolve()),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      const stacks = [
+        makeStack('S', [
+          { logicalId: 'ResA', properties: { name: 'new-a' } },
+          { logicalId: 'ResB', properties: { name: 'b' } },
+        ]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      await engine.deploy(stacks, plan);
+
+      const rollbackFailed = events.find(
+        (e) =>
+          e.logicalResourceId === 'ResA' &&
+          e.resourceStatus === ResourceStatus.UPDATE_ROLLBACK_FAILED,
+      );
+      expect(rollbackFailed).toBeDefined();
     });
   });
 });
