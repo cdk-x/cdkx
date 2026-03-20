@@ -1,6 +1,13 @@
 {
   "name": "hetzner-e2e",
   "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "{projectRoot}"
+      }
+    },
     "synth": {
       "executor": "nx:run-commands",
       "dependsOn": [
