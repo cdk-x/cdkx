@@ -596,6 +596,14 @@ export class DeploymentEngine {
       }
 
       const isUpdate = currentStackState !== undefined;
+
+      // If the stack has no entry in the current state (e.g. a first deploy
+      // that was interrupted before any state was persisted), register it now
+      // so that rollback can transition it through its lifecycle states.
+      if (!isUpdate) {
+        this.stateManager.initStack(stackId);
+      }
+
       const isPartial = await this.rollback(
         assemblyStack,
         createdInOrder,
@@ -680,7 +688,6 @@ export class DeploymentEngine {
           logicalId,
           resourceById,
           this.adapters,
-          isUpdate,
         ),
       );
 
@@ -853,7 +860,6 @@ export class DeploymentEngine {
     logicalId: string,
     resourceById: Map<string, AssemblyResource>,
     adapters: Record<string, ProviderAdapter>,
-    isUpdate: boolean,
   ): Promise<
     ResourceDeploymentResult & {
       wasCreated?: boolean;
