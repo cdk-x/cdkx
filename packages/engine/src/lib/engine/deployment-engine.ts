@@ -117,6 +117,14 @@ export interface DeploymentEngineOptions {
   readonly stateManager?: EngineStateManager;
 
   /**
+   * Optional `StatePersistence` instance used for snapshot operations
+   * (write before deployment, delete on success).
+   * When not provided alongside `stateManager`, a new instance is created
+   * from `stateDir`. Pass a mock in tests to observe or suppress snapshot I/O.
+   */
+  readonly persistence?: StatePersistence;
+
+  /**
    * Optional `EventBus` to subscribe to engine events.
    * If not provided, a new one is created internally.
    */
@@ -176,6 +184,7 @@ export class DeploymentEngine {
   private readonly eventBus: EventBus<EngineEvent>;
   private readonly adapters: Record<string, ProviderAdapter>;
   private readonly deployLock: DeployLock;
+  private readonly persistence: StatePersistence;
 
   /**
    * Resources updated in the current deployment run, in the order they reached
@@ -205,15 +214,18 @@ export class DeploymentEngine {
 
     this.eventBus = options.eventBus ?? new EventBus<EngineEvent>();
 
-    // Set up state manager
+    // Set up state manager and persistence
     if (options.stateManager !== undefined) {
       this.stateManager = options.stateManager;
+      this.persistence =
+        options.persistence ?? new StatePersistence(options.stateDir);
     } else {
-      const persistence = new StatePersistence(options.stateDir);
-      const loadedState = persistence.load() ?? undefined;
+      this.persistence =
+        options.persistence ?? new StatePersistence(options.stateDir);
+      const loadedState = this.persistence.load() ?? undefined;
       this.stateManager = new EngineStateManager(
         this.eventBus,
-        persistence,
+        this.persistence,
         loadedState,
       );
     }
@@ -386,6 +398,11 @@ export class DeploymentEngine {
     const actualStacks = stacks ?? this.readAssembly();
     const actualPlan = plan ?? this.createPlan(actualStacks);
 
+    // Write a snapshot of the current known-good state before any mutations.
+    // On a first deployment this writes an empty state (no-op for rollback).
+    // The snapshot is deleted only after a fully successful deployment.
+    this.persistence.writeSnapshot(this.stateManager.getState());
+
     const stackById = new Map<string, AssemblyStack>(
       actualStacks.map((s) => [s.id, s]),
     );
@@ -439,6 +456,10 @@ export class DeploymentEngine {
         }
       }
     }
+
+    // All stacks succeeded — delete the snapshot so the working directory
+    // stays clean. Snapshot is preserved on failure for crash recovery.
+    this.persistence.deleteSnapshot();
 
     this.deployLock.release();
     return { success: true, stacks: stackResults };
