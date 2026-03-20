@@ -3352,4 +3352,242 @@ describe('DeploymentEngine', () => {
   // reconcile delete occurs whenever a staying assembly resource references a
   // resource scheduled for deletion. The hasReferenceTo guard exists as a
   // safety net for future cross-stack or alternative-validation scenarios.
+
+  // ─── Crash recovery ──────────────────────────────────────────────────────────
+
+  describe('crash recovery — resume rollback from snapshot', () => {
+    /**
+     * Build a StatePersistence where snapshotExists() returns true and
+     * readSnapshot() returns the provided snapshot state. The main state
+     * file returns `currentState` (simulating a partially-applied deployment).
+     * Calls to writeSnapshot/deleteSnapshot/save are tracked via arrays.
+     */
+    function makeSnapshotPersistence(opts: {
+      snapshotState: EngineState;
+      currentState?: EngineState;
+      deletedSnapshots?: string[];
+    }): StatePersistence {
+      const deleted = opts.deletedSnapshots ?? [];
+      const snapshotJson = JSON.stringify(opts.snapshotState);
+      const currentJson = opts.currentState
+        ? JSON.stringify(opts.currentState)
+        : null;
+
+      const deps: StatePersistenceDeps = {
+        mkdirSync: () => undefined,
+        writeFileSync: () => undefined,
+        readFileSync: (filePath: string) => {
+          if (String(filePath).endsWith('snapshot.json')) {
+            return snapshotJson;
+          }
+          if (currentJson !== null) {
+            return currentJson;
+          }
+          throw new Error('not found');
+        },
+        existsSync: (filePath: string) => {
+          // snapshot file always exists; main state file exists only if currentState provided
+          if (String(filePath).endsWith('snapshot.json')) return true;
+          return currentJson !== null;
+        },
+        unlinkSync: (filePath: string) => {
+          deleted.push(String(filePath));
+        },
+      };
+
+      return new StatePersistence('/fake', deps);
+    }
+
+    it('skips forward deployment and runs rollback when snapshot exists', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      // Snapshot: ResA was the known-good state before the interrupted deployment.
+      const snapshotState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'a' },
+                lastAppliedProperties: { name: 'a' },
+              },
+            },
+          },
+        },
+      };
+
+      // Current state: ResA still present (not deleted), ResB was created during
+      // the interrupted deployment and should be rolled back (deleted).
+      const currentState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.UPDATE_IN_PROGRESS,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'a' },
+                lastAppliedProperties: { name: 'a' },
+              },
+              ResB: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-B',
+                properties: { name: 'b' },
+                lastAppliedProperties: { name: 'b' },
+              },
+            },
+          },
+        },
+      };
+
+      const deletedSnapshots: string[] = [];
+      const persistence = makeSnapshotPersistence({
+        snapshotState,
+        currentState,
+        deletedSnapshots,
+      });
+
+      const deleteLog: string[] = [];
+      const fullAdapter: ProviderAdapter = {
+        create: () => Promise.reject(new Error('should not be called')),
+        update: () => Promise.reject(new Error('should not be called')),
+        delete: (resource) => {
+          deleteLog.push(resource.logicalId);
+          return Promise.resolve();
+        },
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const stateManager = new EngineStateManager(
+        bus,
+        persistence,
+        currentState,
+      );
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // Assembly still has both ResA and ResB.
+      const stacks = [
+        makeStack('S', [{ logicalId: 'ResA' }, { logicalId: 'ResB' }]),
+      ];
+      const plan = makePlan(['S'], { S: ['ResA', 'ResB'] });
+      const result = await engine.deploy(stacks, plan);
+
+      // Deployment should fail (rollback resumed).
+      expect(result.success).toBe(false);
+
+      // ResB (newly created during interrupted run) should have been deleted.
+      expect(deleteLog).toContain('ResB');
+
+      // Snapshot should be deleted after rollback.
+      expect(deletedSnapshots.some((p) => p.endsWith('snapshot.json'))).toBe(
+        true,
+      );
+
+      // Stack should reach a rollback terminal status.
+      const rollbackCompleteEvent = events.find(
+        (e) =>
+          e.resourceType === 'cdkx::stack' &&
+          (e.resourceStatus === StackStatus.UPDATE_ROLLBACK_COMPLETE ||
+            e.resourceStatus === StackStatus.ROLLBACK_COMPLETE ||
+            e.resourceStatus === StackStatus.ROLLBACK_PARTIAL),
+      );
+      expect(rollbackCompleteEvent).toBeDefined();
+    });
+
+    it('deletes snapshot after rollback completes', async () => {
+      const snapshotState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: {},
+                lastAppliedProperties: {},
+              },
+            },
+          },
+        },
+      };
+
+      const deletedSnapshots: string[] = [];
+      const persistence = makeSnapshotPersistence({
+        snapshotState,
+        deletedSnapshots,
+      });
+
+      const fullAdapter: ProviderAdapter = {
+        create: () => Promise.reject(new Error('not called')),
+        update: () => Promise.reject(new Error('not called')),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const bus = new EventBus<EngineEvent>();
+      // No current state — snapshot-only scenario (first deploy interrupted before any mutations).
+      const stateManager = new EngineStateManager(bus, persistence);
+
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      expect(deletedSnapshots.some((p) => p.endsWith('snapshot.json'))).toBe(
+        true,
+      );
+    });
+
+    it('does not resume rollback when no snapshot exists (normal deploy)', async () => {
+      const events: EngineEvent[] = [];
+      const bus = new EventBus<EngineEvent>();
+      bus.subscribe((e) => events.push(e));
+
+      // Normal null persistence — snapshotExists returns false.
+      const engine = makeEngine(successAdapter('phys-001'), bus);
+
+      const stacks = [makeStack('S', [{ logicalId: 'Res1' }])];
+      const plan = makePlan(['S'], { S: ['Res1'] });
+      const result = await engine.deploy(stacks, plan);
+
+      // Normal deploy succeeds.
+      expect(result.success).toBe(true);
+
+      // Stack should reach CREATE_COMPLETE, not a rollback status.
+      const completeEvent = events.find(
+        (e) =>
+          e.resourceType === 'cdkx::stack' &&
+          e.resourceStatus === StackStatus.CREATE_COMPLETE,
+      );
+      expect(completeEvent).toBeDefined();
+    });
+  });
 });

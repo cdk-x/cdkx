@@ -415,6 +415,13 @@ export class DeploymentEngine {
     stacks?: AssemblyStack[],
     plan?: DeploymentPlan,
   ): Promise<DeploymentResult> {
+    // CRASH RECOVERY: if a snapshot exists from a previous interrupted run,
+    // skip forward deployment entirely and resume rollback from snapshot state.
+    if (this.persistence.snapshotExists()) {
+      const assemblyStacks = stacks ?? this.readAssembly();
+      return await this.resumeRollback(assemblyStacks);
+    }
+
     // If no stacks provided, read assembly and create plan internally
     const actualStacks = stacks ?? this.readAssembly();
     const actualPlan = plan ?? this.createPlan(actualStacks);
@@ -487,6 +494,138 @@ export class DeploymentEngine {
   }
 
   // ─── Private helpers ───────────────────────────────────────────────────────
+
+  /**
+   * Resume a rollback from a leftover snapshot file.
+   *
+   * Called when `snapshotExists()` returns `true` at the start of `deploy()`,
+   * indicating that a previous run was interrupted before it could clean up.
+   * Diffs the current engine state against the snapshot to reconstruct what
+   * happened during the interrupted deployment, then runs all three rollback
+   * phases for each affected stack.
+   *
+   * The snapshot is deleted after rollback completes (full or partial).
+   */
+  private async resumeRollback(
+    assemblyStacks: AssemblyStack[],
+  ): Promise<DeploymentResult> {
+    const snapshot = this.persistence.readSnapshot();
+    if (snapshot === null) {
+      this.deployLock.release();
+      throw new Error(
+        'Crash recovery failed: snapshot file exists but could not be read. ' +
+          'Manual intervention may be required.',
+      );
+    }
+
+    const stackById = new Map(assemblyStacks.map((s) => [s.id, s]));
+    const stackResults: StackDeploymentResult[] = [];
+
+    for (const [stackId, snapshotStackState] of Object.entries(
+      snapshot.stacks,
+    )) {
+      const assemblyStack = stackById.get(stackId);
+      if (assemblyStack === undefined) {
+        stackResults.push({
+          stackId,
+          success: false,
+          resources: [],
+          error:
+            `Stack '${stackId}' found in snapshot but not in assembly; ` +
+            `cannot resume rollback. Manual intervention may be required.`,
+        });
+        continue;
+      }
+
+      const resourceById = new Map(
+        assemblyStack.resources.map((r) => [r.logicalId, r]),
+      );
+
+      const currentStackState = this.stateManager.getStackState(stackId);
+      const currentResources = currentStackState?.resources ?? {};
+      const snapshotResources = snapshotStackState.resources;
+      const snapshotResourceIds = new Set(Object.keys(snapshotResources));
+
+      // Phase 1: resources created during interrupted deployment.
+      // Present in current state as CREATE_COMPLETE but absent from snapshot.
+      const createdInOrder: string[][] = [];
+      const newlyCreated: string[] = [];
+      for (const [logicalId, resState] of Object.entries(currentResources)) {
+        if (
+          !snapshotResourceIds.has(logicalId) &&
+          resState.status === ResourceStatus.CREATE_COMPLETE
+        ) {
+          newlyCreated.push(logicalId);
+        }
+      }
+      if (newlyCreated.length > 0) {
+        createdInOrder.push(newlyCreated);
+      }
+
+      // Phase 2: resources updated during interrupted deployment.
+      // Present in both current and snapshot with differing lastAppliedProperties.
+      for (const [logicalId, resState] of Object.entries(currentResources)) {
+        const snapshotRes = snapshotResources[logicalId];
+        if (snapshotRes === undefined) continue;
+        const currentLap = resState.lastAppliedProperties ?? {};
+        const snapshotLap = snapshotRes.lastAppliedProperties ?? {};
+        if (JSON.stringify(currentLap) !== JSON.stringify(snapshotLap)) {
+          this.updatedInOrder.push({ logicalId, stackId });
+        }
+      }
+
+      // Phase 3: resources deleted during reconcile.
+      // Present in snapshot but absent from current state.
+      for (const [logicalId, snapshotRes] of Object.entries(
+        snapshotResources,
+      )) {
+        if (logicalId in currentResources) continue;
+        const provider = (snapshotRes.type ?? 'unknown')
+          .split('::')[0]
+          .toLowerCase();
+        this.reconciledDeletedInOrder.push({
+          logicalId,
+          stackId,
+          type: snapshotRes.type ?? 'unknown',
+          provider,
+          physicalId: snapshotRes.physicalId,
+          priorProperties:
+            snapshotRes.lastAppliedProperties ?? snapshotRes.properties,
+          priorOutputs: snapshotRes.outputs ?? {},
+        });
+      }
+
+      const isUpdate = currentStackState !== undefined;
+      const isPartial = await this.rollback(
+        assemblyStack,
+        createdInOrder,
+        resourceById,
+        this.adapters,
+        isUpdate,
+      );
+
+      const finalStatus = isPartial
+        ? StackStatus.ROLLBACK_PARTIAL
+        : isUpdate
+          ? StackStatus.UPDATE_ROLLBACK_COMPLETE
+          : StackStatus.ROLLBACK_COMPLETE;
+
+      this.stateManager.transitionStack(stackId, finalStatus, {
+        reason: 'Crash recovery: rollback resumed from snapshot',
+      });
+
+      stackResults.push({
+        stackId,
+        success: false,
+        resources: [],
+        error: 'Rollback resumed from snapshot after process crash',
+      });
+    }
+
+    this.persistence.deleteSnapshot();
+    this.deployLock.release();
+    return { success: false, stacks: stackResults };
+  }
 
   private async deployStack(
     stack: AssemblyStack,
