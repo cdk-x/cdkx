@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { resolve, isAbsolute, basename } from 'path';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
+import { spawnSync } from 'child_process';
 import { BaseCommand } from '../../lib/base-command.js';
 import {
   InitTemplateEngine,
@@ -19,6 +20,17 @@ function defaultCreateFileSystem(): InitFileSystem {
     writeFile: (p, content) => writeFileSync(p, content, 'utf-8'),
     readFile: (p) => readFileSync(p, 'utf-8'),
   };
+}
+
+function defaultInstallPackages(dir: string, pm: PackageManager): void {
+  const result = spawnSync(pm, ['install'], {
+    cwd: dir,
+    stdio: 'inherit',
+    shell: true,
+  });
+  if (result.status !== 0) {
+    throw new Error(`${pm} install failed with exit code ${result.status ?? 1}`);
+  }
 }
 
 // ─── InitCommandDeps ──────────────────────────────────────────────────────────
@@ -53,7 +65,7 @@ export class InitCommand extends BaseCommand {
     this.detectMode = deps.detectMode ?? InitTemplateEngine.detectMode;
     this.detectPackageManager =
       deps.detectPackageManager ?? InitTemplateEngine.detectPackageManager;
-    this.installPackages = deps.installPackages ?? (() => undefined);
+    this.installPackages = deps.installPackages ?? defaultInstallPackages;
   }
 
   static create(deps?: InitCommandDeps): Command {
