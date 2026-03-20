@@ -9,3 +9,6 @@ export type { HetznerRouteProps, HetznerRouteState } from './route';
 
 export { HetznerCertificateHandler } from './certificate';
 export type { HetznerCertificateState } from './certificate';
+
+export { HetznerServerHandler } from './server';
+export type { HetznerServerState } from './server';
