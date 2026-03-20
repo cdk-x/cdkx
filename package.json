@@ -53,6 +53,7 @@
   "workspaces": [
     "packages/*",
     "packages/tools/*",
-    "packages/providers/hetzner/*"
+    "packages/providers/hetzner/*",
+    "e2e/*"
   ]
 }

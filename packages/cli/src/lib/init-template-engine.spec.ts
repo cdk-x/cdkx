@@ -432,13 +432,16 @@ describe('InitTemplateEngine — nx mode', () => {
   });
 
   describe('project.json', () => {
-    it('generates project.json with synth, deploy, and destroy nx:run-commands targets', () => {
+    it('generates project.json with typecheck, synth, deploy, and destroy nx:run-commands targets', () => {
       const fs = makeNxFs();
       const engine = new InitTemplateEngine(fs);
       engine.generate({ dir: '/ws/packages/infra', name: 'infra', mode: 'nx' });
 
       const proj = JSON.parse(fs.written['/ws/packages/infra/project.json']);
       expect(proj.name).toBe('infra');
+      expect(proj.targets.typecheck.executor).toBe('nx:run-commands');
+      expect(proj.targets.typecheck.options.command).toBe('tsc --noEmit');
+      expect(proj.targets.typecheck.options.cwd).toBe('{projectRoot}');
       expect(proj.targets.synth.executor).toBe('nx:run-commands');
       expect(proj.targets.synth.options.command).toBe('cdkx synth');
       expect(proj.targets.synth.options.cwd).toBe('{projectRoot}');
