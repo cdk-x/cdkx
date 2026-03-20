@@ -2,8 +2,8 @@ import { StackStatus } from './stack-status';
 import { ResourceStatus } from './resource-status';
 
 describe('StackStatus', () => {
-  it('has 17 values', () => {
-    expect(Object.keys(StackStatus)).toHaveLength(17);
+  it('has 18 values', () => {
+    expect(Object.keys(StackStatus)).toHaveLength(18);
   });
 
   describe('creation states', () => {
@@ -87,6 +87,12 @@ describe('StackStatus', () => {
   describe('no-op states', () => {
     it('defines NO_CHANGES', () => {
       expect(StackStatus.NO_CHANGES).toBe('NO_CHANGES');
+    });
+  });
+
+  describe('skipped state', () => {
+    it('defines SKIPPED', () => {
+      expect(StackStatus.SKIPPED).toBe('SKIPPED');
     });
   });
 });
