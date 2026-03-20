@@ -683,12 +683,7 @@ export class DeploymentEngine {
     // parallel; waves execute sequentially to respect dependencies.
     for (const wave of resourceWaves) {
       const wavePromises = wave.map((logicalId) =>
-        this.deployResource(
-          stack,
-          logicalId,
-          resourceById,
-          this.adapters,
-        ),
+        this.deployResource(stack, logicalId, resourceById, this.adapters),
       );
 
       const waveResults = await Promise.allSettled(wavePromises);
