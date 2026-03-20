@@ -431,13 +431,10 @@ describe('DeploymentEngine', () => {
       expect(receivedProps[1]).toEqual({ networkId: 42 });
     });
 
-    it('leaves unresolvable tokens as-is (cross-stack not yet deployed)', async () => {
-      const receivedProps: Record<string, unknown>[] = [];
+    it('fails resource deploy when { ref, attr } token references a non-existent resource', async () => {
       const adapter: Partial<ProviderAdapter> = {
-        create: (r: ManifestResource): Promise<CreateResult> => {
-          receivedProps.push(r.properties);
-          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
-        },
+        create: (r: ManifestResource): Promise<CreateResult> =>
+          Promise.resolve({ physicalId: `phys-${r.logicalId}` }),
         delete: () => Promise.resolve(),
       };
 
@@ -449,9 +446,10 @@ describe('DeploymentEngine', () => {
         ]),
       ];
       const plan = makePlan(['S'], { S: ['ResA'] });
-      await engine.deploy(stacks, plan);
+      const result = await engine.deploy(stacks, plan);
 
-      expect(receivedProps[0]).toEqual({ externalRef: token });
+      // Token resolution throws → resource and stack both fail.
+      expect(result.stacks[0].success).toBe(false);
     });
   });
 
@@ -3721,6 +3719,165 @@ describe('DeploymentEngine', () => {
           e.resourceStatus === StackStatus.ROLLBACK_PARTIAL,
       );
       expect(partialEvent).toBeDefined();
+    });
+  });
+
+  // ─── Cross-stack output resolution ───────────────────────────────────────────
+
+  describe('cross-stack output resolution', () => {
+    function makeEngineExposed(
+      adaptersByProvider: Record<string, Partial<ProviderAdapter>>,
+      eventBus?: EventBus<EngineEvent>,
+    ): { engine: DeploymentEngine; stateManager: EngineStateManager } {
+      const bus = eventBus ?? new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(bus, persistence);
+
+      const fullAdapters: Record<string, ProviderAdapter> = {};
+      for (const [provider, partial] of Object.entries(adaptersByProvider)) {
+        fullAdapters[provider] = {
+          create:
+            partial.create ??
+            (() => Promise.reject(new Error('not implemented'))),
+          update:
+            partial.update ??
+            (() => Promise.reject(new Error('not implemented'))),
+          delete: partial.delete ?? (() => Promise.resolve()),
+          getOutput: partial.getOutput ?? (() => Promise.resolve(undefined)),
+          getCreateOnlyProps:
+            partial.getCreateOnlyProps ?? (() => new Set<string>()),
+        };
+      }
+
+      const engine = new DeploymentEngine({
+        adapters: fullAdapters,
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+      return { engine, stateManager };
+    }
+
+    it('stores resolved stack outputs in StackState after stack completes', async () => {
+      // NetworkStack has one resource whose create returns networkId.
+      // The stack declares an output NetworkId referencing that attribute.
+      const { engine, stateManager } = makeEngineExposed({
+        test: {
+          create: () =>
+            Promise.resolve({
+              physicalId: 'phys-1',
+              outputs: { id: 'net-99' },
+            }),
+        },
+      });
+
+      const networkStack: AssemblyStack = {
+        id: 'NetworkStack',
+        templateFile: 'NetworkStack.json',
+        resources: [
+          {
+            logicalId: 'NetABC12345',
+            type: 'test::Resource',
+            provider: 'test',
+            properties: {},
+          },
+        ],
+        outputs: {
+          NetworkId: { value: { ref: 'NetABC12345', attr: 'id' } },
+        },
+        outputKeys: ['NetworkId'],
+        dependencies: [],
+      };
+
+      const plan: DeploymentPlan = {
+        stackWaves: [['NetworkStack']],
+        resourceWaves: { NetworkStack: [['NetABC12345']] },
+      };
+
+      await engine.deploy([networkStack], plan);
+
+      const stackState = stateManager.getStackState('NetworkStack');
+      expect(stackState?.outputs).toEqual({ NetworkId: 'net-99' });
+    });
+
+    it('substitutes cross-stack token in server properties with stack output value', async () => {
+      // NetworkStack deploys first; ServerStack resource property references it.
+      const createCalls: Array<{
+        logicalId: string;
+        properties: Record<string, unknown>;
+      }> = [];
+
+      const { engine } = makeEngineExposed({
+        test: {
+          create: (resource: ManifestResource) => {
+            createCalls.push({
+              logicalId: resource.logicalId,
+              properties: resource.properties,
+            });
+            const outputs =
+              resource.logicalId === 'NetABC12345'
+                ? { id: 'net-99' }
+                : undefined;
+            return Promise.resolve({
+              physicalId: `phys-${resource.logicalId}`,
+              ...(outputs ? { outputs } : {}),
+            });
+          },
+        },
+      });
+
+      const networkStack: AssemblyStack = {
+        id: 'NetworkStack',
+        templateFile: 'NetworkStack.json',
+        resources: [
+          {
+            logicalId: 'NetABC12345',
+            type: 'test::Resource',
+            provider: 'test',
+            properties: {},
+          },
+        ],
+        outputs: {
+          NetworkId: { value: { ref: 'NetABC12345', attr: 'id' } },
+        },
+        outputKeys: ['NetworkId'],
+        dependencies: [],
+      };
+
+      const serverStack: AssemblyStack = {
+        id: 'ServerStack',
+        templateFile: 'ServerStack.json',
+        resources: [
+          {
+            logicalId: 'SrvXYZ12345',
+            type: 'test::Resource',
+            provider: 'test',
+            properties: {
+              networkId: { stackRef: 'NetworkStack', outputKey: 'NetworkId' },
+            },
+          },
+        ],
+        outputs: {},
+        outputKeys: [],
+        dependencies: ['NetworkStack'],
+      };
+
+      const plan: DeploymentPlan = {
+        stackWaves: [['NetworkStack'], ['ServerStack']],
+        resourceWaves: {
+          NetworkStack: [['NetABC12345']],
+          ServerStack: [['SrvXYZ12345']],
+        },
+      };
+
+      await engine.deploy([networkStack, serverStack], plan);
+
+      const serverCall = createCalls.find((c) => c.logicalId === 'SrvXYZ12345');
+      expect(serverCall).toBeDefined();
+      expect(serverCall?.properties['networkId']).toBe('net-99');
     });
   });
 });
