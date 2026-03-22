@@ -291,6 +291,37 @@ describe('DeploymentPlanner', () => {
     });
   });
 
+  // ─── detectCycles() static method ───────────────────────────────────────────
+
+  describe('detectCycles()', () => {
+    it('returns null for an empty dependency map', () => {
+      expect(DeploymentPlanner.detectCycles({})).toBeNull();
+    });
+
+    it('returns null for an acyclic graph', () => {
+      expect(
+        DeploymentPlanner.detectCycles({ A: [], B: ['A'], C: ['B'] }),
+      ).toBeNull();
+    });
+
+    it('returns cycle node IDs for a two-stack cycle', () => {
+      const result = DeploymentPlanner.detectCycles({ A: ['B'], B: ['A'] });
+      expect(result).not.toBeNull();
+      expect(result).toContain('A');
+      expect(result).toContain('B');
+    });
+
+    it('returns cycle node IDs for a three-stack cycle', () => {
+      const result = DeploymentPlanner.detectCycles({
+        A: ['C'],
+        B: ['A'],
+        C: ['B'],
+      });
+      expect(result).not.toBeNull();
+      expect(result).toHaveLength(3);
+    });
+  });
+
   // ─── Empty inputs ────────────────────────────────────────────────────────────
 
   describe('empty inputs', () => {
