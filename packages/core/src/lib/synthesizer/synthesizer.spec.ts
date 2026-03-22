@@ -2,9 +2,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { JsonSynthesizer, IStackRef, ISynthesisSession } from './synthesizer';
+import { CycleError } from './cycle-detector';
 import { CloudAssemblyBuilder } from '../assembly/cloud-assembly';
 import { makeApp, makeStack } from '../../../test/helpers';
 import { ProviderResource } from '../provider-resource/provider-resource';
+import { StackOutput } from '../stack-output/stack-output';
 
 function tmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'cdkx-synth-test-'));
@@ -130,5 +132,119 @@ describe('JsonSynthesizer', () => {
       expect(fs.existsSync(outdir)).toBe(true);
       fs.rmSync(outdir, { recursive: true });
     });
+  });
+});
+
+// ─── Cycle detection at synthesis time ───────────────────────────────────────
+
+describe('app.synth() cycle detection', () => {
+  it('throws CycleError when two stacks import each other (A → B → A)', () => {
+    const outdir = tmpDir();
+    const app = makeApp(outdir);
+
+    const stackA = makeStack(app, 'StackA');
+    const stackB = makeStack(app, 'StackB');
+
+    // Declare outputs on each stack
+    const outputA = new StackOutput(stackA, 'OutputA', { value: 'valueA' });
+    const outputB = new StackOutput(stackB, 'OutputB', { value: 'valueB' });
+
+    // Stack A imports B's output → A depends on B
+    new ProviderResource(stackA, 'ResA', {
+      type: 'test::Res',
+      properties: { dep: outputB.importValue() },
+    });
+
+    // Stack B imports A's output → B depends on A (cycle!)
+    new ProviderResource(stackB, 'ResB', {
+      type: 'test::Res',
+      properties: { dep: outputA.importValue() },
+    });
+
+    expect(() => app.synth()).toThrow(CycleError);
+    fs.rmSync(outdir, { recursive: true });
+  });
+
+  it('names both stacks in the CycleError message', () => {
+    const outdir = tmpDir();
+    const app = makeApp(outdir);
+
+    const stackA = makeStack(app, 'StackA');
+    const stackB = makeStack(app, 'StackB');
+
+    const outputA = new StackOutput(stackA, 'OutputA', { value: 'v' });
+    const outputB = new StackOutput(stackB, 'OutputB', { value: 'v' });
+
+    new ProviderResource(stackA, 'ResA', {
+      type: 'test::Res',
+      properties: { dep: outputB.importValue() },
+    });
+    new ProviderResource(stackB, 'ResB', {
+      type: 'test::Res',
+      properties: { dep: outputA.importValue() },
+    });
+
+    let err: CycleError | undefined;
+    try {
+      app.synth();
+    } catch (e) {
+      err = e as CycleError;
+    }
+
+    expect(err).toBeInstanceOf(CycleError);
+    if (!(err instanceof CycleError)) return;
+    expect(err.cycleNodes).toContain(stackA.artifactId);
+    expect(err.cycleNodes).toContain(stackB.artifactId);
+    fs.rmSync(outdir, { recursive: true });
+  });
+
+  it('writes no output files when a cycle is detected', () => {
+    const outdir = tmpDir();
+    const app = makeApp(outdir);
+
+    const stackA = makeStack(app, 'StackA');
+    const stackB = makeStack(app, 'StackB');
+
+    const outputA = new StackOutput(stackA, 'OutputA', { value: 'v' });
+    const outputB = new StackOutput(stackB, 'OutputB', { value: 'v' });
+
+    new ProviderResource(stackA, 'ResA', {
+      type: 'test::Res',
+      properties: { dep: outputB.importValue() },
+    });
+    new ProviderResource(stackB, 'ResB', {
+      type: 'test::Res',
+      properties: { dep: outputA.importValue() },
+    });
+
+    expect(() => app.synth()).toThrow(CycleError);
+
+    // No template files or manifest should be written
+    const files = fs.readdirSync(outdir);
+    expect(files).toHaveLength(0);
+
+    fs.rmSync(outdir, { recursive: true });
+  });
+
+  it('synth succeeds and writes files for a valid acyclic cross-stack ref', () => {
+    const outdir = tmpDir();
+    const app = makeApp(outdir);
+
+    const stackA = makeStack(app, 'StackA');
+    const stackB = makeStack(app, 'StackB');
+
+    // Only B depends on A (no cycle)
+    const outputA = new StackOutput(stackA, 'OutputA', { value: 'v' });
+    new ProviderResource(stackB, 'ResB', {
+      type: 'test::Res',
+      properties: { dep: outputA.importValue() },
+    });
+
+    expect(() => app.synth()).not.toThrow();
+
+    expect(fs.existsSync(path.join(outdir, 'StackA.json'))).toBe(true);
+    expect(fs.existsSync(path.join(outdir, 'StackB.json'))).toBe(true);
+    expect(fs.existsSync(path.join(outdir, 'manifest.json'))).toBe(true);
+    fs.rmSync(outdir, { recursive: true });
   });
 });
