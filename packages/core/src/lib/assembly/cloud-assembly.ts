@@ -45,6 +45,14 @@ export interface StackArtifact {
    * Actual resolved values are written to the stack template under `"outputs"`.
    */
   readonly outputKeys?: string[];
+
+  /**
+   * Artifact IDs of stacks this stack depends on.
+   * Populated at synthesis time when `StackOutput.importValue()` tokens are
+   * detected in the resolved template. Used by the engine to order stack
+   * deployment waves.
+   */
+  readonly dependencies?: string[];
 }
 
 /**
@@ -81,6 +89,13 @@ export interface AddArtifactOptions {
    * from the manifest without reading the full stack template.
    */
   readonly outputKeys?: string[];
+
+  /**
+   * Artifact IDs of stacks this stack depends on (optional).
+   * Inferred at synthesis time from `{ stackRef }` tokens in the resolved
+   * template. When present, the engine uses these to order deployment waves.
+   */
+  readonly dependencies?: string[];
 }
 
 /**
@@ -130,6 +145,9 @@ export class CloudAssemblyBuilder {
         : {}),
       ...(options.outputKeys !== undefined && options.outputKeys.length > 0
         ? { outputKeys: options.outputKeys }
+        : {}),
+      ...(options.dependencies !== undefined && options.dependencies.length > 0
+        ? { dependencies: options.dependencies }
         : {}),
     };
     this.artifacts[options.id] = artifact;

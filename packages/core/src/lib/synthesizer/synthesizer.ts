@@ -37,6 +37,13 @@ export interface IStackSynthesizer {
    * Called during `app.synth()` to produce the stack's output artifact.
    */
   synthesize(session: ISynthesisSession): void;
+
+  /**
+   * Optional. Returns the artifact IDs of stacks this stack depends on.
+   * Called by `App.synth()` before writing any files so that cross-stack
+   * cycles can be detected and reported without producing partial output.
+   */
+  collectDependencies?(): string[];
 }
 
 /**
@@ -92,6 +99,21 @@ export class JsonSynthesizer implements IStackSynthesizer {
     this.stack = stack;
   }
 
+  /**
+   * Returns the artifact IDs of stacks this stack depends on, by resolving
+   * all resource properties and scanning for `{ stackRef }` tokens.
+   * No files are written.
+   */
+  public collectDependencies(): string[] {
+    const resources = Object.assign(
+      {},
+      ...this.stack.getProviderResources().map((r) => r.toJson()),
+    );
+    const stackRefs = new Set<string>();
+    this.collectStackRefs(resources, stackRefs);
+    return Array.from(stackRefs);
+  }
+
   public synthesize(session: ISynthesisSession): void {
     // Merge all per-resource keyed objects into a single map
     const resources = Object.assign(
@@ -122,6 +144,10 @@ export class JsonSynthesizer implements IStackSynthesizer {
     const fileName = `${this.stack.artifactId}.json`;
     const content = JSON.stringify(templateContent, null, 2);
 
+    // Collect cross-stack references from the resolved template
+    const stackRefs = new Set<string>();
+    this.collectStackRefs(resources, stackRefs);
+
     this.writeFile(session.outdir, fileName, content);
 
     session.assembly.addArtifact({
@@ -132,7 +158,33 @@ export class JsonSynthesizer implements IStackSynthesizer {
         stackOutputs.length > 0
           ? stackOutputs.map((o) => o.outputKey)
           : undefined,
+      dependencies: stackRefs.size > 0 ? Array.from(stackRefs) : undefined,
     });
+  }
+
+  /**
+   * Recursively walks a resolved value and collects the `stackRef` string from
+   * every `{ stackRef: string, outputKey: string }` object found.
+   * Mirrors `collectRefLogicalIds` on `ProviderResource` but for cross-stack refs.
+   */
+  private collectStackRefs(value: unknown, refs: Set<string>): void {
+    if (value === null || value === undefined) return;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        this.collectStackRefs(item, refs);
+      }
+      return;
+    }
+    if (typeof value === 'object') {
+      const obj = value as Record<string, unknown>;
+      if (typeof obj['stackRef'] === 'string' && 'outputKey' in obj) {
+        refs.add(obj['stackRef']);
+        return;
+      }
+      for (const v of Object.values(obj)) {
+        this.collectStackRefs(v, refs);
+      }
+    }
   }
 
   protected writeFile(outdir: string, fileName: string, content: string): void {

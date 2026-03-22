@@ -21,6 +21,7 @@ import {
   ResolveContext,
 } from '../../src/lib/resolvables/resolvables';
 import { MANIFEST_VERSION } from '../../src/lib/assembly/cloud-assembly';
+import { StackOutput } from '../../src/lib/stack-output/stack-output';
 import { SynthHelpers, TestResources } from '../helpers';
 
 // ---------------------------------------------------------------------------
@@ -441,6 +442,67 @@ describe('Unresolved token detection', () => {
     } finally {
       if (fs.existsSync(outdir)) fs.rmSync(outdir, { recursive: true });
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 9. Cross-stack output references
+// ---------------------------------------------------------------------------
+describe('Cross-stack output references', () => {
+  let outdir: string;
+
+  beforeEach(() => {
+    outdir = SynthHelpers.tmpDir();
+  });
+  afterEach(() => fs.rmSync(outdir, { recursive: true }));
+
+  it('manifest records dependencies on the consuming stack when importValue() is used', () => {
+    const app = new App({ outdir });
+
+    const networkStack = new Stack(app, 'NetworkStack', {});
+    const network = TestResources.resource(networkStack, 'Network');
+    const networkOutput = new StackOutput(networkStack, 'NetworkId', {
+      value: network.getAtt('id'),
+    });
+
+    const serverStack = new Stack(app, 'ServerStack', {});
+    new ProviderResource(serverStack, 'Server', {
+      type: 'test::Resource',
+      properties: { network_id: networkOutput.importValue() },
+    });
+
+    app.synth();
+
+    const manifest = SynthHelpers.readJson(
+      path.join(outdir, 'manifest.json'),
+    ) as {
+      artifacts: Record<
+        string,
+        { dependencies?: string[]; outputKeys?: string[] }
+      >;
+    };
+
+    expect(manifest.artifacts['NetworkStack'].dependencies).toBeUndefined();
+    expect(manifest.artifacts['ServerStack'].dependencies).toEqual([
+      'NetworkStack',
+    ]);
+  });
+
+  it('manifest has no dependencies field when there are no cross-stack references', () => {
+    const app = new App({ outdir });
+    const s1 = new Stack(app, 'StackA', {});
+    const s2 = new Stack(app, 'StackB', {});
+    TestResources.resource(s1);
+    TestResources.resource(s2);
+
+    app.synth();
+
+    const manifest = SynthHelpers.readJson(
+      path.join(outdir, 'manifest.json'),
+    ) as { artifacts: Record<string, { dependencies?: string[] }> };
+
+    expect(manifest.artifacts['StackA'].dependencies).toBeUndefined();
+    expect(manifest.artifacts['StackB'].dependencies).toBeUndefined();
   });
 });
 

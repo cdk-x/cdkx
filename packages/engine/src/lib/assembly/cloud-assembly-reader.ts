@@ -22,6 +22,7 @@ interface ManifestArtifact {
   properties: { templateFile: string };
   displayName?: string;
   outputKeys?: string[];
+  dependencies?: string[];
 }
 
 interface ManifestJson {
@@ -120,26 +121,6 @@ export class CloudAssemblyReader {
   private readStacks(manifest: ManifestJson): AssemblyStack[] {
     const stackIds = Object.keys(manifest.artifacts);
 
-    // Build a set of all output keys across all stacks so we can infer
-    // cross-stack dependencies: stack B depends on stack A if any of B's
-    // resource properties contain { ref } tokens pointing to a resource
-    // in A. However, at read time we do the simpler manifest-level check:
-    // B depends on A when A declares an output key that B's template
-    // references via its own output values or properties.
-    // The full { ref, attr } dependency scan is left to DeploymentPlanner.
-    // Here we compute the simpler output-key-based dependency: if stack B's
-    // template outputs reference an outputKey declared by stack A, B depends on A.
-
-    // First pass: read all stack templates and build output key → stackId map.
-    const outputKeyToStack = new Map<string, string>();
-    for (const stackId of stackIds) {
-      const artifact = manifest.artifacts[stackId];
-      for (const key of artifact.outputKeys ?? []) {
-        outputKeyToStack.set(key, stackId);
-      }
-    }
-
-    // Second pass: fully parse each stack and determine dependencies.
     return stackIds.map((stackId) => {
       const artifact = manifest.artifacts[stackId];
       const templatePath = path.join(
@@ -166,11 +147,9 @@ export class CloudAssemblyReader {
       const resources = this.parseResources(template);
       const outputs = this.parseOutputs(template);
       const outputKeys = artifact.outputKeys ?? [];
-      const dependencies = this.inferDependencies(
-        stackId,
-        template,
-        outputKeyToStack,
-      );
+      // Read stack dependencies directly from the manifest field written by
+      // the synthesizer. This replaces the previous heuristic string-scan.
+      const dependencies = artifact.dependencies ?? [];
 
       const stack: AssemblyStack = {
         id: stackId,
@@ -222,66 +201,5 @@ export class CloudAssemblyReader {
       };
     }
     return result;
-  }
-
-  /**
-   * Infer stack-level dependencies by scanning the template for `{ ref }`
-   * tokens in output values. A cross-stack output dependency is declared
-   * when stack A's outputs contain a `{ ref }` token that resolves to a
-   * resource in another stack. Since the engine computes the full token
-   * dependency graph in `DeploymentPlanner`, here we only infer the simpler
-   * case: if ANY string value in this stack's outputs/properties starts with
-   * a pattern that matches an output key declared by another stack.
-   *
-   * In practice, cross-stack token resolution happens via `StackOutput`
-   * constructs — the engine reads completed stack outputs from `EngineState`.
-   * This method is a best-effort heuristic for ordering purposes; the planner
-   * does the authoritative dependency resolution.
-   */
-  private inferDependencies(
-    stackId: string,
-    template: StackTemplate,
-    outputKeyToStack: Map<string, string>,
-  ): string[] {
-    const deps = new Set<string>();
-
-    // Scan all resource properties for { ref, attr } tokens.
-    // A { ref } pointing to a logical ID that belongs to another stack
-    // means this stack depends on that stack.
-    // Since we don't have a cross-stack logical ID map here, we skip
-    // intra-resource-ref scanning and leave it to DeploymentPlanner.
-    // Here we handle the manifest-level output key cross-reference:
-    // look for string values matching an output key from another stack.
-    const scan = (value: unknown): void => {
-      if (value === null || value === undefined) return;
-      if (typeof value === 'object' && !Array.isArray(value)) {
-        const obj = value as Record<string, unknown>;
-        // Check for cross-stack output reference pattern:
-        // { ref: '<stackId>.<outputKey>' } is the convention used by
-        // StackOutput.importValue() (future). For now, just recurse.
-        for (const v of Object.values(obj)) {
-          scan(v);
-        }
-      } else if (Array.isArray(value)) {
-        for (const item of value) {
-          scan(item);
-        }
-      } else if (typeof value === 'string') {
-        // Check if this string value is an output key from another stack.
-        const depStackId = outputKeyToStack.get(value);
-        if (depStackId !== undefined && depStackId !== stackId) {
-          deps.add(depStackId);
-        }
-      }
-    };
-
-    for (const resource of Object.values(template.resources ?? {})) {
-      scan(resource.properties);
-    }
-    for (const output of Object.values(template.outputs ?? {})) {
-      scan(output.value);
-    }
-
-    return Array.from(deps);
   }
 }

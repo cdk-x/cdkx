@@ -8,6 +8,7 @@ import { DeployLock } from '../deploy-lock';
 import { CloudAssemblyReader } from '../assembly/cloud-assembly-reader';
 import { DeploymentPlanner } from '../planner/deployment-planner';
 import { PluginManager } from '../plugins/plugin-manager';
+import { DeployTimeResolver } from './deploy-time-resolver';
 import type { ProviderAdapter } from '../adapter/provider-adapter';
 import type {
   AssemblyStack,
@@ -437,6 +438,9 @@ export class DeploymentEngine {
 
     const stackResults: StackDeploymentResult[] = [];
 
+    // Track stacks that ended in FAILED or SKIPPED so dependents can be skipped.
+    const failedOrSkipped = new Set<string>();
+
     // Deploy stacks wave by wave (parallel within each wave).
     for (const wave of actualPlan.stackWaves) {
       const waveResults = await Promise.allSettled(
@@ -452,19 +456,49 @@ export class DeploymentEngine {
             } as StackDeploymentResult;
           }
 
-          return await this.deployStack(
-            stack,
-            actualPlan.resourceWaves[stackId] ?? [],
+          // Skip this stack if any of its dependencies failed or were skipped.
+          const blockedBy = stack.dependencies.find((dep) =>
+            failedOrSkipped.has(dep),
           );
+          if (blockedBy !== undefined) {
+            const reason = `dependency ${blockedBy} failed`;
+            this.stateManager.initStack(stackId, { reason });
+            this.stateManager.transitionStack(stackId, StackStatus.SKIPPED, {
+              reason,
+            });
+            return {
+              stackId,
+              success: false,
+              resources: [],
+              error: reason,
+            } as StackDeploymentResult;
+          }
+
+          try {
+            return await this.deployStack(
+              stack,
+              actualPlan.resourceWaves[stackId] ?? [],
+            );
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err);
+            return {
+              stackId,
+              success: false,
+              resources: [],
+              error: message,
+            } as StackDeploymentResult;
+          }
         }),
       );
 
-      // Collect results and check for failures.
+      // Collect results. All stacks in the wave complete before we check failures.
+      let waveHadFailure = false;
       for (const settledResult of waveResults) {
         if (settledResult.status === 'fulfilled') {
           stackResults.push(settledResult.value);
           if (!settledResult.value.success) {
-            return { success: false, stacks: stackResults };
+            failedOrSkipped.add(settledResult.value.stackId);
+            waveHadFailure = true;
           }
         } else {
           // Rejection from Promise.allSettled — should not happen since
@@ -479,10 +513,19 @@ export class DeploymentEngine {
             resources: [],
             error: `Unhandled error: ${error}`,
           });
-          this.deployLock.release();
-          return { success: false, stacks: stackResults };
+          waveHadFailure = true;
         }
       }
+
+      // Continue to the next wave even on failure so that dependent stacks
+      // in subsequent waves can be recorded as SKIPPED.
+      void waveHadFailure;
+    }
+
+    // If any stack failed or was skipped, report overall failure.
+    if (failedOrSkipped.size > 0) {
+      this.deployLock.release();
+      return { success: false, stacks: stackResults };
     }
 
     // All stacks succeeded — delete the snapshot so the working directory
@@ -683,12 +726,7 @@ export class DeploymentEngine {
     // parallel; waves execute sequentially to respect dependencies.
     for (const wave of resourceWaves) {
       const wavePromises = wave.map((logicalId) =>
-        this.deployResource(
-          stack,
-          logicalId,
-          resourceById,
-          this.adapters,
-        ),
+        this.deployResource(stack, logicalId, resourceById, this.adapters),
       );
 
       const waveResults = await Promise.allSettled(wavePromises);
@@ -833,6 +871,19 @@ export class DeploymentEngine {
       reconciledCount === 0 &&
       (isUpdate || totalResourceCount === 0);
 
+    // Resolve and store stack-level outputs so dependent stacks can use them.
+    if (Object.keys(stack.outputs).length > 0) {
+      const outputResolver = new DeployTimeResolver(
+        this.stateManager.getState(),
+        stack.id,
+      );
+      const resolvedOutputs: Record<string, unknown> = {};
+      for (const [key, output] of Object.entries(stack.outputs)) {
+        resolvedOutputs[key] = outputResolver.resolve(output.value);
+      }
+      this.stateManager.setStackOutputs(stack.id, resolvedOutputs);
+    }
+
     this.stateManager.transitionStack(
       stack.id,
       isNoOp
@@ -887,18 +938,26 @@ export class DeploymentEngine {
       };
     }
 
-    // Resolve { ref, attr } tokens in properties.
-    const resolvedProperties = this.resolveProperties(
-      resource.properties,
+    // Resolve { ref, attr } and { stackRef, outputKey } tokens in properties.
+    const resolver = new DeployTimeResolver(
+      this.stateManager.getState(),
       stack.id,
     );
+    const resolvedProperties = resolver.resolve(resource.properties) as Record<
+      string,
+      unknown
+    >;
 
     // If this resource already exists as CREATE_COMPLETE in prior state,
     // compute a diff to decide whether to update or skip.
-    const existingState = this.stateManager.getResourceState(
-      stack.id,
-      logicalId,
-    );
+    let existingState = this.stateManager.getResourceState(stack.id, logicalId);
+
+    // A CREATE_FAILED resource from a previous deploy has no physical ID —
+    // remove it from state so it can be re-created from scratch.
+    if (existingState?.status === ResourceStatus.CREATE_FAILED) {
+      this.stateManager.removeResource(stack.id, logicalId);
+      existingState = undefined;
+    }
 
     if (existingState?.status === ResourceStatus.CREATE_COMPLETE) {
       const patch = this.computePatch(
@@ -1207,7 +1266,7 @@ export class DeploymentEngine {
   ): void {
     if (value === null || value === undefined) return;
 
-    if (this.isRefAttrToken(value)) {
+    if (DeploymentEngine.isRefAttrToken(value)) {
       if (toDeleteIds.has(value.ref)) {
         blockedDeletes.push({
           toDeleteLogicalId: value.ref,
@@ -1569,7 +1628,7 @@ export class DeploymentEngine {
   private valueHasRefTo(value: unknown, logicalId: string): boolean {
     if (value === null || value === undefined) return false;
 
-    if (this.isRefAttrToken(value)) {
+    if (DeploymentEngine.isRefAttrToken(value)) {
       return value.ref === logicalId;
     }
 
@@ -1649,49 +1708,7 @@ export class DeploymentEngine {
     return false;
   }
 
-  /**
-   * Recursively walk `properties` and replace every `{ ref, attr }` token
-   * with the actual value read from `EngineState.outputs` of the referenced
-   * resource.
-   *
-   * If the referenced resource hasn't been created yet (or has no matching
-   * output), the token is left as-is. The `DeploymentPlanner` guarantees
-   * that intra-stack dependencies are deployed in the correct order, so
-   * unresolved tokens at this point indicate cross-stack references (which
-   * are already resolved before their dependent stack is deployed) or
-   * misconfigured constructs.
-   */
-  private resolveProperties(
-    properties: Record<string, unknown>,
-    stackId: string,
-  ): Record<string, unknown> {
-    return this.resolveValue(properties, stackId) as Record<string, unknown>;
-  }
-
-  private resolveValue(value: unknown, stackId: string): unknown {
-    if (value === null || value === undefined) return value;
-
-    if (this.isRefAttrToken(value)) {
-      return this.resolveToken(value.ref, value.attr, stackId);
-    }
-
-    if (Array.isArray(value)) {
-      return value.map((item) => this.resolveValue(item, stackId));
-    }
-
-    if (typeof value === 'object') {
-      const obj = value as Record<string, unknown>;
-      const resolved: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(obj)) {
-        resolved[k] = this.resolveValue(v, stackId);
-      }
-      return resolved;
-    }
-
-    return value;
-  }
-
-  private isRefAttrToken(
+  private static isRefAttrToken(
     value: unknown,
   ): value is { ref: string; attr: string } {
     if (value === null || typeof value !== 'object' || Array.isArray(value)) {
@@ -1699,34 +1716,6 @@ export class DeploymentEngine {
     }
     const obj = value as Record<string, unknown>;
     return typeof obj['ref'] === 'string' && typeof obj['attr'] === 'string';
-  }
-
-  private resolveToken(ref: string, attr: string, stackId: string): unknown {
-    // Try intra-stack resolution first.
-    const resourceState = this.stateManager.getResourceState(stackId, ref);
-    if (
-      resourceState !== undefined &&
-      resourceState.outputs !== undefined &&
-      attr in resourceState.outputs
-    ) {
-      return resourceState.outputs[attr];
-    }
-
-    // If not found in the current stack, search all stacks (cross-stack).
-    const allStacks = this.stateManager.getState().stacks;
-    for (const [, stackState] of Object.entries(allStacks)) {
-      const res = stackState.resources[ref];
-      if (
-        res !== undefined &&
-        res.outputs !== undefined &&
-        attr in res.outputs
-      ) {
-        return res.outputs[attr];
-      }
-    }
-
-    // Return the token as-is if not resolvable.
-    return { ref, attr };
   }
 
   // ─── Destroy ──────────────────────────────────────────────────────────────────
@@ -1788,6 +1777,7 @@ export class DeploymentEngine {
         if (settledResult.status === 'fulfilled') {
           stackResults.push(settledResult.value);
           if (!settledResult.value.success) {
+            this.deployLock.release();
             return { success: false, stacks: stackResults };
           }
         } else {

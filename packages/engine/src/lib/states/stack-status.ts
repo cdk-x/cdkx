@@ -61,4 +61,12 @@ export enum StackStatus {
    * Does not block future deployments — informational only.
    */
   ROLLBACK_PARTIAL = 'ROLLBACK_PARTIAL',
+
+  // ── Skipped ───────────────────────────────────────────────────────────────
+  /**
+   * Stack was not deployed because one or more of its dependency stacks
+   * ended in `FAILED` or `SKIPPED`. Reported as a failure in the overall
+   * deployment result.
+   */
+  SKIPPED = 'SKIPPED',
 }

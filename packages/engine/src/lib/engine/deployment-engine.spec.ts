@@ -431,13 +431,10 @@ describe('DeploymentEngine', () => {
       expect(receivedProps[1]).toEqual({ networkId: 42 });
     });
 
-    it('leaves unresolvable tokens as-is (cross-stack not yet deployed)', async () => {
-      const receivedProps: Record<string, unknown>[] = [];
+    it('fails resource deploy when { ref, attr } token references a non-existent resource', async () => {
       const adapter: Partial<ProviderAdapter> = {
-        create: (r: ManifestResource): Promise<CreateResult> => {
-          receivedProps.push(r.properties);
-          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
-        },
+        create: (r: ManifestResource): Promise<CreateResult> =>
+          Promise.resolve({ physicalId: `phys-${r.logicalId}` }),
         delete: () => Promise.resolve(),
       };
 
@@ -449,9 +446,10 @@ describe('DeploymentEngine', () => {
         ]),
       ];
       const plan = makePlan(['S'], { S: ['ResA'] });
-      await engine.deploy(stacks, plan);
+      const result = await engine.deploy(stacks, plan);
 
-      expect(receivedProps[0]).toEqual({ externalRef: token });
+      // Token resolution throws → resource and stack both fail.
+      expect(result.stacks[0].success).toBe(false);
     });
   });
 
@@ -552,7 +550,7 @@ describe('DeploymentEngine', () => {
       expect(stackStatuses).toContain(StackStatus.ROLLBACK_COMPLETE);
     });
 
-    it('aborts subsequent stacks after a stack failure', async () => {
+    it('continues deploying independent stacks after a stack failure', async () => {
       const engine = makeEngine(failingAdapter('fail'));
       const stacks = [
         makeStack('StackA', [{ logicalId: 'Res1' }]),
@@ -564,10 +562,11 @@ describe('DeploymentEngine', () => {
       });
       const result = await engine.deploy(stacks, plan);
 
-      // Only StackA should appear in results — StackB never ran.
+      // Both stacks run — StackB has no dependency on StackA so it is not skipped.
       expect(result.success).toBe(false);
-      expect(result.stacks).toHaveLength(1);
-      expect(result.stacks[0].stackId).toBe('StackA');
+      expect(result.stacks).toHaveLength(2);
+      expect(result.stacks.map((s) => s.stackId)).toContain('StackA');
+      expect(result.stacks.map((s) => s.stackId)).toContain('StackB');
     });
   });
 
@@ -3721,6 +3720,479 @@ describe('DeploymentEngine', () => {
           e.resourceStatus === StackStatus.ROLLBACK_PARTIAL,
       );
       expect(partialEvent).toBeDefined();
+    });
+  });
+
+  // ─── Cross-stack output resolution ───────────────────────────────────────────
+
+  describe('cross-stack output resolution', () => {
+    function makeEngineExposed(
+      adaptersByProvider: Record<string, Partial<ProviderAdapter>>,
+      eventBus?: EventBus<EngineEvent>,
+    ): { engine: DeploymentEngine; stateManager: EngineStateManager } {
+      const bus = eventBus ?? new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(bus, persistence);
+
+      const fullAdapters: Record<string, ProviderAdapter> = {};
+      for (const [provider, partial] of Object.entries(adaptersByProvider)) {
+        fullAdapters[provider] = {
+          create:
+            partial.create ??
+            (() => Promise.reject(new Error('not implemented'))),
+          update:
+            partial.update ??
+            (() => Promise.reject(new Error('not implemented'))),
+          delete: partial.delete ?? (() => Promise.resolve()),
+          getOutput: partial.getOutput ?? (() => Promise.resolve(undefined)),
+          getCreateOnlyProps:
+            partial.getCreateOnlyProps ?? (() => new Set<string>()),
+        };
+      }
+
+      const engine = new DeploymentEngine({
+        adapters: fullAdapters,
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+      return { engine, stateManager };
+    }
+
+    it('stores resolved stack outputs in StackState after stack completes', async () => {
+      // NetworkStack has one resource whose create returns networkId.
+      // The stack declares an output NetworkId referencing that attribute.
+      const { engine, stateManager } = makeEngineExposed({
+        test: {
+          create: () =>
+            Promise.resolve({
+              physicalId: 'phys-1',
+              outputs: { id: 'net-99' },
+            }),
+        },
+      });
+
+      const networkStack: AssemblyStack = {
+        id: 'NetworkStack',
+        templateFile: 'NetworkStack.json',
+        resources: [
+          {
+            logicalId: 'NetABC12345',
+            type: 'test::Resource',
+            provider: 'test',
+            properties: {},
+          },
+        ],
+        outputs: {
+          NetworkId: { value: { ref: 'NetABC12345', attr: 'id' } },
+        },
+        outputKeys: ['NetworkId'],
+        dependencies: [],
+      };
+
+      const plan: DeploymentPlan = {
+        stackWaves: [['NetworkStack']],
+        resourceWaves: { NetworkStack: [['NetABC12345']] },
+      };
+
+      await engine.deploy([networkStack], plan);
+
+      const stackState = stateManager.getStackState('NetworkStack');
+      expect(stackState?.outputs).toEqual({ NetworkId: 'net-99' });
+    });
+
+    it('stores a static-value output in StackState.outputs after deploy', async () => {
+      // Stack has a resource but its output is a plain string, not a { ref, attr } token.
+      const { engine, stateManager } = makeEngineExposed({
+        test: {
+          create: () => Promise.resolve({ physicalId: 'phys-1', outputs: {} }),
+        },
+      });
+
+      const stack: AssemblyStack = {
+        id: 'StaticStack',
+        templateFile: 'StaticStack.json',
+        resources: [
+          {
+            logicalId: 'Res1',
+            type: 'test::Resource',
+            provider: 'test',
+            properties: {},
+          },
+        ],
+        outputs: {
+          Region: { value: 'eu-central-1' },
+        },
+        outputKeys: ['Region'],
+        dependencies: [],
+      };
+
+      const plan: DeploymentPlan = {
+        stackWaves: [['StaticStack']],
+        resourceWaves: { StaticStack: [['Res1']] },
+      };
+
+      await engine.deploy([stack], plan);
+
+      const stackState = stateManager.getStackState('StaticStack');
+      expect(stackState?.outputs).toEqual({ Region: 'eu-central-1' });
+    });
+
+    it('substitutes cross-stack token in server properties with stack output value', async () => {
+      // NetworkStack deploys first; ServerStack resource property references it.
+      const createCalls: Array<{
+        logicalId: string;
+        properties: Record<string, unknown>;
+      }> = [];
+
+      const { engine } = makeEngineExposed({
+        test: {
+          create: (resource: ManifestResource) => {
+            createCalls.push({
+              logicalId: resource.logicalId,
+              properties: resource.properties,
+            });
+            const outputs =
+              resource.logicalId === 'NetABC12345'
+                ? { id: 'net-99' }
+                : undefined;
+            return Promise.resolve({
+              physicalId: `phys-${resource.logicalId}`,
+              ...(outputs ? { outputs } : {}),
+            });
+          },
+        },
+      });
+
+      const networkStack: AssemblyStack = {
+        id: 'NetworkStack',
+        templateFile: 'NetworkStack.json',
+        resources: [
+          {
+            logicalId: 'NetABC12345',
+            type: 'test::Resource',
+            provider: 'test',
+            properties: {},
+          },
+        ],
+        outputs: {
+          NetworkId: { value: { ref: 'NetABC12345', attr: 'id' } },
+        },
+        outputKeys: ['NetworkId'],
+        dependencies: [],
+      };
+
+      const serverStack: AssemblyStack = {
+        id: 'ServerStack',
+        templateFile: 'ServerStack.json',
+        resources: [
+          {
+            logicalId: 'SrvXYZ12345',
+            type: 'test::Resource',
+            provider: 'test',
+            properties: {
+              networkId: { stackRef: 'NetworkStack', outputKey: 'NetworkId' },
+            },
+          },
+        ],
+        outputs: {},
+        outputKeys: [],
+        dependencies: ['NetworkStack'],
+      };
+
+      const plan: DeploymentPlan = {
+        stackWaves: [['NetworkStack'], ['ServerStack']],
+        resourceWaves: {
+          NetworkStack: [['NetABC12345']],
+          ServerStack: [['SrvXYZ12345']],
+        },
+      };
+
+      await engine.deploy([networkStack, serverStack], plan);
+
+      const serverCall = createCalls.find((c) => c.logicalId === 'SrvXYZ12345');
+      expect(serverCall).toBeDefined();
+      expect(serverCall?.properties['networkId']).toBe('net-99');
+    });
+  });
+
+  // ─── Wave failure propagation and SKIPPED status ─────────────────────────────
+
+  describe('wave failure propagation', () => {
+    it('completes all stacks in a wave even when one fails', async () => {
+      const completed: string[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'FailRes') {
+            return Promise.reject(new Error('forced failure'));
+          }
+          completed.push(r.logicalId);
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: () => Promise.resolve(),
+      };
+
+      const bus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(bus, persistence);
+      const engine = new DeploymentEngine({
+        adapters: { test: adapter as ProviderAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // StackA (fails) and StackC (succeeds) are in the same wave.
+      const stacks = [
+        makeStack('StackA', [{ logicalId: 'FailRes' }]),
+        makeStack('StackC', [{ logicalId: 'SuccessRes' }]),
+      ];
+      const plan: DeploymentPlan = {
+        stackWaves: [['StackA', 'StackC']],
+        resourceWaves: {
+          StackA: [['FailRes']],
+          StackC: [['SuccessRes']],
+        },
+      };
+
+      await engine.deploy(stacks, plan);
+
+      // StackC's resource must have been created despite StackA failing.
+      expect(completed).toContain('SuccessRes');
+    });
+
+    it('returns success: false when any stack in a wave fails', async () => {
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'FailRes') {
+            return Promise.reject(new Error('forced failure'));
+          }
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: () => Promise.resolve(),
+      };
+
+      const engine = makeEngine(adapter);
+      const stacks = [
+        makeStack('StackA', [{ logicalId: 'FailRes' }]),
+        makeStack('StackC', [{ logicalId: 'SuccessRes' }]),
+      ];
+      const plan: DeploymentPlan = {
+        stackWaves: [['StackA', 'StackC']],
+        resourceWaves: {
+          StackA: [['FailRes']],
+          StackC: [['SuccessRes']],
+        },
+      };
+
+      const result = await engine.deploy(stacks, plan);
+      expect(result.success).toBe(false);
+    });
+
+    it('records a dependent stack as SKIPPED when its dependency failed', async () => {
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'FailRes') {
+            return Promise.reject(new Error('forced failure'));
+          }
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: () => Promise.resolve(),
+      };
+
+      const bus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(bus, persistence);
+      const engine = new DeploymentEngine({
+        adapters: { test: adapter as ProviderAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // StackA fails in wave 0; StackB depends on StackA (wave 1).
+      const stacks = [
+        makeStack('StackA', [{ logicalId: 'FailRes' }]),
+        makeStack('StackB', [{ logicalId: 'ResB' }], ['StackA']),
+      ];
+      const plan: DeploymentPlan = {
+        stackWaves: [['StackA'], ['StackB']],
+        resourceWaves: {
+          StackA: [['FailRes']],
+          StackB: [['ResB']],
+        },
+      };
+
+      await engine.deploy(stacks, plan);
+
+      const stackBState = stateManager.getStackState('StackB');
+      expect(stackBState?.status).toBe(StackStatus.SKIPPED);
+    });
+
+    it('includes the failing dependency name in the SKIPPED reason', async () => {
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'FailRes') {
+            return Promise.reject(new Error('forced failure'));
+          }
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: () => Promise.resolve(),
+      };
+
+      const bus = new EventBus<EngineEvent>();
+      const events: EngineEvent[] = [];
+      bus.subscribe((e) => events.push(e));
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(bus, persistence);
+      const engine = new DeploymentEngine({
+        adapters: { test: adapter as ProviderAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      const stacks = [
+        makeStack('StackA', [{ logicalId: 'FailRes' }]),
+        makeStack('StackB', [{ logicalId: 'ResB' }], ['StackA']),
+      ];
+      const plan: DeploymentPlan = {
+        stackWaves: [['StackA'], ['StackB']],
+        resourceWaves: {
+          StackA: [['FailRes']],
+          StackB: [['ResB']],
+        },
+      };
+
+      await engine.deploy(stacks, plan);
+
+      const skippedEvent = events.find(
+        (e) =>
+          e.resourceType === 'cdkx::stack' &&
+          e.resourceStatus === StackStatus.SKIPPED &&
+          e.logicalResourceId === 'StackB',
+      );
+      expect(skippedEvent).toBeDefined();
+      expect(skippedEvent?.resourceStatusReason).toMatch(/StackA/);
+    });
+
+    it('cascades SKIPPED to a stack whose dependency was itself SKIPPED', async () => {
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'FailRes') {
+            return Promise.reject(new Error('forced failure'));
+          }
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: () => Promise.resolve(),
+      };
+
+      const bus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(bus, persistence);
+      const engine = new DeploymentEngine({
+        adapters: { test: adapter as ProviderAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // StackA fails → StackB SKIPPED → StackC SKIPPED (depends on B).
+      const stacks = [
+        makeStack('StackA', [{ logicalId: 'FailRes' }]),
+        makeStack('StackB', [{ logicalId: 'ResB' }], ['StackA']),
+        makeStack('StackC', [{ logicalId: 'ResC' }], ['StackB']),
+      ];
+      const plan: DeploymentPlan = {
+        stackWaves: [['StackA'], ['StackB'], ['StackC']],
+        resourceWaves: {
+          StackA: [['FailRes']],
+          StackB: [['ResB']],
+          StackC: [['ResC']],
+        },
+      };
+
+      await engine.deploy(stacks, plan);
+
+      expect(stateManager.getStackState('StackB')?.status).toBe(
+        StackStatus.SKIPPED,
+      );
+      expect(stateManager.getStackState('StackC')?.status).toBe(
+        StackStatus.SKIPPED,
+      );
+    });
+
+    it('deploys an independent stack normally even when a sibling dependency failed', async () => {
+      const created: string[] = [];
+      const adapter: Partial<ProviderAdapter> = {
+        create: (r: ManifestResource): Promise<CreateResult> => {
+          if (r.logicalId === 'FailRes') {
+            return Promise.reject(new Error('forced failure'));
+          }
+          created.push(r.logicalId);
+          return Promise.resolve({ physicalId: `phys-${r.logicalId}` });
+        },
+        delete: () => Promise.resolve(),
+      };
+
+      const bus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(bus, persistence);
+      const engine = new DeploymentEngine({
+        adapters: { test: adapter as ProviderAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // Wave 0: StackA (fails), StackC (succeeds, independent).
+      // Wave 1: StackB (depends on A → SKIPPED), StackD (depends on C → deploys).
+      const stacks = [
+        makeStack('StackA', [{ logicalId: 'FailRes' }]),
+        makeStack('StackB', [{ logicalId: 'ResB' }], ['StackA']),
+        makeStack('StackC', [{ logicalId: 'ResC' }]),
+        makeStack('StackD', [{ logicalId: 'ResD' }], ['StackC']),
+      ];
+      const plan: DeploymentPlan = {
+        stackWaves: [
+          ['StackA', 'StackC'],
+          ['StackB', 'StackD'],
+        ],
+        resourceWaves: {
+          StackA: [['FailRes']],
+          StackB: [['ResB']],
+          StackC: [['ResC']],
+          StackD: [['ResD']],
+        },
+      };
+
+      await engine.deploy(stacks, plan);
+
+      expect(stateManager.getStackState('StackB')?.status).toBe(
+        StackStatus.SKIPPED,
+      );
+      expect(stateManager.getStackState('StackD')?.status).toBe(
+        StackStatus.CREATE_COMPLETE,
+      );
+      expect(created).toContain('ResD');
     });
   });
 });

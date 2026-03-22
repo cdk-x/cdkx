@@ -55,6 +55,23 @@ export class EngineStateManager {
   }
 
   /**
+   * Stores resolved output values on an existing stack state.
+   * Called after all of the stack's resources complete successfully.
+   * Throws if the stack has not been registered via `initStack()`.
+   */
+  public setStackOutputs(
+    stackId: string,
+    outputs: Record<string, unknown>,
+  ): void {
+    const existing = this.requireStack(stackId);
+    const updatedStack: StackState = { ...existing, outputs };
+    this.state = {
+      stacks: { ...this.state.stacks, [stackId]: updatedStack },
+    };
+    this.persistence.save(this.state);
+  }
+
+  /**
    * Transitions an existing stack to the given `StackStatus`.
    * Throws if the stack has not been registered via `initStack()`.
    */

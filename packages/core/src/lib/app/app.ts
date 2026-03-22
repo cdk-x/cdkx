@@ -8,6 +8,7 @@ import {
   CloudAssemblyBuilder,
 } from '../assembly/cloud-assembly';
 import { ISynthesisSession } from '../synthesizer/synthesizer';
+import { CycleDetector, CycleError } from '../synthesizer/cycle-detector';
 
 export interface AppProps {
   /**
@@ -123,17 +124,34 @@ export class App extends Construct {
    * @returns The immutable `CloudAssembly` describing the synthesis output.
    */
   public synth(): CloudAssembly {
+    const stacks = this.node.findAll().filter(Stack.isStack);
+
+    // Phase 1: Collect all stack dependency maps without writing any files.
+    const depMap: Record<string, string[]> = {};
+    for (const stack of stacks) {
+      const { collectDependencies } = stack.synthesizer;
+      if (typeof collectDependencies === 'function') {
+        depMap[stack.artifactId] = stack.synthesizer.collectDependencies!();
+      } else {
+        depMap[stack.artifactId] = [];
+      }
+    }
+
+    // Phase 2: Detect cycles — throw before writing anything.
+    const cycleNodes = CycleDetector.detect(depMap);
+    if (cycleNodes !== null) {
+      throw new CycleError(cycleNodes);
+    }
+
+    // Phase 3: Full synthesis (write files and register artifacts).
     const builder = new CloudAssemblyBuilder(this.outdir);
     const session: ISynthesisSession = {
       outdir: this.outdir,
       assembly: builder,
     };
 
-    // Traverse all constructs, synthesize stacks in tree order
-    for (const construct of this.node.findAll()) {
-      if (Stack.isStack(construct)) {
-        construct.synthesizer.synthesize(session);
-      }
+    for (const stack of stacks) {
+      stack.synthesizer.synthesize(session);
     }
 
     return builder.buildAssembly();
