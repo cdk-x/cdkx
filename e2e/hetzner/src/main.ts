@@ -1,31 +1,16 @@
-import { App, Stack } from '@cdkx-io/core';
-import {
-  HtzNetwork,
-  HtzSubnet,
-  HtzRoute,
-  NetworkSubnetType,
-  NetworkZone,
-} from '@cdkx-io/hetzner';
+import { App } from '@cdkx-io/core';
+import { NetworkStack } from './network-stack';
+import { ComputeStack } from './compute-stack';
 
 const app = new App();
-const networking = new Stack(app, 'Networking');
 
-const network = new HtzNetwork(networking, 'Network', {
-  name: 'e2e-network',
-  ipRange: '10.0.0.0/16',
-});
+const networking = new NetworkStack(app);
 
-new HtzSubnet(networking, 'Subnet', {
-  networkId: network.attrNetworkId,
-  type: NetworkSubnetType.CLOUD,
-  networkZone: NetworkZone.EU_CENTRAL,
-  ipRange: '10.0.1.0/24',
-});
-
-new HtzRoute(networking, 'Route', {
-  networkId: network.attrNetworkId,
-  destination: '10.100.0.0/24',
-  gateway: '10.0.1.1',
+new ComputeStack(app, {
+  // Import the network ID output from the networking stack.
+  // This automatically infers the cross-stack dependency — no manual
+  // addDependency() call required.
+  networkId: networking.networkIdOutput.importValue(),
 });
 
 app.synth();
