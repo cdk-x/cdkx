@@ -1774,6 +1774,7 @@ export class DeploymentEngine {
         if (settledResult.status === 'fulfilled') {
           stackResults.push(settledResult.value);
           if (!settledResult.value.success) {
+            this.deployLock.release();
             return { success: false, stacks: stackResults };
           }
         } else {
