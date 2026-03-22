@@ -126,9 +126,26 @@ export class HetznerSubnetHandler extends ResourceHandler<
       physicalId: state.physicalId,
     });
 
-    await ctx.sdk.networkActions.deleteNetworkSubnet(state.networkId, {
-      ip_range: state.ipRange,
-    });
+    let actionResponse;
+    try {
+      actionResponse = await ctx.sdk.networkActions.deleteNetworkSubnet(
+        state.networkId,
+        {
+          ip_range: state.ipRange,
+        },
+      );
+    } catch (err) {
+      const errorData =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: unknown } }).response?.data
+          : undefined;
+      ctx.logger.info('provider.handler.subnet.delete.error', {
+        error: errorData ?? String(err),
+      });
+      throw err;
+    }
+
+    await this.waitForAction(ctx, actionResponse.data.action.id);
   }
 
   async get(

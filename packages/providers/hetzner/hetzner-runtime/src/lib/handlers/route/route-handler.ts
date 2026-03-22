@@ -114,10 +114,27 @@ export class HetznerRouteHandler extends ResourceHandler<
       physicalId: state.physicalId,
     });
 
-    await ctx.sdk.networkActions.deleteNetworkRoute(state.networkId, {
-      destination: state.destination,
-      gateway: state.gateway,
-    });
+    let actionResponse;
+    try {
+      actionResponse = await ctx.sdk.networkActions.deleteNetworkRoute(
+        state.networkId,
+        {
+          destination: state.destination,
+          gateway: state.gateway,
+        },
+      );
+    } catch (err) {
+      const errorData =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: unknown } }).response?.data
+          : undefined;
+      ctx.logger.info('provider.handler.route.delete.error', {
+        error: errorData ?? String(err),
+      });
+      throw err;
+    }
+
+    await this.waitForAction(ctx, actionResponse.data.action.id);
   }
 
   async get(
