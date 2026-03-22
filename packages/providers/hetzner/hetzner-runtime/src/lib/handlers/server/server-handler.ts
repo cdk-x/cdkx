@@ -41,30 +41,42 @@ export class HetznerServerHandler extends ResourceHandler<
       serverType: props.serverType,
     });
 
-    const response = await ctx.sdk.servers.createServer({
-      name: props.name,
-      location: props.location,
-      datacenter: props.datacenter,
-      server_type: props.serverType,
-      start_after_create: props.startAfterCreate,
-      image: props.image,
-      placement_group: props.placementGroup,
-      ssh_keys: props.sshKeys,
-      volumes: props.volumes as number[] | undefined,
-      networks: props.networks as number[] | undefined,
-      firewalls: props.firewalls,
-      user_data: props.userData,
-      labels: props.labels,
-      automount: props.automount,
-      public_net: props.publicNet
-        ? {
-            enable_ipv4: props.publicNet.enableIpv4,
-            enable_ipv6: props.publicNet.enableIpv6,
-            ipv4: props.publicNet.ipv4,
-            ipv6: props.publicNet.ipv6,
-          }
-        : undefined,
-    });
+    let response;
+    try {
+      response = await ctx.sdk.servers.createServer({
+        name: props.name,
+        location: props.location,
+        datacenter: props.datacenter,
+        server_type: props.serverType,
+        start_after_create: props.startAfterCreate,
+        image: props.image,
+        placement_group: props.placementGroup,
+        ssh_keys: props.sshKeys,
+        volumes: props.volumes as number[] | undefined,
+        networks: props.networks as number[] | undefined,
+        firewalls: props.firewalls,
+        user_data: props.userData,
+        labels: props.labels,
+        automount: props.automount,
+        public_net: props.publicNet
+          ? {
+              enable_ipv4: props.publicNet.enableIpv4,
+              enable_ipv6: props.publicNet.enableIpv6,
+              ipv4: props.publicNet.ipv4,
+              ipv6: props.publicNet.ipv6,
+            }
+          : undefined,
+      });
+    } catch (err) {
+      const errorData =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: unknown } }).response?.data
+          : undefined;
+      ctx.logger.info('provider.handler.server.create.error', {
+        error: errorData ?? String(err),
+      });
+      throw err;
+    }
 
     const server = this.assertExists(
       response.data.server,

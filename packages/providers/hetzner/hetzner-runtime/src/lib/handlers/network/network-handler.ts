@@ -45,12 +45,24 @@ export class HetznerNetworkHandler extends ResourceHandler<
       name: props.name,
     });
 
-    const response = await ctx.sdk.networks.createNetwork({
-      name: props.name,
-      ip_range: props.ipRange,
-      labels: props.labels,
-      expose_routes_to_vswitch: props.exposeRoutesToVswitch,
-    });
+    let response;
+    try {
+      response = await ctx.sdk.networks.createNetwork({
+        name: props.name,
+        ip_range: props.ipRange,
+        labels: props.labels,
+        expose_routes_to_vswitch: props.exposeRoutesToVswitch,
+      });
+    } catch (err) {
+      const errorData =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: unknown } }).response?.data
+          : undefined;
+      ctx.logger.info('provider.handler.network.create.error', {
+        error: errorData ?? String(err),
+      });
+      throw err;
+    }
 
     const network = this.assertExists(
       response.data.network,
@@ -76,11 +88,23 @@ export class HetznerNetworkHandler extends ResourceHandler<
       name: props.name,
     });
 
-    const response = await ctx.sdk.networks.updateNetwork(state.networkId, {
-      name: props.name,
-      labels: props.labels,
-      expose_routes_to_vswitch: props.exposeRoutesToVswitch,
-    });
+    let response;
+    try {
+      response = await ctx.sdk.networks.updateNetwork(state.networkId, {
+        name: props.name,
+        labels: props.labels,
+        expose_routes_to_vswitch: props.exposeRoutesToVswitch,
+      });
+    } catch (err) {
+      const errorData =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: unknown } }).response?.data
+          : undefined;
+      ctx.logger.info('provider.handler.network.update.error', {
+        error: errorData ?? String(err),
+      });
+      throw err;
+    }
 
     const network = this.assertExists(
       response.data.network,
@@ -104,7 +128,18 @@ export class HetznerNetworkHandler extends ResourceHandler<
       networkId: state.networkId,
     });
 
-    await ctx.sdk.networks.deleteNetwork(state.networkId);
+    try {
+      await ctx.sdk.networks.deleteNetwork(state.networkId);
+    } catch (err) {
+      const errorData =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: unknown } }).response?.data
+          : undefined;
+      ctx.logger.info('provider.handler.network.delete.error', {
+        error: errorData ?? String(err),
+      });
+      throw err;
+    }
   }
 
   async get(
