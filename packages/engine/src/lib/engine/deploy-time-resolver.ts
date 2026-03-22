@@ -1,4 +1,5 @@
 import type { EngineState } from '../state/engine-state';
+import { ResourceStatus } from '../states/resource-status';
 
 // ─── Token type guards ────────────────────────────────────────────────────────
 
@@ -91,6 +92,11 @@ export class DeployTimeResolver {
     if (resourceState === undefined) {
       throw new Error(
         `Token resolution failed: resource '${ref}' not found in stack '${this.stackId}'.`,
+      );
+    }
+    if (resourceState.status === ResourceStatus.CREATE_FAILED) {
+      throw new Error(
+        `Token resolution failed: resource '${ref}' is in FAILED state and cannot provide attribute '${attr}'.`,
       );
     }
     const outputs = resourceState.outputs ?? {};
