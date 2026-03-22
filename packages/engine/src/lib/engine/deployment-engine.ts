@@ -480,8 +480,7 @@ export class DeploymentEngine {
               actualPlan.resourceWaves[stackId] ?? [],
             );
           } catch (err: unknown) {
-            const message =
-              err instanceof Error ? err.message : String(err);
+            const message = err instanceof Error ? err.message : String(err);
             return {
               stackId,
               success: false,
@@ -951,10 +950,14 @@ export class DeploymentEngine {
 
     // If this resource already exists as CREATE_COMPLETE in prior state,
     // compute a diff to decide whether to update or skip.
-    const existingState = this.stateManager.getResourceState(
-      stack.id,
-      logicalId,
-    );
+    let existingState = this.stateManager.getResourceState(stack.id, logicalId);
+
+    // A CREATE_FAILED resource from a previous deploy has no physical ID —
+    // remove it from state so it can be re-created from scratch.
+    if (existingState?.status === ResourceStatus.CREATE_FAILED) {
+      this.stateManager.removeResource(stack.id, logicalId);
+      existingState = undefined;
+    }
 
     if (existingState?.status === ResourceStatus.CREATE_COMPLETE) {
       const patch = this.computePatch(
