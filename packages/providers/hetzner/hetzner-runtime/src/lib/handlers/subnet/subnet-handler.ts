@@ -1,4 +1,8 @@
-import { ResourceHandler, RuntimeContext } from '@cdkx-io/core';
+import {
+  ResourceHandler,
+  RuntimeContext,
+  StabilizeStatus,
+} from '@cdkx-io/core';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 /**
@@ -34,6 +38,11 @@ export interface HetznerSubnetState {
  * Manages subnets via the Hetzner Cloud Network Actions API.
  * Subnets are identified by a composite physicalId: `${networkId}/${ipRange}`
  * since they don't have their own unique ID in the Hetzner API.
+ *
+ * All mutating SDK calls return a Hetzner Action object. We poll the action
+ * until it reaches `success` (or `error`) before returning, because the
+ * Hetzner Cloud API only allows one concurrent action per network — returning
+ * before the action completes would cause a 422 on the next network operation.
  */
 export class HetznerSubnetHandler extends ResourceHandler<
   HetznerSubnetProps,
@@ -49,12 +58,17 @@ export class HetznerSubnetHandler extends ResourceHandler<
       ipRange: props.ipRange,
     });
 
-    await ctx.sdk.networkActions.addNetworkSubnet(props.networkId, {
-      type: props.type,
-      network_zone: props.networkZone,
-      ip_range: props.ipRange,
-      vswitch_id: props.vswitchId,
-    });
+    const actionResponse = await ctx.sdk.networkActions.addNetworkSubnet(
+      props.networkId,
+      {
+        type: props.type,
+        network_zone: props.networkZone,
+        ip_range: props.ipRange,
+        vswitch_id: props.vswitchId,
+      },
+    );
+
+    await this.waitForAction(ctx, actionResponse.data.action.id);
 
     // The action response doesn't contain the subnet details directly.
     // We need to fetch the network and find the subnet by its properties.
@@ -165,5 +179,26 @@ export class HetznerSubnetHandler extends ResourceHandler<
       vswitchId: subnet.vswitch_id ?? undefined,
       gateway: subnet.gateway ?? undefined,
     };
+  }
+
+  /**
+   * Polls a Hetzner Action until it reaches `success` or `error`.
+   * Hetzner's network API only allows one concurrent action per network;
+   * callers must wait for the action to complete before issuing the next one.
+   */
+  private async waitForAction(
+    ctx: RuntimeContext<HetznerSdk>,
+    actionId: number,
+  ): Promise<void> {
+    await this.waitUntilStabilized(async (): Promise<StabilizeStatus> => {
+      const response = await ctx.sdk.actions.getAction(actionId);
+      const status = response.data.action.status;
+      if (status === 'success') return { status: 'ready' };
+      if (status === 'running') return { status: 'pending' };
+      return {
+        status: 'failed',
+        reason: `Hetzner action ${actionId} ended with status '${status}'`,
+      };
+    }, ctx.stabilizeConfig);
   }
 }
