@@ -4,13 +4,12 @@
 
 ```typescript
 import { App, Stack } from '@cdkx-io/core';
-import { HetznerProvider } from '@cdkx-io/hetzner';
-import { NtvHetznerNetwork } from '@cdkx-io/hetzner';
+import { HtzNetwork } from '@cdkx-io/hetzner';
 
 const app = new App();
-const stack = new Stack(app, 'MyStack', { provider: new HetznerProvider() });
+const stack = new Stack(app, 'MyStack');
 
-new NtvHetznerNetwork(stack, 'Network', {
+new HtzNetwork(stack, 'Network', {
   name: 'my-network',
   ip_range: '10.0.0.0/16',
 });

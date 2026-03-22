@@ -195,7 +195,7 @@ values and throws on any remaining unresolved class instances.
 L1 constructs expose attribute getters that return an `IResolvable`:
 
 ```ts
-// NtvHetznerNetwork exposes:
+// HtzNetwork exposes:
 get attrNetworkId(): IResolvable {
   return this.getAtt('networkId');
 }
@@ -204,7 +204,7 @@ get attrNetworkId(): IResolvable {
 When used as a prop on another resource:
 
 ```ts
-new NtvHetznerSubnet(stack, 'Subnet', {
+new HtzSubnet(stack, 'Subnet', {
   networkId: network.attrNetworkId, // IResolvable → { ref: 'NetworkXXXX', attr: 'networkId' }
 });
 ```

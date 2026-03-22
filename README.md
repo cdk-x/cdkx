@@ -14,17 +14,17 @@ A multi-provider CDK-like framework for TypeScript. Write your infrastructure as
 
 ```typescript
 import { App, Stack } from '@cdkx-io/core';
-import { HetznerProvider, NtvHetznerNetwork, NtvHetznerSubnet } from '@cdkx-io/hetzner';
+import { HtzNetwork, HtzSubnet } from '@cdkx-io/hetzner';
 
 const app = new App();
-const stack = new Stack(app, 'MyStack', { provider: new HetznerProvider() });
+const stack = new Stack(app, 'MyStack');
 
-const network = new NtvHetznerNetwork(stack, 'Network', {
+const network = new HtzNetwork(stack, 'Network', {
   name: 'my-network',
   ip_range: '10.0.0.0/16',
 });
 
-new NtvHetznerSubnet(stack, 'Subnet', {
+new HtzSubnet(stack, 'Subnet', {
   network_id: network.getAtt('id'), // (1)
   type: 'cloud',
   ip_range: '10.0.1.0/24',
