@@ -167,7 +167,24 @@ export class HetznerServerHandler extends ResourceHandler<
       serverId: state.serverId,
     });
 
-    await ctx.sdk.servers.deleteServer(state.serverId);
+    const deleteResponse = await ctx.sdk.servers.deleteServer(state.serverId);
+
+    // deleteServer returns an async Action. Poll until it reaches 'success'
+    // so the server's network attachments are fully released before dependent
+    // resources (subnets, routes) are deleted.
+    const action = deleteResponse.data.action;
+    if (action) {
+      await this.waitUntilStabilized(async (): Promise<StabilizeStatus> => {
+        const actionResponse = await ctx.sdk.actions.getAction(action.id);
+        const actionStatus = actionResponse.data.action.status;
+        if (actionStatus === 'success') return { status: 'ready' };
+        if (actionStatus === 'running') return { status: 'pending' };
+        return {
+          status: 'failed',
+          reason: `Server deletion action ${action.id} ended with status '${actionStatus}'`,
+        };
+      }, ctx.stabilizeConfig);
+    }
   }
 
   async get(
