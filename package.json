@@ -1,7 +1,7 @@
 {
   "name": "@cdkx-io/cdkx",
   "version": "0.1.0",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "cdkx": "nx build @cdkx-io/cli && node packages/cli/dist/main.js",
     "ralph": "bash .sandcastle/ralph.sh",
