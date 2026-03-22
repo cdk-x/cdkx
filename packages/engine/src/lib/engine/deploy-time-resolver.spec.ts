@@ -127,6 +127,22 @@ describe('DeployTimeResolver', () => {
         resolver.resolve({ ref: 'ResABC12345', attr: 'missingAttr' }),
       ).toThrow(/attribute 'missingAttr'.*not found/i);
     });
+
+    it('throws when the referenced resource is in FAILED state', () => {
+      const state = makeState({
+        [STACK_ID]: makeStackState({
+          ResABC12345: {
+            status: ResourceStatus.CREATE_FAILED,
+            properties: {},
+            outputs: { id: 'partial' },
+          },
+        }),
+      });
+      const resolver = new DeployTimeResolver(state, STACK_ID);
+      expect(() =>
+        resolver.resolve({ ref: 'ResABC12345', attr: 'id' }),
+      ).toThrow(/ResABC12345/);
+    });
   });
 
   describe('{ stackRef, outputKey } cross-stack token resolution', () => {

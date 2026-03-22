@@ -3804,6 +3804,43 @@ describe('DeploymentEngine', () => {
       expect(stackState?.outputs).toEqual({ NetworkId: 'net-99' });
     });
 
+    it('stores a static-value output in StackState.outputs after deploy', async () => {
+      // Stack has a resource but its output is a plain string, not a { ref, attr } token.
+      const { engine, stateManager } = makeEngineExposed({
+        test: {
+          create: () => Promise.resolve({ physicalId: 'phys-1', outputs: {} }),
+        },
+      });
+
+      const stack: AssemblyStack = {
+        id: 'StaticStack',
+        templateFile: 'StaticStack.json',
+        resources: [
+          {
+            logicalId: 'Res1',
+            type: 'test::Resource',
+            provider: 'test',
+            properties: {},
+          },
+        ],
+        outputs: {
+          Region: { value: 'eu-central-1' },
+        },
+        outputKeys: ['Region'],
+        dependencies: [],
+      };
+
+      const plan: DeploymentPlan = {
+        stackWaves: [['StaticStack']],
+        resourceWaves: { StaticStack: [['Res1']] },
+      };
+
+      await engine.deploy([stack], plan);
+
+      const stackState = stateManager.getStackState('StaticStack');
+      expect(stackState?.outputs).toEqual({ Region: 'eu-central-1' });
+    });
+
     it('substitutes cross-stack token in server properties with stack output value', async () => {
       // NetworkStack deploys first; ServerStack resource property references it.
       const createCalls: Array<{
@@ -4135,7 +4172,10 @@ describe('DeploymentEngine', () => {
         makeStack('StackD', [{ logicalId: 'ResD' }], ['StackC']),
       ];
       const plan: DeploymentPlan = {
-        stackWaves: [['StackA', 'StackC'], ['StackB', 'StackD']],
+        stackWaves: [
+          ['StackA', 'StackC'],
+          ['StackB', 'StackD'],
+        ],
         resourceWaves: {
           StackA: [['FailRes']],
           StackB: [['ResB']],
