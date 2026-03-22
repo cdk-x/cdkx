@@ -1,3 +1,4 @@
+import { CycleDetector } from '@cdkx-io/core';
 import type {
   AssemblyResource,
   AssemblyStack,
@@ -193,6 +194,21 @@ export class DeploymentPlanner {
    *
    * @throws `CycleError` if a cycle is detected among stacks or resources.
    */
+  /**
+   * Query-only cycle detection on a plain dependency map.
+   *
+   * Unlike `plan()`, this method does not throw — it returns the cycle nodes
+   * or `null`, leaving error handling to the caller.
+   *
+   * @param dependencies - Map of node ID → list of dependency IDs.
+   * @returns Array of node IDs in the cycle, or `null` if the graph is acyclic.
+   */
+  public static detectCycles(
+    dependencies: Record<string, string[]>,
+  ): string[] | null {
+    return CycleDetector.detect(dependencies);
+  }
+
   public plan(stacks: AssemblyStack[]): DeploymentPlan {
     const stackWaves = this.planStacks(stacks);
     const resourceWaves = this.planResources(stacks);

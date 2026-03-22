@@ -64,6 +64,16 @@ export interface StackState {
    * template JSON file).
    */
   readonly resources: Record<string, ResourceState>;
+
+  /**
+   * Resolved stack output values, eagerly stored after all of the stack's
+   * resources have been successfully deployed.
+   *
+   * Keyed by output key (the `StackOutput` construct id).
+   * Used by `DeployTimeResolver` to substitute `{ stackRef, outputKey }`
+   * tokens in dependent stacks.
+   */
+  readonly outputs?: Record<string, unknown>;
 }
 
 /**

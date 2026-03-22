@@ -34,9 +34,14 @@ function fakeServer(
   };
 }
 
-/** Creates an HetznerSdk stub with only the `servers` API mocked. */
+/** Creates an HetznerSdk stub with only the `servers` and `actions` API mocked. */
 function stubSdk(overrides?: Partial<HetznerSdk['servers']>): HetznerSdk {
   return {
+    actions: {
+      getAction: jest
+        .fn()
+        .mockResolvedValue({ data: { action: { status: 'success' } } }),
+    },
     servers: {
       createServer: jest.fn(),
       updateServer: jest.fn(),
@@ -161,11 +166,9 @@ describe('HetznerServerHandler', () => {
         createServer: jest.fn().mockResolvedValue({
           data: { server: fakeServer({ status: 'initializing' }) },
         }),
-        getServer: jest
-          .fn()
-          .mockResolvedValue({
-            data: { server: fakeServer({ status: 'off' }) },
-          }),
+        getServer: jest.fn().mockResolvedValue({
+          data: { server: fakeServer({ status: 'off' }) },
+        }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
       ctx.stabilizeConfig = { intervalMs: 0, timeoutMs: 5000 };
@@ -180,11 +183,9 @@ describe('HetznerServerHandler', () => {
         createServer: jest.fn().mockResolvedValue({
           data: { server: fakeServer({ status: 'initializing' }) },
         }),
-        getServer: jest
-          .fn()
-          .mockResolvedValue({
-            data: { server: fakeServer({ status: 'initializing' }) },
-          }),
+        getServer: jest.fn().mockResolvedValue({
+          data: { server: fakeServer({ status: 'initializing' }) },
+        }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
       ctx.stabilizeConfig = { intervalMs: 0, timeoutMs: 0 };
@@ -289,7 +290,11 @@ describe('HetznerServerHandler', () => {
   describe('delete', () => {
     it('calls deleteServer with the serverId', async () => {
       const sdk = stubSdk({
-        deleteServer: jest.fn().mockResolvedValue(undefined),
+        deleteServer: jest
+          .fn()
+          .mockResolvedValue({
+            data: { action: { id: 99, status: 'running' } },
+          }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
@@ -298,9 +303,28 @@ describe('HetznerServerHandler', () => {
       expect(sdk.servers.deleteServer).toHaveBeenCalledWith(101);
     });
 
+    it('polls the deletion action until success before resolving', async () => {
+      const sdk = stubSdk({
+        deleteServer: jest
+          .fn()
+          .mockResolvedValue({
+            data: { action: { id: 99, status: 'running' } },
+          }),
+      });
+      const ctx = new HetznerRuntimeContext(sdk, logger);
+
+      await handler.delete(ctx, baseState);
+
+      expect(sdk.actions.getAction).toHaveBeenCalledWith(99);
+    });
+
     it('logs the delete call', async () => {
       const sdk = stubSdk({
-        deleteServer: jest.fn().mockResolvedValue(undefined),
+        deleteServer: jest
+          .fn()
+          .mockResolvedValue({
+            data: { action: { id: 99, status: 'running' } },
+          }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 

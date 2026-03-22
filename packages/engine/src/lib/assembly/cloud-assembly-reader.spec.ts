@@ -12,6 +12,7 @@ function makeManifest(
       templateFile: string;
       displayName?: string;
       outputKeys?: string[];
+      dependencies?: string[];
     }
   >,
 ): string {
@@ -22,6 +23,7 @@ function makeManifest(
       properties: { templateFile: string };
       displayName?: string;
       outputKeys?: string[];
+      dependencies?: string[];
     }
   > = {};
   for (const [id, a] of Object.entries(artifacts)) {
@@ -30,6 +32,7 @@ function makeManifest(
       properties: { templateFile: a.templateFile },
       ...(a.displayName !== undefined ? { displayName: a.displayName } : {}),
       ...(a.outputKeys !== undefined ? { outputKeys: a.outputKeys } : {}),
+      ...(a.dependencies !== undefined ? { dependencies: a.dependencies } : {}),
     };
   }
   return JSON.stringify(
@@ -369,11 +372,72 @@ describe('CloudAssemblyReader', () => {
         expect(a.dependencies).toEqual([]);
       });
 
-      it('StackB depends on StackA because it references NetworkId output key', () => {
+      it('StackB has no dependencies because none are declared in the manifest', () => {
         const b = stacks.find((s) => s.id === 'StackB');
         expect(b).toBeDefined();
         if (!b) return;
-        expect(b.dependencies).toContain('StackA');
+        expect(b.dependencies).toEqual([]);
+      });
+    });
+
+    describe('cross-stack dependencies from manifest field', () => {
+      let stacks: AssemblyStack[];
+
+      beforeAll(() => {
+        const files: Record<string, string> = {
+          [`${OUTDIR}/manifest.json`]: makeManifest({
+            NetworkStack: {
+              templateFile: 'NetworkStack.json',
+              outputKeys: ['NetworkId'],
+            },
+            ServerStack: {
+              templateFile: 'ServerStack.json',
+              dependencies: ['NetworkStack'],
+            },
+          }),
+          [`${OUTDIR}/NetworkStack.json`]: makeTemplate(
+            {
+              NetABCDEF01: {
+                type: 'Hetzner::Networking::Network',
+                properties: { name: 'net' },
+              },
+            },
+            { NetworkId: { value: { ref: 'NetABCDEF01', attr: 'id' } } },
+          ),
+          [`${OUTDIR}/ServerStack.json`]: makeTemplate({
+            SrvXYZ12345: {
+              type: 'Hetzner::Compute::Server',
+              properties: {
+                network_id: {
+                  stackRef: 'NetworkStack',
+                  outputKey: 'NetworkId',
+                },
+              },
+            },
+          }),
+        };
+        stacks = new CloudAssemblyReader(OUTDIR, makeDeps(files)).read();
+      });
+
+      it('NetworkStack has no dependencies', () => {
+        const net = stacks.find((s) => s.id === 'NetworkStack');
+        expect(net?.dependencies).toEqual([]);
+      });
+
+      it('ServerStack dependencies are read directly from the manifest field', () => {
+        const srv = stacks.find((s) => s.id === 'ServerStack');
+        expect(srv?.dependencies).toEqual(['NetworkStack']);
+      });
+
+      it('ServerStack resource properties contain the raw cross-stack token', () => {
+        const srv = stacks.find((s) => s.id === 'ServerStack');
+        const resource = srv?.resources.find(
+          (r) => r.logicalId === 'SrvXYZ12345',
+        );
+        expect(resource?.properties['network_id']).toEqual({
+          stackRef: 'NetworkStack',
+          outputKey: 'NetworkId',
+        });
       });
     });
   });

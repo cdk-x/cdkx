@@ -34,6 +34,11 @@ function stubSdk(
   overrides?: Partial<HetznerSdk['networkActions'] & HetznerSdk['networks']>,
 ): HetznerSdk {
   return {
+    actions: {
+      getAction: jest
+        .fn()
+        .mockResolvedValue({ data: { action: { status: 'success' } } }),
+    },
     networkActions: {
       addNetworkRoute: jest.fn(),
       deleteNetworkRoute: jest.fn(),
@@ -197,7 +202,9 @@ describe('HetznerRouteHandler', () => {
   describe('delete', () => {
     it('calls deleteNetworkRoute with networkId, destination and gateway', async () => {
       const sdk = stubSdk({
-        deleteNetworkRoute: jest.fn().mockResolvedValue(undefined),
+        deleteNetworkRoute: jest
+          .fn()
+          .mockResolvedValue({ data: { action: { id: 123 } } }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
@@ -216,7 +223,9 @@ describe('HetznerRouteHandler', () => {
 
     it('logs the delete call', async () => {
       const sdk = stubSdk({
-        deleteNetworkRoute: jest.fn().mockResolvedValue(undefined),
+        deleteNetworkRoute: jest
+          .fn()
+          .mockResolvedValue({ data: { action: { id: 123 } } }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 

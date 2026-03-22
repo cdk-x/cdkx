@@ -33,14 +33,26 @@ export class HetznerCertificateHandler extends ResourceHandler<
       type: props.type,
     });
 
-    const response = await ctx.sdk.certificates.createCertificate({
-      name: props.name,
-      labels: props.labels,
-      type: props.type as CertificateType,
-      certificate: props.certificate,
-      private_key: props.privateKey,
-      domain_names: props.domainNames,
-    });
+    let response;
+    try {
+      response = await ctx.sdk.certificates.createCertificate({
+        name: props.name,
+        labels: props.labels,
+        type: props.type as CertificateType,
+        certificate: props.certificate,
+        private_key: props.privateKey,
+        domain_names: props.domainNames,
+      });
+    } catch (err) {
+      const errorData =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: unknown } }).response?.data
+          : undefined;
+      ctx.logger.info('provider.handler.certificate.create.error', {
+        error: errorData ?? String(err),
+      });
+      throw err;
+    }
 
     const certificate = this.assertExists(
       response.data.certificate,
@@ -68,13 +80,25 @@ export class HetznerCertificateHandler extends ResourceHandler<
       name: props.name,
     });
 
-    const response = await ctx.sdk.certificates.updateCertificate(
-      state.certificateId,
-      {
-        name: props.name,
-        labels: props.labels,
-      },
-    );
+    let response;
+    try {
+      response = await ctx.sdk.certificates.updateCertificate(
+        state.certificateId,
+        {
+          name: props.name,
+          labels: props.labels,
+        },
+      );
+    } catch (err) {
+      const errorData =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: unknown } }).response?.data
+          : undefined;
+      ctx.logger.info('provider.handler.certificate.update.error', {
+        error: errorData ?? String(err),
+      });
+      throw err;
+    }
 
     const certificate = this.assertExists(
       response.data.certificate,
@@ -100,7 +124,18 @@ export class HetznerCertificateHandler extends ResourceHandler<
       certificateId: state.certificateId,
     });
 
-    await ctx.sdk.certificates.deleteCertificate(state.certificateId);
+    try {
+      await ctx.sdk.certificates.deleteCertificate(state.certificateId);
+    } catch (err) {
+      const errorData =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: unknown } }).response?.data
+          : undefined;
+      ctx.logger.info('provider.handler.certificate.delete.error', {
+        error: errorData ?? String(err),
+      });
+      throw err;
+    }
   }
 
   async get(
