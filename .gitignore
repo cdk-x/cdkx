@@ -66,3 +66,9 @@ examples/
 # Claude Code local settings (machine-specific)
 .claude/settings.local.json
 .claude/settings.json
+
+# MkDocs build output
+site/
+
+# TypeDoc build output
+typedoc-out/

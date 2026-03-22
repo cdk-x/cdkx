@@ -4,7 +4,9 @@
   "license": "MIT",
   "scripts": {
     "cdkx": "nx build @cdkx-io/cli && node packages/cli/dist/main.js",
-    "ralph": "bash .sandcastle/ralph.sh"
+    "ralph": "bash .sandcastle/ralph.sh",
+    "docs:serve": "mkdocs serve",
+    "docs:build": "mkdocs build"
   },
   "private": true,
   "dependencies": {
