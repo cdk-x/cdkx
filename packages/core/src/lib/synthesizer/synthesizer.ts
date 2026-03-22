@@ -37,6 +37,13 @@ export interface IStackSynthesizer {
    * Called during `app.synth()` to produce the stack's output artifact.
    */
   synthesize(session: ISynthesisSession): void;
+
+  /**
+   * Optional. Returns the artifact IDs of stacks this stack depends on.
+   * Called by `App.synth()` before writing any files so that cross-stack
+   * cycles can be detected and reported without producing partial output.
+   */
+  collectDependencies?(): string[];
 }
 
 /**
@@ -90,6 +97,21 @@ export class JsonSynthesizer implements IStackSynthesizer {
 
   public bind(stack: IStackRef): void {
     this.stack = stack;
+  }
+
+  /**
+   * Returns the artifact IDs of stacks this stack depends on, by resolving
+   * all resource properties and scanning for `{ stackRef }` tokens.
+   * No files are written.
+   */
+  public collectDependencies(): string[] {
+    const resources = Object.assign(
+      {},
+      ...this.stack.getProviderResources().map((r) => r.toJson()),
+    );
+    const stackRefs = new Set<string>();
+    this.collectStackRefs(resources, stackRefs);
+    return Array.from(stackRefs);
   }
 
   public synthesize(session: ISynthesisSession): void {
