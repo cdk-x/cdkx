@@ -382,15 +382,15 @@ Abstract base for higher-level constructs. Extends `Construct`, implements `IRes
 
 **Construct layers:**
 
-- **L1 (Native / `NtvXxx`)** — thin typed wrapper over `ProviderResource`. Equivalent to
-  `CfnXxx` in AWS CDK. The `Ntv` prefix signals "native" — the raw provider resource level.
-  Always sets `this.node.defaultChild = this.l1`. Exposes cross-reference attributes via
-  `ResourceAttribute`. Example: `NtvHetznerServer`, `NtvKubernetesDeployment` (future provider packages).
+- **L1** — thin typed wrapper over `ProviderResource`. Equivalent to `CfnXxx` in AWS CDK.
+  The class name prefix is set at codegen time via `--prefix` (e.g. `Htz` for Hetzner →
+  `HtzServer`, `HtzNetwork`). Exposes cross-reference attributes via `ResourceAttribute`.
+  Example: `HtzServer` (Hetzner), `K8sDeployment` (future provider packages).
 - **L2** — future layer. Adds higher-level abstractions on top of L1: typed props,
   convenience methods, grants, metrics, events, connections, etc. Not yet implemented.
 
-Provider packages will implement their own `NtvXxx` L1 classes. Test helpers use plain
-`ProviderResource` directly — no `NtvXxx` wrappers needed in tests.
+Provider packages implement their own L1 classes via `spec-to-cdkx` codegen. Test helpers
+use plain `ProviderResource` directly — no L1 wrappers needed in tests.
 
 ---
 
@@ -756,8 +756,8 @@ Each generated file contains (in order):
 3. Nested interfaces (flat list — includes deep nesting, all at top level)
 4. Enums
 5. Resource props interface (`HetznerNetwork`)
-6. L1 props interface (`NtvHetznerNetworkProps extends HetznerNetwork {}`)
-7. L1 class (`NtvHetznerNetwork extends ProviderResource`)
+6. L1 props interface (`HtzNetworkProps extends HetznerNetwork {}`)
+7. L1 class (`HtzNetwork extends ProviderResource`)
 
 **Key detail:** the L1 class constructor casts `props` as
 `props as unknown as Record<string, PropertyValue>` — this is necessary because

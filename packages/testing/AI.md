@@ -50,7 +50,7 @@ import { ProviderResource } from '@cdkx-io/core';
 describe('MyResource', () => {
   it('synthesizes correctly', () => {
     const app = TestApp.default();
-    const stack = TestStack.default(app, { provider: new TestProvider() });
+    const stack = TestStack.default(app, {});
 
     new ProviderResource(stack, 'MyResource', {
       type: 'test::Resource',
@@ -75,7 +75,6 @@ is the pattern used by `@cdkx-io/hetzner`'s network topology test.
 ```ts
 import * as path from 'node:path';
 import { App, Stack } from '@cdkx-io/core';
-import { HetznerProvider } from '@cdkx-io/hetzner';
 import { SynthHelpers } from '@cdkx-io/testing';
 
 const OUTDIR = path.resolve(__dirname, '../../cdkx.out');
@@ -85,9 +84,7 @@ describe('network topology', () => {
 
   beforeAll(() => {
     const app = new App({ outdir: OUTDIR });
-    const stack = new Stack(app, 'HetznerNetworkStack', {
-      provider: new HetznerProvider(),
-    });
+    const stack = new Stack(app, 'HetznerNetworkStack');
 
     // ... add resources to stack ...
 
@@ -119,7 +116,7 @@ import {
 } from '@cdkx-io/testing';
 
 const app = TestApp.default();
-const stack = TestStack.default(app, { provider: new TestProvider() });
+const stack = TestStack.default(app, {});
 const resource = TestResources.resource(stack, 'MyRes');
 
 const entry = SynthHelpers.resourceEntry(resource);
@@ -154,7 +151,7 @@ const app = new AppWithCustomResolver();
 | Unit test — single resource, no file I/O                  | `TestApp.default()` + `SynthHelpers.resourceEntry()`  |
 | Unit test — full stack synthesis, ephemeral               | `TestApp.default()` + `SynthHelpers.synthSnapshot()`  |
 | Integration test — permanent output for visual inspection | `new App({ outdir: FIXEDPATH })` + `app.synth()`      |
-| Testing a real provider (e.g. `HetznerProvider`)          | Pass `new HetznerProvider()` to `TestStack.default()` |
+| Integration test with a real provider stack               | Use `new Stack(app, 'id')` directly — no provider prop needed |
 | Testing resolver pipeline cache or `getResolvers()` calls | `SpyProvider`                                         |
 | Testing a custom synthesizer                              | `CustomSynthesizerProvider`                           |
 | Testing provider-agnostic synthesis behaviour             | `TestProvider` (identifier `'test'`)                  |
@@ -198,7 +195,7 @@ Extends `Stack` from `@cdkx-io/core`.
 | ------------------------------ | ------------------------------------------------------------------ |
 | `static default(scope, props)` | Creates a `Stack` named `'DefaultTestStack'` with the given props. |
 
-`StackProps.provider` is required — pass the provider under test or `new TestProvider()`.
+`StackProps` is all-optional (`synthesizer?`, `description?`, `stackName?`) — pass `{}` or omit props entirely. No provider prop exists on `Stack`; each resource carries its provider implicitly.
 
 ---
 

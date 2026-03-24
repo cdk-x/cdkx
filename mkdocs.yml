@@ -1,0 +1,129 @@
+site_name: cdkx
+site_description: A multi-provider CDK-like framework for TypeScript. Write construct trees, deploy to any cloud.
+site_url: https://docs.cdkx.com/
+repo_url: https://github.com/cdk-x/cdkx
+repo_name: cdk-x/cdkx
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+  logo: assets/logo.svg
+  favicon: assets/favicon.png
+  icon:
+    repo: fontawesome/brands/github
+
+extra:
+  version:
+    provider: mike
+    default: latest
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/cdk-x/cdkx
+    - icon: fontawesome/brands/npm
+      link: https://www.npmjs.com/package/@cdkx-io/cli
+
+extra_css:
+  - assets/extra.css
+
+plugins:
+  - search
+  - mike:
+      alias_type: symlink
+      redirect_template: null
+      deploy_prefix: ''
+      canonical_version: latest
+      version_selector: true
+      css_dir: css
+      javascript_dir: js
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: On this page
+  - tables
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+  - pymdownx.details
+  - pymdownx.snippets
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Your First Stack: getting-started/first-stack.md
+      - CLI Reference: getting-started/cli-reference.md
+  - Concepts:
+      - App: concepts/app.md
+      - Stack: concepts/stack.md
+      - Construct: concepts/construct.md
+      - Cloud Assembly: concepts/cloud-assembly.md
+      - Tokens & Cross-stack References: concepts/tokens.md
+      - Deployment Lifecycle: concepts/deployment-lifecycle.md
+  - Providers:
+      - Hetzner:
+          - Overview: providers/hetzner/index.md
+          - Network: providers/hetzner/network.md
+          - Subnet: providers/hetzner/subnet.md
+          - Route: providers/hetzner/route.md
+          - Server: providers/hetzner/server.md
+          - Certificate: providers/hetzner/certificate.md
+  - API Reference: api/index.md
+  - Contributing:
+      - Add a Provider: contributing/add-provider.md
+      - Add a Resource Handler: contributing/add-resource-handler.md
