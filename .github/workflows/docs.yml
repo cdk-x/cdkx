@@ -7,20 +7,11 @@ on:
         description: 'Version to deploy (e.g. 0.1.0 or dev)'
         required: true
         type: string
-      alias:
-        description: 'Mike alias to update (e.g. latest). Leave empty for none.'
-        required: false
-        type: string
-        default: ''
   workflow_call:
     inputs:
       version:
         required: true
         type: string
-      alias:
-        required: false
-        type: string
-        default: ''
 
 permissions:
   contents: write
@@ -63,16 +54,9 @@ jobs:
           cp -r typedoc-out/hetzner docs/api/hetzner
 
       - name: Deploy with mike
+        env:
+          VERSION: ${{ inputs.version }}
+          ALIAS: latest
         run: |
-          VERSION="${{ inputs.version }}"
-          ALIAS="${{ inputs.alias }}"
-
-          if [ -n "$ALIAS" ]; then
-            mike deploy --push --update-aliases "$VERSION" "$ALIAS"
-          else
-            mike deploy --push "$VERSION"
-          fi
-
-      - name: Set default version
-        run: mike set-default --push latest
-        continue-on-error: true
+          mike deploy --push --update-aliases ${{ env.VERSION }} ${{ env.ALIAS }}
+          mike set-default --push ${{ env.ALIAS }}
