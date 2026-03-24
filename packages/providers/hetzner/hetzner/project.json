@@ -29,6 +29,14 @@
         "rootDir": "packages/providers/hetzner/hetzner/src"
       }
     },
+    "docs": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/typedoc-out/hetzner"],
+      "options": {
+        "command": "typedoc",
+        "cwd": "{projectRoot}"
+      }
+    },
     "publish-local": {
       "dependsOn": ["build"],
       "executor": "nx:run-commands",

@@ -1,0 +1,14 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "tsconfig": "tsconfig.lib.json",
+  "out": "../../../../typedoc-out/hetzner",
+  "name": "@cdkx-io/hetzner",
+  "readme": "none",
+  "skipErrorChecking": false,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeExternals": false,
+  "navigationLinks": {
+    "Docs": "https://docs.cdkx.com"
+  }
+}

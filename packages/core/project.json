@@ -29,6 +29,14 @@
         "rootDir": "packages/core/src"
       }
     },
+    "docs": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/typedoc-out/core"],
+      "options": {
+        "command": "typedoc",
+        "cwd": "{projectRoot}"
+      }
+    },
     "publish-local": {
       "dependsOn": ["build"],
       "executor": "nx:run-commands",

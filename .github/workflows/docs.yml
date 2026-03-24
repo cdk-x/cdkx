@@ -1,0 +1,81 @@
+name: Docs
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g. 0.1.0 or dev)'
+        required: true
+        type: string
+      alias:
+        description: 'Mike alias to update (e.g. latest). Leave empty for none.'
+        required: false
+        type: string
+        default: ''
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      alias:
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install Node dependencies
+        run: yarn install --frozen-lockfile
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git for mike
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Generate TypeDoc API reference
+        run: npx nx run-many -t docs --projects=@cdkx-io/core,@cdkx-io/hetzner
+
+      - name: Build MkDocs site
+        run: mkdocs build
+
+      - name: Copy TypeDoc output into site
+        run: |
+          mkdir -p site/api
+          cp -r typedoc-out/core  site/api/core
+          cp -r typedoc-out/hetzner site/api/hetzner
+
+      - name: Deploy with mike
+        run: |
+          VERSION="${{ inputs.version }}"
+          ALIAS="${{ inputs.alias }}"
+
+          if [ -n "$ALIAS" ]; then
+            mike deploy --push --update-aliases "$VERSION" "$ALIAS"
+          else
+            mike deploy --push "$VERSION"
+          fi
+
+      - name: Set default version
+        run: mike set-default --push latest
+        continue-on-error: true
