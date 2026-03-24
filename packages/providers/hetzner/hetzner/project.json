@@ -32,6 +32,12 @@
     "docs": {
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/typedoc-out/hetzner"],
+      "dependsOn": [
+        {
+          "projects": ["@cdkx-io/core"],
+          "target": "build"
+        }
+      ],
       "options": {
         "command": "typedoc",
         "cwd": "{projectRoot}"
