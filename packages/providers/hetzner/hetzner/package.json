@@ -1,6 +1,6 @@
 {
   "name": "@cdkx-io/hetzner",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -16,14 +16,14 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
-    "@cdkx-io/core": "*",
+    "@cdkx-io/core": "0.2.0",
     "constructs": "^10.4.2",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@cdkx-io/engine": "*",
-    "@cdkx-io/spec-to-cdkx": "*",
-    "@cdkx-io/testing": "*"
+    "@cdkx-io/engine": "0.2.0",
+    "@cdkx-io/spec-to-cdkx": "0.2.0",
+    "@cdkx-io/testing": "0.2.0"
   },
   "publishConfig": {
     "access": "public"
