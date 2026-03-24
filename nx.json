@@ -54,82 +54,22 @@
     }
   ],
   "release": {
-    "projectsRelationship": "independent",
+    "projectsRelationship": "fixed",
+    "releaseTag": {
+      "pattern": "v{version}"
+    },
     "version": {
       "preVersionCommand": "yarn nx run-many -t build --projects={projectName}",
       "conventionalCommits": true,
-      "adjustSemverBumpsForZeroMajorVersion": true,
       "fallbackCurrentVersionResolver": "disk",
-      "preserveMatchingDependencyRanges": false
+      "preserveMatchingDependencyRanges": false,
+      "updateDependents": "never"
     },
     "changelog": {
-      "workspaceChangelog": false
-    },
-    "groups": {
-      "core": {
-        "projects": ["@cdkx-io/core", "@cdkx-io/testing", "@cdkx-io/logger"],
-        "projectsRelationship": "fixed",
-        "releaseTag": {
-          "pattern": "{projectName}-v{version}"
-        },
-        "version": {
-          "updateDependents": "never"
-        },
-        "changelog": {
-          "projectChangelogs": {
-            "createRelease": "github"
-          }
-        }
-      },
-      "cli": {
-        "projects": ["@cdkx-io/cli"],
-        "projectsRelationship": "fixed",
-        "releaseTag": {
-          "pattern": "{projectName}-v{version}"
-        },
-        "version": {
-          "updateDependents": "never"
-        },
-        "changelog": {
-          "projectChangelogs": {
-            "createRelease": "github"
-          }
-        }
-      },
-      "providers": {
-        "projects": [
-          "@cdkx-io/hetzner",
-          "@cdkx-io/hetzner-runtime",
-          "@cdkx-io/hetzner-sdk"
-        ],
-        "projectsRelationship": "independent",
-        "releaseTag": {
-          "pattern": "{projectName}-v{version}"
-        },
-        "version": {
-          "updateDependents": "auto"
-        }
-      },
-      "engine": {
-        "projects": ["@cdkx-io/engine"],
-        "projectsRelationship": "independent",
-        "version": {
-          "updateDependents": "never"
-        }
-      },
-      "tools": {
-        "projects": ["@cdkx-io/spec-to-cdkx"],
-        "projectsRelationship": "independent",
-        "releaseTag": {
-          "pattern": "{projectName}-v{version}"
-        },
-        "version": {
-          "updateDependents": "never"
-        },
-        "changelog": {
-          "projectChangelogs": {
-            "createRelease": "github"
-          }
+      "workspaceChangelog": {
+        "createRelease": "github",
+        "renderOptions": {
+          "authors": false
         }
       }
     }
