@@ -78,7 +78,6 @@ jobs:
     uses: ./.github/workflows/docs.yml
     with:
       version: ${{ needs.release.outputs.core_version }}
-      alias: latest
     secrets: inherit
     permissions:
       contents: write
