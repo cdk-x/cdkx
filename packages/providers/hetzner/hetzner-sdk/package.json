@@ -1,11 +1,11 @@
 {
   "name": "@cdkx-io/hetzner-sdk",
-  "version": "1.0.0",
-  "description": "OpenAPI client for @cdkx-io/hetzner-sdk",
-  "author": "OpenAPI-Generator Contributors",
+  "version": "0.0.1",
+  "description": "OpenAPI client for Hetzner Cloud API",
+  "author": "cdkx contributors",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GIT_USER_ID/GIT_REPO_ID.git"
+    "url": "https://github.com/cdkx-io/cdkx.git"
   },
   "keywords": [
     "axios",
@@ -14,7 +14,10 @@
     "openapi-generator",
     "@cdkx-io/hetzner-sdk"
   ],
-  "license": "Unlicense",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
   "scripts": {
