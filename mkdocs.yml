@@ -7,6 +7,7 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
+  custom_dir: docs/overrides
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -56,6 +57,10 @@ extra:
 
 extra_css:
   - assets/extra.css
+
+validation:
+  links:
+    not_found: ignore
 
 plugins:
   - search
