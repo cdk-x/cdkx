@@ -109,14 +109,14 @@ describe('TypeMapper', () => {
       ).toBe('(number | IResolvable)[]');
     });
 
-    it('maps string array to string[] (not affected by IResolvable change)', () => {
+    it('maps string array to (string | IResolvable)[]', () => {
       expect(
         TypeMapper.mapType(
           { type: 'array', items: { type: 'string' } },
           ctx,
           'tags',
         ),
-      ).toBe('string[]');
+      ).toBe('(string | IResolvable)[]');
     });
 
     it('maps array with $ref items', () => {
