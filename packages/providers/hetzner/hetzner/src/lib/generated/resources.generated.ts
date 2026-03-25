@@ -51,7 +51,7 @@ export const HetznerResourceType = {
   Storage: {
     /** `Hetzner::Storage::Volume` */
     Volume: 'Hetzner::Storage::Volume',
-  },
+  }
 } as const;
 
 // ==============================================================================
@@ -90,6 +90,7 @@ export enum NetworkZone {
   /** `ap-southeast` */
   AP_SOUTHEAST = 'ap-southeast',
 }
+
 
 // ==============================================================================
 // Security
@@ -135,7 +136,7 @@ export interface HetznerCertificate {
   /**
    * Domains and subdomains that should be contained in the Certificate issued by Let's Encrypt. Required for type `managed` Certificates.
    */
-  domainNames?: string[];
+  domainNames?: (string | IResolvable)[];
 }
 
 /**
@@ -158,7 +159,7 @@ export class HtzCertificate extends ProviderResource {
   public resourceType?: CertificateType;
   public certificate?: string;
   public privateKey?: string;
-  public domainNames?: string[];
+  public domainNames?: (string | IResolvable)[];
 
   constructor(scope: Construct, id: string, props: HetznerCertificate) {
     super(scope, id, {
@@ -186,6 +187,7 @@ export class HtzCertificate extends ProviderResource {
   }
 }
 
+
 // --- Firewall ---
 /**
  * Array of rules. Rules are limited to 50 entries per Firewall and 500 effective rules.
@@ -202,11 +204,11 @@ export interface FirewallRule {
   /**
    * List of permitted IPv4/IPv6 addresses for incoming traffic.
    */
-  sourceIps?: string[];
+  sourceIps?: (string | IResolvable)[];
   /**
    * List of permitted IPv4/IPv6 addresses for outgoing traffic.
    */
-  destinationIps?: string[];
+  destinationIps?: (string | IResolvable)[];
   /**
    * Network protocol to apply the rule for.
    */
@@ -357,6 +359,7 @@ export class HtzFirewall extends ProviderResource {
   }
 }
 
+
 // --- SshKey ---
 /**
  * Props for {@link HtzSshKey}.
@@ -387,6 +390,12 @@ export class HtzSshKey extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
   public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Security::SshKey';
 
+  /**
+   * The `name` attribute of this resource.
+   * Resolves to `{ ref: logicalId, attr: 'name' }` at synthesis time.
+   */
+  public readonly attrName: IResolvable;
+
   public name: string;
   public publicKey: string;
   public labels?: Record<string, string>;
@@ -396,6 +405,7 @@ export class HtzSshKey extends ProviderResource {
       type: HtzSshKey.RESOURCE_TYPE_NAME,
     });
     this.node.defaultChild = this;
+    this.attrName = this.getAtt('name');
     this.name = props.name;
     this.publicKey = props.publicKey;
     this.labels = props.labels;
@@ -409,6 +419,7 @@ export class HtzSshKey extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // ==============================================================================
 // Networking
@@ -505,6 +516,7 @@ export class HtzFloatingIp extends ProviderResource {
   }
 }
 
+
 // --- Network ---
 /**
  * Props for {@link HtzNetwork}.
@@ -572,6 +584,7 @@ export class HtzNetwork extends ProviderResource {
   }
 }
 
+
 // --- PrimaryIp ---
 /**
  * Primary IP type.
@@ -597,6 +610,10 @@ export enum PrimaryIpAssigneeType {
  * Manages a Hetzner Cloud Primary IP.
  */
 export interface HetznerPrimaryIp {
+  /**
+   * ID of the Primary IP. Assigned by the API on creation.
+   */
+  id?: number;
   /**
    * Name of the Resource. Must be unique per Project.
    */
@@ -642,6 +659,7 @@ export class HtzPrimaryIp extends ProviderResource {
    */
   public readonly attrId: IResolvable;
 
+  public id?: number;
   public name: string;
   public labels?: Record<string, string>;
   public resourceType: PrimaryIpType;
@@ -656,6 +674,7 @@ export class HtzPrimaryIp extends ProviderResource {
     });
     this.node.defaultChild = this;
     this.attrId = this.getAtt('id');
+    this.id = props.id;
     this.name = props.name;
     this.labels = props.labels;
     this.resourceType = props.type;
@@ -667,6 +686,7 @@ export class HtzPrimaryIp extends ProviderResource {
 
   protected override renderProperties(): Record<string, PropertyValue> {
     return {
+      id: this.id,
       name: this.name,
       labels: this.labels,
       type: this.resourceType,
@@ -677,6 +697,7 @@ export class HtzPrimaryIp extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // --- Route ---
 /**
@@ -730,6 +751,7 @@ export class HtzRoute extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // --- Subnet ---
 /**
@@ -810,6 +832,7 @@ export class HtzSubnet extends ProviderResource {
   }
 }
 
+
 // ==============================================================================
 // Compute
 // ==============================================================================
@@ -844,7 +867,7 @@ export interface LoadBalancerServiceHealthCheckHttp {
   /**
    * List of returned HTTP status codes in order to pass the health check. Supports the wildcards `?` for exactly one character and `*` for multiple ones.
    */
-  statusCodes?: string[];
+  statusCodes?: (string | IResolvable)[];
   /**
    * Use HTTPS for health check.
    */
@@ -1157,6 +1180,7 @@ export class HtzLoadBalancer extends ProviderResource {
   }
 }
 
+
 // --- NetworkAttachment ---
 /**
  * Props for {@link HtzNetworkAttachment}.
@@ -1179,7 +1203,7 @@ export interface HetznerNetworkAttachment {
   /**
    * Additional IPs to assign to the Server.
    */
-  aliasIps?: string[];
+  aliasIps?: (string | IResolvable)[];
   /**
    * Subnet CIDR to auto-assign IP from. Must be a subnet of the Network.
    */
@@ -1193,13 +1217,12 @@ export interface HetznerNetworkAttachment {
  */
 export class HtzNetworkAttachment extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME =
-    'Hetzner::Compute::NetworkAttachment';
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::NetworkAttachment';
 
   public serverId: number | IResolvable;
   public networkId: number | IResolvable;
   public ip?: string;
-  public aliasIps?: string[];
+  public aliasIps?: (string | IResolvable)[];
   public ipRange?: string;
 
   constructor(scope: Construct, id: string, props: HetznerNetworkAttachment) {
@@ -1225,6 +1248,7 @@ export class HtzNetworkAttachment extends ProviderResource {
   }
 }
 
+
 // --- PlacementGroup ---
 /**
  * Define the Placement Group Type.
@@ -1241,6 +1265,10 @@ export enum PlacementGroupType {
  */
 export interface HetznerPlacementGroup {
   /**
+   * ID of the Placement Group. Assigned by the API on creation.
+   */
+  id?: number;
+  /**
    * Name of the Placement Group.
    */
   name: string;
@@ -1252,6 +1280,10 @@ export interface HetznerPlacementGroup {
    * Define the Placement Group Type.
    */
   type: PlacementGroupType;
+  /**
+   * IDs of Servers that are part of this Placement Group. Read-only — managed by the engine at deploy time. Maps to the `servers` field in the Hetzner API response.
+   */
+  serverIds?: (number | IResolvable)[];
 }
 
 /**
@@ -1261,8 +1293,7 @@ export interface HetznerPlacementGroup {
  */
 export class HtzPlacementGroup extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME =
-    'Hetzner::Compute::PlacementGroup';
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::PlacementGroup';
 
   /**
    * The `id` attribute of this resource.
@@ -1275,9 +1306,11 @@ export class HtzPlacementGroup extends ProviderResource {
    */
   public readonly attrServerIds: IResolvable;
 
+  public id?: number;
   public name: string;
   public labels?: Record<string, string>;
   public resourceType: PlacementGroupType;
+  public serverIds?: (number | IResolvable)[];
 
   constructor(scope: Construct, id: string, props: HetznerPlacementGroup) {
     super(scope, id, {
@@ -1286,19 +1319,24 @@ export class HtzPlacementGroup extends ProviderResource {
     this.node.defaultChild = this;
     this.attrId = this.getAtt('id');
     this.attrServerIds = this.getAtt('serverIds');
+    this.id = props.id;
     this.name = props.name;
     this.labels = props.labels;
     this.resourceType = props.type;
+    this.serverIds = props.serverIds;
   }
 
   protected override renderProperties(): Record<string, PropertyValue> {
     return {
+      id: this.id,
       name: this.name,
       labels: this.labels,
       type: this.resourceType,
+      serverIds: this.serverIds,
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // --- Server ---
 /**
@@ -1418,7 +1456,7 @@ export interface HetznerServer {
   /**
    * SSH key IDs (`integer`) or names (`string`) which should be injected into the Server at creation time.
    */
-  sshKeys?: string[];
+  sshKeys?: (string | IResolvable)[];
   /**
    * Volume IDs which should be attached to the Server at the creation time. Volumes must be in the same Location.
    */
@@ -1471,7 +1509,7 @@ export class HtzServer extends ProviderResource {
   public startAfterCreate?: boolean;
   public image: string;
   public placementGroup?: number;
-  public sshKeys?: string[];
+  public sshKeys?: (string | IResolvable)[];
   public volumes?: (number | IResolvable)[];
   public networks?: (number | IResolvable)[];
   public firewalls?: ServerFirewall[];
@@ -1523,6 +1561,7 @@ export class HtzServer extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // ==============================================================================
 // Storage
@@ -1615,3 +1654,4 @@ export class HtzVolume extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
