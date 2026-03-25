@@ -39,8 +39,19 @@ describe('RegistryGenerator', () => {
       expect(src).toContain('AUTO-GENERATED — DO NOT EDIT');
     });
 
-    it('imports the resource type const', () => {
-      const src = RegistryGenerator.generate([], {
+    it('imports the resource type const when there are API resources', () => {
+      const resource = makeResource({
+        typeName: 'Test::Compute::Server',
+        domain: 'Compute',
+        resourceName: 'Server',
+        api: {
+          createPath: '/servers',
+          getPath: '/servers/{id}',
+          deletePath: '/servers/{id}',
+          responseBodyKey: 'server',
+        },
+      });
+      const src = RegistryGenerator.generate([resource], {
         resourceTypeConst: RESOURCE_TYPE_CONST,
         resourcesImportPath: './resources.generated',
       });
@@ -49,8 +60,26 @@ describe('RegistryGenerator', () => {
       );
     });
 
-    it('uses default import path when resourcesImportPath is omitted', () => {
+    it('omits the import when there are no API resources', () => {
       const src = RegistryGenerator.generate([], {
+        resourceTypeConst: RESOURCE_TYPE_CONST,
+      });
+      expect(src).not.toContain(`from './resources.generated'`);
+    });
+
+    it('uses default import path when resourcesImportPath is omitted', () => {
+      const resource = makeResource({
+        typeName: 'Test::Compute::Server',
+        domain: 'Compute',
+        resourceName: 'Server',
+        api: {
+          createPath: '/servers',
+          getPath: '/servers/{id}',
+          deletePath: '/servers/{id}',
+          responseBodyKey: 'server',
+        },
+      });
+      const src = RegistryGenerator.generate([resource], {
         resourceTypeConst: RESOURCE_TYPE_CONST,
       });
       expect(src).toContain(`from './resources.generated'`);
@@ -67,11 +96,11 @@ describe('RegistryGenerator', () => {
       );
     });
 
-    it('emits the asRecord helper function', () => {
+    it('omits the asRecord helper function when there are no API resources', () => {
       const src = RegistryGenerator.generate([], {
         resourceTypeConst: RESOURCE_TYPE_CONST,
       });
-      expect(src).toContain(
+      expect(src).not.toContain(
         'function asRecord(v: unknown): Record<string, unknown>',
       );
     });

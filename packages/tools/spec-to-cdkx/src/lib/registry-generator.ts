@@ -53,15 +53,19 @@ export class RegistryGenerator {
     // 1. Header
     RegistryGenerator.emitHeader(lines);
 
-    // 2. Import
-    lines.push('');
-    lines.push(`import { ${opts.resourceTypeConst} } from '${importPath}';`);
+    // 2. Import — only needed when there are API resources that reference it
+    if (apiResources.length > 0) {
+      lines.push('');
+      lines.push(`import { ${opts.resourceTypeConst} } from '${importPath}';`);
+    }
 
     // 3. ResourceConfig interface
     RegistryGenerator.emitResourceConfigInterface(lines);
 
-    // 4. asRecord helper
-    RegistryGenerator.emitAsRecordHelper(lines);
+    // 4. asRecord helper — only needed when there are API resources that call it
+    if (apiResources.length > 0) {
+      RegistryGenerator.emitAsRecordHelper(lines);
+    }
 
     // 5. RESOURCE_REGISTRY
     RegistryGenerator.emitRegistry(lines, apiResources, opts.resourceTypeConst);
