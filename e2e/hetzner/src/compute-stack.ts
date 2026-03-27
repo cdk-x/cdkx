@@ -4,6 +4,7 @@ import {
   HtzServer,
   HtzSshKey,
   HtzVolume,
+  HtzVolumeAttachment,
   Location,
   PlacementGroupType,
   ServerType,
@@ -31,7 +32,7 @@ export class ComputeStack extends Stack {
       type: PlacementGroupType.SPREAD,
     });
 
-    new HtzServer(this, 'AppServer', {
+    const server = new HtzServer(this, 'AppServer', {
       name: 'e2e-app-server',
       serverType: ServerType.CAX11,
       image: 'ubuntu-22.04',
@@ -58,6 +59,11 @@ export class ComputeStack extends Stack {
     this.volumeNameOutput = new StackOutput(this, 'VolumeName', {
       value: volume.name,
       description: 'The Hetzner volume name',
+    });
+
+    new HtzVolumeAttachment(this, 'AppVolumeAttachment', {
+      volumeId: volume.attrVolumeId,
+      serverId: server.attrServerId,
     });
   }
 }
