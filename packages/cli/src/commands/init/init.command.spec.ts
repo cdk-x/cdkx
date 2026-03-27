@@ -58,7 +58,7 @@ describe('InitCommand — execution', () => {
       p.endsWith('package.json'),
     );
     expect(pkgJson).toBeDefined();
-    expect(JSON.parse(pkgJson![1]).name).toBe('awesome-app');
+    expect(JSON.parse((pkgJson as [string, string])[1]).name).toBe('awesome-app');
   });
 
   it('prints a ✔ Created line for each generated file', async () => {
@@ -122,7 +122,7 @@ describe('InitCommand — execution', () => {
       p.endsWith('package.json'),
     );
     expect(pkgJson).toBeDefined();
-    expect(JSON.parse(pkgJson![1]).name).toBe('my-project');
+    expect(JSON.parse((pkgJson as [string, string])[1]).name).toBe('my-project');
   });
 });
 
