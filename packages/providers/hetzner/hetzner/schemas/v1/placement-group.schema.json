@@ -13,7 +13,7 @@
     }
   },
   "properties": {
-    "id": {
+    "placementGroupId": {
       "type": "integer",
       "description": "ID of the Placement Group. Assigned by the API on creation."
     },
@@ -42,5 +42,5 @@
     "/properties/placementGroupId",
     "/properties/serverIds"
   ],
-  "primaryIdentifier": ["/properties/id"]
+  "primaryIdentifier": ["/properties/placementGroupId"]
 }

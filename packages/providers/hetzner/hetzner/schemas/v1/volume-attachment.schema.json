@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerVolumeAttachment",
+  "description": "Attaches a Hetzner Cloud Volume to a Server via the attach_volume action.",
+  "typeName": "Hetzner::Storage::VolumeAttachment",
+  "domain": "Storage",
+  "additionalProperties": false,
+  "properties": {
+    "volumeId": {
+      "type": "integer",
+      "description": "ID of the Volume to attach."
+    },
+    "serverId": {
+      "type": "integer",
+      "description": "ID of the Server to attach the Volume to."
+    },
+    "automount": {
+      "type": "boolean",
+      "description": "Auto-mount the Volume after attaching it."
+    }
+  },
+  "required": ["volumeId", "serverId"],
+  "primaryIdentifier": ["/properties/volumeId"]
+}

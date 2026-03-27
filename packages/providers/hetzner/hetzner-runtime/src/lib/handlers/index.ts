@@ -21,3 +21,6 @@ export type { HetznerPlacementGroupState } from './placement-group';
 
 export { HetznerVolumeHandler } from './volume';
 export type { HetznerVolumeState } from './volume';
+
+export { HetznerVolumeAttachmentHandler } from './volume-attachment';
+export type { HetznerVolumeAttachmentState } from './volume-attachment';
