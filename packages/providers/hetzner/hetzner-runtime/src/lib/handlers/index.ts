@@ -24,3 +24,6 @@ export type { HetznerVolumeState } from './volume';
 
 export { HetznerVolumeAttachmentHandler } from './volume-attachment';
 export type { HetznerVolumeAttachmentState } from './volume-attachment';
+
+export { HetznerFloatingIpHandler } from './floating-ip';
+export type { HetznerFloatingIpState } from './floating-ip';
