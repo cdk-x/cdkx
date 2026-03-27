@@ -8,6 +8,7 @@ import {
   HetznerServerHandler,
   HetznerSshKeyHandler,
   HetznerPlacementGroupHandler,
+  HetznerVolumeHandler,
 } from './handlers';
 
 /**
@@ -33,6 +34,7 @@ export class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
       'Hetzner::Compute::PlacementGroup',
       new HetznerPlacementGroupHandler(),
     );
+    this.register('Hetzner::Storage::Volume', new HetznerVolumeHandler());
   }
 
   listResourceTypes(): string[] {

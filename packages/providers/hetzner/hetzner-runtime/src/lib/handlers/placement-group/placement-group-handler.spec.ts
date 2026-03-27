@@ -174,7 +174,11 @@ describe('HetznerPlacementGroupHandler', () => {
 
       await handler.update(
         ctx,
-        { name: 'renamed', type: PlacementGroupType.SPREAD, labels: { a: '1' } },
+        {
+          name: 'renamed',
+          type: PlacementGroupType.SPREAD,
+          labels: { a: '1' },
+        },
         baseState,
       );
 
@@ -199,7 +203,11 @@ describe('HetznerPlacementGroupHandler', () => {
 
       const state = await handler.update(
         ctx,
-        { name: 'renamed', type: PlacementGroupType.SPREAD, labels: { a: '1' } },
+        {
+          name: 'renamed',
+          type: PlacementGroupType.SPREAD,
+          labels: { a: '1' },
+        },
         baseState,
       );
 

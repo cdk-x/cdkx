@@ -18,3 +18,6 @@ export type { HetznerSshKeyState } from './ssh-key';
 
 export { HetznerPlacementGroupHandler } from './placement-group';
 export type { HetznerPlacementGroupState } from './placement-group';
+
+export { HetznerVolumeHandler } from './volume';
+export type { HetznerVolumeState } from './volume';

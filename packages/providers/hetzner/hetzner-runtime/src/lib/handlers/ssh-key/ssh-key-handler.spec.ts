@@ -120,7 +120,10 @@ describe('HetznerSshKeyHandler', () => {
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
-      await handler.create(ctx, { name: 'my-key', publicKey: 'ssh-rsa AAAA...' });
+      await handler.create(ctx, {
+        name: 'my-key',
+        publicKey: 'ssh-rsa AAAA...',
+      });
 
       expect(logger.info).toHaveBeenCalledWith(
         'provider.handler.ssh-key.create',
@@ -200,9 +203,7 @@ describe('HetznerSshKeyHandler', () => {
 
     it('throws when API returns no ssh_key object', async () => {
       const sdk = stubSdk({
-        updateSshKey: jest
-          .fn()
-          .mockResolvedValue({ data: { ssh_key: null } }),
+        updateSshKey: jest.fn().mockResolvedValue({ data: { ssh_key: null } }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
@@ -282,10 +283,7 @@ describe('HetznerSshKeyHandler', () => {
       });
 
       expect(state.sshKeyId).toBe(77);
-      expect(sdk.sshKeys.listSshKeys).toHaveBeenCalledWith(
-        undefined,
-        'my-key',
-      );
+      expect(sdk.sshKeys.listSshKeys).toHaveBeenCalledWith(undefined, 'my-key');
     });
 
     it('throws when ssh key is not found', async () => {

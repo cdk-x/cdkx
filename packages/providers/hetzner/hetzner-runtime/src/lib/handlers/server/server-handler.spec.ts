@@ -290,11 +290,9 @@ describe('HetznerServerHandler', () => {
   describe('delete', () => {
     it('calls deleteServer with the serverId', async () => {
       const sdk = stubSdk({
-        deleteServer: jest
-          .fn()
-          .mockResolvedValue({
-            data: { action: { id: 99, status: 'running' } },
-          }),
+        deleteServer: jest.fn().mockResolvedValue({
+          data: { action: { id: 99, status: 'running' } },
+        }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
@@ -305,11 +303,9 @@ describe('HetznerServerHandler', () => {
 
     it('polls the deletion action until success before resolving', async () => {
       const sdk = stubSdk({
-        deleteServer: jest
-          .fn()
-          .mockResolvedValue({
-            data: { action: { id: 99, status: 'running' } },
-          }),
+        deleteServer: jest.fn().mockResolvedValue({
+          data: { action: { id: 99, status: 'running' } },
+        }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
@@ -320,11 +316,9 @@ describe('HetznerServerHandler', () => {
 
     it('logs the delete call', async () => {
       const sdk = stubSdk({
-        deleteServer: jest
-          .fn()
-          .mockResolvedValue({
-            data: { action: { id: 99, status: 'running' } },
-          }),
+        deleteServer: jest.fn().mockResolvedValue({
+          data: { action: { id: 99, status: 'running' } },
+        }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
