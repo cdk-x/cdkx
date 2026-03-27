@@ -1,8 +1,9 @@
-import { App, Stack, IResolvable } from '@cdkx-io/core';
+import { App, Stack, IResolvable, StackOutput } from '@cdkx-io/core';
 import {
   HtzPlacementGroup,
   HtzServer,
   HtzSshKey,
+  HtzVolume,
   Location,
   PlacementGroupType,
   ServerType,
@@ -14,6 +15,9 @@ export interface ComputeStackProps {
 }
 
 export class ComputeStack extends Stack {
+  public readonly volumeIdOutput: StackOutput;
+  public readonly volumeNameOutput: StackOutput;
+
   constructor(app: App, props: ComputeStackProps) {
     super(app, 'Compute');
 
@@ -35,6 +39,25 @@ export class ComputeStack extends Stack {
       networks: [props.networkId],
       sshKeys: [sshKey.attrName],
       placementGroupId: placementGroup.attrPlacementGroupId,
+    });
+
+    // Volume in the same location as the server.
+    // Attachment to the server will be declared via HtzVolumeAttachment (follow-up issue).
+    const volume = new HtzVolume(this, 'AppVolume', {
+      name: 'e2e-app-volume',
+      size: 10,
+      location: Location.NBG1,
+      format: 'ext4',
+    });
+
+    this.volumeIdOutput = new StackOutput(this, 'VolumeId', {
+      value: volume.attrVolumeId,
+      description: 'The Hetzner volume ID',
+    });
+
+    this.volumeNameOutput = new StackOutput(this, 'VolumeName', {
+      value: volume.name,
+      description: 'The Hetzner volume name',
     });
   }
 }

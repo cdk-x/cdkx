@@ -130,6 +130,7 @@ nav:
           - Placement Group: providers/hetzner/placement-group.md
           - SSH Key: providers/hetzner/ssh-key.md
           - Certificate: providers/hetzner/certificate.md
+          - Volume: providers/hetzner/volume.md
   - API Reference: api/index.md
   - Contributing:
       - Add a Provider: contributing/add-provider.md

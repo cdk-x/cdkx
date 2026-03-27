@@ -31,6 +31,7 @@ cdkx deploy
 | [`HtzPlacementGroup`](placement-group.md) | `Hetzner::Compute::PlacementGroup` | Controls physical server placement for high availability |
 | [`HtzSshKey`](ssh-key.md) | `Hetzner::Security::SshKey` | SSH public key for server access |
 | [`HtzCertificate`](certificate.md) | `Hetzner::Security::Certificate` | TLS certificate (uploaded or Let's Encrypt managed) |
+| [`HtzVolume`](volume.md) | `Hetzner::Storage::Volume` | Persistent block storage volume |
 
 ## Quick example
 

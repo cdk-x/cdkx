@@ -11,6 +11,7 @@ import {
   PrimaryIPsApi,
   ServersApi,
   SSHKeysApi,
+  VolumeActionsApi,
   VolumesApi,
 } from '@cdkx-io/hetzner-sdk';
 
@@ -32,6 +33,7 @@ export interface HetznerSdk {
   readonly primaryIps: PrimaryIPsApi;
   readonly servers: ServersApi;
   readonly sshKeys: SSHKeysApi;
+  readonly volumeActions: VolumeActionsApi;
   readonly volumes: VolumesApi;
 }
 
@@ -64,6 +66,7 @@ export interface HetznerSdkFactoryDeps {
   PrimaryIPsApi?: typeof PrimaryIPsApi;
   ServersApi?: typeof ServersApi;
   SSHKeysApi?: typeof SSHKeysApi;
+  VolumeActionsApi?: typeof VolumeActionsApi;
   VolumesApi?: typeof VolumesApi;
 }
 
@@ -94,6 +97,7 @@ export class HetznerSdkFactory {
     const PrimaryIPs = deps.PrimaryIPsApi ?? PrimaryIPsApi;
     const Servers = deps.ServersApi ?? ServersApi;
     const SSHKeys = deps.SSHKeysApi ?? SSHKeysApi;
+    const VolumeActions = deps.VolumeActionsApi ?? VolumeActionsApi;
     const Volumes = deps.VolumesApi ?? VolumesApi;
 
     return {
@@ -108,6 +112,7 @@ export class HetznerSdkFactory {
       primaryIps: new PrimaryIPs(config),
       servers: new Servers(config),
       sshKeys: new SSHKeys(config),
+      volumeActions: new VolumeActions(config),
       volumes: new Volumes(config),
     };
   }
