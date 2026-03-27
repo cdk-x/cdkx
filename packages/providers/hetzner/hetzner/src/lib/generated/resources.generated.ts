@@ -49,9 +49,11 @@ export const HetznerResourceType = {
   },
   /** Storage resources. */
   Storage: {
+    /** `Hetzner::Storage::VolumeAttachment` */
+    VolumeAttachment: 'Hetzner::Storage::VolumeAttachment',
     /** `Hetzner::Storage::Volume` */
     Volume: 'Hetzner::Storage::Volume',
-  },
+  }
 } as const;
 
 // ==============================================================================
@@ -90,6 +92,7 @@ export enum NetworkZone {
   /** `ap-southeast` */
   AP_SOUTHEAST = 'ap-southeast',
 }
+
 
 // ==============================================================================
 // Security
@@ -185,6 +188,7 @@ export class HtzCertificate extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // --- Firewall ---
 /**
@@ -357,6 +361,7 @@ export class HtzFirewall extends ProviderResource {
   }
 }
 
+
 // --- SshKey ---
 /**
  * Props for {@link HtzSshKey}.
@@ -416,6 +421,7 @@ export class HtzSshKey extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // ==============================================================================
 // Networking
@@ -512,6 +518,7 @@ export class HtzFloatingIp extends ProviderResource {
   }
 }
 
+
 // --- Network ---
 /**
  * Props for {@link HtzNetwork}.
@@ -578,6 +585,7 @@ export class HtzNetwork extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // --- PrimaryIp ---
 /**
@@ -692,6 +700,7 @@ export class HtzPrimaryIp extends ProviderResource {
   }
 }
 
+
 // --- Route ---
 /**
  * Props for {@link HtzRoute}.
@@ -744,6 +753,7 @@ export class HtzRoute extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // --- Subnet ---
 /**
@@ -823,6 +833,7 @@ export class HtzSubnet extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // ==============================================================================
 // Compute
@@ -1171,6 +1182,7 @@ export class HtzLoadBalancer extends ProviderResource {
   }
 }
 
+
 // --- NetworkAttachment ---
 /**
  * Props for {@link HtzNetworkAttachment}.
@@ -1207,8 +1219,7 @@ export interface HetznerNetworkAttachment {
  */
 export class HtzNetworkAttachment extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME =
-    'Hetzner::Compute::NetworkAttachment';
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::NetworkAttachment';
 
   public serverId: number | IResolvable;
   public networkId: number | IResolvable;
@@ -1239,6 +1250,7 @@ export class HtzNetworkAttachment extends ProviderResource {
   }
 }
 
+
 // --- PlacementGroup ---
 /**
  * Define the Placement Group Type.
@@ -1257,7 +1269,7 @@ export interface HetznerPlacementGroup {
   /**
    * ID of the Placement Group. Assigned by the API on creation.
    */
-  id?: number;
+  placementGroupId?: number | IResolvable;
   /**
    * Name of the Placement Group.
    */
@@ -1283,8 +1295,7 @@ export interface HetznerPlacementGroup {
  */
 export class HtzPlacementGroup extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME =
-    'Hetzner::Compute::PlacementGroup';
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::PlacementGroup';
 
   /**
    * The `placementGroupId` attribute of this resource.
@@ -1297,7 +1308,7 @@ export class HtzPlacementGroup extends ProviderResource {
    */
   public readonly attrServerIds: IResolvable;
 
-  public id?: number;
+  public placementGroupId?: number | IResolvable;
   public name: string;
   public labels?: Record<string, string>;
   public resourceType: PlacementGroupType;
@@ -1310,7 +1321,7 @@ export class HtzPlacementGroup extends ProviderResource {
     this.node.defaultChild = this;
     this.attrPlacementGroupId = this.getAtt('placementGroupId');
     this.attrServerIds = this.getAtt('serverIds');
-    this.id = props.id;
+    this.placementGroupId = props.placementGroupId;
     this.name = props.name;
     this.labels = props.labels;
     this.resourceType = props.type;
@@ -1319,7 +1330,7 @@ export class HtzPlacementGroup extends ProviderResource {
 
   protected override renderProperties(): Record<string, PropertyValue> {
     return {
-      id: this.id,
+      placementGroupId: this.placementGroupId,
       name: this.name,
       labels: this.labels,
       type: this.resourceType,
@@ -1327,6 +1338,7 @@ export class HtzPlacementGroup extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
 
 // --- Server ---
 /**
@@ -1552,9 +1564,64 @@ export class HtzServer extends ProviderResource {
   }
 }
 
+
 // ==============================================================================
 // Storage
 // ==============================================================================
+
+// --- VolumeAttachment ---
+/**
+ * Props for {@link HtzVolumeAttachment}.
+ *
+ * Attaches a Hetzner Cloud Volume to a Server via the attach_volume action.
+ */
+export interface HetznerVolumeAttachment {
+  /**
+   * ID of the Volume to attach.
+   */
+  volumeId: number | IResolvable;
+  /**
+   * ID of the Server to attach the Volume to.
+   */
+  serverId: number | IResolvable;
+  /**
+   * Auto-mount the Volume after attaching it.
+   */
+  automount?: boolean;
+}
+
+/**
+ * L1 construct for a Hetzner VolumeAttachment resource.
+ *
+ * Attaches a Hetzner Cloud Volume to a Server via the attach_volume action.
+ */
+export class HtzVolumeAttachment extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Storage::VolumeAttachment';
+
+  public volumeId: number | IResolvable;
+  public serverId: number | IResolvable;
+  public automount?: boolean;
+
+  constructor(scope: Construct, id: string, props: HetznerVolumeAttachment) {
+    super(scope, id, {
+      type: HtzVolumeAttachment.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.volumeId = props.volumeId;
+    this.serverId = props.serverId;
+    this.automount = props.automount;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      volumeId: this.volumeId,
+      serverId: this.serverId,
+      automount: this.automount,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
 
 // --- Volume ---
 /**
@@ -1629,3 +1696,4 @@ export class HtzVolume extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
+
