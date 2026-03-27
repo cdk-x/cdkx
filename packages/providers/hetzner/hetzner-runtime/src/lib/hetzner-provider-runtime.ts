@@ -6,6 +6,7 @@ import {
   HetznerRouteHandler,
   HetznerCertificateHandler,
   HetznerServerHandler,
+  HetznerSshKeyHandler,
 } from './handlers';
 
 /**
@@ -26,6 +27,7 @@ export class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
       new HetznerCertificateHandler(),
     );
     this.register('Hetzner::Compute::Server', new HetznerServerHandler());
+    this.register('Hetzner::Security::SshKey', new HetznerSshKeyHandler());
   }
 
   listResourceTypes(): string[] {

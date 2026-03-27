@@ -17,6 +17,7 @@ import type {
   UpdateResult,
 } from '../adapter/provider-adapter';
 import type { AssemblyStack } from '../assembly/assembly-types';
+import type { Logger } from '@cdkx-io/logger';
 import type { DeploymentPlan } from '../planner/deployment-plan';
 import type { EngineState } from '../state/engine-state';
 
@@ -1983,7 +1984,7 @@ describe('DeploymentEngine', () => {
         stateDir: '/fake/state',
         stateManager,
         eventBus,
-        logger: mockLogger as any,
+        logger: mockLogger as Logger,
         deployLock: makeMockDeployLock(),
       });
 
@@ -2036,7 +2037,7 @@ describe('DeploymentEngine', () => {
         stateDir: '/fake',
         stateManager,
         eventBus,
-        logger: mockLogger as any,
+        logger: mockLogger as Logger,
         deployLock: makeMockDeployLock(),
       });
 
@@ -2085,7 +2086,7 @@ describe('DeploymentEngine', () => {
         stateDir: '/fake',
         stateManager,
         eventBus,
-        logger: mockLogger as any,
+        logger: mockLogger as Logger,
         deployLock: makeMockDeployLock(),
       });
 
@@ -2133,7 +2134,7 @@ describe('DeploymentEngine', () => {
         stateDir: '/fake',
         stateManager,
         eventBus,
-        logger: mockLogger as any,
+        logger: mockLogger as Logger,
         deployLock: makeMockDeployLock(),
       });
 
@@ -2176,7 +2177,7 @@ describe('DeploymentEngine', () => {
         stateDir: '/fake',
         stateManager,
         eventBus,
-        logger: mockLogger as any,
+        logger: mockLogger as Logger,
         deployLock: makeMockDeployLock(),
       });
 
@@ -2894,11 +2895,9 @@ describe('DeploymentEngine', () => {
     it('continues restoring remaining resources when one restore fails', async () => {
       const updateCalls: string[] = [];
 
-      let callIndex = 0;
       const adapter: Partial<ProviderAdapter> = {
         update: (resource): Promise<UpdateResult> => {
           updateCalls.push(resource.logicalId);
-          callIndex++;
           // ResB restore fails; ResA restore succeeds (called after in reverse order).
           if (
             resource.logicalId === 'ResB' &&

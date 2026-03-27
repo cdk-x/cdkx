@@ -41,7 +41,7 @@ export class HetznerCertificateHandler extends ResourceHandler<
         type: props.type as CertificateType,
         certificate: props.certificate,
         private_key: props.privateKey,
-        domain_names: props.domainNames,
+        domain_names: props.domainNames as string[] | undefined,
       });
     } catch (err) {
       const errorData =

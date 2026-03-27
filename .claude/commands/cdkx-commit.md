@@ -207,3 +207,4 @@ git commit -m "docs(hetzner): document cross-resource reference pattern"
 4. **Wrong type** — don't use `feat` for bug fixes or `chore` for features
 5. **Non-imperative mood** — "add" not "added"
 6. **Subject too long** — keep under 72 characters
+7. **Adding Claude Code as co-author** — NEVER add `Co-Authored-By: Claude` or any Claude Code trailer to commits or PR descriptions

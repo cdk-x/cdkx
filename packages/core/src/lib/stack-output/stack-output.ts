@@ -69,7 +69,6 @@ export class StackOutput extends Construct {
    */
   public importValue(): IResolvable {
     // Lazy require to avoid circular dependency: stack-output ← stack ← stack-output
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Stack } =
       require('../stack/stack') as typeof import('../stack/stack');
     const artifactId = Stack.of(this).artifactId;

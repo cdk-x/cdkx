@@ -204,8 +204,8 @@ export class TypeMapper {
 
     if (items.type) {
       const primitive = TypeMapper.mapPrimitive(items.type);
-      if (primitive === 'number') {
-        return 'number | IResolvable';
+      if (primitive === 'number' || primitive === 'string') {
+        return `${primitive} | IResolvable`;
       }
       return primitive;
     }

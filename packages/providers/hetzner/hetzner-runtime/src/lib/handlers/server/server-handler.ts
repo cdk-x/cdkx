@@ -51,7 +51,7 @@ export class HetznerServerHandler extends ResourceHandler<
         start_after_create: props.startAfterCreate,
         image: props.image,
         placement_group: props.placementGroup,
-        ssh_keys: props.sshKeys,
+        ssh_keys: props.sshKeys as string[] | undefined,
         volumes: props.volumes as number[] | undefined,
         networks: props.networks as number[] | undefined,
         firewalls: props.firewalls,

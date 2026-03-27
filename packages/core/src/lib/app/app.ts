@@ -129,9 +129,9 @@ export class App extends Construct {
     // Phase 1: Collect all stack dependency maps without writing any files.
     const depMap: Record<string, string[]> = {};
     for (const stack of stacks) {
-      const { collectDependencies } = stack.synthesizer;
-      if (typeof collectDependencies === 'function') {
-        depMap[stack.artifactId] = stack.synthesizer.collectDependencies!();
+      const synth = stack.synthesizer;
+      if (typeof synth.collectDependencies === 'function') {
+        depMap[stack.artifactId] = synth.collectDependencies();
       } else {
         depMap[stack.artifactId] = [];
       }
