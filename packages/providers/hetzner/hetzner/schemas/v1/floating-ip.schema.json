@@ -39,7 +39,7 @@
       "$ref": "./common.schema.json#/definitions/Labels"
     }
   },
-  "required": ["type"],
+  "required": ["type", "homeLocation"],
   "createOnlyProperties": ["/properties/type", "/properties/homeLocation"],
   "readOnlyProperties": ["/properties/floatingIpId"],
   "primaryIdentifier": ["/properties/floatingIpId"]

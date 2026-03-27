@@ -10,6 +10,7 @@ import {
   HetznerPlacementGroupHandler,
   HetznerVolumeHandler,
   HetznerVolumeAttachmentHandler,
+  HetznerFloatingIpHandler,
 } from './handlers';
 
 /**
@@ -39,6 +40,10 @@ export class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
     this.register(
       'Hetzner::Storage::VolumeAttachment',
       new HetznerVolumeAttachmentHandler(),
+    );
+    this.register(
+      'Hetzner::Networking::FloatingIp',
+      new HetznerFloatingIpHandler(),
     );
   }
 

@@ -3,6 +3,9 @@ import {
   HtzNetwork,
   HtzSubnet,
   HtzRoute,
+  HtzFloatingIp,
+  FloatingIpType,
+  Location,
   NetworkSubnetType,
   NetworkZone,
 } from '@cdkx-io/hetzner';
@@ -10,6 +13,8 @@ import {
 export class NetworkStack extends Stack {
   /** Cross-stack output: the network ID created by this stack. */
   public readonly networkIdOutput: StackOutput;
+  /** Cross-stack output: the floating IP ID created by this stack. */
+  public readonly floatingIpIdOutput: StackOutput;
 
   constructor(app: App) {
     super(app, 'Networking');
@@ -39,6 +44,17 @@ export class NetworkStack extends Stack {
     this.networkIdOutput = new StackOutput(this, 'NetworkId', {
       value: network.attrNetworkId,
       description: 'The Hetzner network ID',
+    });
+
+    const floatingIp = new HtzFloatingIp(this, 'FloatingIp', {
+      type: FloatingIpType.IPV4,
+      name: 'e2e-floating-ip',
+      homeLocation: Location.NBG1,
+    });
+
+    this.floatingIpIdOutput = new StackOutput(this, 'FloatingIpId', {
+      value: floatingIp.attrFloatingIpId,
+      description: 'The Hetzner floating IP ID',
     });
   }
 }
