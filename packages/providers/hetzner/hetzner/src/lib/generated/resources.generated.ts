@@ -1296,10 +1296,10 @@ export class HtzPlacementGroup extends ProviderResource {
   public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::PlacementGroup';
 
   /**
-   * The `id` attribute of this resource.
-   * Resolves to `{ ref: logicalId, attr: 'id' }` at synthesis time.
+   * The `placementGroupId` attribute of this resource.
+   * Resolves to `{ ref: logicalId, attr: 'placementGroupId' }` at synthesis time.
    */
-  public readonly attrId: IResolvable;
+  public readonly attrPlacementGroupId: IResolvable;
   /**
    * The `serverIds` attribute of this resource.
    * Resolves to `{ ref: logicalId, attr: 'serverIds' }` at synthesis time.
@@ -1317,7 +1317,7 @@ export class HtzPlacementGroup extends ProviderResource {
       type: HtzPlacementGroup.RESOURCE_TYPE_NAME,
     });
     this.node.defaultChild = this;
-    this.attrId = this.getAtt('id');
+    this.attrPlacementGroupId = this.getAtt('placementGroupId');
     this.attrServerIds = this.getAtt('serverIds');
     this.id = props.id;
     this.name = props.name;
@@ -1452,7 +1452,7 @@ export interface HetznerServer {
   /**
    * ID of the Placement Group the Server should be in.
    */
-  placementGroup?: number;
+  placementGroupId?: number | IResolvable;
   /**
    * SSH key IDs (`integer`) or names (`string`) which should be injected into the Server at creation time.
    */
@@ -1508,7 +1508,7 @@ export class HtzServer extends ProviderResource {
   public serverType: ServerType;
   public startAfterCreate?: boolean;
   public image: string;
-  public placementGroup?: number;
+  public placementGroupId?: number | IResolvable;
   public sshKeys?: (string | IResolvable)[];
   public volumes?: (number | IResolvable)[];
   public networks?: (number | IResolvable)[];
@@ -1530,7 +1530,7 @@ export class HtzServer extends ProviderResource {
     this.serverType = props.serverType;
     this.startAfterCreate = props.startAfterCreate;
     this.image = props.image;
-    this.placementGroup = props.placementGroup;
+    this.placementGroupId = props.placementGroupId;
     this.sshKeys = props.sshKeys;
     this.volumes = props.volumes;
     this.networks = props.networks;
@@ -1549,7 +1549,7 @@ export class HtzServer extends ProviderResource {
       serverType: this.serverType,
       startAfterCreate: this.startAfterCreate,
       image: this.image,
-      placementGroup: this.placementGroup,
+      placementGroupId: this.placementGroupId,
       sshKeys: this.sshKeys,
       volumes: this.volumes,
       networks: this.networks,

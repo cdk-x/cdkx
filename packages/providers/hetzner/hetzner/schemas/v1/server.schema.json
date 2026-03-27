@@ -94,7 +94,7 @@
       "type": "string",
       "description": "ID or name of the Image the Server is created from."
     },
-    "placementGroup": {
+    "placementGroupId": {
       "type": "integer",
       "description": "ID of the Placement Group the Server should be in."
     },

@@ -1,5 +1,12 @@
 import { App, Stack, IResolvable } from '@cdkx-io/core';
-import { HtzServer, HtzSshKey, Location, ServerType } from '@cdkx-io/hetzner';
+import {
+  HtzPlacementGroup,
+  HtzServer,
+  HtzSshKey,
+  Location,
+  PlacementGroupType,
+  ServerType,
+} from '@cdkx-io/hetzner';
 
 export interface ComputeStackProps {
   /** Token that resolves to the Hetzner network ID at deploy time. */
@@ -15,6 +22,11 @@ export class ComputeStack extends Stack {
       publicKey: process.env['SSH_PUBLIC_KEY'] ?? '',
     });
 
+    const placementGroup = new HtzPlacementGroup(this, 'AppPlacementGroup', {
+      name: 'e2e-placement-group',
+      type: PlacementGroupType.SPREAD,
+    });
+
     new HtzServer(this, 'AppServer', {
       name: 'e2e-app-server',
       serverType: ServerType.CAX11,
@@ -22,6 +34,7 @@ export class ComputeStack extends Stack {
       location: Location.NBG1,
       networks: [props.networkId],
       sshKeys: [sshKey.attrName],
+      placementGroupId: placementGroup.attrPlacementGroupId,
     });
   }
 }
