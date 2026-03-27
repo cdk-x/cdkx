@@ -20,6 +20,7 @@
 | `publicNet` | `ServerPublicNet` | — | Configure or disable the public IPv4/IPv6 interface. |
 | `startAfterCreate` | `boolean` | — | Automatically power on the server after creation (default: `true`). |
 | `volumes` | `(number \| IResolvable)[]` | — | Volume IDs to attach. Volumes must be in the same location. |
+| `placementGroupId` | `number \| IResolvable` | — | ID of the placement group to assign the server to. Use `HtzPlacementGroup.attrPlacementGroupId` to reference a managed group. Create-only. |
 
 ### `ServerType` enum (selected)
 
@@ -154,5 +155,6 @@ The engine calls `DELETE /servers/{id}`. This powers off and permanently deletes
     - [Network](network.md) — create a private network first
     - [Subnet](subnet.md) — subnet the server attaches to
     - [SSH Key](ssh-key.md) — manage SSH keys as constructs
+    - [Placement Group](placement-group.md) — spread servers across physical hosts
     - [Certificate](certificate.md) — TLS certificates for HTTPS
     - [Deployment Lifecycle](../../concepts/deployment-lifecycle.md) — creation order

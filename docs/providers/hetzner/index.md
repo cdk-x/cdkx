@@ -28,6 +28,7 @@ cdkx deploy
 | [`HtzSubnet`](subnet.md) | `Hetzner::Networking::Subnet` | Subnet within a network |
 | [`HtzRoute`](route.md) | `Hetzner::Networking::Route` | Static route added to a network |
 | [`HtzServer`](server.md) | `Hetzner::Compute::Server` | Virtual machine |
+| [`HtzPlacementGroup`](placement-group.md) | `Hetzner::Compute::PlacementGroup` | Controls physical server placement for high availability |
 | [`HtzSshKey`](ssh-key.md) | `Hetzner::Security::SshKey` | SSH public key for server access |
 | [`HtzCertificate`](certificate.md) | `Hetzner::Security::Certificate` | TLS certificate (uploaded or Let's Encrypt managed) |
 

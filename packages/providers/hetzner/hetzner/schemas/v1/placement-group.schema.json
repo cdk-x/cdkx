@@ -38,6 +38,9 @@
   },
   "required": ["name", "type"],
   "createOnlyProperties": ["/properties/type"],
-  "readOnlyProperties": ["/properties/id", "/properties/serverIds"],
+  "readOnlyProperties": [
+    "/properties/placementGroupId",
+    "/properties/serverIds"
+  ],
   "primaryIdentifier": ["/properties/id"]
 }
