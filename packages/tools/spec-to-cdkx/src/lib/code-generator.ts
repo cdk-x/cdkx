@@ -305,12 +305,7 @@ export class CodeGenerator {
     _nestedInterfaces: Array<[string, JsonSchema]>,
     _enums: Array<[string, JsonSchema]>,
   ): void {
-    const {
-      resourceName,
-      description,
-      properties,
-      required,
-    } = resource;
+    const { resourceName, description, properties, required } = resource;
     const interfaceName = `${opts.providerName}${resourceName}`;
 
     if (description) {

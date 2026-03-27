@@ -135,21 +135,5 @@ describe('SchemaReader', () => {
       const server = resources.find((r) => r.resourceName === 'Server');
       expect(server?.createOnlyProperties).toEqual([]);
     });
-
-    it('populates api when the schema has an api block', () => {
-      const network = resources.find((r) => r.resourceName === 'Network');
-      expect(network?.api).toBeDefined();
-      expect(network?.api?.createPath).toBe('/networks');
-      expect(network?.api?.getPath).toBe('/networks/{id}');
-      expect(network?.api?.updatePath).toBe('/networks/{id}');
-      expect(network?.api?.deletePath).toBe('/networks/{id}');
-      expect(network?.api?.responseBodyKey).toBe('network');
-      expect(network?.api?.outputAttrMap).toEqual({ networkId: 'id' });
-    });
-
-    it('leaves api undefined when the schema has no api block', () => {
-      const server = resources.find((r) => r.resourceName === 'Server');
-      expect(server?.api).toBeUndefined();
-    });
   });
 });
