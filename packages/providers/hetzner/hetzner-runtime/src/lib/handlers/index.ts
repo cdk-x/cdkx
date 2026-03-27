@@ -15,3 +15,6 @@ export type { HetznerServerState } from './server';
 
 export { HetznerSshKeyHandler } from './ssh-key';
 export type { HetznerSshKeyState } from './ssh-key';
+
+export { HetznerPlacementGroupHandler } from './placement-group';
+export type { HetznerPlacementGroupState } from './placement-group';
