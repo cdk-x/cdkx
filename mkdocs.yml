@@ -127,6 +127,7 @@ nav:
           - Subnet: providers/hetzner/subnet.md
           - Route: providers/hetzner/route.md
           - Server: providers/hetzner/server.md
+          - SSH Key: providers/hetzner/ssh-key.md
           - Certificate: providers/hetzner/certificate.md
   - API Reference: api/index.md
   - Contributing:
