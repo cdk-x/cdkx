@@ -17,29 +17,19 @@
     "labels": {
       "$ref": "./common.schema.json#/definitions/Labels"
     },
-    "automount": {
-      "type": "boolean",
-      "description": "Auto-mount Volume after attach. `server` must be provided."
-    },
     "format": {
       "type": "string",
       "description": "Format Volume after creation. One of: `xfs`, `ext4`."
     },
     "location": {
       "type": "string",
-      "description": "Location to create the Volume in (can be omitted if Server is specified)."
-    },
-    "serverId": {
-      "type": "integer",
-      "description": "ID of the Server to attach the Volume to once it's created (Volume will be created in the same Location as the server)."
+      "description": "Location to create the Volume in."
     }
   },
   "required": ["size", "name"],
   "createOnlyProperties": [
     "/properties/location",
-    "/properties/format",
-    "/properties/serverId",
-    "/properties/automount"
+    "/properties/format"
   ],
   "readOnlyProperties": ["/properties/volumeId"],
   "primaryIdentifier": ["/properties/volumeId"]
