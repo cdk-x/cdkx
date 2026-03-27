@@ -32,11 +32,5 @@
     "/properties/type",
     "/properties/ipRange"
   ],
-  "primaryIdentifier": ["/properties/networkId", "/properties/ipRange"],
-  "api": {
-    "createPath": "/networks/{networkId}/actions/add_subnet",
-    "deletePath": "/networks/{networkId}/actions/delete_subnet",
-    "responseBodyKey": null,
-    "compositeIdProps": ["networkId", "ipRange"]
-  }
+  "primaryIdentifier": ["/properties/networkId", "/properties/ipRange"]
 }

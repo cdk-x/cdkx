@@ -70,7 +70,7 @@ export class CycleDetector {
 
     const processed: string[] = [];
     while (queue.length > 0) {
-      const node = queue.shift()!;
+      const node = queue.shift() as string;
       processed.push(node);
       const nodesDependingOnThis = [...(dependents.get(node) ?? [])].sort();
       for (const dependent of nodesDependingOnThis) {

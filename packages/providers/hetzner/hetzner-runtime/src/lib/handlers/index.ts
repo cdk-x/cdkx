@@ -12,3 +12,6 @@ export type { HetznerCertificateState } from './certificate';
 
 export { HetznerServerHandler } from './server';
 export type { HetznerServerState } from './server';
+
+export { HetznerSshKeyHandler } from './ssh-key';
+export type { HetznerSshKeyState } from './ssh-key';

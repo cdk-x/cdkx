@@ -305,13 +305,7 @@ export class CodeGenerator {
     _nestedInterfaces: Array<[string, JsonSchema]>,
     _enums: Array<[string, JsonSchema]>,
   ): void {
-    const {
-      resourceName,
-      description,
-      properties,
-      readOnlyProperties,
-      required,
-    } = resource;
+    const { resourceName, description, properties, required } = resource;
     const interfaceName = `${opts.providerName}${resourceName}`;
 
     if (description) {
@@ -324,8 +318,9 @@ export class CodeGenerator {
     lines.push(`export interface ${interfaceName} {`);
 
     for (const [propName, prop] of Object.entries(properties)) {
-      // Skip read-only properties — they are not settable by users.
-      if (readOnlyProperties.includes(propName)) continue;
+      // All properties in the map are user-settable — no skipping needed.
+      // readOnlyProperties that are NOT in properties (e.g. API-generated IDs
+      // like networkId) never appear in this loop in the first place.
 
       const camel = TypeMapper.toCamelCase(propName);
       const tsType = TypeMapper.mapType(
@@ -368,10 +363,9 @@ export class CodeGenerator {
     const className = `${opts.prefix}${resourceName}`;
     const propsInterface = `${opts.providerName}${resourceName}`;
 
-    // Collect writable props (exclude readOnly ones).
-    const writableProps = Object.entries(properties).filter(
-      ([propName]) => !readOnlyProperties.includes(propName),
-    );
+    // All properties in the map are writable by the user. readOnlyProperties
+    // that are NOT in properties (API-generated IDs) never appear here.
+    const writableProps = Object.entries(properties);
 
     lines.push('/**');
     lines.push(

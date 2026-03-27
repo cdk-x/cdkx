@@ -32,15 +32,5 @@
   "required": ["name", "ipRange"],
   "createOnlyProperties": ["/properties/ipRange"],
   "readOnlyProperties": ["/properties/networkId"],
-  "primaryIdentifier": ["/properties/networkId"],
-  "api": {
-    "createPath": "/networks",
-    "getPath": "/networks/{id}",
-    "updatePath": "/networks/{id}",
-    "deletePath": "/networks/{id}",
-    "responseBodyKey": "network",
-    "outputAttrMap": {
-      "networkId": "id"
-    }
-  }
+  "primaryIdentifier": ["/properties/networkId"]
 }

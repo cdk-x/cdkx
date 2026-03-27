@@ -5,7 +5,6 @@ import chalk from 'chalk';
 import { BaseCommand } from '../../lib/base-command.js';
 import { SchemaReader } from '../../lib/schema-reader.js';
 import { CodeGenerator } from '../../lib/code-generator.js';
-import { RegistryGenerator } from '../../lib/registry-generator.js';
 import { RuntimeConfigGenerator } from '../../lib/runtime-config-generator.js';
 
 // ---------------------------------------------------------------------------
@@ -22,9 +21,6 @@ export interface GenerateCommandDeps {
 
   /** Generate TypeScript source. Defaults to `CodeGenerator.generate`. */
   generateCode?: typeof CodeGenerator.generate;
-
-  /** Generate resource registry source. Defaults to `RegistryGenerator.generate`. */
-  generateRegistry?: typeof RegistryGenerator.generate;
 
   /** Generate runtime config source. Defaults to `RuntimeConfigGenerator.generate`. */
   generateRuntimeConfig?: typeof RuntimeConfigGenerator.generate;
@@ -83,10 +79,6 @@ export class GenerateCommand extends BaseCommand {
         'src/lib/generated/resources.generated.ts',
       )
       .option(
-        '--registry-output <file>',
-        'Output file path for the resource registry (optional)',
-      )
-      .option(
         '--runtime-config-output <file>',
         'Output file path for the runtime config (optional)',
       )
@@ -97,7 +89,6 @@ export class GenerateCommand extends BaseCommand {
           resourceTypeConst: string;
           schemas: string;
           output: string;
-          registryOutput?: string;
           runtimeConfigOutput?: string;
         }) => {
           await this.run(() => this.execute(options));
@@ -111,14 +102,11 @@ export class GenerateCommand extends BaseCommand {
     resourceTypeConst: string;
     schemas: string;
     output: string;
-    registryOutput?: string;
     runtimeConfigOutput?: string;
   }): Promise<void> {
     const existsSync = this.deps.existsSync ?? fs.existsSync;
     const readSchemas = this.deps.readSchemas ?? SchemaReader.read;
     const generateCode = this.deps.generateCode ?? CodeGenerator.generate;
-    const generateRegistry =
-      this.deps.generateRegistry ?? RegistryGenerator.generate;
     const generateRuntimeConfig =
       this.deps.generateRuntimeConfig ?? RuntimeConfigGenerator.generate;
     const writeFile =
@@ -168,26 +156,6 @@ export class GenerateCommand extends BaseCommand {
       chalk.green('✔') +
         ` Generated ${resources.length} resources → ${chalk.dim(outputFile)}`,
     );
-
-    // Optionally generate the resource registry.
-    if (options.registryOutput) {
-      const registryFile = path.resolve(process.cwd(), options.registryOutput);
-      const registryDir = path.dirname(registryFile);
-      if (!existsSync(registryDir)) {
-        fs.mkdirSync(registryDir, { recursive: true });
-      }
-
-      const registrySource = generateRegistry(resources, {
-        resourceTypeConst: options.resourceTypeConst,
-      });
-      writeFile(registryFile, registrySource);
-
-      const registryCount = resources.filter((r) => r.api !== undefined).length;
-      log(
-        chalk.green('✔') +
-          ` Generated registry with ${registryCount} entries → ${chalk.dim(registryFile)}`,
-      );
-    }
 
     // Optionally generate the runtime config.
     if (options.runtimeConfigOutput) {
