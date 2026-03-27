@@ -96,7 +96,7 @@ app.synth();
 
 1. Network and subnet are deployed first — server depends on them via the `networks` token.
 2. `cx22` = 2 vCPU / 4 GB RAM shared Intel. See the table above for all types.
-3. SSH key must already exist in the Hetzner project (upload once via Console or API).
+3. SSH key name to inject. Use `sshKey.attrName` if the key is managed by `HtzSshKey` in the same stack — the engine will deploy the key first.
 4. Attaches the server to the private network at creation — it will receive an IP from `10.0.1.0/24`.
 5. Cloud-Init script runs once on first boot. Limited to 32 KiB.
 
@@ -153,5 +153,6 @@ The engine calls `DELETE /servers/{id}`. This powers off and permanently deletes
 !!! info "See also"
     - [Network](network.md) — create a private network first
     - [Subnet](subnet.md) — subnet the server attaches to
+    - [SSH Key](ssh-key.md) — manage SSH keys as constructs
     - [Certificate](certificate.md) — TLS certificates for HTTPS
     - [Deployment Lifecycle](../../concepts/deployment-lifecycle.md) — creation order
