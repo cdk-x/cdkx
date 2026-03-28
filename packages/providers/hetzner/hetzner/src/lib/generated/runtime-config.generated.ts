@@ -36,15 +36,11 @@ export interface RuntimeResourceConfig {
  * to their runtime configuration.
  */
 export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
+
   // Hetzner::Security::Certificate
   'Hetzner::Security::Certificate': {
     physicalIdKey: 'certificateId',
-    createOnlyProps: new Set([
-      'type',
-      'certificate',
-      'privateKey',
-      'domainNames',
-    ]),
+    createOnlyProps: new Set(['type', 'certificate', 'privateKey', 'domainNames']),
   },
 
   // Hetzner::Security::Firewall
@@ -68,28 +64,13 @@ export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
   // Hetzner::Compute::LoadBalancer
   'Hetzner::Compute::LoadBalancer': {
     physicalIdKey: 'loadBalancerId',
-    createOnlyProps: new Set([
-      'loadBalancerType',
-      'algorithm',
-      'services',
-      'targets',
-      'publicInterface',
-      'networkId',
-      'networkZone',
-      'location',
-    ]),
+    createOnlyProps: new Set(['loadBalancerType', 'algorithm', 'services', 'targets', 'publicInterface', 'networkId', 'networkZone', 'location']),
   },
 
   // Hetzner::Compute::NetworkAttachment
   'Hetzner::Compute::NetworkAttachment': {
     physicalIdKey: 'physicalId',
-    createOnlyProps: new Set([
-      'serverId',
-      'networkId',
-      'ip',
-      'aliasIps',
-      'ipRange',
-    ]),
+    createOnlyProps: new Set(['serverId', 'networkId', 'ip', 'aliasIps', 'ipRange']),
   },
 
   // Hetzner::Networking::Network
@@ -106,7 +87,7 @@ export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
 
   // Hetzner::Networking::PrimaryIp
   'Hetzner::Networking::PrimaryIp': {
-    physicalIdKey: 'id',
+    physicalIdKey: 'primaryIpId',
     createOnlyProps: new Set(['type', 'assigneeType', 'location']),
   },
 
@@ -119,21 +100,7 @@ export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
   // Hetzner::Compute::Server
   'Hetzner::Compute::Server': {
     physicalIdKey: 'serverId',
-    createOnlyProps: new Set([
-      'location',
-      'datacenter',
-      'serverType',
-      'startAfterCreate',
-      'image',
-      'placementGroup',
-      'sshKeys',
-      'volumes',
-      'networks',
-      'firewalls',
-      'userData',
-      'automount',
-      'publicNet',
-    ]),
+    createOnlyProps: new Set(['location', 'datacenter', 'serverType', 'startAfterCreate', 'image', 'placementGroup', 'sshKeys', 'volumes', 'networks', 'firewalls', 'userData', 'automount', 'publicNet']),
   },
 
   // Hetzner::Security::SshKey
@@ -145,13 +112,7 @@ export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
   // Hetzner::Networking::Subnet
   'Hetzner::Networking::Subnet': {
     physicalIdKey: 'physicalId',
-    createOnlyProps: new Set([
-      'networkId',
-      'type',
-      'networkZone',
-      'ipRange',
-      'vswitchId',
-    ]),
+    createOnlyProps: new Set(['networkId', 'type', 'networkZone', 'ipRange', 'vswitchId']),
   },
 
   // Hetzner::Storage::VolumeAttachment
