@@ -30,3 +30,6 @@ export type { HetznerFloatingIpState } from './floating-ip';
 
 export { HetznerFloatingIpAssignmentHandler } from './floating-ip-assignment';
 export type { HetznerFloatingIpAssignmentState } from './floating-ip-assignment';
+
+export { HetznerPrimaryIpHandler } from './primary-ip';
+export type { HetznerPrimaryIpState } from './primary-ip';
