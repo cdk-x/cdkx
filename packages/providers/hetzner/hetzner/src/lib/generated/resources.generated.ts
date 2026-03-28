@@ -25,6 +25,8 @@ export const HetznerResourceType = {
   },
   /** Networking resources. */
   Networking: {
+    /** `Hetzner::Networking::FloatingIpAssignment` */
+    FloatingIpAssignment: 'Hetzner::Networking::FloatingIpAssignment',
     /** `Hetzner::Networking::FloatingIp` */
     FloatingIp: 'Hetzner::Networking::FloatingIp',
     /** `Hetzner::Networking::Network` */
@@ -422,6 +424,57 @@ export class HtzSshKey extends ProviderResource {
 // ==============================================================================
 // Networking
 // ==============================================================================
+
+// --- FloatingIpAssignment ---
+/**
+ * Props for {@link HtzFloatingIpAssignment}.
+ *
+ * Assigns a Hetzner Cloud Floating IP to a Server via the assign action.
+ */
+export interface HetznerFloatingIpAssignment {
+  /**
+   * ID of the Floating IP to assign.
+   */
+  floatingIpId: number | IResolvable;
+  /**
+   * ID of the Server to assign the Floating IP to.
+   */
+  serverId: number | IResolvable;
+}
+
+/**
+ * L1 construct for a Hetzner FloatingIpAssignment resource.
+ *
+ * Assigns a Hetzner Cloud Floating IP to a Server via the assign action.
+ */
+export class HtzFloatingIpAssignment extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Networking::FloatingIpAssignment';
+
+  public floatingIpId: number | IResolvable;
+  public serverId: number | IResolvable;
+
+  constructor(
+    scope: Construct,
+    id: string,
+    props: HetznerFloatingIpAssignment,
+  ) {
+    super(scope, id, {
+      type: HtzFloatingIpAssignment.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.floatingIpId = props.floatingIpId;
+    this.serverId = props.serverId;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      floatingIpId: this.floatingIpId,
+      serverId: this.serverId,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
 
 // --- FloatingIp ---
 /**
