@@ -35,6 +35,7 @@ cdkx deploy
 | [`HtzVolumeAttachment`](volume-attachment.md) | `Hetzner::Storage::VolumeAttachment` | Attaches a volume to a server |
 | [`HtzFloatingIp`](floating-ip.md) | `Hetzner::Networking::FloatingIp` | Static public IP independent of servers |
 | [`HtzFloatingIpAssignment`](floating-ip-assignment.md) | `Hetzner::Networking::FloatingIpAssignment` | Assigns a floating IP to a server |
+| [`HtzPrimaryIp`](primary-ip.md) | `Hetzner::Networking::PrimaryIp` | Pre-allocatable static public IP bound to a location |
 
 ## Quick example
 

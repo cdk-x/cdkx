@@ -18,7 +18,7 @@
     }
   },
   "properties": {
-    "id": {
+    "primaryIpId": {
       "type": "integer",
       "description": "ID of the Primary IP. Assigned by the API on creation."
     },
@@ -57,6 +57,6 @@
     "/properties/assigneeType",
     "/properties/location"
   ],
-  "readOnlyProperties": ["/properties/id"],
-  "primaryIdentifier": ["/properties/id"]
+  "readOnlyProperties": ["/properties/primaryIpId"],
+  "primaryIdentifier": ["/properties/primaryIpId"]
 }
