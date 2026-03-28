@@ -7,10 +7,11 @@ const app = new App();
 const networking = new NetworkStack(app);
 
 new ComputeStack(app, {
-  // Import the network ID output from the networking stack.
+  // Import outputs from the networking stack.
   // This automatically infers the cross-stack dependency — no manual
   // addDependency() call required.
   networkId: networking.networkIdOutput.importValue(),
+  floatingIpId: networking.floatingIpIdOutput.importValue(),
 });
 
 app.synth();

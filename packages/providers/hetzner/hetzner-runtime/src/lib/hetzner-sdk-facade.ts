@@ -3,6 +3,7 @@ import {
   CertificatesApi,
   Configuration,
   FirewallsApi,
+  FloatingIPActionsApi,
   FloatingIPsApi,
   LoadBalancersApi,
   NetworkActionsApi,
@@ -25,6 +26,7 @@ export interface HetznerSdk {
   readonly actions: ActionsApi;
   readonly certificates: CertificatesApi;
   readonly firewalls: FirewallsApi;
+  readonly floatingIpActions: FloatingIPActionsApi;
   readonly floatingIps: FloatingIPsApi;
   readonly loadBalancers: LoadBalancersApi;
   readonly networkActions: NetworkActionsApi;
@@ -58,6 +60,7 @@ export interface HetznerSdkFactoryDeps {
   ActionsApi?: typeof ActionsApi;
   CertificatesApi?: typeof CertificatesApi;
   FirewallsApi?: typeof FirewallsApi;
+  FloatingIPActionsApi?: typeof FloatingIPActionsApi;
   FloatingIPsApi?: typeof FloatingIPsApi;
   LoadBalancersApi?: typeof LoadBalancersApi;
   NetworkActionsApi?: typeof NetworkActionsApi;
@@ -89,6 +92,7 @@ export class HetznerSdkFactory {
     const Actions = deps.ActionsApi ?? ActionsApi;
     const Certificates = deps.CertificatesApi ?? CertificatesApi;
     const Firewalls = deps.FirewallsApi ?? FirewallsApi;
+    const FloatingIPActions = deps.FloatingIPActionsApi ?? FloatingIPActionsApi;
     const FloatingIPs = deps.FloatingIPsApi ?? FloatingIPsApi;
     const LoadBalancers = deps.LoadBalancersApi ?? LoadBalancersApi;
     const NetworkActions = deps.NetworkActionsApi ?? NetworkActionsApi;
@@ -104,6 +108,7 @@ export class HetznerSdkFactory {
       actions: new Actions(config),
       certificates: new Certificates(config),
       firewalls: new Firewalls(config),
+      floatingIpActions: new FloatingIPActions(config),
       floatingIps: new FloatingIPs(config),
       loadBalancers: new LoadBalancers(config),
       networkActions: new NetworkActions(config),

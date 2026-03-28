@@ -32,6 +32,9 @@ cdkx deploy
 | [`HtzSshKey`](ssh-key.md) | `Hetzner::Security::SshKey` | SSH public key for server access |
 | [`HtzCertificate`](certificate.md) | `Hetzner::Security::Certificate` | TLS certificate (uploaded or Let's Encrypt managed) |
 | [`HtzVolume`](volume.md) | `Hetzner::Storage::Volume` | Persistent block storage volume |
+| [`HtzVolumeAttachment`](volume-attachment.md) | `Hetzner::Storage::VolumeAttachment` | Attaches a volume to a server |
+| [`HtzFloatingIp`](floating-ip.md) | `Hetzner::Networking::FloatingIp` | Static public IP independent of servers |
+| [`HtzFloatingIpAssignment`](floating-ip-assignment.md) | `Hetzner::Networking::FloatingIpAssignment` | Assigns a floating IP to a server |
 
 ## Quick example
 

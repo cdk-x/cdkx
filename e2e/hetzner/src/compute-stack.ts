@@ -1,5 +1,6 @@
 import { App, Stack, IResolvable, StackOutput } from '@cdkx-io/core';
 import {
+  HtzFloatingIpAssignment,
   HtzPlacementGroup,
   HtzServer,
   HtzSshKey,
@@ -13,6 +14,8 @@ import {
 export interface ComputeStackProps {
   /** Token that resolves to the Hetzner network ID at deploy time. */
   readonly networkId: IResolvable;
+  /** Token that resolves to the Hetzner floating IP ID at deploy time. */
+  readonly floatingIpId: IResolvable;
 }
 
 export class ComputeStack extends Stack {
@@ -63,6 +66,11 @@ export class ComputeStack extends Stack {
 
     new HtzVolumeAttachment(this, 'AppVolumeAttachment', {
       volumeId: volume.attrVolumeId,
+      serverId: server.attrServerId,
+    });
+
+    new HtzFloatingIpAssignment(this, 'AppFloatingIpAssignment', {
+      floatingIpId: props.floatingIpId,
       serverId: server.attrServerId,
     });
   }
