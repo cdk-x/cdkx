@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerFloatingIpAssignment",
+  "description": "Assigns a Hetzner Cloud Floating IP to a Server via the assign action.",
+  "typeName": "Hetzner::Networking::FloatingIpAssignment",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "properties": {
+    "floatingIpId": {
+      "type": "integer",
+      "description": "ID of the Floating IP to assign."
+    },
+    "serverId": {
+      "type": "integer",
+      "description": "ID of the Server to assign the Floating IP to."
+    }
+  },
+  "required": ["floatingIpId", "serverId"],
+  "primaryIdentifier": ["/properties/floatingIpId"]
+}

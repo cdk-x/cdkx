@@ -133,6 +133,7 @@ nav:
           - Volume: providers/hetzner/volume.md
           - Volume Attachment: providers/hetzner/volume-attachment.md
           - Floating IP: providers/hetzner/floating-ip.md
+          - Floating IP Assignment: providers/hetzner/floating-ip-assignment.md
   - API Reference: api/index.md
   - Contributing:
       - Add a Provider: contributing/add-provider.md

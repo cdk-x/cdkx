@@ -53,6 +53,12 @@ export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
     createOnlyProps: new Set(['rules', 'applyTo']),
   },
 
+  // Hetzner::Networking::FloatingIpAssignment
+  'Hetzner::Networking::FloatingIpAssignment': {
+    physicalIdKey: 'floatingIpId',
+    createOnlyProps: new Set(),
+  },
+
   // Hetzner::Networking::FloatingIp
   'Hetzner::Networking::FloatingIp': {
     physicalIdKey: 'floatingIpId',
