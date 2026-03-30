@@ -13,6 +13,7 @@ import {
   HetznerFloatingIpHandler,
   HetznerFloatingIpAssignmentHandler,
   HetznerPrimaryIpHandler,
+  HetznerPrimaryIpAssignmentHandler,
 } from './handlers';
 
 /**
@@ -54,6 +55,10 @@ export class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
     this.register(
       'Hetzner::Networking::PrimaryIp',
       new HetznerPrimaryIpHandler(),
+    );
+    this.register(
+      'Hetzner::Networking::PrimaryIpAssignment',
+      new HetznerPrimaryIpAssignmentHandler(),
     );
   }
 
