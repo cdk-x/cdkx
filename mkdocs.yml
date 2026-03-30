@@ -135,6 +135,7 @@ nav:
           - Floating IP: providers/hetzner/floating-ip.md
           - Floating IP Assignment: providers/hetzner/floating-ip-assignment.md
           - Primary IP: providers/hetzner/primary-ip.md
+          - Primary IP Assignment: providers/hetzner/primary-ip-assignment.md
   - API Reference: api/index.md
   - Contributing:
       - Add a Provider: contributing/add-provider.md

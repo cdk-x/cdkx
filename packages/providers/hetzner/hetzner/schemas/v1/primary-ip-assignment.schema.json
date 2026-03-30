@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerPrimaryIpAssignment",
+  "description": "Assigns a Hetzner Cloud Primary IP to a resource via the assign action.",
+  "typeName": "Hetzner::Networking::PrimaryIpAssignment",
+  "domain": "Networking",
+  "additionalProperties": false,
+  "properties": {
+    "primaryIpId": {
+      "type": "integer",
+      "description": "ID of the Primary IP to assign."
+    },
+    "assigneeId": {
+      "type": "integer",
+      "description": "ID of the resource to assign the Primary IP to."
+    },
+    "assigneeType": {
+      "$ref": "./primary-ip.schema.json#/definitions/PrimaryIpAssigneeType",
+      "description": "Type of resource to assign the Primary IP to."
+    }
+  },
+  "required": ["primaryIpId", "assigneeId", "assigneeType"],
+  "primaryIdentifier": ["/properties/primaryIpId"]
+}

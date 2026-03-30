@@ -31,6 +31,8 @@ export const HetznerResourceType = {
     FloatingIp: 'Hetzner::Networking::FloatingIp',
     /** `Hetzner::Networking::Network` */
     Network: 'Hetzner::Networking::Network',
+    /** `Hetzner::Networking::PrimaryIpAssignment` */
+    PrimaryIpAssignment: 'Hetzner::Networking::PrimaryIpAssignment',
     /** `Hetzner::Networking::PrimaryIp` */
     PrimaryIp: 'Hetzner::Networking::PrimaryIp',
     /** `Hetzner::Networking::Route` */
@@ -93,6 +95,14 @@ export enum NetworkZone {
   US_WEST = 'us-west',
   /** `ap-southeast` */
   AP_SOUTHEAST = 'ap-southeast',
+}
+
+/**
+ * Type of resource the Primary IP can get assigned to. Currently Primary IPs can only be assigned to Servers, therefore this field must be set to `server`.
+ */
+export enum PrimaryIpAssigneeType {
+  /** `server` */
+  SERVER = 'server',
 }
 
 
@@ -636,6 +646,60 @@ export class HtzNetwork extends ProviderResource {
 }
 
 
+// --- PrimaryIpAssignment ---
+/**
+ * Props for {@link HtzPrimaryIpAssignment}.
+ *
+ * Assigns a Hetzner Cloud Primary IP to a resource via the assign action.
+ */
+export interface HetznerPrimaryIpAssignment {
+  /**
+   * ID of the Primary IP to assign.
+   */
+  primaryIpId: number | IResolvable;
+  /**
+   * ID of the resource to assign the Primary IP to.
+   */
+  assigneeId: number | IResolvable;
+  /**
+   * Type of resource to assign the Primary IP to.
+   */
+  assigneeType: PrimaryIpAssigneeType;
+}
+
+/**
+ * L1 construct for a Hetzner PrimaryIpAssignment resource.
+ *
+ * Assigns a Hetzner Cloud Primary IP to a resource via the assign action.
+ */
+export class HtzPrimaryIpAssignment extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Networking::PrimaryIpAssignment';
+
+  public primaryIpId: number | IResolvable;
+  public assigneeId: number | IResolvable;
+  public assigneeType: PrimaryIpAssigneeType;
+
+  constructor(scope: Construct, id: string, props: HetznerPrimaryIpAssignment) {
+    super(scope, id, {
+      type: HtzPrimaryIpAssignment.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.primaryIpId = props.primaryIpId;
+    this.assigneeId = props.assigneeId;
+    this.assigneeType = props.assigneeType;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      primaryIpId: this.primaryIpId,
+      assigneeId: this.assigneeId,
+      assigneeType: this.assigneeType,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
+
 // --- PrimaryIp ---
 /**
  * Primary IP type.
@@ -645,14 +709,6 @@ export enum PrimaryIpType {
   IPV4 = 'ipv4',
   /** `ipv6` */
   IPV6 = 'ipv6',
-}
-
-/**
- * Type of resource the Primary IP can get assigned to. Currently Primary IPs can only be assigned to Servers, therefore this field must be set to `server`.
- */
-export enum PrimaryIpAssigneeType {
-  /** `server` */
-  SERVER = 'server',
 }
 
 /**

@@ -33,3 +33,6 @@ export type { HetznerFloatingIpAssignmentState } from './floating-ip-assignment'
 
 export { HetznerPrimaryIpHandler } from './primary-ip';
 export type { HetznerPrimaryIpState } from './primary-ip';
+
+export { HetznerPrimaryIpAssignmentHandler } from './primary-ip-assignment';
+export type { HetznerPrimaryIpAssignmentState } from './primary-ip-assignment';

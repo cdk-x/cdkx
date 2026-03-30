@@ -85,6 +85,12 @@ export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
     createOnlyProps: new Set(['type']),
   },
 
+  // Hetzner::Networking::PrimaryIpAssignment
+  'Hetzner::Networking::PrimaryIpAssignment': {
+    physicalIdKey: 'primaryIpId',
+    createOnlyProps: new Set(),
+  },
+
   // Hetzner::Networking::PrimaryIp
   'Hetzner::Networking::PrimaryIp': {
     physicalIdKey: 'primaryIpId',

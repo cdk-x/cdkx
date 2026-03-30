@@ -9,6 +9,7 @@ import {
   NetworkActionsApi,
   NetworksApi,
   PlacementGroupsApi,
+  PrimaryIPActionsApi,
   PrimaryIPsApi,
   ServersApi,
   SSHKeysApi,
@@ -32,6 +33,7 @@ export interface HetznerSdk {
   readonly networkActions: NetworkActionsApi;
   readonly networks: NetworksApi;
   readonly placementGroups: PlacementGroupsApi;
+  readonly primaryIpActions: PrimaryIPActionsApi;
   readonly primaryIps: PrimaryIPsApi;
   readonly servers: ServersApi;
   readonly sshKeys: SSHKeysApi;
@@ -66,6 +68,7 @@ export interface HetznerSdkFactoryDeps {
   NetworkActionsApi?: typeof NetworkActionsApi;
   NetworksApi?: typeof NetworksApi;
   PlacementGroupsApi?: typeof PlacementGroupsApi;
+  PrimaryIPActionsApi?: typeof PrimaryIPActionsApi;
   PrimaryIPsApi?: typeof PrimaryIPsApi;
   ServersApi?: typeof ServersApi;
   SSHKeysApi?: typeof SSHKeysApi;
@@ -98,6 +101,7 @@ export class HetznerSdkFactory {
     const NetworkActions = deps.NetworkActionsApi ?? NetworkActionsApi;
     const Networks = deps.NetworksApi ?? NetworksApi;
     const PlacementGroups = deps.PlacementGroupsApi ?? PlacementGroupsApi;
+    const PrimaryIPActions = deps.PrimaryIPActionsApi ?? PrimaryIPActionsApi;
     const PrimaryIPs = deps.PrimaryIPsApi ?? PrimaryIPsApi;
     const Servers = deps.ServersApi ?? ServersApi;
     const SSHKeys = deps.SSHKeysApi ?? SSHKeysApi;
@@ -114,6 +118,7 @@ export class HetznerSdkFactory {
       networkActions: new NetworkActions(config),
       networks: new Networks(config),
       placementGroups: new PlacementGroups(config),
+      primaryIpActions: new PrimaryIPActions(config),
       primaryIps: new PrimaryIPs(config),
       servers: new Servers(config),
       sshKeys: new SSHKeys(config),
