@@ -893,6 +893,74 @@ describe('DeploymentEngine', () => {
       expect(createdIds).not.toContain('ResA');
     });
 
+    it('removes a CREATE_FAILED orphan from state without calling adapter.delete', async () => {
+      let savedState: EngineState | undefined;
+      const persistence = new StatePersistence('/fake', {
+        mkdirSync: () => undefined,
+        writeFileSync: (_, data) => {
+          savedState = JSON.parse(data) as EngineState;
+        },
+        readFileSync: () => {
+          throw new Error('not found');
+        },
+        existsSync: () => false,
+        unlinkSync: () => undefined,
+      });
+
+      const priorState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.CREATE_COMPLETE,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: {},
+              },
+              ResFailed: {
+                status: ResourceStatus.CREATE_FAILED,
+                type: 'test::Resource',
+                properties: {},
+              },
+            },
+          },
+        },
+      };
+
+      const deleteIds: string[] = [];
+      const bus = new EventBus<EngineEvent>();
+      const stateManager = new EngineStateManager(bus, persistence, priorState);
+
+      const engine = new DeploymentEngine({
+        adapters: {
+          test: {
+            create: () => Promise.resolve({ physicalId: 'new-A' }),
+            update: () => Promise.reject(new Error('not implemented')),
+            delete: (r: ManifestResource): Promise<void> => {
+              deleteIds.push(r.logicalId);
+              return Promise.resolve();
+            },
+            getOutput: () => Promise.resolve(undefined),
+          },
+        },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // New assembly only has ResA — ResFailed is removed from manifest.
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      expect(deleteIds).not.toContain('ResFailed');
+      expect(savedState?.stacks['S']?.resources['ResFailed']).toBeUndefined();
+    });
+
     it('fails the stack when reconcile delete throws', async () => {
       const adapter: Partial<ProviderAdapter> = {
         delete: (): Promise<void> => Promise.reject(new Error('delete failed')),
@@ -3719,6 +3787,84 @@ describe('DeploymentEngine', () => {
           e.resourceStatus === StackStatus.ROLLBACK_PARTIAL,
       );
       expect(partialEvent).toBeDefined();
+    });
+
+    it('does not recreate a CREATE_FAILED resource present in snapshot but absent from current state', async () => {
+      // Snapshot: ResA (CREATE_COMPLETE) + ResB (CREATE_FAILED, no physicalId).
+      // ResB never reached the provider so it must never be recreated.
+      const snapshotState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.UPDATE_IN_PROGRESS,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'a' },
+                lastAppliedProperties: { name: 'a' },
+              },
+              ResB: {
+                status: ResourceStatus.CREATE_FAILED,
+                type: 'test::Resource',
+                properties: { name: 'b' },
+              },
+            },
+          },
+        },
+      };
+
+      // Current state: only ResA (ResB was dropped by the reconcile fix).
+      const currentState: EngineState = {
+        stacks: {
+          S: {
+            status: StackStatus.UPDATE_IN_PROGRESS,
+            resources: {
+              ResA: {
+                status: ResourceStatus.CREATE_COMPLETE,
+                type: 'test::Resource',
+                physicalId: 'phys-A',
+                properties: { name: 'a' },
+                lastAppliedProperties: { name: 'a' },
+              },
+            },
+          },
+        },
+      };
+
+      const persistence = makeSnapshotPersistence({ snapshotState, currentState });
+
+      const createCalls: string[] = [];
+      const fullAdapter: ProviderAdapter = {
+        create: (resource) => {
+          createCalls.push(resource.logicalId);
+          return Promise.resolve({ physicalId: `phys-${resource.logicalId}` });
+        },
+        update: () => Promise.resolve({}),
+        delete: () => Promise.resolve(),
+        getOutput: () => Promise.resolve(undefined),
+        getCreateOnlyProps: () => new Set<string>(),
+      };
+
+      const bus = new EventBus<EngineEvent>();
+      const stateManager = new EngineStateManager(bus, persistence, currentState);
+      const engine = new DeploymentEngine({
+        adapters: { test: fullAdapter },
+        assemblyDir: '/fake/assembly',
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+
+      // New assembly still has ResA (no ResB — it was removed from the manifest).
+      const stacks = [makeStack('S', [{ logicalId: 'ResA' }])];
+      const plan = makePlan(['S'], { S: ['ResA'] });
+      await engine.deploy(stacks, plan);
+
+      // ResB must never be passed to adapter.create.
+      expect(createCalls).not.toContain('ResB');
     });
   });
 
