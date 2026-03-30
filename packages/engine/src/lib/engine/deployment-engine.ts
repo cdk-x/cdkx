@@ -623,6 +623,8 @@ export class DeploymentEngine {
         snapshotResources,
       )) {
         if (logicalId in currentResources) continue;
+        // CREATE_FAILED resources never reached the provider — nothing to recreate.
+        if (snapshotRes.status === ResourceStatus.CREATE_FAILED) continue;
         const provider = (snapshotRes.type ?? 'unknown')
           .split('::')[0]
           .toLowerCase();
@@ -952,9 +954,12 @@ export class DeploymentEngine {
     // compute a diff to decide whether to update or skip.
     let existingState = this.stateManager.getResourceState(stack.id, logicalId);
 
-    // A CREATE_FAILED resource from a previous deploy has no physical ID —
-    // remove it from state so it can be re-created from scratch.
-    if (existingState?.status === ResourceStatus.CREATE_FAILED) {
+    // A CREATE_FAILED or DELETE_COMPLETE resource has no live presence in the
+    // provider — remove it from state so it can be re-created from scratch.
+    if (
+      existingState?.status === ResourceStatus.CREATE_FAILED ||
+      existingState?.status === ResourceStatus.DELETE_COMPLETE
+    ) {
       this.stateManager.removeResource(stack.id, logicalId);
       existingState = undefined;
     }
@@ -1123,6 +1128,19 @@ export class DeploymentEngine {
     if (prevState === undefined) return 0;
 
     const newIds = new Set(stack.resources.map((r) => r.logicalId));
+
+    // Resources that failed to create and are absent from the new assembly
+    // never reached the provider — drop them from state without any API call.
+    for (const [logicalId, resourceState] of Object.entries(
+      prevState.resources,
+    )) {
+      if (
+        resourceState.status === ResourceStatus.CREATE_FAILED &&
+        !newIds.has(logicalId)
+      ) {
+        this.stateManager.removeResource(stack.id, logicalId);
+      }
+    }
 
     // Find resources to delete: CREATE_COMPLETE in prior state, absent from
     // new assembly.
@@ -1398,6 +1416,7 @@ export class DeploymentEngine {
             resource.type,
             ResourceStatus.DELETE_COMPLETE,
           );
+          this.stateManager.removeResource(stack.id, logicalId);
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : String(err);
           this.stateManager.transitionResource(
