@@ -1,10 +1,15 @@
 import { App, Stack, StackOutput } from '@cdkx-io/core';
 import {
+  HtzFirewall,
+  HtzFirewallRules,
+  HtzFirewallAttachment,
   HtzNetwork,
   HtzSubnet,
   HtzRoute,
   HtzFloatingIp,
   HtzPrimaryIp,
+  FirewallRuleDirection,
+  FirewallRuleProtocol,
   FloatingIpType,
   Location,
   NetworkSubnetType,
@@ -72,6 +77,48 @@ export class NetworkStack extends Stack {
     this.primaryIpIdOutput = new StackOutput(this, 'PrimaryIpId', {
       value: primaryIp.attrPrimaryIpId,
       description: 'The Hetzner primary IP ID',
+    });
+
+    const firewall = new HtzFirewall(this, 'WebFirewall', {
+      name: 'e2e-web-firewall',
+    });
+
+    new HtzFirewallRules(this, 'WebFirewallRules', {
+      firewallId: firewall.attrFirewallId,
+      rules: [
+        {
+          direction: FirewallRuleDirection.IN,
+          protocol: FirewallRuleProtocol.TCP,
+          port: '22',
+          sourceIps: ['0.0.0.0/0', '::/0'],
+          description: 'Allow SSH',
+        },
+        {
+          direction: FirewallRuleDirection.IN,
+          protocol: FirewallRuleProtocol.TCP,
+          port: '80',
+          sourceIps: ['0.0.0.0/0', '::/0'],
+          description: 'Allow HTTP',
+        },
+        {
+          direction: FirewallRuleDirection.IN,
+          protocol: FirewallRuleProtocol.TCP,
+          port: '443',
+          sourceIps: ['0.0.0.0/0', '::/0'],
+          description: 'Allow HTTPS',
+        },
+        {
+          direction: FirewallRuleDirection.OUT,
+          protocol: FirewallRuleProtocol.TCP,
+          destinationIps: ['0.0.0.0/0', '::/0'],
+          description: 'Allow all outbound TCP',
+        },
+      ],
+    });
+
+    new HtzFirewallAttachment(this, 'WebFirewallAttachment', {
+      firewallId: firewall.attrFirewallId,
+      labelSelector: 'role=web',
     });
   }
 }
