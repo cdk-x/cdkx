@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerFirewallRules",
+  "description": "Manages the complete rules set for a Hetzner Cloud Firewall via the set_rules action.",
+  "typeName": "Hetzner::Security::FirewallRules",
+  "domain": "Security",
+  "additionalProperties": false,
+  "properties": {
+    "firewallId": {
+      "type": "integer",
+      "description": "ID of the Firewall to manage rules for."
+    },
+    "rules": {
+      "type": "array",
+      "description": "Array of rules. Rules are limited to 50 entries per Firewall.",
+      "items": { "$ref": "#/definitions/FirewallRule" }
+    }
+  },
+  "definitions": {
+    "FirewallRule": {
+      "type": "object",
+      "description": "A single firewall rule.",
+      "additionalProperties": false,
+      "required": ["direction", "protocol"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Description of the rule.",
+          "nullable": true
+        },
+        "direction": {
+          "$ref": "#/definitions/FirewallRuleDirection",
+          "description": "Traffic direction in which the rule should be applied to."
+        },
+        "sourceIps": {
+          "type": "array",
+          "description": "List of permitted IPv4/IPv6 addresses for incoming traffic.",
+          "items": { "type": "string" }
+        },
+        "destinationIps": {
+          "type": "array",
+          "description": "List of permitted IPv4/IPv6 addresses for outgoing traffic.",
+          "items": { "type": "string" }
+        },
+        "protocol": {
+          "$ref": "#/definitions/FirewallRuleProtocol",
+          "description": "Network protocol to apply the rule for."
+        },
+        "port": {
+          "type": "string",
+          "description": "Port or port range to apply the rule for."
+        }
+      }
+    },
+    "FirewallRuleDirection": {
+      "type": "string",
+      "description": "Traffic direction in which the rule should be applied to.",
+      "enum": ["in", "out"]
+    },
+    "FirewallRuleProtocol": {
+      "type": "string",
+      "description": "Network protocol to apply the rule for.",
+      "enum": ["tcp", "udp", "icmp", "esp", "gre"]
+    }
+  },
+  "required": ["firewallId"],
+  "createOnlyProperties": ["/properties/firewallId"],
+  "primaryIdentifier": ["/properties/firewallId"]
+}

@@ -43,10 +43,22 @@ export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
     createOnlyProps: new Set(['type', 'certificate', 'privateKey', 'domainNames']),
   },
 
+  // Hetzner::Security::FirewallAttachment
+  'Hetzner::Security::FirewallAttachment': {
+    physicalIdKey: 'physicalId',
+    createOnlyProps: new Set(['firewallId', 'serverId', 'labelSelector']),
+  },
+
+  // Hetzner::Security::FirewallRules
+  'Hetzner::Security::FirewallRules': {
+    physicalIdKey: 'firewallId',
+    createOnlyProps: new Set(['firewallId']),
+  },
+
   // Hetzner::Security::Firewall
   'Hetzner::Security::Firewall': {
     physicalIdKey: 'firewallId',
-    createOnlyProps: new Set(['rules', 'applyTo']),
+    createOnlyProps: new Set(),
   },
 
   // Hetzner::Networking::FloatingIpAssignment
