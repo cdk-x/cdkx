@@ -18,6 +18,10 @@ export const HetznerResourceType = {
   Security: {
     /** `Hetzner::Security::Certificate` */
     Certificate: 'Hetzner::Security::Certificate',
+    /** `Hetzner::Security::FirewallAttachment` */
+    FirewallAttachment: 'Hetzner::Security::FirewallAttachment',
+    /** `Hetzner::Security::FirewallRules` */
+    FirewallRules: 'Hetzner::Security::FirewallRules',
     /** `Hetzner::Security::Firewall` */
     Firewall: 'Hetzner::Security::Firewall',
     /** `Hetzner::Security::SshKey` */
@@ -202,9 +206,63 @@ export class HtzCertificate extends ProviderResource {
 }
 
 
-// --- Firewall ---
+// --- FirewallAttachment ---
 /**
- * Array of rules. Rules are limited to 50 entries per Firewall and 500 effective rules.
+ * Props for {@link HtzFirewallAttachment}.
+ *
+ * Attaches a Hetzner Cloud Firewall to a server or label selector.
+ */
+export interface HetznerFirewallAttachment {
+  /**
+   * ID of the Firewall to attach.
+   */
+  firewallId: number | IResolvable;
+  /**
+   * ID of the Server to attach the Firewall to. Provide either serverId or labelSelector, not both.
+   */
+  serverId?: number | IResolvable;
+  /**
+   * Label selector string. Attaches the Firewall to all matching servers. Provide either serverId or labelSelector, not both.
+   */
+  labelSelector?: string;
+}
+
+/**
+ * L1 construct for a Hetzner FirewallAttachment resource.
+ *
+ * Attaches a Hetzner Cloud Firewall to a server or label selector.
+ */
+export class HtzFirewallAttachment extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Security::FirewallAttachment';
+
+  public firewallId: number | IResolvable;
+  public serverId?: number | IResolvable;
+  public labelSelector?: string;
+
+  constructor(scope: Construct, id: string, props: HetznerFirewallAttachment) {
+    super(scope, id, {
+      type: HtzFirewallAttachment.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.firewallId = props.firewallId;
+    this.serverId = props.serverId;
+    this.labelSelector = props.labelSelector;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      firewallId: this.firewallId,
+      serverId: this.serverId,
+      labelSelector: this.labelSelector,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
+
+// --- FirewallRules ---
+/**
+ * A single firewall rule.
  */
 export interface FirewallRule {
   /**
@@ -234,45 +292,7 @@ export interface FirewallRule {
 }
 
 /**
- * Server the Firewall is applied to. Only set for type `server`, otherwise `null`.
- */
-export interface FirewallApplyToServer {
-  /**
-   * ID of the Server.
-   */
-  id: number;
-}
-
-/**
- * Label Selector the Firewall is applied to. Only set for type `label_selector`, otherwise `null`.
- */
-export interface FirewallApplyToLabelSelector {
-  /**
-   * The selector.
-   */
-  selector: string;
-}
-
-/**
- * Resources to apply the Firewall to. Resources added directly are taking precedence over those added via a Label Selector.
- */
-export interface FirewallApplyTo {
-  /**
-   * Type of the resource.
-   */
-  type: FirewallApplyToType;
-  /**
-   * Server the Firewall is applied to.
-   */
-  server?: FirewallApplyToServer;
-  /**
-   * Label Selector the Firewall is applied to.
-   */
-  labelSelector?: FirewallApplyToLabelSelector;
-}
-
-/**
- * Traffic direction in which the rule should be applied to. Use `source_ips` for direction `in` and `destination_ips` for direction `out` to specify IPs.
+ * Traffic direction in which the rule should be applied to.
  */
 export enum FirewallRuleDirection {
   /** `in` */
@@ -298,15 +318,52 @@ export enum FirewallRuleProtocol {
 }
 
 /**
- * Type of the resource.
+ * Props for {@link HtzFirewallRules}.
+ *
+ * Manages the complete rules set for a Hetzner Cloud Firewall via the set_rules action.
  */
-export enum FirewallApplyToType {
-  /** `server` */
-  SERVER = 'server',
-  /** `label_selector` */
-  LABEL_SELECTOR = 'label_selector',
+export interface HetznerFirewallRules {
+  /**
+   * ID of the Firewall to manage rules for.
+   */
+  firewallId: number | IResolvable;
+  /**
+   * Array of rules. Rules are limited to 50 entries per Firewall.
+   */
+  rules?: FirewallRule[];
 }
 
+/**
+ * L1 construct for a Hetzner FirewallRules resource.
+ *
+ * Manages the complete rules set for a Hetzner Cloud Firewall via the set_rules action.
+ */
+export class HtzFirewallRules extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Security::FirewallRules';
+
+  public firewallId: number | IResolvable;
+  public rules?: FirewallRule[];
+
+  constructor(scope: Construct, id: string, props: HetznerFirewallRules) {
+    super(scope, id, {
+      type: HtzFirewallRules.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.firewallId = props.firewallId;
+    this.rules = props.rules;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      firewallId: this.firewallId,
+      rules: this.rules,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
+
+// --- Firewall ---
 /**
  * Props for {@link HtzFirewall}.
  *
@@ -321,14 +378,6 @@ export interface HetznerFirewall {
    * User-defined labels (`key/value` pairs) for the Resource.
    */
   labels?: Record<string, string>;
-  /**
-   * Array of rules.
-   */
-  rules?: FirewallRule[];
-  /**
-   * Resources to apply the Firewall to.
-   */
-  applyTo?: FirewallApplyTo[];
 }
 
 /**
@@ -348,8 +397,6 @@ export class HtzFirewall extends ProviderResource {
 
   public name: string;
   public labels?: Record<string, string>;
-  public rules?: FirewallRule[];
-  public applyTo?: FirewallApplyTo[];
 
   constructor(scope: Construct, id: string, props: HetznerFirewall) {
     super(scope, id, {
@@ -359,16 +406,12 @@ export class HtzFirewall extends ProviderResource {
     this.attrFirewallId = this.getAtt('firewallId');
     this.name = props.name;
     this.labels = props.labels;
-    this.rules = props.rules;
-    this.applyTo = props.applyTo;
   }
 
   protected override renderProperties(): Record<string, PropertyValue> {
     return {
       name: this.name,
       labels: this.labels,
-      rules: this.rules,
-      applyTo: this.applyTo,
     } as unknown as Record<string, PropertyValue>;
   }
 }

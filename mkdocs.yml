@@ -129,6 +129,7 @@ nav:
           - Server: providers/hetzner/server.md
           - Placement Group: providers/hetzner/placement-group.md
           - SSH Key: providers/hetzner/ssh-key.md
+          - Firewall: providers/hetzner/firewall.md
           - Certificate: providers/hetzner/certificate.md
           - Volume: providers/hetzner/volume.md
           - Volume Attachment: providers/hetzner/volume-attachment.md

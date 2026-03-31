@@ -14,6 +14,9 @@ import {
   HetznerFloatingIpAssignmentHandler,
   HetznerPrimaryIpHandler,
   HetznerPrimaryIpAssignmentHandler,
+  HetznerFirewallHandler,
+  HetznerFirewallRulesHandler,
+  HetznerFirewallAttachmentHandler,
 } from './handlers';
 
 /**
@@ -59,6 +62,15 @@ export class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
     this.register(
       'Hetzner::Networking::PrimaryIpAssignment',
       new HetznerPrimaryIpAssignmentHandler(),
+    );
+    this.register('Hetzner::Security::Firewall', new HetznerFirewallHandler());
+    this.register(
+      'Hetzner::Security::FirewallRules',
+      new HetznerFirewallRulesHandler(),
+    );
+    this.register(
+      'Hetzner::Security::FirewallAttachment',
+      new HetznerFirewallAttachmentHandler(),
     );
   }
 

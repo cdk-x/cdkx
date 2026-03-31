@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerFirewallAttachment",
+  "description": "Attaches a Hetzner Cloud Firewall to a server or label selector.",
+  "typeName": "Hetzner::Security::FirewallAttachment",
+  "domain": "Security",
+  "additionalProperties": false,
+  "properties": {
+    "firewallId": {
+      "type": "integer",
+      "description": "ID of the Firewall to attach."
+    },
+    "serverId": {
+      "type": "integer",
+      "description": "ID of the Server to attach the Firewall to. Provide either serverId or labelSelector, not both."
+    },
+    "labelSelector": {
+      "type": "string",
+      "description": "Label selector string. Attaches the Firewall to all matching servers. Provide either serverId or labelSelector, not both."
+    }
+  },
+  "required": ["firewallId"],
+  "createOnlyProperties": [
+    "/properties/firewallId",
+    "/properties/serverId",
+    "/properties/labelSelector"
+  ],
+  "primaryIdentifier": [
+    "/properties/firewallId",
+    "/properties/serverId",
+    "/properties/labelSelector"
+  ]
+}
