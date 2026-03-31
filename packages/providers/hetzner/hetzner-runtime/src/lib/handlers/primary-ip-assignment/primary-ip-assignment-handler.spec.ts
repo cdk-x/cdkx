@@ -129,7 +129,11 @@ describe('HetznerPrimaryIpAssignmentHandler', () => {
         assigneeType: 'server',
       });
 
-      expect(state).toEqual({ primaryIpId: 10, assigneeId: 99, assigneeType: 'server' });
+      expect(state).toEqual({
+        primaryIpId: 10,
+        assigneeId: 99,
+        assigneeType: 'server',
+      });
     });
 
     it('logs the create operation', async () => {

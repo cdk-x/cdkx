@@ -177,7 +177,9 @@ describe('HetznerPrimaryIpHandler', () => {
     it('calls updatePrimaryIp with id and snake_case fields', async () => {
       const sdk = stubSdk({
         updatePrimaryIp: jest.fn().mockResolvedValue({
-          data: { primary_ip: fakePrimaryIp({ name: 'renamed', auto_delete: true }) },
+          data: {
+            primary_ip: fakePrimaryIp({ name: 'renamed', auto_delete: true }),
+          },
         }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
