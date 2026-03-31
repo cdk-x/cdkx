@@ -36,3 +36,12 @@ export type { HetznerPrimaryIpState } from './primary-ip';
 
 export { HetznerPrimaryIpAssignmentHandler } from './primary-ip-assignment';
 export type { HetznerPrimaryIpAssignmentState } from './primary-ip-assignment';
+
+export { HetznerFirewallHandler } from './firewall';
+export type { HetznerFirewallState } from './firewall';
+
+export { HetznerFirewallRulesHandler } from './firewall-rules';
+export type { HetznerFirewallRulesState } from './firewall-rules';
+
+export { HetznerFirewallAttachmentHandler } from './firewall-attachment';
+export type { HetznerFirewallAttachmentState } from './firewall-attachment';
