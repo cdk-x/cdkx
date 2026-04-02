@@ -46,6 +46,10 @@ export const HetznerResourceType = {
   },
   /** Compute resources. */
   Compute: {
+    /** `Hetzner::Compute::LoadBalancerService` */
+    LoadBalancerService: 'Hetzner::Compute::LoadBalancerService',
+    /** `Hetzner::Compute::LoadBalancerTarget` */
+    LoadBalancerTarget: 'Hetzner::Compute::LoadBalancerTarget',
     /** `Hetzner::Compute::LoadBalancer` */
     LoadBalancer: 'Hetzner::Compute::LoadBalancer',
     /** `Hetzner::Compute::NetworkAttachment` */
@@ -987,17 +991,7 @@ export class HtzSubnet extends ProviderResource {
 // Compute
 // ==============================================================================
 
-// --- LoadBalancer ---
-/**
- * Algorithm of the Load Balancer.
- */
-export interface LoadBalancerAlgorithm {
-  /**
-   * Type of the algorithm.
-   */
-  type: LoadBalancerAlgorithmType;
-}
-
+// --- LoadBalancerService ---
 /**
  * Additional configuration for protocol http.
  */
@@ -1081,29 +1075,57 @@ export interface LoadBalancerServiceHttp {
 }
 
 /**
- * Array of services.
+ * Protocol of the Load Balancer service.
  */
-export interface LoadBalancerService {
+export enum LoadBalancerServiceProtocol {
+  /** `tcp` */
+  TCP = 'tcp',
+  /** `http` */
+  HTTP = 'http',
+  /** `https` */
+  HTTPS = 'https',
+}
+
+/**
+ * Type of the health check.
+ */
+export enum LoadBalancerServiceHealthCheckProtocol {
+  /** `tcp` */
+  TCP = 'tcp',
+  /** `http` */
+  HTTP = 'http',
+}
+
+/**
+ * Props for {@link HtzLoadBalancerService}.
+ *
+ * Manages a service (listener) on a Hetzner Cloud Load Balancer.
+ */
+export interface HetznerLoadBalancerService {
   /**
-   * Protocol of the Load Balancer.
+   * ID of the Load Balancer this service belongs to.
    */
-  protocol: LoadBalancerServiceProtocol;
+  loadBalancerId: number | IResolvable;
   /**
    * Port the Load Balancer listens on.
    */
   listenPort: number;
   /**
+   * Protocol of the Load Balancer service.
+   */
+  protocol?: LoadBalancerServiceProtocol;
+  /**
    * Port the Load Balancer will balance to.
    */
-  destinationPort: number;
+  destinationPort?: number;
   /**
    * Is Proxyprotocol enabled or not.
    */
-  proxyprotocol: boolean;
+  proxyprotocol?: boolean;
   /**
    * Service health check.
    */
-  healthCheck: LoadBalancerServiceHealthCheck;
+  healthCheck?: LoadBalancerServiceHealthCheck;
   /**
    * Configuration option for protocols http and https.
    */
@@ -1111,59 +1133,146 @@ export interface LoadBalancerService {
 }
 
 /**
- * Configuration for type Server, only valid and required if type is `server`.
+ * L1 construct for a Hetzner LoadBalancerService resource.
+ *
+ * Manages a service (listener) on a Hetzner Cloud Load Balancer.
  */
-export interface LoadBalancerTargetServer {
-  /**
-   * ID of the Server.
-   */
-  serverId: number | IResolvable;
+export class HtzLoadBalancerService extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::LoadBalancerService';
+
+  public loadBalancerId: number | IResolvable;
+  public listenPort: number;
+  public protocol?: LoadBalancerServiceProtocol;
+  public destinationPort?: number;
+  public proxyprotocol?: boolean;
+  public healthCheck?: LoadBalancerServiceHealthCheck;
+  public http?: LoadBalancerServiceHttp;
+
+  constructor(scope: Construct, id: string, props: HetznerLoadBalancerService) {
+    super(scope, id, {
+      type: HtzLoadBalancerService.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.loadBalancerId = props.loadBalancerId;
+    this.listenPort = props.listenPort;
+    this.protocol = props.protocol;
+    this.destinationPort = props.destinationPort;
+    this.proxyprotocol = props.proxyprotocol;
+    this.healthCheck = props.healthCheck;
+    this.http = props.http;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      loadBalancerId: this.loadBalancerId,
+      listenPort: this.listenPort,
+      protocol: this.protocol,
+      destinationPort: this.destinationPort,
+      proxyprotocol: this.proxyprotocol,
+      healthCheck: this.healthCheck,
+      http: this.http,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
+
+// --- LoadBalancerTarget ---
+/**
+ * Type of the target.
+ */
+export enum LoadBalancerTargetType {
+  /** `server` */
+  SERVER = 'server',
+  /** `label_selector` */
+  LABEL_SELECTOR = 'label_selector',
+  /** `ip` */
+  IP = 'ip',
 }
 
 /**
- * Configuration for label selector targets, only valid and required if type is `label_selector`.
+ * Props for {@link HtzLoadBalancerTarget}.
+ *
+ * Manages a target on a Hetzner Cloud Load Balancer.
  */
-export interface LoadBalancerTargetLabelSelector {
+export interface HetznerLoadBalancerTarget {
   /**
-   * Label selector.
+   * ID of the Load Balancer this target belongs to.
    */
-  selector: string;
-}
-
-/**
- * Configuration for an IP target. It is only possible to use the (Public or vSwitch) IPs of Hetzner Online Root Servers belonging to the project owner. IPs belonging to other users are blocked. Additionally IPs belonging to services provided by Hetzner Cloud (Servers, Load Balancers, ...) are blocked as well. Only valid and required if type is `ip`.
- */
-export interface LoadBalancerTargetIp {
+  loadBalancerId: number | IResolvable;
   /**
-   * IP of a server that belongs to the same customer (public IPv4/IPv6) or private IP in a subnet type vswitch.
-   */
-  ip: string;
-}
-
-/**
- * Array of targets.
- */
-export interface LoadBalancerTarget {
-  /**
-   * Type of the resource.
+   * Type of the target.
    */
   type: LoadBalancerTargetType;
   /**
-   * Configuration for type Server, only valid and required if type is `server`.
+   * ID of the Server to add as target. Only valid and required if type is `server`.
    */
-  server?: LoadBalancerTargetServer;
+  serverId?: number | IResolvable;
+  /**
+   * Label selector string. Adds all matching servers as targets. Only valid and required if type is `label_selector`.
+   */
+  labelSelector?: string;
+  /**
+   * IP of a server that belongs to the same customer (public IPv4/IPv6) or private IP in a subnet type vswitch. Only valid and required if type is `ip`.
+   */
+  ip?: string;
   /**
    * Use the private network IP instead of the public IP of the Server, requires the Server and Load Balancer to be in the same network. Only valid for target types `server` and `label_selector`.
    */
   usePrivateIp?: boolean;
+}
+
+/**
+ * L1 construct for a Hetzner LoadBalancerTarget resource.
+ *
+ * Manages a target on a Hetzner Cloud Load Balancer.
+ */
+export class HtzLoadBalancerTarget extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::LoadBalancerTarget';
+
+  public loadBalancerId: number | IResolvable;
+  public resourceType: LoadBalancerTargetType;
+  public serverId?: number | IResolvable;
+  public labelSelector?: string;
+  public ip?: string;
+  public usePrivateIp?: boolean;
+
+  constructor(scope: Construct, id: string, props: HetznerLoadBalancerTarget) {
+    super(scope, id, {
+      type: HtzLoadBalancerTarget.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.loadBalancerId = props.loadBalancerId;
+    this.resourceType = props.type;
+    this.serverId = props.serverId;
+    this.labelSelector = props.labelSelector;
+    this.ip = props.ip;
+    this.usePrivateIp = props.usePrivateIp;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      loadBalancerId: this.loadBalancerId,
+      type: this.resourceType,
+      serverId: this.serverId,
+      labelSelector: this.labelSelector,
+      ip: this.ip,
+      usePrivateIp: this.usePrivateIp,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
+
+// --- LoadBalancer ---
+/**
+ * Algorithm of the Load Balancer.
+ */
+export interface LoadBalancerAlgorithm {
   /**
-   * Configuration for label selector targets, only valid and required if type is `label_selector`.
+   * Type of the algorithm.
    */
-  labelSelector?: LoadBalancerTargetLabelSelector;
-  /**
-   * Configuration for an IP target.
-   */
-  ip?: LoadBalancerTargetIp;
+  type: LoadBalancerAlgorithmType;
 }
 
 /**
@@ -1189,40 +1298,6 @@ export enum LoadBalancerAlgorithmType {
 }
 
 /**
- * Protocol of the Load Balancer.
- */
-export enum LoadBalancerServiceProtocol {
-  /** `tcp` */
-  TCP = 'tcp',
-  /** `http` */
-  HTTP = 'http',
-  /** `https` */
-  HTTPS = 'https',
-}
-
-/**
- * Type of the health check.
- */
-export enum LoadBalancerServiceHealthCheckProtocol {
-  /** `tcp` */
-  TCP = 'tcp',
-  /** `http` */
-  HTTP = 'http',
-}
-
-/**
- * Type of the resource.
- */
-export enum LoadBalancerTargetType {
-  /** `server` */
-  SERVER = 'server',
-  /** `label_selector` */
-  LABEL_SELECTOR = 'label_selector',
-  /** `ip` */
-  IP = 'ip',
-}
-
-/**
  * Props for {@link HtzLoadBalancer}.
  *
  * Manages a Hetzner Cloud Load Balancer.
@@ -1240,14 +1315,6 @@ export interface HetznerLoadBalancer {
    * Algorithm of the Load Balancer.
    */
   algorithm?: LoadBalancerAlgorithm;
-  /**
-   * Array of services.
-   */
-  services?: LoadBalancerService[];
-  /**
-   * Array of targets.
-   */
-  targets?: LoadBalancerTarget[];
   /**
    * User-defined labels (`key/value` pairs) for the Resource.
    */
@@ -1288,8 +1355,6 @@ export class HtzLoadBalancer extends ProviderResource {
   public name: string;
   public loadBalancerType: LoadBalancerType;
   public algorithm?: LoadBalancerAlgorithm;
-  public services?: LoadBalancerService[];
-  public targets?: LoadBalancerTarget[];
   public labels?: Record<string, string>;
   public publicInterface?: boolean;
   public networkId?: number | IResolvable;
@@ -1305,8 +1370,6 @@ export class HtzLoadBalancer extends ProviderResource {
     this.name = props.name;
     this.loadBalancerType = props.loadBalancerType;
     this.algorithm = props.algorithm;
-    this.services = props.services;
-    this.targets = props.targets;
     this.labels = props.labels;
     this.publicInterface = props.publicInterface;
     this.networkId = props.networkId;
@@ -1319,8 +1382,6 @@ export class HtzLoadBalancer extends ProviderResource {
       name: this.name,
       loadBalancerType: this.loadBalancerType,
       algorithm: this.algorithm,
-      services: this.services,
-      targets: this.targets,
       labels: this.labels,
       publicInterface: this.publicInterface,
       networkId: this.networkId,
