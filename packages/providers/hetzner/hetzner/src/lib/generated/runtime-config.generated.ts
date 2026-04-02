@@ -73,10 +73,22 @@ export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
     createOnlyProps: new Set(['type', 'homeLocation']),
   },
 
+  // Hetzner::Compute::LoadBalancerService
+  'Hetzner::Compute::LoadBalancerService': {
+    physicalIdKey: 'physicalId',
+    createOnlyProps: new Set(['loadBalancerId', 'listenPort']),
+  },
+
+  // Hetzner::Compute::LoadBalancerTarget
+  'Hetzner::Compute::LoadBalancerTarget': {
+    physicalIdKey: 'physicalId',
+    createOnlyProps: new Set(['loadBalancerId', 'type', 'serverId', 'labelSelector', 'ip']),
+  },
+
   // Hetzner::Compute::LoadBalancer
   'Hetzner::Compute::LoadBalancer': {
     physicalIdKey: 'loadBalancerId',
-    createOnlyProps: new Set(['loadBalancerType', 'algorithm', 'services', 'targets', 'publicInterface', 'networkId', 'networkZone', 'location']),
+    createOnlyProps: new Set(['networkId', 'networkZone', 'location']),
   },
 
   // Hetzner::Compute::NetworkAttachment
