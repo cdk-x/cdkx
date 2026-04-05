@@ -36,6 +36,9 @@ cdkx deploy
 | [`HtzFloatingIp`](floating-ip.md) | `Hetzner::Networking::FloatingIp` | Static public IP independent of servers |
 | [`HtzFloatingIpAssignment`](floating-ip-assignment.md) | `Hetzner::Networking::FloatingIpAssignment` | Assigns a floating IP to a server |
 | [`HtzPrimaryIp`](primary-ip.md) | `Hetzner::Networking::PrimaryIp` | Pre-allocatable static public IP bound to a location |
+| [`HtzLoadBalancer`](load-balancer.md) | `Hetzner::Compute::LoadBalancer` | Distributes traffic across backend targets |
+| [`HtzLoadBalancerService`](load-balancer-service.md) | `Hetzner::Compute::LoadBalancerService` | Listener port and health check on a load balancer |
+| [`HtzLoadBalancerTarget`](load-balancer-target.md) | `Hetzner::Compute::LoadBalancerTarget` | Backend server, label selector, or IP registered to a load balancer |
 
 ## Quick example
 
