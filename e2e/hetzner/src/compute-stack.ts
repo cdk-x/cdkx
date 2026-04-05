@@ -1,11 +1,15 @@
 import { App, Stack, IResolvable, StackOutput } from '@cdkx-io/core';
 import {
   HtzFloatingIpAssignment,
+  HtzLoadBalancerService,
+  HtzLoadBalancerTarget,
   HtzPlacementGroup,
   HtzServer,
   HtzSshKey,
   HtzVolume,
   HtzVolumeAttachment,
+  LoadBalancerServiceProtocol,
+  LoadBalancerTargetType,
   Location,
   PlacementGroupType,
   ServerType,
@@ -16,6 +20,8 @@ export interface ComputeStackProps {
   readonly networkId: IResolvable;
   /** Token that resolves to the Hetzner floating IP ID at deploy time. */
   readonly floatingIpId: IResolvable;
+  /** Token that resolves to the Hetzner load balancer ID at deploy time. */
+  readonly loadBalancerId: IResolvable;
 }
 
 export class ComputeStack extends Stack {
@@ -72,6 +78,21 @@ export class ComputeStack extends Stack {
     new HtzFloatingIpAssignment(this, 'AppFloatingIpAssignment', {
       floatingIpId: props.floatingIpId,
       serverId: server.attrServerId,
+    });
+
+    new HtzLoadBalancerService(this, 'AppLbService', {
+      loadBalancerId: props.loadBalancerId,
+      listenPort: 80,
+      destinationPort: 80,
+      protocol: LoadBalancerServiceProtocol.TCP,
+      proxyprotocol: false,
+    });
+
+    new HtzLoadBalancerTarget(this, 'AppLbTarget', {
+      loadBalancerId: props.loadBalancerId,
+      type: LoadBalancerTargetType.SERVER,
+      serverId: server.attrServerId,
+      usePrivateIp: true,
     });
   }
 }
