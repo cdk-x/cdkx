@@ -46,7 +46,7 @@ jobs:
       - name: Build release command
         id: build-command
         run: |
-          COMMAND="yarn nx release"
+          COMMAND="yarn nx release --yes"
 
           if [ -n "${{ github.event.inputs.group }}" ]; then
             COMMAND="$COMMAND --groups=${{ github.event.inputs.group }}"
@@ -70,9 +70,9 @@ jobs:
         if: github.event.inputs.dryRun != 'true'
         run: |
           git fetch --tags
-          TAG=$(git tag --list "core-v*" --sort=-version:refname | head -1)
+          TAG=$(git tag --list "v*" --sort=-version:refname | head -1)
           if [ -n "$TAG" ]; then
-            echo "version=${TAG#core-v}" >> $GITHUB_OUTPUT
+            echo "version=${TAG#v}" >> $GITHUB_OUTPUT
           fi
 
   deploy-docs:
