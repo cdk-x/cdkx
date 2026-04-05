@@ -36,7 +36,10 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Configure npm auth
-        run: npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
+          yarn config set registry https://registry.npmjs.org
+          yarn config set _authToken ${{ secrets.NPM_TOKEN }}
 
       - name: Configure git identity
         run: |
