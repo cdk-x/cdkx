@@ -1,33 +1,3 @@
-## 0.2.1 (2026-04-05)
-
-### 🚀 Features
-
-- **cdkx:** add outdated version banner for mike versioning ([88c8244](https://github.com/cdk-x/cdkx/commit/88c8244))
-- **hetzner:** SshKeyHandler tracer bullet — Phase 1 ([#50](https://github.com/cdk-x/cdkx/pull/50), [#63](https://github.com/cdk-x/cdkx/pull/63))
-- **hetzner:** add PlacementGroupHandler ([#64](https://github.com/cdk-x/cdkx/pull/64))
-- **hetzner:** VolumeHandler + remove serverId/automount from volume schema ([#65](https://github.com/cdk-x/cdkx/pull/65))
-- **hetzner:** VolumeAttachmentHandler + volume-attachment schema ([#66](https://github.com/cdk-x/cdkx/pull/66))
-- **hetzner:** FloatingIpHandler ([#53](https://github.com/cdk-x/cdkx/pull/53), [#67](https://github.com/cdk-x/cdkx/pull/67))
-- **hetzner:** FloatingIpAssignmentHandler ([#58](https://github.com/cdk-x/cdkx/pull/58), [#68](https://github.com/cdk-x/cdkx/pull/68))
-- **hetzner:** PrimaryIpHandler ([#54](https://github.com/cdk-x/cdkx/pull/54), [#69](https://github.com/cdk-x/cdkx/pull/69))
-- **hetzner:** add PrimaryIpAssignmentHandler ([d1d464f](https://github.com/cdk-x/cdkx/commit/d1d464f))
-- **hetzner:** PrimaryIpAssignmentHandler ([#59](https://github.com/cdk-x/cdkx/pull/59), [#70](https://github.com/cdk-x/cdkx/pull/70))
-- **hetzner:** split Firewall into Firewall, FirewallRules, and FirewallAttachment ([#71](https://github.com/cdk-x/cdkx/pull/71))
-- **hetzner:** split LoadBalancer schema into Service and Target resources ([20e4cdc](https://github.com/cdk-x/cdkx/commit/20e4cdc))
-- **hetzner:** add loadBalancerActions to HetznerSdk facade ([59b36b9](https://github.com/cdk-x/cdkx/commit/59b36b9))
-- **hetzner:** add LoadBalancerHandler ([abdee8f](https://github.com/cdk-x/cdkx/commit/abdee8f))
-- **hetzner:** add LoadBalancerServiceHandler ([4d032af](https://github.com/cdk-x/cdkx/commit/4d032af))
-- **hetzner:** add LoadBalancerTargetHandler ([36c9f7b](https://github.com/cdk-x/cdkx/commit/36c9f7b))
-- **hetzner:** register LB, LBService, LBTarget handlers in runtime ([75f4d0f](https://github.com/cdk-x/cdkx/commit/75f4d0f))
-- **hetzner:** add LB, LBService, LBTarget resources to e2e stacks ([5487212](https://github.com/cdk-x/cdkx/commit/5487212))
-- **hetzner:** LoadBalancer, LoadBalancerService, and LoadBalancerTarget handlers ([#72](https://github.com/cdk-x/cdkx/pull/72))
-
-### 🩹 Fixes
-
-- **cdkx:** use redirect aliases and suppress typedoc link warnings ([a448703](https://github.com/cdk-x/cdkx/commit/a448703))
-- **engine:** drop CREATE_FAILED orphans from state and treat DELETE_COMPLETE as absent on redeploy ([a904957](https://github.com/cdk-x/cdkx/commit/a904957))
-- **hetzner:** serialize LB destroy before route and subnet in e2e stack ([8543855](https://github.com/cdk-x/cdkx/commit/8543855))
-
 ## 0.2.0 (2026-03-24)
 
 ### 🚀 Features
