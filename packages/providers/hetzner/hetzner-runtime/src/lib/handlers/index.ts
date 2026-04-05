@@ -45,3 +45,12 @@ export type { HetznerFirewallRulesState } from './firewall-rules';
 
 export { HetznerFirewallAttachmentHandler } from './firewall-attachment';
 export type { HetznerFirewallAttachmentState } from './firewall-attachment';
+
+export { HetznerLoadBalancerHandler } from './load-balancer';
+export type { HetznerLoadBalancerState } from './load-balancer';
+
+export { HetznerLoadBalancerServiceHandler } from './load-balancer-service';
+export type { HetznerLoadBalancerServiceState } from './load-balancer-service';
+
+export { HetznerLoadBalancerTargetHandler } from './load-balancer-target';
+export type { HetznerLoadBalancerTargetState } from './load-balancer-target';
