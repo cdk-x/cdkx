@@ -17,6 +17,9 @@ import {
   HetznerFirewallHandler,
   HetznerFirewallRulesHandler,
   HetznerFirewallAttachmentHandler,
+  HetznerLoadBalancerHandler,
+  HetznerLoadBalancerServiceHandler,
+  HetznerLoadBalancerTargetHandler,
 } from './handlers';
 
 /**
@@ -71,6 +74,18 @@ export class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
     this.register(
       'Hetzner::Security::FirewallAttachment',
       new HetznerFirewallAttachmentHandler(),
+    );
+    this.register(
+      'Hetzner::Compute::LoadBalancer',
+      new HetznerLoadBalancerHandler(),
+    );
+    this.register(
+      'Hetzner::Compute::LoadBalancerService',
+      new HetznerLoadBalancerServiceHandler(),
+    );
+    this.register(
+      'Hetzner::Compute::LoadBalancerTarget',
+      new HetznerLoadBalancerTargetHandler(),
     );
   }
 
