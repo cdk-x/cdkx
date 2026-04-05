@@ -1,5 +1,9 @@
 {
   "name": "@cdkx-io/testing",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cdk-x/cdkx.git"
+  },
   "version": "0.2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
