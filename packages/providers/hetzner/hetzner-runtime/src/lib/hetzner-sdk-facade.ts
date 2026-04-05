@@ -6,6 +6,7 @@ import {
   FirewallsApi,
   FloatingIPActionsApi,
   FloatingIPsApi,
+  LoadBalancerActionsApi,
   LoadBalancersApi,
   NetworkActionsApi,
   NetworksApi,
@@ -31,6 +32,7 @@ export interface HetznerSdk {
   readonly firewalls: FirewallsApi;
   readonly floatingIpActions: FloatingIPActionsApi;
   readonly floatingIps: FloatingIPsApi;
+  readonly loadBalancerActions: LoadBalancerActionsApi;
   readonly loadBalancers: LoadBalancersApi;
   readonly networkActions: NetworkActionsApi;
   readonly networks: NetworksApi;
@@ -67,6 +69,7 @@ export interface HetznerSdkFactoryDeps {
   FirewallsApi?: typeof FirewallsApi;
   FloatingIPActionsApi?: typeof FloatingIPActionsApi;
   FloatingIPsApi?: typeof FloatingIPsApi;
+  LoadBalancerActionsApi?: typeof LoadBalancerActionsApi;
   LoadBalancersApi?: typeof LoadBalancersApi;
   NetworkActionsApi?: typeof NetworkActionsApi;
   NetworksApi?: typeof NetworksApi;
@@ -101,6 +104,8 @@ export class HetznerSdkFactory {
     const Firewalls = deps.FirewallsApi ?? FirewallsApi;
     const FloatingIPActions = deps.FloatingIPActionsApi ?? FloatingIPActionsApi;
     const FloatingIPs = deps.FloatingIPsApi ?? FloatingIPsApi;
+    const LoadBalancerActions =
+      deps.LoadBalancerActionsApi ?? LoadBalancerActionsApi;
     const LoadBalancers = deps.LoadBalancersApi ?? LoadBalancersApi;
     const NetworkActions = deps.NetworkActionsApi ?? NetworkActionsApi;
     const Networks = deps.NetworksApi ?? NetworksApi;
@@ -119,6 +124,7 @@ export class HetznerSdkFactory {
       firewalls: new Firewalls(config),
       floatingIpActions: new FloatingIPActions(config),
       floatingIps: new FloatingIPs(config),
+      loadBalancerActions: new LoadBalancerActions(config),
       loadBalancers: new LoadBalancers(config),
       networkActions: new NetworkActions(config),
       networks: new Networks(config),

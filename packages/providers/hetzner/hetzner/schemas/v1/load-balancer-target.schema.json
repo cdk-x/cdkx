@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerLoadBalancerTarget",
+  "description": "Manages a target on a Hetzner Cloud Load Balancer.",
+  "typeName": "Hetzner::Compute::LoadBalancerTarget",
+  "domain": "Compute",
+  "additionalProperties": false,
+  "definitions": {
+    "LoadBalancerTargetType": {
+      "type": "string",
+      "description": "Type of the target.",
+      "enum": ["server", "label_selector", "ip"]
+    }
+  },
+  "properties": {
+    "loadBalancerId": {
+      "type": "integer",
+      "description": "ID of the Load Balancer this target belongs to."
+    },
+    "type": {
+      "$ref": "#/definitions/LoadBalancerTargetType",
+      "description": "Type of the target."
+    },
+    "serverId": {
+      "type": "integer",
+      "description": "ID of the Server to add as target. Only valid and required if type is `server`."
+    },
+    "labelSelector": {
+      "type": "string",
+      "description": "Label selector string. Adds all matching servers as targets. Only valid and required if type is `label_selector`."
+    },
+    "ip": {
+      "type": "string",
+      "description": "IP of a server that belongs to the same customer (public IPv4/IPv6) or private IP in a subnet type vswitch. Only valid and required if type is `ip`."
+    },
+    "usePrivateIp": {
+      "type": "boolean",
+      "description": "Use the private network IP instead of the public IP of the Server, requires the Server and Load Balancer to be in the same network. Only valid for target types `server` and `label_selector`."
+    }
+  },
+  "required": ["loadBalancerId", "type"],
+  "createOnlyProperties": [
+    "/properties/loadBalancerId",
+    "/properties/type",
+    "/properties/serverId",
+    "/properties/labelSelector",
+    "/properties/ip"
+  ],
+  "primaryIdentifier": [
+    "/properties/loadBalancerId",
+    "/properties/type",
+    "/properties/serverId",
+    "/properties/labelSelector",
+    "/properties/ip"
+  ]
+}

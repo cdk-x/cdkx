@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HetznerLoadBalancerService",
+  "description": "Manages a service (listener) on a Hetzner Cloud Load Balancer.",
+  "typeName": "Hetzner::Compute::LoadBalancerService",
+  "domain": "Compute",
+  "additionalProperties": false,
+  "definitions": {
+    "LoadBalancerServiceProtocol": {
+      "type": "string",
+      "description": "Protocol of the Load Balancer service.",
+      "enum": ["tcp", "http", "https"]
+    },
+    "LoadBalancerServiceHealthCheckProtocol": {
+      "type": "string",
+      "description": "Type of the health check.",
+      "enum": ["tcp", "http"]
+    },
+    "LoadBalancerServiceHealthCheckHttp": {
+      "type": "object",
+      "description": "Additional configuration for protocol http.",
+      "additionalProperties": false,
+      "required": ["domain", "path"],
+      "properties": {
+        "domain": {
+          "type": "string",
+          "description": "Host header to send in the HTTP request. May not contain spaces, percent or backslash symbols. Can be null, in that case no host header is sent.",
+          "nullable": true
+        },
+        "path": {
+          "type": "string",
+          "description": "HTTP path to use for health checks. May not contain literal spaces, use percent-encoding instead."
+        },
+        "response": {
+          "type": "string",
+          "description": "String that must be contained in HTTP response in order to pass the health check."
+        },
+        "statusCodes": {
+          "type": "array",
+          "description": "List of returned HTTP status codes in order to pass the health check. Supports the wildcards `?` for exactly one character and `*` for multiple ones.",
+          "items": { "type": "string" }
+        },
+        "tls": {
+          "type": "boolean",
+          "description": "Use HTTPS for health check."
+        }
+      }
+    },
+    "LoadBalancerServiceHealthCheck": {
+      "type": "object",
+      "description": "Service health check.",
+      "additionalProperties": false,
+      "required": ["protocol", "port", "interval", "timeout", "retries"],
+      "properties": {
+        "protocol": {
+          "$ref": "#/definitions/LoadBalancerServiceHealthCheckProtocol",
+          "description": "Type of the health check."
+        },
+        "port": {
+          "type": "integer",
+          "description": "Port the health check will be performed on."
+        },
+        "interval": {
+          "type": "integer",
+          "description": "Time interval in seconds health checks are performed."
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Time in seconds after an attempt is considered a timeout."
+        },
+        "retries": {
+          "type": "integer",
+          "description": "Unsuccessful retries needed until a target is considered unhealthy; an unhealthy target needs the same number of successful retries to become healthy again."
+        },
+        "http": {
+          "$ref": "#/definitions/LoadBalancerServiceHealthCheckHttp",
+          "description": "Additional configuration for protocol http."
+        }
+      }
+    },
+    "LoadBalancerServiceHttp": {
+      "type": "object",
+      "description": "Configuration option for protocols http and https.",
+      "additionalProperties": false,
+      "properties": {
+        "cookieName": {
+          "type": "string",
+          "description": "Name of the cookie used for sticky sessions."
+        },
+        "cookieLifetime": {
+          "type": "integer",
+          "description": "Lifetime of the cookie used for sticky sessions (in seconds)."
+        },
+        "certificates": {
+          "type": "array",
+          "description": "IDs of the Certificates to use for TLS/SSL termination by the Load Balancer; empty for TLS/SSL passthrough or if `protocol` is `http`.",
+          "items": { "type": "integer" }
+        },
+        "redirectHttp": {
+          "type": "boolean",
+          "description": "Redirect HTTP requests to HTTPS. Only available if `protocol` is `https`."
+        },
+        "stickySessions": {
+          "type": "boolean",
+          "description": "Use sticky sessions. Only available if `protocol` is `http` or `https`."
+        }
+      }
+    }
+  },
+  "properties": {
+    "loadBalancerId": {
+      "type": "integer",
+      "description": "ID of the Load Balancer this service belongs to."
+    },
+    "listenPort": {
+      "type": "integer",
+      "description": "Port the Load Balancer listens on."
+    },
+    "protocol": {
+      "$ref": "#/definitions/LoadBalancerServiceProtocol",
+      "description": "Protocol of the Load Balancer service."
+    },
+    "destinationPort": {
+      "type": "integer",
+      "description": "Port the Load Balancer will balance to."
+    },
+    "proxyprotocol": {
+      "type": "boolean",
+      "description": "Is Proxyprotocol enabled or not."
+    },
+    "healthCheck": {
+      "$ref": "#/definitions/LoadBalancerServiceHealthCheck",
+      "description": "Service health check."
+    },
+    "http": {
+      "$ref": "#/definitions/LoadBalancerServiceHttp",
+      "description": "Configuration option for protocols http and https."
+    }
+  },
+  "required": ["loadBalancerId", "listenPort"],
+  "createOnlyProperties": [
+    "/properties/loadBalancerId",
+    "/properties/listenPort"
+  ],
+  "primaryIdentifier": [
+    "/properties/loadBalancerId",
+    "/properties/listenPort"
+  ]
+}

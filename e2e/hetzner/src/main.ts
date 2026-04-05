@@ -12,6 +12,7 @@ new ComputeStack(app, {
   // addDependency() call required.
   networkId: networking.networkIdOutput.importValue(),
   floatingIpId: networking.floatingIpIdOutput.importValue(),
+  loadBalancerId: networking.loadBalancerIdOutput.importValue(),
 });
 
 app.synth();

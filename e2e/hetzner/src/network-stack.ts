@@ -3,6 +3,7 @@ import {
   HtzFirewall,
   HtzFirewallRules,
   HtzFirewallAttachment,
+  HtzLoadBalancer,
   HtzNetwork,
   HtzSubnet,
   HtzRoute,
@@ -11,6 +12,7 @@ import {
   FirewallRuleDirection,
   FirewallRuleProtocol,
   FloatingIpType,
+  LoadBalancerType,
   Location,
   NetworkSubnetType,
   NetworkZone,
@@ -25,6 +27,8 @@ export class NetworkStack extends Stack {
   public readonly floatingIpIdOutput: StackOutput;
   /** Cross-stack output: the primary IP ID created by this stack. */
   public readonly primaryIpIdOutput: StackOutput;
+  /** Cross-stack output: the load balancer ID created by this stack. */
+  public readonly loadBalancerIdOutput: StackOutput;
 
   constructor(app: App) {
     super(app, 'Networking');
@@ -48,7 +52,7 @@ export class NetworkStack extends Stack {
     });
 
     // Hetzner only allows one concurrent action per network.
-    // Serialize route after subnet so destroy runs route first, then subnet.
+    // Serialize: route after subnet → destroy runs route first, then subnet.
     route.addDependency(subnet);
 
     this.networkIdOutput = new StackOutput(this, 'NetworkId', {
@@ -119,6 +123,24 @@ export class NetworkStack extends Stack {
     new HtzFirewallAttachment(this, 'WebFirewallAttachment', {
       firewallId: firewall.attrFirewallId,
       labelSelector: 'role=web',
+    });
+
+    const lb = new HtzLoadBalancer(this, 'LoadBalancer', {
+      name: 'e2e-load-balancer',
+      loadBalancerType: LoadBalancerType.LB11,
+      networkZone: NetworkZone.EU_CENTRAL,
+      networkId: network.attrNetworkId,
+    });
+
+    // Hetzner rejects subnet/route deletion while the LB network action is
+    // in flight. Serialize: LB after route → destroy runs LB first, then
+    // route, then subnet (route already serialized after subnet above).
+    lb.addDependency(route);
+    lb.addDependency(subnet);
+
+    this.loadBalancerIdOutput = new StackOutput(this, 'LoadBalancerId', {
+      value: lb.attrLoadBalancerId,
+      description: 'The Hetzner load balancer ID',
     });
   }
 }
