@@ -1,6 +1,6 @@
 {
   "name": "@cdkx-io/testing",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -16,11 +16,11 @@
     "!**/*.tsbuildinfo"
   ],
   "peerDependencies": {
-    "@cdkx-io/core": "0.2.0",
+    "@cdkx-io/core": "0.2.1",
     "tslib": ">=2.3.0"
   },
   "devDependencies": {
-    "@cdkx-io/core": "0.2.0"
+    "@cdkx-io/core": "0.2.1"
   },
   "dependencies": {},
   "publishConfig": {
