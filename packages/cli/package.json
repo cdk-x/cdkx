@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/cdk-x/cdkx.git"
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "bin": {
     "cdkx": "./bin/cdkx.js"
   },
@@ -16,11 +16,11 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
-    "@cdk-x/engine": "*",
-    "@cdk-x/logger": "*",
+    "@cdk-x/engine": "0.2.0",
+    "@cdk-x/logger": "0.2.0",
     "chalk": "^5.6.2",
     "commander": "^14.0.3",
-    "@cdk-x/core": "*"
+    "@cdk-x/core": "0.2.0"
   },
   "devDependencies": {
     "esbuild": "*"

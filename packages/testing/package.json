@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/cdk-x/cdkx.git"
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -20,11 +20,11 @@
     "!**/*.tsbuildinfo"
   ],
   "peerDependencies": {
-    "@cdk-x/core": "*",
+    "@cdk-x/core": "0.2.0",
     "tslib": ">=2.3.0"
   },
   "devDependencies": {
-    "@cdk-x/core": "*"
+    "@cdk-x/core": "0.2.0"
   },
   "dependencies": {},
   "publishConfig": {
