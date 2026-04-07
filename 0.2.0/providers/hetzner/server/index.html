@@ -16,7 +16,7 @@
         <link rel="prev" href="../route/">
       
       
-        <link rel="next" href="../certificate/">
+        <link rel="next" href="../placement-group/">
       
       
         
@@ -1219,6 +1219,90 @@
   
   
     <li class="md-nav__item">
+      <a href="../placement-group/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Placement Group
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ssh-key/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SSH Key
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../firewall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Firewall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../certificate/" class="md-nav__link">
         
   
@@ -1227,6 +1311,258 @@
     
   
     Certificate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../volume/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Volume
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../volume-attachment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Volume Attachment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../floating-ip/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Floating IP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../floating-ip-assignment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Floating IP Assignment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../primary-ip/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Primary IP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../primary-ip-assignment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Primary IP Assignment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-balancer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load Balancer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-balancer-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load Balancer Service
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load-balancer-target/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load Balancer Target
   
 
     
@@ -1618,7 +1954,7 @@
 <h1 id="server">Server<a class="headerlink" href="#server" title="Permanent link">&para;</a></h1>
 <p><code>HtzServer</code> manages a <a href="https://docs.hetzner.com/cloud/servers/overview">Hetzner Cloud virtual machine</a>. Servers are created from a base image, assigned a server type (size), and optionally attached to private networks, SSH keys, and firewalls.</p>
 <p><strong>Type:</strong> <code>Hetzner::Compute::Server</code>
-<strong>Import:</strong> <code>@cdkx-io/hetzner</code></p>
+<strong>Import:</strong> <code>@cdk-x/hetzner</code></p>
 <h2 id="props">Props<a class="headerlink" href="#props" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1696,6 +2032,12 @@
 <td>—</td>
 <td>Volume IDs to attach. Volumes must be in the same location.</td>
 </tr>
+<tr>
+<td><code>placementGroupId</code></td>
+<td><code>number \| IResolvable</code></td>
+<td>—</td>
+<td>ID of the placement group to assign the server to. Use <code>HtzPlacementGroup.attrPlacementGroupId</code> to reference a managed group. Create-only.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="servertype-enum-selected"><code>ServerType</code> enum (selected)<a class="headerlink" href="#servertype-enum-selected" title="Permanent link">&para;</a></h3>
@@ -1741,7 +2083,7 @@
 </tr>
 </tbody>
 </table>
-<p>Full list available in the <code>ServerType</code> enum exported from <code>@cdkx-io/hetzner</code>.</p>
+<p>Full list available in the <code>ServerType</code> enum exported from <code>@cdk-x/hetzner</code>.</p>
 <h3 id="location-enum"><code>Location</code> enum<a class="headerlink" href="#location-enum" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -1831,7 +2173,7 @@
 <span class="normal"><a href="#__codelineno-0-36">36</a></span>
 <span class="normal"><a href="#__codelineno-0-37">37</a></span>
 <span class="normal"><a href="#__codelineno-0-38">38</a></span>
-<span class="normal"><a href="#__codelineno-0-39">39</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">App</span><span class="p">,</span><span class="w"> </span><span class="nx">Stack</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@cdkx-io/core&#39;</span><span class="p">;</span>
+<span class="normal"><a href="#__codelineno-0-39">39</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">App</span><span class="p">,</span><span class="w"> </span><span class="nx">Stack</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@cdk-x/core&#39;</span><span class="p">;</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="w">  </span><span class="nx">HtzNetwork</span><span class="p">,</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="w">  </span><span class="nx">HtzSubnet</span><span class="p">,</span>
@@ -1839,7 +2181,7 @@
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="w">  </span><span class="nx">ServerType</span><span class="p">,</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">  </span><span class="nx">Location</span><span class="p">,</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="w">  </span><span class="nx">NetworkZone</span><span class="p">,</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@cdkx-io/hetzner&#39;</span><span class="p">;</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@cdk-x/hetzner&#39;</span><span class="p">;</span>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10"></a>
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="kd">const</span><span class="w"> </span><span class="nx">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">App</span><span class="p">();</span>
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="kd">const</span><span class="w"> </span><span class="nx">stack</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Stack</span><span class="p">(</span><span class="nx">app</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;ComputeStack&#39;</span><span class="p">);</span>
@@ -1874,7 +2216,7 @@
 <ol>
 <li>Network and subnet are deployed first — server depends on them via the <code>networks</code> token.</li>
 <li><code>cx22</code> = 2 vCPU / 4 GB RAM shared Intel. See the table above for all types.</li>
-<li>SSH key must already exist in the Hetzner project (upload once via Console or API).</li>
+<li>SSH key name to inject. Use <code>sshKey.attrName</code> if the key is managed by <code>HtzSshKey</code> in the same stack — the engine will deploy the key first.</li>
 <li>Attaches the server to the private network at creation — it will receive an IP from <code>10.0.1.0/24</code>.</li>
 <li>Cloud-Init script runs once on first boot. Limited to 32 KiB.</li>
 </ol>
@@ -1892,7 +2234,7 @@
 <span class="normal"><a href="#__codelineno-1-10">10</a></span>
 <span class="normal"><a href="#__codelineno-1-11">11</a></span>
 <span class="normal"><a href="#__codelineno-1-12">12</a></span>
-<span class="normal"><a href="#__codelineno-1-13">13</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">HtzServer</span><span class="p">,</span><span class="w"> </span><span class="nx">HtzFloatingIp</span><span class="p">,</span><span class="w"> </span><span class="nx">FloatingIpType</span><span class="p">,</span><span class="w"> </span><span class="nx">Location</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@cdkx-io/hetzner&#39;</span><span class="p">;</span>
+<span class="normal"><a href="#__codelineno-1-13">13</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">HtzServer</span><span class="p">,</span><span class="w"> </span><span class="nx">HtzFloatingIp</span><span class="p">,</span><span class="w"> </span><span class="nx">FloatingIpType</span><span class="p">,</span><span class="w"> </span><span class="nx">Location</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@cdk-x/hetzner&#39;</span><span class="p">;</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2"></a>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">server</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">HtzServer</span><span class="p">(</span><span class="nx">stack</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Server&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;web-1&#39;</span><span class="p">,</span>
@@ -1946,6 +2288,8 @@
 <ul>
 <li><a href="../network/">Network</a> — create a private network first</li>
 <li><a href="../subnet/">Subnet</a> — subnet the server attaches to</li>
+<li><a href="../ssh-key/">SSH Key</a> — manage SSH keys as constructs</li>
+<li><a href="../placement-group/">Placement Group</a> — spread servers across physical hosts</li>
 <li><a href="../certificate/">Certificate</a> — TLS certificates for HTTPS</li>
 <li><a href="../../../concepts/deployment-lifecycle/">Deployment Lifecycle</a> — creation order</li>
 </ul>
@@ -2004,13 +2348,13 @@
         
         
           
-          <a href="../certificate/" class="md-footer__link md-footer__link--next" aria-label="Next: Certificate">
+          <a href="../placement-group/" class="md-footer__link md-footer__link--next" aria-label="Next: Placement Group">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Certificate
+                Placement Group
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -2055,7 +2399,7 @@
       
       
     
-    <a href="https://www.npmjs.com/package/@cdkx-io/cli" target="_blank" rel="noopener" title="www.npmjs.com" class="md-social__link">
+    <a href="https://www.npmjs.com/package/@cdk-x/cli" target="_blank" rel="noopener" title="www.npmjs.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M288 288h-32v-64h32zm288-128v192H288v32H160v-32H0V160zm-416 32H32v128h64v-96h32v96h32zm160 0H192v160h64v-32h64zm224 0H352v128h64v-96h32v96h32v-96h32v96h32z"/></svg>
     </a>
   
