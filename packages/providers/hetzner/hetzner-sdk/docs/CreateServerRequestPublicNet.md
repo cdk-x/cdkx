@@ -14,7 +14,7 @@ Public Network options.
 ## Example
 
 ```typescript
-import { CreateServerRequestPublicNet } from '@cdkx-io/hetzner-sdk';
+import { CreateServerRequestPublicNet } from '@cdk-x/hetzner-sdk';
 
 const instance: CreateServerRequestPublicNet = {
   enable_ipv4,

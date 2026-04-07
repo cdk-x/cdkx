@@ -45,7 +45,7 @@ import {
   ServerActionsApi,
   Configuration,
   AddToPlacementGroupRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -102,7 +102,7 @@ import {
   ServerActionsApi,
   Configuration,
   AttachServerIsoRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -159,7 +159,7 @@ import {
   ServerActionsApi,
   Configuration,
   AttachToNetworkRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -216,7 +216,7 @@ import {
   ServerActionsApi,
   Configuration,
   ChangeServerAliasIpsRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -273,7 +273,7 @@ import {
   ServerActionsApi,
   Configuration,
   ChangeServerDnsPtrRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -330,7 +330,7 @@ import {
   ServerActionsApi,
   Configuration,
   ChangeServerProtectionRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -387,7 +387,7 @@ import {
   ServerActionsApi,
   Configuration,
   ChangeServerTypeRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -444,7 +444,7 @@ import {
   ServerActionsApi,
   Configuration,
   CreateImageRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -501,7 +501,7 @@ import {
   ServerActionsApi,
   Configuration,
   DetachFromNetworkRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -554,7 +554,7 @@ Detaches an ISO from a Server. In case no ISO Image is attached to the Server, t
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -602,7 +602,7 @@ Disables the automatic backup option and deletes all existing Backups for a Serv
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -650,7 +650,7 @@ Disables the Hetzner Rescue System for a Server. This makes a Server start from 
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -698,7 +698,7 @@ Enables and configures the automatic daily backup option for the Server. Enablin
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -750,7 +750,7 @@ import {
   ServerActionsApi,
   Configuration,
   EnableServerRescueRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -803,7 +803,7 @@ Returns a specific Action object for a Server.
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -853,7 +853,7 @@ Returns a specific Action object.
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -901,7 +901,7 @@ Returns all Action objects for a Server. You can `sort` the results by using the
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -979,7 +979,7 @@ Returns all Action objects. You can `sort` the results by using the sort URI par
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -1057,7 +1057,7 @@ Cuts power to the Server. This forcefully stops it without giving the Server ope
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -1105,7 +1105,7 @@ Starts a Server by turning its power on.
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -1153,7 +1153,7 @@ Reboots a Server gracefully by sending an ACPI request. The Server operating sys
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -1205,7 +1205,7 @@ import {
   ServerActionsApi,
   Configuration,
   RebuildServerRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -1258,7 +1258,7 @@ Removes a Server from a Placement Group.
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -1306,7 +1306,7 @@ Requests credentials for remote access via VNC over websocket to keyboard, monit
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -1354,7 +1354,7 @@ Cuts power to a Server and starts it again. This forcefully stops it without giv
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -1402,7 +1402,7 @@ Resets the root password. Only works for Linux systems that are running the qemu
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);
@@ -1450,7 +1450,7 @@ Shuts down a Server gracefully by sending an ACPI shutdown request. The Server o
 ### Example
 
 ```typescript
-import { ServerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerActionsApi(configuration);

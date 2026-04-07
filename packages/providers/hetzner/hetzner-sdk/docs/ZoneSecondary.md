@@ -20,7 +20,7 @@
 ## Example
 
 ```typescript
-import { ZoneSecondary } from '@cdkx-io/hetzner-sdk';
+import { ZoneSecondary } from '@cdk-x/hetzner-sdk';
 
 const instance: ZoneSecondary = {
   id,

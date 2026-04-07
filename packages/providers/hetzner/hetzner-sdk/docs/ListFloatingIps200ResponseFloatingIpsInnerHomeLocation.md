@@ -16,7 +16,7 @@
 ## Example
 
 ```typescript
-import { ListFloatingIps200ResponseFloatingIpsInnerHomeLocation } from '@cdkx-io/hetzner-sdk';
+import { ListFloatingIps200ResponseFloatingIpsInnerHomeLocation } from '@cdk-x/hetzner-sdk';
 
 const instance: ListFloatingIps200ResponseFloatingIpsInnerHomeLocation = {
   id,

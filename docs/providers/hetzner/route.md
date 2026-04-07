@@ -3,7 +3,7 @@
 `HtzRoute` adds a static route to an existing Hetzner Cloud network. Routes direct traffic destined for a CIDR block to a specific gateway IP within the network.
 
 **Type:** `Hetzner::Networking::Route`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -19,8 +19,8 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="13 14 15 16"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzNetwork, HtzRoute } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzNetwork, HtzRoute } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'NetworkStack');

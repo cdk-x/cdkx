@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { PrimaryIPActionsAssignRequest } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPActionsAssignRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: PrimaryIPActionsAssignRequest = {
   assignee_type,

@@ -3,7 +3,7 @@
 `HtzSshKey` manages a [Hetzner Cloud SSH key](https://docs.hetzner.com/cloud/servers/getting-started/connecting-to-server). SSH keys are uploaded once to the project and can then be injected into any server at creation time.
 
 **Type:** `Hetzner::Security::SshKey`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -22,8 +22,8 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="7 8 9 10"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzSshKey } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzSshKey } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'SecurityStack');
@@ -44,7 +44,7 @@ app.synth();
 Reference the SSH key from a server so cdkx deploys the key first:
 
 ```typescript linenums="1" hl_lines="7 11"
-import { HtzSshKey, HtzServer, ServerType, Location } from '@cdkx-io/hetzner';
+import { HtzSshKey, HtzServer, ServerType, Location } from '@cdk-x/hetzner';
 
 const sshKey = new HtzSshKey(stack, 'Key', {
   name: 'deployer',

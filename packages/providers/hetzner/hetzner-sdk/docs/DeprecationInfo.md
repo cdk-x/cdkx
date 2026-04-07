@@ -12,7 +12,7 @@ Describes if, when and how the resource is deprecated. If this field is set to `
 ## Example
 
 ```typescript
-import { DeprecationInfo } from '@cdkx-io/hetzner-sdk';
+import { DeprecationInfo } from '@cdk-x/hetzner-sdk';
 
 const instance: DeprecationInfo = {
   unavailable_after,

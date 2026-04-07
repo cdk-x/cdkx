@@ -1,5 +1,5 @@
-import { RuntimeLogger } from '@cdkx-io/core';
-import { PrimaryIpAssigneeType, PrimaryIpType } from '@cdkx-io/hetzner';
+import { RuntimeLogger } from '@cdk-x/core';
+import { PrimaryIpAssigneeType, PrimaryIpType } from '@cdk-x/hetzner';
 import { HetznerPrimaryIpHandler } from './primary-ip-handler';
 import { HetznerRuntimeContext } from '../../hetzner-runtime-context';
 import { HetznerSdk } from '../../hetzner-sdk-facade';

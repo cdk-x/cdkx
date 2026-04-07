@@ -12,7 +12,7 @@
 ## Example
 
 ```typescript
-import { PrimaryZoneAllOfAuthoritativeNameservers } from '@cdkx-io/hetzner-sdk';
+import { PrimaryZoneAllOfAuthoritativeNameservers } from '@cdk-x/hetzner-sdk';
 
 const instance: PrimaryZoneAllOfAuthoritativeNameservers = {
   assigned,

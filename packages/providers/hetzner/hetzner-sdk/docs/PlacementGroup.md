@@ -14,7 +14,7 @@
 ## Example
 
 ```typescript
-import { PlacementGroup } from '@cdkx-io/hetzner-sdk';
+import { PlacementGroup } from '@cdk-x/hetzner-sdk';
 
 const instance: PlacementGroup = {
   id,

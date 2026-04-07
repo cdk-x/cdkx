@@ -3,7 +3,7 @@
 `HtzPrimaryIp` manages a [Hetzner Cloud Primary IP](https://docs.hetzner.com/cloud/primary-ips/overview). Primary IPs are static public IPs that are bound to a specific location and can be pre-allocated before a server exists, then assigned to a server at creation time or later.
 
 **Type:** `Hetzner::Networking::PrimaryIp`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -26,13 +26,13 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="7 8 9 10 11 12"
-import { App, Stack } from '@cdkx-io/core';
+import { App, Stack } from '@cdk-x/core';
 import {
   HtzPrimaryIp,
   PrimaryIpType,
   PrimaryIpAssigneeType,
   Location,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'NetworkingStack');
@@ -52,13 +52,13 @@ app.synth();
 Pre-allocate a Primary IP in one stack and consume its ID in another:
 
 ```typescript title="src/network-stack.ts" linenums="1" hl_lines="15 16 17 18"
-import { App, Stack, StackOutput } from '@cdkx-io/core';
+import { App, Stack, StackOutput } from '@cdk-x/core';
 import {
   HtzPrimaryIp,
   PrimaryIpType,
   PrimaryIpAssigneeType,
   Location,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'NetworkingStack');
@@ -109,7 +109,7 @@ The engine calls `DELETE /primary_ips/{id}`. The IP is released back to Hetzner'
 ## Available locations
 
 ```typescript
-import { Location } from '@cdkx-io/hetzner';
+import { Location } from '@cdk-x/hetzner';
 
 Location.FSN1  // Falkenstein, Germany
 Location.NBG1  // Nuremberg, Germany

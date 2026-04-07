@@ -1,5 +1,5 @@
-import { ResourceHandler, RuntimeContext, StabilizeStatus } from '@cdkx-io/core';
-import { HetznerLoadBalancer } from '@cdkx-io/hetzner';
+import { ResourceHandler, RuntimeContext, StabilizeStatus } from '@cdk-x/core';
+import { HetznerLoadBalancer } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 export interface HetznerLoadBalancerState {

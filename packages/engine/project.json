@@ -1,5 +1,5 @@
 {
-  "name": "@cdkx-io/engine",
+  "name": "@cdk-x/engine",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/engine/src",
   "projectType": "library",

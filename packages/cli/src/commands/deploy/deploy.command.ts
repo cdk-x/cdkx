@@ -8,8 +8,8 @@ import {
   type OutputHandler,
   ResourceStatus,
   StackStatus,
-} from '@cdkx-io/engine';
-import { LoggerFactory } from '@cdkx-io/logger';
+} from '@cdk-x/engine';
+import { LoggerFactory } from '@cdk-x/logger';
 import { BaseCommand } from '../../lib/base-command.js';
 import {
   type CdkxConfig,

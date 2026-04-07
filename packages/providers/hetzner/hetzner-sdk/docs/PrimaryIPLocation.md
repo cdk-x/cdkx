@@ -18,7 +18,7 @@
 ## Example
 
 ```typescript
-import { PrimaryIPLocation } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPLocation } from '@cdk-x/hetzner-sdk';
 
 const instance: PrimaryIPLocation = {
   id,

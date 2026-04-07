@@ -15,7 +15,7 @@
 ## Example
 
 ```typescript
-import { CreateVolumeRequest } from '@cdkx-io/hetzner-sdk';
+import { CreateVolumeRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: CreateVolumeRequest = {
   size,

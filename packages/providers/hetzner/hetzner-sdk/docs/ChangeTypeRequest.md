@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { ChangeTypeRequest } from '@cdkx-io/hetzner-sdk';
+import { ChangeTypeRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ChangeTypeRequest = {
   load_balancer_type,

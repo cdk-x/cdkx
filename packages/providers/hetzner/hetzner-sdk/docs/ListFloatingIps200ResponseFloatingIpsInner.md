@@ -20,7 +20,7 @@
 ## Example
 
 ```typescript
-import { ListFloatingIps200ResponseFloatingIpsInner } from '@cdkx-io/hetzner-sdk';
+import { ListFloatingIps200ResponseFloatingIpsInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListFloatingIps200ResponseFloatingIpsInner = {
   id,

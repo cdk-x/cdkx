@@ -14,7 +14,7 @@
 ## Example
 
 ```typescript
-import { ListIsos200ResponseIsosInner } from '@cdkx-io/hetzner-sdk';
+import { ListIsos200ResponseIsosInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListIsos200ResponseIsosInner = {
   id,

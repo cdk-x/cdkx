@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { AddRouteRequest } from '@cdkx-io/hetzner-sdk';
+import { AddRouteRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: AddRouteRequest = {
   destination,

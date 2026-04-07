@@ -3,7 +3,7 @@
 `HtzNetwork` manages a [Hetzner Cloud private network](https://docs.hetzner.com/cloud/networks/overview). A network is the top-level container for all private networking — subnets and routes are added to it.
 
 **Type:** `Hetzner::Networking::Network`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -23,8 +23,8 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="6 7"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzNetwork } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzNetwork } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'NetworkStack');
@@ -45,7 +45,7 @@ app.synth();
 Subnet and Route resources require the network ID. Use `attrNetworkId` instead of hardcoding — this guarantees the network is created first:
 
 ```typescript linenums="1" hl_lines="10 11"
-import { HtzNetwork, HtzSubnet, NetworkZone } from '@cdkx-io/hetzner';
+import { HtzNetwork, HtzSubnet, NetworkZone } from '@cdk-x/hetzner';
 
 const network = new HtzNetwork(stack, 'Network', {
   name: 'my-network',

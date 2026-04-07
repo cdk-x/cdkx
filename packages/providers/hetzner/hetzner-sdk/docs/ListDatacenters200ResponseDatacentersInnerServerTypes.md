@@ -13,7 +13,7 @@
 ## Example
 
 ```typescript
-import { ListDatacenters200ResponseDatacentersInnerServerTypes } from '@cdkx-io/hetzner-sdk';
+import { ListDatacenters200ResponseDatacentersInnerServerTypes } from '@cdk-x/hetzner-sdk';
 
 const instance: ListDatacenters200ResponseDatacentersInnerServerTypes = {
   supported,

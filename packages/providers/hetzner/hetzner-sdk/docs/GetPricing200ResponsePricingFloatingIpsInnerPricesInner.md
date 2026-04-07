@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricingFloatingIpsInnerPricesInner } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricingFloatingIpsInnerPricesInner } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingFloatingIpsInnerPricesInner = {
   location,

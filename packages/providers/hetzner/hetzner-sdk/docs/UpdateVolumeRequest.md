@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { UpdateVolumeRequest } from '@cdkx-io/hetzner-sdk';
+import { UpdateVolumeRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: UpdateVolumeRequest = {
   name,

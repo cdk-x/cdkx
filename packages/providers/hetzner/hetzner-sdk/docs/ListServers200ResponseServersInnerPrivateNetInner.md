@@ -12,7 +12,7 @@
 ## Example
 
 ```typescript
-import { ListServers200ResponseServersInnerPrivateNetInner } from '@cdkx-io/hetzner-sdk';
+import { ListServers200ResponseServersInnerPrivateNetInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInnerPrivateNetInner = {
   network,

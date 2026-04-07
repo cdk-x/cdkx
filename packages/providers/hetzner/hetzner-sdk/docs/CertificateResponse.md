@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { CertificateResponse } from '@cdkx-io/hetzner-sdk';
+import { CertificateResponse } from '@cdk-x/hetzner-sdk';
 
 const instance: CertificateResponse = {
   certificate,

@@ -24,7 +24,7 @@ import {
   LoadBalancersApi,
   Configuration,
   CreateLoadBalancerRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancersApi(configuration);
@@ -74,7 +74,7 @@ Deletes a Load Balancer.
 ### Example
 
 ```typescript
-import { LoadBalancersApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancersApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancersApi(configuration);
@@ -122,7 +122,7 @@ Gets a specific Load Balancer object.
 ### Example
 
 ```typescript
-import { LoadBalancersApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancersApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancersApi(configuration);
@@ -170,7 +170,7 @@ You must specify the type of metric to get: `open_connections`, `connections_per
 ### Example
 
 ```typescript
-import { LoadBalancersApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancersApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancersApi(configuration);
@@ -237,7 +237,7 @@ Gets all existing Load Balancers that you have available.
 ### Example
 
 ```typescript
-import { LoadBalancersApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancersApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancersApi(configuration);
@@ -313,7 +313,7 @@ import {
   LoadBalancersApi,
   Configuration,
   UpdateLoadBalancerRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancersApi(configuration);

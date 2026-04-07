@@ -13,7 +13,7 @@ A [Location](#tag/locations) (containing only id and name) and Server Type speci
 ## Example
 
 ```typescript
-import { ListServerTypes200ResponseServerTypesInnerLocationsInner } from '@cdkx-io/hetzner-sdk';
+import { ListServerTypes200ResponseServerTypesInnerLocationsInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServerTypes200ResponseServerTypesInnerLocationsInner = {
   id,

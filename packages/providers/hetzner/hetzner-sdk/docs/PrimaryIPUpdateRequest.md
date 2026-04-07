@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { PrimaryIPUpdateRequest } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPUpdateRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: PrimaryIPUpdateRequest = {
   name,

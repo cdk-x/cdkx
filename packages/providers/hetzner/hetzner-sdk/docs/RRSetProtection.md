@@ -11,7 +11,7 @@ Protection of the [RRSet](#tag/zone-rrsets).
 ## Example
 
 ```typescript
-import { RRSetProtection } from '@cdkx-io/hetzner-sdk';
+import { RRSetProtection } from '@cdk-x/hetzner-sdk';
 
 const instance: RRSetProtection = {
   change,

@@ -14,7 +14,7 @@
 ## Example
 
 ```typescript
-import { FloatingIPCreateRequest } from '@cdkx-io/hetzner-sdk';
+import { FloatingIPCreateRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: FloatingIPCreateRequest = {
   type,

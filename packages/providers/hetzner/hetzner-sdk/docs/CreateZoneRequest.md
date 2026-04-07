@@ -15,7 +15,7 @@
 ## Example
 
 ```typescript
-import { CreateZoneRequest } from '@cdkx-io/hetzner-sdk';
+import { CreateZoneRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: CreateZoneRequest = {
   name,

@@ -15,7 +15,7 @@ my-project/
 The generated `src/main.ts` is the starting point for every cdkx project:
 
 ```typescript title="src/main.ts" linenums="1"
-import { App, Stack } from '@cdkx-io/core';
+import { App, Stack } from '@cdk-x/core';
 
 const app = new App(); // (1)
 

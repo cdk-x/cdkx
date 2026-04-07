@@ -1,5 +1,5 @@
-import { RuntimeLogger } from '@cdkx-io/core';
-import { CertificateType } from '@cdkx-io/hetzner';
+import { RuntimeLogger } from '@cdk-x/core';
+import { CertificateType } from '@cdk-x/hetzner';
 import { HetznerCertificateHandler } from './certificate-handler';
 import { HetznerRuntimeContext } from '../../hetzner-runtime-context';
 import { HetznerSdk } from '../../hetzner-sdk-facade';

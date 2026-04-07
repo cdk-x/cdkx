@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { ApplyToResourcesRequest } from '@cdkx-io/hetzner-sdk';
+import { ApplyToResourcesRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ApplyToResourcesRequest = {
   apply_to,

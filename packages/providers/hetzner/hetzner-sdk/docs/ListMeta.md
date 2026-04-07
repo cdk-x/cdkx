@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { ListMeta } from '@cdkx-io/hetzner-sdk';
+import { ListMeta } from '@cdk-x/hetzner-sdk';
 
 const instance: ListMeta = {
   pagination,

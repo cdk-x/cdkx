@@ -12,7 +12,7 @@
 ## Example
 
 ```typescript
-import { AddSubnetRequest } from '@cdkx-io/hetzner-sdk';
+import { AddSubnetRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: AddSubnetRequest = {
   type,

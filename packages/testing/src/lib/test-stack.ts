@@ -1,4 +1,4 @@
-import { App, Stack, StackProps } from '@cdkx-io/core';
+import { App, Stack, StackProps } from '@cdk-x/core';
 
 /**
  * A test-friendly Stack that defaults to a `TestProvider` when none is provided.

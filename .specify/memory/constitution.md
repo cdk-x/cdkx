@@ -100,7 +100,7 @@ The workspace SHALL be organized as an Nx monorepo with clear package boundaries
 
 **Compliance**:
 
-- Packages MUST follow naming convention `@cdkx-io/<name>`
+- Packages MUST follow naming convention `@cdk-x/<name>`
 - Cross-package dependencies MUST be explicit in `package.json`
 - New libraries MUST follow the 11-step checklist in conventions.md
 - Release groups MUST be configured in `nx.json`
@@ -186,9 +186,9 @@ All packages follow Semantic Versioning (MAJOR.MINOR.PATCH):
 
 | Group   | Packages                                                                   | Tag Pattern        | Versioning        |
 | ------- | -------------------------------------------------------------------------- | ------------------ | ----------------- |
-| `core`  | `@cdkx-io/core`, `@cdkx-io/engine`, `@cdkx-io/testing`, `@cdkx-io/hetzner` | `core-v{version}`  | Lock-step (fixed) |
-| `cli`   | `@cdkx-io/cli`                                                             | `cli-v{version}`   | Independent       |
-| `tools` | `@cdkx-io/spec-to-cdkx`                                                    | `tools-v{version}` | Independent       |
+| `core`  | `@cdk-x/core`, `@cdk-x/engine`, `@cdk-x/testing`, `@cdk-x/hetzner` | `core-v{version}`  | Lock-step (fixed) |
+| `cli`   | `@cdk-x/cli`                                                             | `cli-v{version}`   | Independent       |
+| `tools` | `@cdk-x/spec-to-cdkx`                                                    | `tools-v{version}` | Independent       |
 
 **Rules**:
 

@@ -22,7 +22,7 @@
 ## Example
 
 ```typescript
-import { PrimaryIP } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIP } from '@cdk-x/hetzner-sdk';
 
 const instance: PrimaryIP = {
   id,

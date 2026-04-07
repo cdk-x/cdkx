@@ -1,4 +1,4 @@
-import { App, Stack, StackOutput } from '@cdkx-io/core';
+import { App, Stack, StackOutput } from '@cdk-x/core';
 import {
   HtzFirewall,
   HtzFirewallRules,
@@ -18,7 +18,7 @@ import {
   NetworkZone,
   PrimaryIpAssigneeType,
   PrimaryIpType,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 export class NetworkStack extends Stack {
   /** Cross-stack output: the network ID created by this stack. */

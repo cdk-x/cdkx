@@ -23,7 +23,7 @@ import {
   VolumesApi,
   Configuration,
   CreateVolumeRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumesApi(configuration);
@@ -71,7 +71,7 @@ Deletes a volume. All Volume data is irreversibly destroyed. The Volume must not
 ### Example
 
 ```typescript
-import { VolumesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { VolumesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumesApi(configuration);
@@ -119,7 +119,7 @@ Gets a specific Volume object.
 ### Example
 
 ```typescript
-import { VolumesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { VolumesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumesApi(configuration);
@@ -167,7 +167,7 @@ Gets all existing Volumes that you have available.
 ### Example
 
 ```typescript
-import { VolumesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { VolumesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumesApi(configuration);
@@ -246,7 +246,7 @@ import {
   VolumesApi,
   Configuration,
   UpdateVolumeRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumesApi(configuration);

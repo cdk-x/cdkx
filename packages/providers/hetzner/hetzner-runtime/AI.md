@@ -1,6 +1,6 @@
-# @cdkx-io/hetzner-runtime
+# @cdk-x/hetzner-runtime
 
-Deployment runtime for Hetzner Cloud resources. Implements `ProviderRuntime` from `@cdkx-io/core`.
+Deployment runtime for Hetzner Cloud resources. Implements `ProviderRuntime` from `@cdk-x/core`.
 
 ## Architecture
 
@@ -36,7 +36,7 @@ HetznerRuntimeAdapterFactory
    - `<name>-handler.spec.ts` - Tests
    - `index.ts` - Export
 2. Register in `HetznerProviderRuntime`
-3. Config auto-generated in `@cdkx-io/hetzner` (RUNTIME_CONFIGS)
+3. Config auto-generated in `@cdk-x/hetzner` (RUNTIME_CONFIGS)
 
 ## File Structure
 

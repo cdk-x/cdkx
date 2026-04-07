@@ -69,7 +69,7 @@ Create a schema file in `packages/providers/hetzner/hetzner/schemas/v1/`. One fi
 ## Step 2 — Run codegen
 
 ```bash
-npx nx run @cdkx-io/hetzner:codegen
+npx nx run @cdk-x/hetzner:codegen
 ```
 
 This regenerates two files from all schemas in `schemas/v1/`:
@@ -113,7 +113,7 @@ Commit the generated files — they are checked into the repo.
 
 ## Step 3 — Implement the `ResourceHandler`
 
-Create the handler directory inside `@cdkx-io/hetzner-runtime`:
+Create the handler directory inside `@cdk-x/hetzner-runtime`:
 
 ```
 packages/providers/hetzner/hetzner-runtime/src/lib/handlers/placement-group/
@@ -123,7 +123,7 @@ packages/providers/hetzner/hetzner-runtime/src/lib/handlers/placement-group/
 ```
 
 ```typescript title="placement-group-handler.ts" linenums="1" hl_lines="23 24 25 26 27"
-import { ResourceHandler, RuntimeContext } from '@cdkx-io/core';
+import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 // Props mirror the cdkx schema (camelCase). Never import the generated
@@ -249,7 +249,7 @@ export { PlacementGroupHandler } from './placement-group/placement-group-handler
 Open `hetzner-provider-runtime.ts` and register the new handler:
 
 ```typescript title="hetzner-provider-runtime.ts" linenums="1" hl_lines="7 8 18"
-import { ProviderRuntime } from '@cdkx-io/core';
+import { ProviderRuntime } from '@cdk-x/core';
 import { HetznerSdk } from './hetzner-sdk-facade';
 import {
   HetznerNetworkHandler,
@@ -279,10 +279,10 @@ export class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
 
 ```bash
 # Run the full test suite for the runtime package
-npx nx test @cdkx-io/hetzner-runtime
+npx nx test @cdk-x/hetzner-runtime
 
 # Run just your new handler's tests
-npx nx test @cdkx-io/hetzner-runtime \
+npx nx test @cdk-x/hetzner-runtime \
   --testFile=packages/providers/hetzner/hetzner-runtime/src/lib/handlers/placement-group/placement-group-handler.spec.ts
 ```
 

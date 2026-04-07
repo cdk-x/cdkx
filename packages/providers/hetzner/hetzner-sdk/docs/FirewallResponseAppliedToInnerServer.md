@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { FirewallResponseAppliedToInnerServer } from '@cdkx-io/hetzner-sdk';
+import { FirewallResponseAppliedToInnerServer } from '@cdk-x/hetzner-sdk';
 
 const instance: FirewallResponseAppliedToInnerServer = {
   id,

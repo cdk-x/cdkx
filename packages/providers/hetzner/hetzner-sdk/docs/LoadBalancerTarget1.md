@@ -13,7 +13,7 @@
 ## Example
 
 ```typescript
-import { LoadBalancerTarget1 } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTarget1 } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerTarget1 = {
   type,

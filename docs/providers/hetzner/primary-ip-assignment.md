@@ -3,7 +3,7 @@
 `HtzPrimaryIpAssignment` assigns a [Hetzner Cloud Primary IP](https://docs.hetzner.com/cloud/primary-ips/overview) to a server. It models the assignment as a first-class resource with its own lifecycle — create assigns, update reassigns to a different server, and destroy unassigns.
 
 **Type:** `Hetzner::Networking::PrimaryIpAssignment`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 !!! warning "Server must be powered off"
     The Hetzner Cloud API requires the target server to be **powered off** before a Primary IP can be assigned or unassigned. Attempting to assign a Primary IP to a running server will fail with a `server_not_stopped` error. Use `HtzFloatingIpAssignment` if you need to assign a public IP to a running server.
@@ -22,7 +22,7 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="16 17 18 19 20 21"
-import { App, Stack } from '@cdkx-io/core';
+import { App, Stack } from '@cdk-x/core';
 import {
   HtzPrimaryIp,
   HtzPrimaryIpAssignment,
@@ -31,7 +31,7 @@ import {
   PrimaryIpAssigneeType,
   Location,
   ServerType,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'NetworkingStack');
@@ -69,13 +69,13 @@ app.synth();
 When the Primary IP lives in a different stack (e.g. a shared networking stack), export it via `StackOutput` and import the value:
 
 ```typescript title="src/networking-stack.ts" linenums="1" hl_lines="15 16 17 18"
-import { App, Stack, StackOutput } from '@cdkx-io/core';
+import { App, Stack, StackOutput } from '@cdk-x/core';
 import {
   HtzPrimaryIp,
   PrimaryIpType,
   PrimaryIpAssigneeType,
   Location,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 export class NetworkingStack extends Stack {
   public readonly primaryIpIdOutput: StackOutput;
@@ -99,14 +99,14 @@ export class NetworkingStack extends Stack {
 ```
 
 ```typescript title="src/compute-stack.ts" linenums="1" hl_lines="20 21 22 23 24 25"
-import { App, Stack, IResolvable } from '@cdkx-io/core';
+import { App, Stack, IResolvable } from '@cdk-x/core';
 import {
   HtzPrimaryIpAssignment,
   HtzServer,
   PrimaryIpAssigneeType,
   ServerType,
   Location,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 export class ComputeStack extends Stack {
   constructor(app: App, props: { primaryIpId: IResolvable }) {
@@ -130,7 +130,7 @@ export class ComputeStack extends Stack {
 ```
 
 ```typescript title="src/main.ts" linenums="1"
-import { App } from '@cdkx-io/core';
+import { App } from '@cdk-x/core';
 import { NetworkingStack } from './networking-stack';
 import { ComputeStack } from './compute-stack';
 

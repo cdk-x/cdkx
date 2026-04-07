@@ -13,8 +13,8 @@
  * is run to produce HtzLoadBalancerService and HtzLoadBalancerTarget.
  */
 import * as path from 'node:path';
-import { App, Stack } from '@cdkx-io/core';
-import { SynthHelpers } from '@cdkx-io/testing';
+import { App, Stack } from '@cdk-x/core';
+import { SynthHelpers } from '@cdk-x/testing';
 import {
   HtzLoadBalancer,
   HtzLoadBalancerService,

@@ -13,7 +13,7 @@
 ## Example
 
 ```typescript
-import { CreateZoneRequestRrsetsInner } from '@cdkx-io/hetzner-sdk';
+import { CreateZoneRequestRrsetsInner } from '@cdk-x/hetzner-sdk';
 
 const instance: CreateZoneRequestRrsetsInner = {
   name,

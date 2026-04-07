@@ -11,7 +11,7 @@ Price of [Server](#tag/servers) backups.
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricingServerBackup } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricingServerBackup } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingServerBackup = {
   percentage,

@@ -3,7 +3,7 @@
 `HtzVolumeAttachment` attaches a [Hetzner Cloud Volume](https://docs.hetzner.com/cloud/volumes/overview) to a Server. It models the attachment relationship as a first-class resource with its own lifecycle — create attaches, update re-attaches to a different server, and destroy detaches.
 
 **Type:** `Hetzner::Storage::VolumeAttachment`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -19,8 +19,8 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="14 15 16 17 18"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzVolume, HtzServer, HtzVolumeAttachment, ServerType, Location } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzVolume, HtzServer, HtzVolumeAttachment, ServerType, Location } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'StorageStack');

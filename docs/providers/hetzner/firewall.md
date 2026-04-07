@@ -10,7 +10,7 @@ Hetzner Cloud Firewalls are managed using three separate constructs that map dir
 
 Splitting into three constructs lets you update rules independently from attachments, and add or remove individual attachments without touching rules.
 
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ---
 
@@ -106,7 +106,7 @@ Calls `POST /firewalls/{id}/actions/remove_from_resources` for the specific atta
 ## Full example
 
 ```typescript title="src/main.ts" linenums="1"
-import { App, Stack } from '@cdkx-io/core';
+import { App, Stack } from '@cdk-x/core';
 import {
   HtzFirewall,
   HtzFirewallRules,
@@ -116,7 +116,7 @@ import {
   FirewallRuleProtocol,
   ServerType,
   Location,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'SecurityStack');

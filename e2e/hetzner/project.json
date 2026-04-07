@@ -11,7 +11,7 @@
     "synth": {
       "executor": "nx:run-commands",
       "dependsOn": [
-        { "projects": ["@cdkx-io/cli", "@cdkx-io/core", "@cdkx-io/hetzner"], "target": "build" }
+        { "projects": ["@cdk-x/cli", "@cdk-x/core", "@cdk-x/hetzner"], "target": "build" }
       ],
       "options": {
         "command": "cdkx synth",

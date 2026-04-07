@@ -11,7 +11,7 @@ Price of [Volumes](#tag/volumes).
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricingVolume } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricingVolume } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingVolume = {
   price_per_gb_month,

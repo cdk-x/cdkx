@@ -24,7 +24,7 @@ import {
   ZonesApi,
   Configuration,
   CreateZoneRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZonesApi(configuration);
@@ -72,7 +72,7 @@ Deletes a [Zone](#tag/zones).
 ### Example
 
 ```typescript
-import { ZonesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZonesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZonesApi(configuration);
@@ -120,7 +120,7 @@ Returns a single [Zone](#tag/zones).
 ### Example
 
 ```typescript
-import { ZonesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZonesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZonesApi(configuration);
@@ -168,7 +168,7 @@ Returns a generated [Zone](#tag/zones) file in BIND (RFC [1034](https://datatrac
 ### Example
 
 ```typescript
-import { ZonesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZonesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZonesApi(configuration);
@@ -216,7 +216,7 @@ Returns all [Zones](#tag/zones). Use the provided URI parameters to modify the r
 ### Example
 
 ```typescript
-import { ZonesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZonesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZonesApi(configuration);
@@ -295,7 +295,7 @@ import {
   ZonesApi,
   Configuration,
   ZoneUpdateRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZonesApi(configuration);

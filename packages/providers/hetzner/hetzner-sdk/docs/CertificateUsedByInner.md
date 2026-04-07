@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { CertificateUsedByInner } from '@cdkx-io/hetzner-sdk';
+import { CertificateUsedByInner } from '@cdk-x/hetzner-sdk';
 
 const instance: CertificateUsedByInner = {
   id,

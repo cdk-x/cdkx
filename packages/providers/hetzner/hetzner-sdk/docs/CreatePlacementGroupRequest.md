@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { CreatePlacementGroupRequest } from '@cdkx-io/hetzner-sdk';
+import { CreatePlacementGroupRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: CreatePlacementGroupRequest = {
   name,

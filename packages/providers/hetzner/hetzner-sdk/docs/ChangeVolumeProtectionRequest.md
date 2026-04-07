@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { ChangeVolumeProtectionRequest } from '@cdkx-io/hetzner-sdk';
+import { ChangeVolumeProtectionRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ChangeVolumeProtectionRequest = {
   _delete,

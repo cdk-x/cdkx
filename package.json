@@ -1,9 +1,9 @@
 {
-  "name": "@cdkx-io/cdkx",
+  "name": "@cdk-x/cdkx",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "scripts": {
-    "cdkx": "nx build @cdkx-io/cli && node packages/cli/dist/main.js",
+    "cdkx": "nx build @cdk-x/cli && node packages/cli/dist/main.js",
     "ralph": "bash .sandcastle/ralph.sh",
     "docs:serve": "mkdocs serve",
     "docs:build": "mkdocs build"

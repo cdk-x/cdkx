@@ -1,9 +1,9 @@
 /**
  * Logger interface for the provider runtime layer.
  *
- * Decoupled from `@cdkx-io/logger` so that provider packages have no
+ * Decoupled from `@cdk-x/logger` so that provider packages have no
  * compile-time dependency on the concrete logger implementation.
- * `LoggerImpl` from `@cdkx-io/logger` satisfies this interface
+ * `LoggerImpl` from `@cdk-x/logger` satisfies this interface
  * structurally — no adapter needed.
  */
 export interface RuntimeLogger {

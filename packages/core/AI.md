@@ -1,7 +1,7 @@
-# @cdkx-io/core — Development Context
+# @cdk-x/core — Development Context
 
 This file captures the full design, architecture, and implementation details of
-`@cdkx-io/core` for future AI-assisted sessions. It is auto-loaded by OpenCode.
+`@cdk-x/core` for future AI-assisted sessions. It is auto-loaded by OpenCode.
 
 > **Maintenance rule:** whenever code in `packages/core` is modified — classes,
 > interfaces, file structure, conventions, or design decisions — this file must
@@ -17,8 +17,8 @@ deployment manifests from construct trees. It is provider-agnostic: the same
 Hetzner Cloud JSON file, a GitHub Actions workflow, etc. — depending on which
 `Provider` is attached to each `Stack`.
 
-`@cdkx-io/core` is the foundation package. All provider packages (e.g.
-`@cdkx-io/kubernetes`, `@cdkx-io/hetzner`) extend its abstract classes.
+`@cdk-x/core` is the foundation package. All provider packages (e.g.
+`@cdk-x/kubernetes`, `@cdk-x/hetzner`) extend its abstract classes.
 
 ---
 
@@ -42,8 +42,8 @@ Run tasks via Nx:
 yarn nx lint core
 yarn nx test core
 yarn nx build core
-yarn nx run @cdkx-io/core:format        # format src/ with prettier
-yarn nx run @cdkx-io/core:format:check  # check formatting without writing
+yarn nx run @cdk-x/core:format        # format src/ with prettier
+yarn nx run @cdk-x/core:format:check  # check formatting without writing
 ```
 
 ---
@@ -458,17 +458,17 @@ writing the output entry.
 
 The runtime module defines the **provider-agnostic abstractions** that provider
 packages use to implement deployment handlers. These abstractions are consumed
-by the engine bridge (`RuntimeAdapter` in `@cdkx-io/engine`) and implemented by
-provider runtime packages (e.g. `@cdkx-io/hetzner-runtime`).
+by the engine bridge (`RuntimeAdapter` in `@cdk-x/engine`) and implemented by
+provider runtime packages (e.g. `@cdk-x/hetzner-runtime`).
 
 **Key design principle:** total decoupling. Providers know nothing about the
 engine, and all dependencies (logger, SDK) are injected via `RuntimeContext`.
 
 ### `RuntimeLogger` (`src/lib/runtime/runtime-logger.ts`)
 
-Logger interface decoupled from `@cdkx-io/logger`. Provider packages depend on
+Logger interface decoupled from `@cdk-x/logger`. Provider packages depend on
 this interface — not the concrete `LoggerImpl` class. `LoggerImpl` from
-`@cdkx-io/logger` satisfies this interface structurally (no adapter needed).
+`@cdk-x/logger` satisfies this interface structurally (no adapter needed).
 
 ```ts
 interface RuntimeLogger {
@@ -568,7 +568,7 @@ class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
 
 ### Runtime module — design decisions
 
-1. **`RuntimeLogger` in core, not `@cdkx-io/logger`:** avoids coupling provider
+1. **`RuntimeLogger` in core, not `@cdk-x/logger`:** avoids coupling provider
    packages to the concrete logger. Both engine and providers depend on core
    (which they already do), so the interface lives here.
 2. **No pre/post operation hooks on `ProviderRuntime`:** removed as YAGNI — the
@@ -576,7 +576,7 @@ class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
 3. **No `any` in `ProviderRuntime`:** `handlers` map uses `unknown` generics.
    The `register()` and `getHandler()` methods use `as unknown as ...` casts
    internally — safe because runtime types are opaque to the container.
-4. **`@cdkx-io/core` does not depend on `@cdkx-io/logger`:** the `@cdkx-io/logger`
+4. **`@cdk-x/core` does not depend on `@cdk-x/logger`:** the `@cdk-x/logger`
    dependency was removed from `packages/core/package.json` when the runtime
    module was added.
 
@@ -590,7 +590,7 @@ class HetznerProviderRuntime extends ProviderRuntime<HetznerSdk> {
 | No `any`                        | Use `unknown` everywhere. The one exception is `Lazy.any()` return type — intentional escape hatch, gets `eslint-disable` comment.                                                                                                                                                                                                                                                                                                                     |
 | CJS imports                     | All local imports use **no file extension** (extensionless). `moduleResolution: node` resolves them correctly at both compile time and runtime.                                                                                                                                                                                                                                                                                                        |
 | Unused params in class methods  | ESLint's `argsIgnorePattern: "^_"` does NOT suppress warnings for class method params. Fix: **omit the parameter entirely** from the method signature. TypeScript allows implementing an interface method with fewer params than declared. When a param is dropped, also remove its import if it's no longer used.                                                                                                                                     |
-| Prettier                        | Run `yarn nx run @cdkx-io/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 80`, `tabWidth: 2`, `semi: true`.                                                                                                                                                                                                                                                                          |
+| Prettier                        | Run `yarn nx run @cdk-x/core:format` after writing or modifying any `.ts` file. Config: `singleQuote`, `trailingComma: all`, `printWidth: 80`, `tabWidth: 2`, `semi: true`.                                                                                                                                                                                                                                                                          |
 | Specs co-located                | `foo/foo.spec.ts` lives next to `foo/foo.ts`.                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Test helpers                    | `test/helpers/` — not exported from the public barrel (`src/index.ts`).                                                                                                                                                                                                                                                                                                                                                                                |
 | Integration tests               | `test/integration/synth.spec.ts`. Suite 8 ("Visual synth output") writes permanent files to `.cdkx.out/` at the workspace root for manual inspection (not cleaned up after the test). Uses `TestProvider` and `TestResources` with generic `test::Resource` L1s to exercise cross-resource references (built directly with `{ ref: source.logicalId, attr }` ), `Lazy` tokens, a custom `IResolver`, and null stripping — all in a two-stack scenario. |
@@ -639,7 +639,7 @@ class, to avoid a circular dependency (`stack.ts` imports `synthesizer.ts`).
 ### 6. `RESOURCE_SYMBOL` for type detection
 
 `ProviderResource.isProviderResource(x)` checks for a private symbol
-(`Symbol.for('@cdkx-io/core.Resource')`) set via `Object.defineProperty`.
+(`Symbol.for('@cdk-x/core.Resource')`) set via `Object.defineProperty`.
 This avoids `instanceof` checks which break across module boundaries (dual
 package hazard) and makes the check safe even if the class is loaded from a
 different copy of the package.
@@ -679,8 +679,8 @@ dependency graph.
 
 ## Codegen subsystem (`src/lib/codegen/`)
 
-`@cdkx-io/core` ships a **provider-agnostic code-generation subsystem** used by
-provider packages (e.g. `@cdkx-io/hetzner`) to auto-generate TypeScript L1
+`@cdk-x/core` ships a **provider-agnostic code-generation subsystem** used by
+provider packages (e.g. `@cdk-x/hetzner`) to auto-generate TypeScript L1
 constructs and engine JSON from OpenAPI specifications.
 
 ### Architecture
@@ -807,7 +807,7 @@ handles `.js`→`.ts` import remapping correctly. Add `tsx` to workspace root de
 
 ```
 packages/core/
-├── package.json                         name: @cdkx-io/core (no "type" field — CommonJS)
+├── package.json                         name: @cdk-x/core (no "type" field — CommonJS)
 ├── AI.md                           ← this file
 ├── src/
 │   ├── index.ts                         public barrel — exports everything
@@ -880,8 +880,8 @@ Releases are managed via `nx release` (configured in `nx.json`).
 
 | Group  | Projects                                  | Tag pattern       | Versioning                    |
 | ------ | ----------------------------------------- | ----------------- | ----------------------------- |
-| `core` | `@cdkx-io/core` (+ `engine` when created) | `core-v{version}` | Fixed (lock-step)             |
-| `cli`  | `cli` (`@cdkx-io/cli`)                    | `cli-v{version}`  | Fixed (independent from core) |
+| `core` | `@cdk-x/core` (+ `engine` when created) | `core-v{version}` | Fixed (lock-step)             |
+| `cli`  | `cli` (`@cdk-x/cli`)                    | `cli-v{version}`  | Fixed (independent from core) |
 
 ### Key decisions
 
@@ -931,7 +931,7 @@ When the `engine` package is created, add it to `nx.json`:
 
 ```jsonc
 "core": {
-  "projects": ["@cdkx-io/core", "@cdkx-io/engine"],
+  "projects": ["@cdk-x/core", "@cdk-x/engine"],
   ...
 }
 ```

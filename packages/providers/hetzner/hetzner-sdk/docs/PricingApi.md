@@ -15,7 +15,7 @@ Returns prices for all resources available on the platform. VAT and currency of 
 ### Example
 
 ```typescript
-import { PricingApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PricingApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PricingApi(configuration);

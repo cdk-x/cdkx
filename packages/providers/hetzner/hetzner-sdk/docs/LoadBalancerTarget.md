@@ -15,7 +15,7 @@
 ## Example
 
 ```typescript
-import { LoadBalancerTarget } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTarget } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerTarget = {
   type,

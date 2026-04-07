@@ -23,7 +23,7 @@ import {
   NetworksApi,
   Configuration,
   NetworkCreateRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworksApi(configuration);
@@ -71,7 +71,7 @@ Deletes a [Network](#tag/networks). Attached resources will be detached automati
 ### Example
 
 ```typescript
-import { NetworksApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { NetworksApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworksApi(configuration);
@@ -119,7 +119,7 @@ Get a specific [Network](#tag/networks).
 ### Example
 
 ```typescript
-import { NetworksApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { NetworksApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworksApi(configuration);
@@ -167,7 +167,7 @@ List multiple [Networks](#tag/networks). Use the provided URI parameters to modi
 ### Example
 
 ```typescript
-import { NetworksApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { NetworksApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworksApi(configuration);
@@ -243,7 +243,7 @@ import {
   NetworksApi,
   Configuration,
   NetworkUpdateRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworksApi(configuration);

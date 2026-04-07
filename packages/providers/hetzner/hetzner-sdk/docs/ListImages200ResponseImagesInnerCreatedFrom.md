@@ -12,7 +12,7 @@ Information about the Server the Image was created from.
 ## Example
 
 ```typescript
-import { ListImages200ResponseImagesInnerCreatedFrom } from '@cdkx-io/hetzner-sdk';
+import { ListImages200ResponseImagesInnerCreatedFrom } from '@cdk-x/hetzner-sdk';
 
 const instance: ListImages200ResponseImagesInnerCreatedFrom = {
   id,

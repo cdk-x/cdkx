@@ -12,7 +12,7 @@ Price of one [Floating IP](#tag/floating-ips) per month.
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricingFloatingIpPriceMonthly } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricingFloatingIpPriceMonthly } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingFloatingIpPriceMonthly = {
   net,

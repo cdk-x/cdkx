@@ -1,2 +1,2 @@
-// @cdkx-io/engine public API
+// @cdk-x/engine public API
 export * from './lib';

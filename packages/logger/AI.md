@@ -1,7 +1,7 @@
-# @cdkx-io/logger — Development Context
+# @cdk-x/logger — Development Context
 
 This file captures the full design, architecture, and implementation details of
-`@cdkx-io/logger` for future AI-assisted sessions. It is auto-loaded by OpenCode.
+`@cdk-x/logger` for future AI-assisted sessions. It is auto-loaded by OpenCode.
 
 > **Maintenance rule:** whenever code in `packages/logger` is modified — classes,
 > interfaces, file structure, conventions, or design decisions — this file must
@@ -9,9 +9,9 @@ This file captures the full design, architecture, and implementation details of
 
 ---
 
-## What is @cdkx-io/logger?
+## What is @cdk-x/logger?
 
-**@cdkx-io/logger** is the centralized structured logging system for the cdkx
+**@cdk-x/logger** is the centralized structured logging system for the cdkx
 monorepo. It captures all deployment events (state transitions, HTTP requests,
 provider interactions) in a structured JSON format and writes them to disk for
 later analysis and debugging.
@@ -43,11 +43,11 @@ Key features:
 Run tasks via Nx:
 
 ```bash
-yarn nx lint @cdkx-io/logger
-yarn nx test @cdkx-io/logger
-yarn nx build @cdkx-io/logger
-yarn nx run @cdkx-io/logger:format        # format src/ with prettier
-yarn nx run @cdkx-io/logger:format:check  # check formatting without writing
+yarn nx lint @cdk-x/logger
+yarn nx test @cdk-x/logger
+yarn nx build @cdk-x/logger
+yarn nx run @cdk-x/logger:format        # format src/ with prettier
+yarn nx run @cdk-x/logger:format:check  # check formatting without writing
 ```
 
 Dependencies:
@@ -277,7 +277,7 @@ to redact sensitive fields at any depth.
 ### In the CLI (`deploy.command.ts`, `destroy.command.ts`)
 
 ```ts
-import { LoggerFactory } from '@cdkx-io/logger';
+import { LoggerFactory } from '@cdk-x/logger';
 
 const logger = LoggerFactory.createEngineLogger({
   logDir: stateDir, // .cdkx/ next to cdkx.json
@@ -321,7 +321,7 @@ constructor(options: DeploymentEngineOptions) {
 ### In the provider adapter (`hetzner-adapter.ts`)
 
 ```ts
-import { Logger } from '@cdkx-io/logger';
+import { Logger } from '@cdk-x/logger';
 
 export class HetznerAdapter implements ProviderAdapter {
   private logger?: Logger;
@@ -355,7 +355,7 @@ export class HetznerAdapter implements ProviderAdapter {
 ### In the HTTP client (`hetzner-client.ts`)
 
 ```ts
-import { Logger, Sanitizers } from '@cdkx-io/logger';
+import { Logger, Sanitizers } from '@cdk-x/logger';
 
 export class HetznerClient {
   private logger?: Logger;
@@ -428,8 +428,8 @@ tests write to disk.
 
 ## Release configuration
 
-Part of the `core` release group in `nx.json` — lock-stepped with `@cdkx-io/core`,
-`@cdkx-io/engine`, `@cdkx-io/testing`, and `@cdkx-io/hetzner`. Tag pattern:
+Part of the `core` release group in `nx.json` — lock-stepped with `@cdk-x/core`,
+`@cdk-x/engine`, `@cdk-x/testing`, and `@cdk-x/hetzner`. Tag pattern:
 `core-v{version}`.
 
 ---
@@ -443,7 +443,7 @@ package follows them identically:
 - No `any` — use `unknown`
 - CJS imports — extensionless local imports
 - Specs co-located — `foo.spec.ts` next to `foo.ts`
-- Prettier — run `yarn nx run @cdkx-io/logger:format` after any `.ts` change
+- Prettier — run `yarn nx run @cdk-x/logger:format` after any `.ts` change
 
 ---
 
@@ -451,7 +451,7 @@ package follows them identically:
 
 ```
 packages/logger/
-├── package.json                  name: @cdkx-io/logger, winston dependency
+├── package.json                  name: @cdk-x/logger, winston dependency
 ├── project.json                  Nx project configuration (build, format, test)
 ├── tsconfig.json
 ├── tsconfig.lib.json
@@ -485,9 +485,9 @@ Also written at runtime (gitignored):
 
 ## Next steps (integration phases)
 
-### Phase 2: Integrate in @cdkx-io/engine
+### Phase 2: Integrate in @cdk-x/engine
 
-- Add `@cdkx-io/logger` as dependency in `packages/engine/package.json`
+- Add `@cdk-x/logger` as dependency in `packages/engine/package.json`
 - Modify `DeploymentEngineOptions` to accept `logger?: Logger`
 - Subscribe logger to the `EventBus` in the constructor
 - Log all state transitions automatically
@@ -500,16 +500,16 @@ Also written at runtime (gitignored):
 - Add optional method `setLogger?(logger: Logger): void` to the interface
 - Document in `packages/engine/AI.md`
 
-### Phase 4: Integrate in @cdkx-io/hetzner
+### Phase 4: Integrate in @cdk-x/hetzner
 
-- Add `@cdkx-io/logger` as peer dependency
+- Add `@cdk-x/logger` as peer dependency
 - Modify `HetznerClientOptions` to accept `logger?: Logger`
 - Implement `HetznerAdapter.setLogger()` and propagate to client
 - Instrument `HetznerClient.request()` to log HTTP request/response/error
 - Instrument `ActionPoller` to log polling iterations
 - Tests
 
-### Phase 5: Connect in @cdkx-io/cli
+### Phase 5: Connect in @cdk-x/cli
 
 - Modify `deploy.command.ts` to create logger and pass to engine
 - Modify `destroy.command.ts` the same way

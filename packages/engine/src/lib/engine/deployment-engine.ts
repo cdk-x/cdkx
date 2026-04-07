@@ -19,8 +19,8 @@ import {
   ReconcileValidationError,
   type BlockedDelete,
 } from './reconcile-validation-error';
-import type { Logger } from '@cdkx-io/logger';
-import type { StabilizeConfig } from '@cdkx-io/core';
+import type { Logger } from '@cdk-x/logger';
+import type { StabilizeConfig } from '@cdk-x/core';
 
 // ─── Output Handler types ─────────────────────────────────────────────────────
 

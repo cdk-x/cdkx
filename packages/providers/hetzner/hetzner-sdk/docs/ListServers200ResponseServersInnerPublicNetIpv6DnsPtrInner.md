@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { ListServers200ResponseServersInnerPublicNetIpv6DnsPtrInner } from '@cdkx-io/hetzner-sdk';
+import { ListServers200ResponseServersInnerPublicNetIpv6DnsPtrInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInnerPublicNetIpv6DnsPtrInner = {
   ip,

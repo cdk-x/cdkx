@@ -2,7 +2,7 @@
   "entryPoints": ["src/index.ts"],
   "tsconfig": "tsconfig.lib.json",
   "out": "../../typedoc-out/core",
-  "name": "@cdkx-io/core",
+  "name": "@cdk-x/core",
   "readme": "none",
   "skipErrorChecking": false,
   "excludePrivate": true,

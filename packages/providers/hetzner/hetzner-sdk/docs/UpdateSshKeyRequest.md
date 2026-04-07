@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { UpdateSshKeyRequest } from '@cdkx-io/hetzner-sdk';
+import { UpdateSshKeyRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: UpdateSshKeyRequest = {
   name,

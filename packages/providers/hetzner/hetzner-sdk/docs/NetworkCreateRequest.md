@@ -14,7 +14,7 @@
 ## Example
 
 ```typescript
-import { NetworkCreateRequest } from '@cdkx-io/hetzner-sdk';
+import { NetworkCreateRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: NetworkCreateRequest = {
   name,

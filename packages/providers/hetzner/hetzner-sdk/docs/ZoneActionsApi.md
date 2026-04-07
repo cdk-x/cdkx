@@ -26,7 +26,7 @@ import {
   ZoneActionsApi,
   Configuration,
   ChangeZonePrimaryNameserversRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneActionsApi(configuration);
@@ -83,7 +83,7 @@ import {
   ZoneActionsApi,
   Configuration,
   ChangeZoneProtectionRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneActionsApi(configuration);
@@ -140,7 +140,7 @@ import {
   ZoneActionsApi,
   Configuration,
   ChangeZoneTtlRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneActionsApi(configuration);
@@ -193,7 +193,7 @@ Returns a specific [Action](#tag/actions) for a [Zone](#tag/zones).
 ### Example
 
 ```typescript
-import { ZoneActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZoneActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneActionsApi(configuration);
@@ -243,7 +243,7 @@ Returns a specific [Action](#tag/actions).
 ### Example
 
 ```typescript
-import { ZoneActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZoneActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneActionsApi(configuration);
@@ -295,7 +295,7 @@ import {
   ZoneActionsApi,
   Configuration,
   ImportZoneZonefileRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneActionsApi(configuration);
@@ -348,7 +348,7 @@ Returns all [Actions](#tag/actions) for a [Zone](#tag/zones). Use the provided U
 ### Example
 
 ```typescript
-import { ZoneActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZoneActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneActionsApi(configuration);
@@ -426,7 +426,7 @@ Returns all [Zone](#tag/zones) [Actions](#tag/actions). Use the provided URI par
 ### Example
 
 ```typescript
-import { ZoneActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZoneActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneActionsApi(configuration);

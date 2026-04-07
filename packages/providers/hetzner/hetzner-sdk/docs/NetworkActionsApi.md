@@ -28,7 +28,7 @@ import {
   NetworkActionsApi,
   Configuration,
   AddRouteRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworkActionsApi(configuration);
@@ -82,7 +82,7 @@ import {
   NetworkActionsApi,
   Configuration,
   AddSubnetRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworkActionsApi(configuration);
@@ -139,7 +139,7 @@ import {
   NetworkActionsApi,
   Configuration,
   ChangeIPRangeRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworkActionsApi(configuration);
@@ -196,7 +196,7 @@ import {
   NetworkActionsApi,
   Configuration,
   ChangeProtectionRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworkActionsApi(configuration);
@@ -253,7 +253,7 @@ import {
   NetworkActionsApi,
   Configuration,
   DeleteRouteRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworkActionsApi(configuration);
@@ -310,7 +310,7 @@ import {
   NetworkActionsApi,
   Configuration,
   DeleteSubnetRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworkActionsApi(configuration);
@@ -363,7 +363,7 @@ Returns a specific [Action](#tag/actions) for a [Network](#tag/networks).
 ### Example
 
 ```typescript
-import { NetworkActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { NetworkActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworkActionsApi(configuration);
@@ -413,7 +413,7 @@ Returns a single [Action](#tag/actions).
 ### Example
 
 ```typescript
-import { NetworkActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { NetworkActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworkActionsApi(configuration);
@@ -461,7 +461,7 @@ Lists [Actions](#tag/actions) for a [Network](#tag/networks). Use the provided U
 ### Example
 
 ```typescript
-import { NetworkActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { NetworkActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworkActionsApi(configuration);
@@ -539,7 +539,7 @@ Lists multiple [Actions](#tag/actions). Use the provided URI parameters to modif
 ### Example
 
 ```typescript
-import { NetworkActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { NetworkActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new NetworkActionsApi(configuration);

@@ -1,5 +1,5 @@
-import { RuntimeLogger } from '@cdkx-io/core';
-import { LoadBalancerServiceProtocol } from '@cdkx-io/hetzner';
+import { RuntimeLogger } from '@cdk-x/core';
+import { LoadBalancerServiceProtocol } from '@cdk-x/hetzner';
 import {
   HetznerLoadBalancerServiceHandler,
   HetznerLoadBalancerServiceState,

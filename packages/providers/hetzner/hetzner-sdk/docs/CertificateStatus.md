@@ -13,7 +13,7 @@ Current status of a type `managed` Certificate, always _null_ for type `uploaded
 ## Example
 
 ```typescript
-import { CertificateStatus } from '@cdkx-io/hetzner-sdk';
+import { CertificateStatus } from '@cdk-x/hetzner-sdk';
 
 const instance: CertificateStatus = {
   issuance,

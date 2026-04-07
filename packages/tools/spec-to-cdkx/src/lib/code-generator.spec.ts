@@ -23,9 +23,9 @@ describe('CodeGenerator', () => {
   });
 
   describe('imports', () => {
-    it('imports ProviderResource, IResolvable, PropertyValue from @cdkx-io/core', () => {
+    it('imports ProviderResource, IResolvable, PropertyValue from @cdk-x/core', () => {
       expect(source).toContain(
-        "import { ProviderResource, IResolvable, PropertyValue } from '@cdkx-io/core';",
+        "import { ProviderResource, IResolvable, PropertyValue } from '@cdk-x/core';",
       );
     });
 

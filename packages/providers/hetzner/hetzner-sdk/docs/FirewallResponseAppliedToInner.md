@@ -12,7 +12,7 @@
 ## Example
 
 ```typescript
-import { FirewallResponseAppliedToInner } from '@cdkx-io/hetzner-sdk';
+import { FirewallResponseAppliedToInner } from '@cdk-x/hetzner-sdk';
 
 const instance: FirewallResponseAppliedToInner = {
   type,

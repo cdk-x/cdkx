@@ -28,7 +28,7 @@ Image the server is based on.
 ## Example
 
 ```typescript
-import { ListServers200ResponseServersInnerImage } from '@cdkx-io/hetzner-sdk';
+import { ListServers200ResponseServersInnerImage } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInnerImage = {
   id,

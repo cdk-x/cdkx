@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { NetworkUpdateRequest } from '@cdkx-io/hetzner-sdk';
+import { NetworkUpdateRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: NetworkUpdateRequest = {
   name,

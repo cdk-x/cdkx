@@ -26,7 +26,7 @@ import {
   FloatingIPActionsApi,
   Configuration,
   FloatingIPActionsAssignRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPActionsApi(configuration);
@@ -83,7 +83,7 @@ import {
   FloatingIPActionsApi,
   Configuration,
   ListFloatingIps200ResponseFloatingIpsInnerDnsPtrInner,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPActionsApi(configuration);
@@ -140,7 +140,7 @@ import {
   FloatingIPActionsApi,
   Configuration,
   ListFloatingIps200ResponseFloatingIpsInnerProtection,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPActionsApi(configuration);
@@ -193,7 +193,7 @@ Returns a specific [Action](#tag/actions) for a [Floating IP](#tag/floating-ips)
 ### Example
 
 ```typescript
-import { FloatingIPActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FloatingIPActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPActionsApi(configuration);
@@ -243,7 +243,7 @@ Returns a single [Action](#tag/actions).
 ### Example
 
 ```typescript
-import { FloatingIPActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FloatingIPActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPActionsApi(configuration);
@@ -291,7 +291,7 @@ Lists [Actions](#tag/actions) for a [Floating IP](#tag/floating-ips). Use the pr
 ### Example
 
 ```typescript
-import { FloatingIPActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FloatingIPActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPActionsApi(configuration);
@@ -369,7 +369,7 @@ Lists multiple [Actions](#tag/actions). Use the provided URI parameters to modif
 ### Example
 
 ```typescript
-import { FloatingIPActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FloatingIPActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPActionsApi(configuration);
@@ -447,7 +447,7 @@ Unassigns a [Floating IP](#tag/floating-ips). Results in the IP being unreachabl
 ### Example
 
 ```typescript
-import { FloatingIPActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FloatingIPActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPActionsApi(configuration);

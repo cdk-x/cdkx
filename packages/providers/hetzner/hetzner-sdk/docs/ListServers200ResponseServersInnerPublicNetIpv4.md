@@ -14,7 +14,7 @@ IP address (v4) and its reverse DNS entry of this Server.
 ## Example
 
 ```typescript
-import { ListServers200ResponseServersInnerPublicNetIpv4 } from '@cdkx-io/hetzner-sdk';
+import { ListServers200ResponseServersInnerPublicNetIpv4 } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInnerPublicNetIpv4 = {
   id,

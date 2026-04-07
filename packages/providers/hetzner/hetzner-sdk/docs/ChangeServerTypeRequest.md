@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { ChangeServerTypeRequest } from '@cdkx-io/hetzner-sdk';
+import { ChangeServerTypeRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ChangeServerTypeRequest = {
   upgrade_disk,

@@ -20,7 +20,7 @@
 ## Example
 
 ```typescript
-import { Certificate } from '@cdkx-io/hetzner-sdk';
+import { Certificate } from '@cdk-x/hetzner-sdk';
 
 const instance: Certificate = {
   id,

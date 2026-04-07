@@ -8,22 +8,22 @@ All tasks run through Nx. Prefix with `npx` (or the workspace package manager):
 
 ```sh
 # Build a package
-npx nx build @cdkx-io/core
+npx nx build @cdk-x/core
 npx nx build hetzner          # short name works too
 
 # Test a package
-npx nx test @cdkx-io/core
+npx nx test @cdk-x/core
 npx nx test hetzner-runtime
 
 # Run a single test file
-npx nx test @cdkx-io/core --testFile=packages/core/src/lib/stack/stack.spec.ts
+npx nx test @cdk-x/core --testFile=packages/core/src/lib/stack/stack.spec.ts
 
 # Lint
-npx nx lint @cdkx-io/core
+npx nx lint @cdk-x/core
 
 # Format (check / fix)
-npx nx run @cdkx-io/hetzner:format:check
-npx nx run @cdkx-io/hetzner:format
+npx nx run @cdk-x/hetzner:format:check
+npx nx run @cdk-x/hetzner:format
 
 # Build all
 npx nx run-many -t build
@@ -32,7 +32,7 @@ npx nx run-many -t build
 npx nx affected -t build,test,lint
 
 # Regenerate Hetzner L1 constructs from JSON Schema
-npx nx run @cdkx-io/hetzner:codegen
+npx nx run @cdk-x/hetzner:codegen
 
 # Run the CLI locally
 npm run cdkx -- synth --app "npx ts-node my-app.ts"
@@ -50,15 +50,15 @@ Two phases:
 
 | Package | Path | Role |
 |---|---|---|
-| `@cdkx-io/core` | `packages/core/` | Construct primitives (`App`, `Stack`, `ProviderResource`), synthesis pipeline, cloud assembly format, `ResolverPipeline`, `Lazy`, runtime base classes |
-| `@cdkx-io/engine` | `packages/engine/` | Deployment runtime — reads manifests, resolves tokens, drives the deploy state machine |
-| `@cdkx-io/cli` | `packages/cli/` | CLI binary (`cdkx synth/deploy/destroy`) — imports engine |
-| `@cdkx-io/hetzner` | `packages/providers/hetzner/hetzner/` | Hetzner Cloud provider + auto-generated L1 constructs |
-| `@cdkx-io/hetzner-runtime` | `packages/providers/hetzner/hetzner-runtime/` | Hetzner deployment handlers (`ResourceHandler` subclasses) + `HetznerRuntimeAdapterFactory` |
-| `@cdkx-io/hetzner-sdk` | `packages/providers/hetzner/hetzner-sdk/` | Raw Hetzner Cloud API client |
-| `@cdkx-io/testing` | `packages/testing/` | Shared test helpers: `TestApp`, `TestStack`, `SynthHelpers` |
-| `@cdkx-io/logger` | `packages/logger/` | Logger interface |
-| `@cdkx-io/spec-to-cdkx` | `packages/tools/spec-to-cdkx/` | Code generator: JSON Schema → TypeScript L1 constructs |
+| `@cdk-x/core` | `packages/core/` | Construct primitives (`App`, `Stack`, `ProviderResource`), synthesis pipeline, cloud assembly format, `ResolverPipeline`, `Lazy`, runtime base classes |
+| `@cdk-x/engine` | `packages/engine/` | Deployment runtime — reads manifests, resolves tokens, drives the deploy state machine |
+| `@cdk-x/cli` | `packages/cli/` | CLI binary (`cdkx synth/deploy/destroy`) — imports engine |
+| `@cdk-x/hetzner` | `packages/providers/hetzner/hetzner/` | Hetzner Cloud provider + auto-generated L1 constructs |
+| `@cdk-x/hetzner-runtime` | `packages/providers/hetzner/hetzner-runtime/` | Hetzner deployment handlers (`ResourceHandler` subclasses) + `HetznerRuntimeAdapterFactory` |
+| `@cdk-x/hetzner-sdk` | `packages/providers/hetzner/hetzner-sdk/` | Raw Hetzner Cloud API client |
+| `@cdk-x/testing` | `packages/testing/` | Shared test helpers: `TestApp`, `TestStack`, `SynthHelpers` |
+| `@cdk-x/logger` | `packages/logger/` | Logger interface |
+| `@cdk-x/spec-to-cdkx` | `packages/tools/spec-to-cdkx/` | Code generator: JSON Schema → TypeScript L1 constructs |
 
 ### Construct tree
 
@@ -95,7 +95,7 @@ Resource lifecycle states: `PENDING → CREATING → CREATED | FAILED`, `UPDATIN
 ### Adding a new resource handler (Hetzner example)
 
 1. Add JSON Schema file for the resource type under `packages/providers/hetzner/hetzner/`.
-2. Run `npx nx run @cdkx-io/hetzner:codegen` to regenerate `resources.generated.ts` and `runtime-config.generated.ts`.
+2. Run `npx nx run @cdk-x/hetzner:codegen` to regenerate `resources.generated.ts` and `runtime-config.generated.ts`.
 3. Create a `XxxHandler extends ResourceHandler<TProps, TState, HetznerSdk>` in `packages/providers/hetzner/hetzner-runtime/src/lib/handlers/`.
 4. Register it in `HetznerProviderRuntime` constructor with `this.register('Hetzner::Domain::Type', new XxxHandler())`.
 
@@ -111,9 +111,9 @@ Resource lifecycle states: `PENDING → CREATING → CREATED | FAILED`, `UPDATIN
 ## Release
 
 Managed via `nx release` with conventional commits. Three release groups:
-- `core` — `@cdkx-io/core`, `engine`, `testing`, `hetzner` (lock-step, tag: `core-v*`)
-- `cli` — `@cdkx-io/cli` (independent, tag: `cli-v*`)
-- `tools` — `@cdkx-io/spec-to-cdkx` (independent, tag: `tools-v*`)
+- `core` — `@cdk-x/core`, `engine`, `testing`, `hetzner` (lock-step, tag: `core-v*`)
+- `cli` — `@cdk-x/cli` (independent, tag: `cli-v*`)
+- `tools` — `@cdk-x/spec-to-cdkx` (independent, tag: `tools-v*`)
 
 ## Conventions
 
@@ -142,12 +142,12 @@ When creating a new library, follow these steps in order:
 1. **Generate with Nx** — use `nx-generate` skill. Always dry-run first (`--dry-run`). Preferred command:
    ```bash
    npx nx g @nx/js:library packages/<name> \
-     --name=<name> --importPath=@cdkx-io/<name> \
+     --name=<name> --importPath=@cdk-x/<name> \
      --bundler=tsc --publishable --unitTestRunner=jest \
      --linter=eslint --minimal --useProjectJson --no-interactive
    ```
 
-2. **Align `project.json`** — replace generated targets with workspace standard: `build` using `@nx/js:tsc`, `format`/`format:check` using prettier (same pattern as `@cdkx-io/core`), `test` with `passWithNoTests: true`.
+2. **Align `project.json`** — replace generated targets with workspace standard: `build` using `@nx/js:tsc`, `format`/`format:check` using prettier (same pattern as `@cdk-x/core`), `test` with `passWithNoTests: true`.
 
 3. **Align `package.json`** — `"version": "0.1.0"`, remove `"type": "module"`, `exports` must use `"require"` (not `"import"`), add `"publishConfig": { "access": "public" }`, use `"tslib": "^2.8.1"` in dependencies.
 
@@ -155,7 +155,7 @@ When creating a new library, follow these steps in order:
 
 5. **Align `tsconfig.spec.json`** — remove `"module": "nodenext"` and `"moduleResolution": "nodenext"`, add `"test/**/*.ts"` to `include`.
 
-6. **Align `jest.config.cts`** — set `displayName` to the full package name (e.g. `'@cdkx-io/engine'`), remove the `/* eslint-disable */` header comment.
+6. **Align `jest.config.cts`** — set `displayName` to the full package name (e.g. `'@cdk-x/engine'`), remove the `/* eslint-disable */` header comment.
 
 7. **Clean up generated stubs** — delete `src/lib/<name>.ts` and `src/lib/<name>.spec.ts`. Replace `src/index.ts` content with a simple comment placeholder.
 

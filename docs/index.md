@@ -3,8 +3,8 @@
 **cdkx** is a multi-provider CDK-like framework for TypeScript. Write your infrastructure as construct trees — cdkx synthesizes provider-specific manifests and deploys them through provider APIs.
 
 ```typescript
-import { App, Stack } from '@cdkx-io/core';
-import { HtzNetwork } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzNetwork } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'MyStack');

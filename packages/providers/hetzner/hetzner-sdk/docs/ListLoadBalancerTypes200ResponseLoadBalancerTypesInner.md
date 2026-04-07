@@ -17,7 +17,7 @@
 ## Example
 
 ```typescript
-import { ListLoadBalancerTypes200ResponseLoadBalancerTypesInner } from '@cdkx-io/hetzner-sdk';
+import { ListLoadBalancerTypes200ResponseLoadBalancerTypesInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListLoadBalancerTypes200ResponseLoadBalancerTypesInner = {
   id,

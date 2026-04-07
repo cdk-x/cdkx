@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { CreatePrimaryIPResponse } from '@cdkx-io/hetzner-sdk';
+import { CreatePrimaryIPResponse } from '@cdk-x/hetzner-sdk';
 
 const instance: CreatePrimaryIPResponse = {
   primary_ip,

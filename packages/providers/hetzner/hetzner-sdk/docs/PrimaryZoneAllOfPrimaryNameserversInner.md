@@ -14,7 +14,7 @@ Primary nameserver that returns [Zones](#tag/zones) via `AXFR`. Must allow queri
 ## Example
 
 ```typescript
-import { PrimaryZoneAllOfPrimaryNameserversInner } from '@cdkx-io/hetzner-sdk';
+import { PrimaryZoneAllOfPrimaryNameserversInner } from '@cdk-x/hetzner-sdk';
 
 const instance: PrimaryZoneAllOfPrimaryNameserversInner = {
   address,

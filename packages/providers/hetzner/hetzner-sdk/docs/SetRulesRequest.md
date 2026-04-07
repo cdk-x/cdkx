@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { SetRulesRequest } from '@cdkx-io/hetzner-sdk';
+import { SetRulesRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: SetRulesRequest = {
   rules,

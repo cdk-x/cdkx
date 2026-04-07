@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { LoadBalancerTargetHealthStatusInner } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTargetHealthStatusInner } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerTargetHealthStatusInner = {
   listen_port,

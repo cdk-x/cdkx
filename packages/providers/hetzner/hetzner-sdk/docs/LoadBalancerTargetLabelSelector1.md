@@ -11,7 +11,7 @@ Configuration for label selector targets, only valid and required if type is `la
 ## Example
 
 ```typescript
-import { LoadBalancerTargetLabelSelector1 } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTargetLabelSelector1 } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerTargetLabelSelector1 = {
   selector,

@@ -49,7 +49,7 @@ describe('PluginManager', () => {
 
       const manager = new PluginManager({
         requireModule: (id: string) => {
-          expect(id).toBe('@cdkx-io/hetzner-runtime');
+          expect(id).toBe('@cdk-x/hetzner-runtime');
           return fakeModule;
         },
       });

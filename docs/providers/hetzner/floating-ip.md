@@ -3,7 +3,7 @@
 `HtzFloatingIp` manages a [Hetzner Cloud Floating IP](https://docs.hetzner.com/cloud/floating-ips/overview). Floating IPs are static public IPs that exist independently of servers and can be reassigned between them without changing your DNS records.
 
 **Type:** `Hetzner::Networking::FloatingIp`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -24,8 +24,8 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="7 8 9 10 11"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzFloatingIp, FloatingIpType, Location } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzFloatingIp, FloatingIpType, Location } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'NetworkingStack');
@@ -45,8 +45,8 @@ app.synth();
 Export the floating IP ID so other stacks or tools can reference it:
 
 ```typescript linenums="1" hl_lines="10 11 12 13"
-import { App, Stack, StackOutput } from '@cdkx-io/core';
-import { HtzFloatingIp, FloatingIpType, Location } from '@cdkx-io/hetzner';
+import { App, Stack, StackOutput } from '@cdk-x/core';
+import { HtzFloatingIp, FloatingIpType, Location } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'NetworkingStack');
@@ -87,7 +87,7 @@ The engine calls `DELETE /floating_ips/{id}`. The IP is released back to Hetzner
 ## Available locations
 
 ```typescript
-import { Location } from '@cdkx-io/hetzner';
+import { Location } from '@cdk-x/hetzner';
 
 Location.FSN1  // Falkenstein, Germany
 Location.NBG1  // Nuremberg, Germany

@@ -2,8 +2,8 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
-} from '@cdkx-io/core';
-import { HetznerFirewallAttachment } from '@cdkx-io/hetzner';
+} from '@cdk-x/core';
+import { HetznerFirewallAttachment } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 export interface HetznerFirewallAttachmentState {

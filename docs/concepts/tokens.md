@@ -85,7 +85,7 @@ Deploy order (topological):
 `Lazy` defers a value until synthesis time. Use it when the value is not known when the construct is instantiated but will be available when `app.synth()` is called:
 
 ```typescript
-import { Lazy } from '@cdkx-io/core';
+import { Lazy } from '@cdk-x/core';
 
 const resource = new ProviderResource(stack, 'MyResource', {
   type: 'Custom::Resource',

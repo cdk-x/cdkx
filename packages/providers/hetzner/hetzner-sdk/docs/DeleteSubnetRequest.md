@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { DeleteSubnetRequest } from '@cdkx-io/hetzner-sdk';
+import { DeleteSubnetRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: DeleteSubnetRequest = {
   ip_range,

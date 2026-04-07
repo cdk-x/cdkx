@@ -3,7 +3,7 @@
 `HtzFloatingIpAssignment` assigns a [Hetzner Cloud Floating IP](https://docs.hetzner.com/cloud/floating-ips/overview) to a Server. It models the assignment as a first-class resource with its own lifecycle — create assigns, update reassigns to a different server, and destroy unassigns.
 
 **Type:** `Hetzner::Networking::FloatingIpAssignment`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -18,7 +18,7 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="14 15 16 17 18"
-import { App, Stack } from '@cdkx-io/core';
+import { App, Stack } from '@cdk-x/core';
 import {
   HtzFloatingIp,
   HtzFloatingIpAssignment,
@@ -26,7 +26,7 @@ import {
   FloatingIpType,
   Location,
   ServerType,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'NetworkingStack');
@@ -60,8 +60,8 @@ app.synth();
 When the floating IP lives in a different stack (e.g. a shared networking stack), export it via `StackOutput` and import the value:
 
 ```typescript title="src/networking-stack.ts" linenums="1" hl_lines="12 13 14 15"
-import { App, Stack, StackOutput } from '@cdkx-io/core';
-import { HtzFloatingIp, FloatingIpType, Location } from '@cdkx-io/hetzner';
+import { App, Stack, StackOutput } from '@cdk-x/core';
+import { HtzFloatingIp, FloatingIpType, Location } from '@cdk-x/hetzner';
 
 export class NetworkingStack extends Stack {
   public readonly floatingIpIdOutput: StackOutput;
@@ -84,13 +84,13 @@ export class NetworkingStack extends Stack {
 ```
 
 ```typescript title="src/compute-stack.ts" linenums="1" hl_lines="18 19 20 21"
-import { App, Stack, IResolvable } from '@cdkx-io/core';
+import { App, Stack, IResolvable } from '@cdk-x/core';
 import {
   HtzFloatingIpAssignment,
   HtzServer,
   ServerType,
   Location,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 export class ComputeStack extends Stack {
   constructor(app: App, props: { floatingIpId: IResolvable }) {
@@ -112,7 +112,7 @@ export class ComputeStack extends Stack {
 ```
 
 ```typescript title="src/main.ts" linenums="1"
-import { App } from '@cdkx-io/core';
+import { App } from '@cdk-x/core';
 import { NetworkingStack } from './networking-stack';
 import { ComputeStack } from './compute-stack';
 

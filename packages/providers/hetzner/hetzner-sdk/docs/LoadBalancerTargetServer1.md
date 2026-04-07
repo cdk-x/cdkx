@@ -11,7 +11,7 @@ Configuration for type Server, only valid and required if type is `server`.
 ## Example
 
 ```typescript
-import { LoadBalancerTargetServer1 } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTargetServer1 } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerTargetServer1 = {
   id,

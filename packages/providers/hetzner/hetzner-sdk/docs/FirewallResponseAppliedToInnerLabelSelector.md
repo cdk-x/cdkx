@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { FirewallResponseAppliedToInnerLabelSelector } from '@cdkx-io/hetzner-sdk';
+import { FirewallResponseAppliedToInnerLabelSelector } from '@cdk-x/hetzner-sdk';
 
 const instance: FirewallResponseAppliedToInnerLabelSelector = {
   selector,

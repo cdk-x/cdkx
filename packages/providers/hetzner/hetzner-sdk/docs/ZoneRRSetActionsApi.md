@@ -24,7 +24,7 @@ import {
   ZoneRRSetActionsApi,
   Configuration,
   AddZoneRrsetRecordsRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetActionsApi(configuration);
@@ -103,7 +103,7 @@ import {
   ZoneRRSetActionsApi,
   Configuration,
   RRSetProtection,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetActionsApi(configuration);
@@ -182,7 +182,7 @@ import {
   ZoneRRSetActionsApi,
   Configuration,
   ChangeZoneRrsetTtlRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetActionsApi(configuration);
@@ -261,7 +261,7 @@ import {
   ZoneRRSetActionsApi,
   Configuration,
   RemoveZoneRrsetRecordsRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetActionsApi(configuration);
@@ -340,7 +340,7 @@ import {
   ZoneRRSetActionsApi,
   Configuration,
   SetZoneRrsetRecordsRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetActionsApi(configuration);
@@ -419,7 +419,7 @@ import {
   ZoneRRSetActionsApi,
   Configuration,
   UpdateZoneRrsetRecordsRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetActionsApi(configuration);

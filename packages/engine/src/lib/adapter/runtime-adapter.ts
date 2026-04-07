@@ -1,10 +1,10 @@
-import type { Logger } from '@cdkx-io/logger';
+import type { Logger } from '@cdk-x/logger';
 import type {
   ProviderRuntime,
   RuntimeContext,
   RuntimeLogger,
   StabilizeConfig,
-} from '@cdkx-io/core';
+} from '@cdk-x/core';
 import type {
   ProviderAdapter,
   ManifestResource,

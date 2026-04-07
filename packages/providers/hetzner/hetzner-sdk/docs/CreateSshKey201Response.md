@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { CreateSshKey201Response } from '@cdkx-io/hetzner-sdk';
+import { CreateSshKey201Response } from '@cdk-x/hetzner-sdk';
 
 const instance: CreateSshKey201Response = {
   ssh_key,

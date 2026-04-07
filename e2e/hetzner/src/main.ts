@@ -1,4 +1,4 @@
-import { App } from '@cdkx-io/core';
+import { App } from '@cdk-x/core';
 import { NetworkStack } from './network-stack';
 import { ComputeStack } from './compute-stack';
 

@@ -11,7 +11,7 @@ Response for a created [Action](#description/actions). Make sure to wait for the
 ## Example
 
 ```typescript
-import { ActionResponse1 } from '@cdkx-io/hetzner-sdk';
+import { ActionResponse1 } from '@cdk-x/hetzner-sdk';
 
 const instance: ActionResponse1 = {
   action,

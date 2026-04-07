@@ -1,5 +1,5 @@
 {
-  "name": "@cdkx-io/hetzner",
+  "name": "@cdk-x/hetzner",
   "repository": {
     "type": "git",
     "url": "https://github.com/cdk-x/cdkx.git"
@@ -20,14 +20,14 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
-    "@cdkx-io/core": "*",
+    "@cdk-x/core": "*",
     "constructs": "^10.4.2",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@cdkx-io/engine": "*",
-    "@cdkx-io/spec-to-cdkx": "*",
-    "@cdkx-io/testing": "*"
+    "@cdk-x/engine": "*",
+    "@cdk-x/spec-to-cdkx": "*",
+    "@cdk-x/testing": "*"
   },
   "publishConfig": {
     "access": "public"

@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { GetLocation200Response } from '@cdkx-io/hetzner-sdk';
+import { GetLocation200Response } from '@cdk-x/hetzner-sdk';
 
 const instance: GetLocation200Response = {
   location,

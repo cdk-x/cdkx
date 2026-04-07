@@ -3,7 +3,7 @@
 `HtzLoadBalancer` manages a [Hetzner Cloud Load Balancer](https://docs.hetzner.com/cloud/load-balancers/overview). A Load Balancer distributes incoming traffic across multiple backend targets and supports health checks, SSL termination, and private network attachment.
 
 **Type:** `Hetzner::Compute::LoadBalancer`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -42,8 +42,8 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="6 7 8 9 10"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzLoadBalancer, LoadBalancerType, NetworkZone } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzLoadBalancer, LoadBalancerType, NetworkZone } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'LbStack');
@@ -65,7 +65,7 @@ app.synth();
 Attach the load balancer to a private network and pass its ID downstream to services and targets:
 
 ```typescript linenums="1" hl_lines="13 14 15 16 17 18 19"
-import { HtzNetwork, HtzLoadBalancer, HtzLoadBalancerService, LoadBalancerType, LoadBalancerServiceProtocol, NetworkZone } from '@cdkx-io/hetzner';
+import { HtzNetwork, HtzLoadBalancer, HtzLoadBalancerService, LoadBalancerType, LoadBalancerServiceProtocol, NetworkZone } from '@cdk-x/hetzner';
 
 const network = new HtzNetwork(stack, 'Network', {
   name: 'my-network',

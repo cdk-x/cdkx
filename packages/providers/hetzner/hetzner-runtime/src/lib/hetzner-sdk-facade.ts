@@ -17,7 +17,7 @@ import {
   SSHKeysApi,
   VolumeActionsApi,
   VolumesApi,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 /**
  * Facade grouping the Hetzner Cloud SDK API classes used by cdkx

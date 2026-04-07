@@ -11,7 +11,7 @@ Label selector used to determine targets. Only present for target type \"label_s
 ## Example
 
 ```typescript
-import { LoadBalancerTargetLabelSelector } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTargetLabelSelector } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerTargetLabelSelector = {
   selector,

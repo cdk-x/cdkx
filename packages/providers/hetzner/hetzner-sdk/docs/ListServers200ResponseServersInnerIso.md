@@ -16,7 +16,7 @@ ISO Image that is attached to this Server. Null if no ISO is attached.
 ## Example
 
 ```typescript
-import { ListServers200ResponseServersInnerIso } from '@cdkx-io/hetzner-sdk';
+import { ListServers200ResponseServersInnerIso } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInnerIso = {
   id,

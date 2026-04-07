@@ -12,7 +12,7 @@ Additional traffic price per TB in this [Location](#tag/locations).
 ## Example
 
 ```typescript
-import { ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPricePerTbTraffic } from '@cdkx-io/hetzner-sdk';
+import { ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPricePerTbTraffic } from '@cdk-x/hetzner-sdk';
 
 const instance: ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPricePerTbTraffic =
   {

@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { ChangeServerDnsPtrRequest } from '@cdkx-io/hetzner-sdk';
+import { ChangeServerDnsPtrRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ChangeServerDnsPtrRequest = {
   ip,

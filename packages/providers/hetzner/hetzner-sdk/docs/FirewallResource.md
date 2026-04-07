@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { FirewallResource } from '@cdkx-io/hetzner-sdk';
+import { FirewallResource } from '@cdk-x/hetzner-sdk';
 
 const instance: FirewallResource = {
   type,

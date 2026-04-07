@@ -3,8 +3,8 @@ import {
   ResourceHandler,
   RuntimeContext,
   RuntimeLogger,
-} from '@cdkx-io/core';
-import type { Logger } from '@cdkx-io/logger';
+} from '@cdk-x/core';
+import type { Logger } from '@cdk-x/logger';
 import {
   RuntimeAdapter,
   RuntimeResourceConfig,

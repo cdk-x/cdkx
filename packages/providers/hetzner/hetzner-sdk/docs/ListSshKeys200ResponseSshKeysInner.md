@@ -14,7 +14,7 @@
 ## Example
 
 ```typescript
-import { ListSshKeys200ResponseSshKeysInner } from '@cdkx-io/hetzner-sdk';
+import { ListSshKeys200ResponseSshKeysInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListSshKeys200ResponseSshKeysInner = {
   id,

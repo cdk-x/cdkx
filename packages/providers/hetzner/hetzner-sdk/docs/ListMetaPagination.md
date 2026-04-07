@@ -16,7 +16,7 @@ See \"[Pagination](#description/pagination)\" for more information.
 ## Example
 
 ```typescript
-import { ListMetaPagination } from '@cdkx-io/hetzner-sdk';
+import { ListMetaPagination } from '@cdk-x/hetzner-sdk';
 
 const instance: ListMetaPagination = {
   page,

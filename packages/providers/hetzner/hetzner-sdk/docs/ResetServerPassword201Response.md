@@ -12,7 +12,7 @@ The `root_password` key in the reply contains the new root password that will be
 ## Example
 
 ```typescript
-import { ResetServerPassword201Response } from '@cdkx-io/hetzner-sdk';
+import { ResetServerPassword201Response } from '@cdk-x/hetzner-sdk';
 
 const instance: ResetServerPassword201Response = {
   root_password,

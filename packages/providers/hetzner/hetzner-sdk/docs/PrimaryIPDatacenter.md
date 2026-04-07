@@ -15,7 +15,7 @@
 ## Example
 
 ```typescript
-import { PrimaryIPDatacenter } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPDatacenter } from '@cdk-x/hetzner-sdk';
 
 const instance: PrimaryIPDatacenter = {
   id,

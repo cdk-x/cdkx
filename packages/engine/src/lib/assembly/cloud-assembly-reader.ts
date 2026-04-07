@@ -15,7 +15,7 @@ export interface CloudAssemblyReaderDeps {
   readonly fileExists?: (filePath: string) => boolean;
 }
 
-// ─── Internal manifest shape (mirrors @cdkx-io/core cloud-assembly.ts) ─────────
+// ─── Internal manifest shape (mirrors @cdk-x/core cloud-assembly.ts) ─────────
 
 interface ManifestArtifact {
   type: string;

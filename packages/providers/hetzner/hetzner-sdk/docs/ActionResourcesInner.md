@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { ActionResourcesInner } from '@cdkx-io/hetzner-sdk';
+import { ActionResourcesInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ActionResourcesInner = {
   id,

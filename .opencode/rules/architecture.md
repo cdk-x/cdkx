@@ -33,12 +33,12 @@ The workflow has two phases:
 
 | Package                 | Location                              | Role                                                            |
 | ----------------------- | ------------------------------------- | --------------------------------------------------------------- |
-| `@cdkx-io/core`         | `packages/core/`                      | Construct primitives, synthesis pipeline, cloud assembly format |
-| `@cdkx-io/engine`       | `packages/engine/`                    | Deployment runtime — reads manifests, resolves tokens, deploys  |
-| `@cdkx-io/testing`      | `packages/testing/`                   | Shared test helpers (app/stack factories, synth utilities)      |
-| `@cdkx-io/cli`          | `packages/cli/`                       | CLI binary (`cdkx synth`, `cdkx deploy`) — imports engine       |
-| `@cdkx-io/hetzner`      | `packages/providers/hetzner/hetzner/` | Hetzner Cloud provider + generated L1 constructs                |
-| `@cdkx-io/spec-to-cdkx` | `packages/tools/spec-to-cdkx/`        | Code generator: JSON Schema → TypeScript L1 constructs          |
+| `@cdk-x/core`         | `packages/core/`                      | Construct primitives, synthesis pipeline, cloud assembly format |
+| `@cdk-x/engine`       | `packages/engine/`                    | Deployment runtime — reads manifests, resolves tokens, deploys  |
+| `@cdk-x/testing`      | `packages/testing/`                   | Shared test helpers (app/stack factories, synth utilities)      |
+| `@cdk-x/cli`          | `packages/cli/`                       | CLI binary (`cdkx synth`, `cdkx deploy`) — imports engine       |
+| `@cdk-x/hetzner`      | `packages/providers/hetzner/hetzner/` | Hetzner Cloud provider + generated L1 constructs                |
+| `@cdk-x/spec-to-cdkx` | `packages/tools/spec-to-cdkx/`        | Code generator: JSON Schema → TypeScript L1 constructs          |
 
 ---
 
@@ -292,7 +292,7 @@ abstract class Provider {
 }
 ```
 
-Provider packages (e.g. `@cdkx-io/hetzner`) extend `Provider` and optionally:
+Provider packages (e.g. `@cdk-x/hetzner`) extend `Provider` and optionally:
 
 - Supply custom resolvers via `getResolvers()`
 - Supply a custom synthesizer via `getSynthesizer()` (e.g. `YamlSynthesizer`)
@@ -301,7 +301,7 @@ Provider packages (e.g. `@cdkx-io/hetzner`) extend `Provider` and optionally:
 
 ---
 
-## Engine model (`@cdkx-io/engine`)
+## Engine model (`@cdk-x/engine`)
 
 The engine is the deployment runtime. It reads the cloud assembly produced by
 `app.synth()` and drives the actual infrastructure deployment.
@@ -311,7 +311,7 @@ CloudAssemblyReader       reads manifest.json + stack JSON files
  └── DeploymentPlanner    builds resource DAG from { ref, attr } tokens
       └── DeploymentEngine  state machine — drives the deployment loop
            └── ProviderAdapter (abstract)
-                └── HetznerAdapter   (future: @cdkx-io/hetzner contributes this)
+                └── HetznerAdapter   (future: @cdk-x/hetzner contributes this)
 ```
 
 ### Deployment state machine
@@ -331,7 +331,7 @@ Resources are processed in **topological order** — a resource only starts when
 all its dependencies are in `CREATED` state. Failed resources block their
 dependents.
 
-The engine is **imported by `@cdkx-io/cli`** and invoked programmatically (e.g.
+The engine is **imported by `@cdk-x/cli`** and invoked programmatically (e.g.
 by `cdkx deploy`). It runs as async Node.js code in the same process as the
 CLI.
 
@@ -344,9 +344,9 @@ other.
 
 | Group   | Packages                                                                   | Tag pattern        | Notes             |
 | ------- | -------------------------------------------------------------------------- | ------------------ | ----------------- |
-| `core`  | `@cdkx-io/core`, `@cdkx-io/engine`, `@cdkx-io/testing`, `@cdkx-io/hetzner` | `core-v{version}`  | Lock-step (fixed) |
-| `cli`   | `@cdkx-io/cli`                                                             | `cli-v{version}`   | Independent       |
-| `tools` | `@cdkx-io/spec-to-cdkx`                                                    | `tools-v{version}` | Independent       |
+| `core`  | `@cdk-x/core`, `@cdk-x/engine`, `@cdk-x/testing`, `@cdk-x/hetzner` | `core-v{version}`  | Lock-step (fixed) |
+| `cli`   | `@cdk-x/cli`                                                             | `cli-v{version}`   | Independent       |
+| `tools` | `@cdk-x/spec-to-cdkx`                                                    | `tools-v{version}` | Independent       |
 
 - `updateDependents: "never"` — releasing `core` does not auto-bump `cli`
   (CLI bundles core via esbuild, no runtime dep).

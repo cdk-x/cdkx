@@ -2,8 +2,8 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
-} from '@cdkx-io/core';
-import { HetznerServer } from '@cdkx-io/hetzner';
+} from '@cdk-x/core';
+import { HetznerServer } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 /**

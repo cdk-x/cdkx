@@ -5,7 +5,7 @@ The Hetzner provider lets you manage [Hetzner Cloud](https://www.hetzner.com/clo
 ## Installation
 
 ```bash
-npm install @cdkx-io/hetzner
+npm install @cdk-x/hetzner
 ```
 
 ## Authentication
@@ -43,14 +43,14 @@ cdkx deploy
 ## Quick example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="8 9 10 11 12 13"
-import { App, Stack } from '@cdkx-io/core';
+import { App, Stack } from '@cdk-x/core';
 import {
   HtzNetwork,
   HtzSubnet,
   HtzServer,
   ServerType,
   NetworkZone,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'MyStack');

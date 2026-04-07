@@ -12,7 +12,7 @@ This field is deprecated. Use the `deprecation` object in the `locations` field 
 ## Example
 
 ```typescript
-import { DeprecationInfo1 } from '@cdkx-io/hetzner-sdk';
+import { DeprecationInfo1 } from '@cdk-x/hetzner-sdk';
 
 const instance: DeprecationInfo1 = {
   unavailable_after,

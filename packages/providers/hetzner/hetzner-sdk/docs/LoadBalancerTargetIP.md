@@ -11,7 +11,7 @@ IP target where the traffic should be routed to. It is only possible to use the 
 ## Example
 
 ```typescript
-import { LoadBalancerTargetIP } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTargetIP } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerTargetIP = {
   ip,

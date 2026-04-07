@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { DeleteLoadBalancerServiceRequest } from '@cdkx-io/hetzner-sdk';
+import { DeleteLoadBalancerServiceRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: DeleteLoadBalancerServiceRequest = {
   listen_port,

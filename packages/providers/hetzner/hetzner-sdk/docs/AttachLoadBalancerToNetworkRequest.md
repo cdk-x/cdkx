@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { AttachLoadBalancerToNetworkRequest } from '@cdkx-io/hetzner-sdk';
+import { AttachLoadBalancerToNetworkRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: AttachLoadBalancerToNetworkRequest = {
   network,

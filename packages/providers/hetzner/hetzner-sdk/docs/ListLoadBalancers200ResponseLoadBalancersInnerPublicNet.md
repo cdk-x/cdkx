@@ -13,7 +13,7 @@ Public network information.
 ## Example
 
 ```typescript
-import { ListLoadBalancers200ResponseLoadBalancersInnerPublicNet } from '@cdkx-io/hetzner-sdk';
+import { ListLoadBalancers200ResponseLoadBalancersInnerPublicNet } from '@cdk-x/hetzner-sdk';
 
 const instance: ListLoadBalancers200ResponseLoadBalancersInnerPublicNet = {
   enabled,

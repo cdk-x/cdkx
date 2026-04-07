@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { AttachServerIsoRequest } from '@cdkx-io/hetzner-sdk';
+import { AttachServerIsoRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: AttachServerIsoRequest = {
   iso,

@@ -3,7 +3,7 @@
 `HtzServer` manages a [Hetzner Cloud virtual machine](https://docs.hetzner.com/cloud/servers/overview). Servers are created from a base image, assigned a server type (size), and optionally attached to private networks, SSH keys, and firewalls.
 
 **Type:** `Hetzner::Compute::Server`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -32,7 +32,7 @@
 | `ServerType.CAX11` | 2 | 4 GB | Shared Arm64 |
 | `ServerType.CCX13` | 2 | 8 GB | Dedicated vCPU |
 
-Full list available in the `ServerType` enum exported from `@cdkx-io/hetzner`.
+Full list available in the `ServerType` enum exported from `@cdk-x/hetzner`.
 
 ### `Location` enum
 
@@ -54,7 +54,7 @@ Full list available in the `ServerType` enum exported from `@cdkx-io/hetzner`.
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="18 19 20"
-import { App, Stack } from '@cdkx-io/core';
+import { App, Stack } from '@cdk-x/core';
 import {
   HtzNetwork,
   HtzSubnet,
@@ -62,7 +62,7 @@ import {
   ServerType,
   Location,
   NetworkZone,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'ComputeStack');
@@ -106,7 +106,7 @@ app.synth();
 Reference a server's ID from another resource (e.g. a floating IP or volume attachment):
 
 ```typescript linenums="1" hl_lines="8"
-import { HtzServer, HtzFloatingIp, FloatingIpType, Location } from '@cdkx-io/hetzner';
+import { HtzServer, HtzFloatingIp, FloatingIpType, Location } from '@cdk-x/hetzner';
 
 const server = new HtzServer(stack, 'Server', {
   name: 'web-1',

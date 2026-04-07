@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { AddToPlacementGroupRequest } from '@cdkx-io/hetzner-sdk';
+import { AddToPlacementGroupRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: AddToPlacementGroupRequest = {
   placement_group,

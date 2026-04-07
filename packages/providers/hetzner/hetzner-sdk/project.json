@@ -1,5 +1,5 @@
 {
-  "name": "@cdkx-io/hetzner-sdk",
+  "name": "@cdk-x/hetzner-sdk",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/providers/hetzner/hetzner-sdk/src",
   "projectType": "library",
@@ -33,7 +33,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate -i https://docs.hetzner.cloud/cloud.spec.json -g typescript-axios -o /local/packages/providers/hetzner/hetzner-sdk --additional-properties=npmName=@cdkx-io/hetzner-sdk --global-property=generateDocs=false &&  nx run @cdkx-io/hetzner-sdk:format --write && nx run @cdkx-io/hetzner-sdk:lint --fix "
+          "docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli generate -i https://docs.hetzner.cloud/cloud.spec.json -g typescript-axios -o /local/packages/providers/hetzner/hetzner-sdk --additional-properties=npmName=@cdk-x/hetzner-sdk --global-property=generateDocs=false &&  nx run @cdk-x/hetzner-sdk:format --write && nx run @cdk-x/hetzner-sdk:lint --fix "
         ],
         "cwd": "{workspaceRoot}"
       }

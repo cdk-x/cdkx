@@ -1,5 +1,5 @@
-import { ResourceHandler, RuntimeContext } from '@cdkx-io/core';
-import { HetznerFloatingIp, Location } from '@cdkx-io/hetzner';
+import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { HetznerFloatingIp, Location } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 /**

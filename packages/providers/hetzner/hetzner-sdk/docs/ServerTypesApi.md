@@ -16,7 +16,7 @@ Gets a specific Server type object.
 ### Example
 
 ```typescript
-import { ServerTypesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerTypesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerTypesApi(configuration);
@@ -64,7 +64,7 @@ Gets all Server type objects.
 ### Example
 
 ```typescript
-import { ServerTypesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServerTypesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServerTypesApi(configuration);

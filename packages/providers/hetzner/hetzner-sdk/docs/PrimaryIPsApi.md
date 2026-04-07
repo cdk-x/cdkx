@@ -23,7 +23,7 @@ import {
   PrimaryIPsApi,
   Configuration,
   PrimaryIPCreateRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPsApi(configuration);
@@ -73,7 +73,7 @@ Deletes a [Primary IP](#tag/primary-ips). The [Server](#tag/servers) must be pow
 ### Example
 
 ```typescript
-import { PrimaryIPsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPsApi(configuration);
@@ -121,7 +121,7 @@ Returns a [Primary IP](#tag/primary-ips).
 ### Example
 
 ```typescript
-import { PrimaryIPsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPsApi(configuration);
@@ -169,7 +169,7 @@ List multiple [Primary IPs](#tag/primary-ips). Use the provided URI parameters t
 ### Example
 
 ```typescript
-import { PrimaryIPsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPsApi(configuration);
@@ -240,7 +240,7 @@ import {
   PrimaryIPsApi,
   Configuration,
   PrimaryIPUpdateRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPsApi(configuration);

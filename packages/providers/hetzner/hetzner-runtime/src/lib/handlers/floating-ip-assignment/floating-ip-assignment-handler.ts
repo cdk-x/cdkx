@@ -2,7 +2,7 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
-} from '@cdkx-io/core';
+} from '@cdk-x/core';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 export interface HetznerFloatingIpAssignmentProps {

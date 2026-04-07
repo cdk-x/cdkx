@@ -1,8 +1,8 @@
-import { RuntimeLogger } from '@cdkx-io/core';
+import { RuntimeLogger } from '@cdk-x/core';
 import { HetznerPlacementGroupHandler } from './placement-group-handler';
 import { HetznerRuntimeContext } from '../../hetzner-runtime-context';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
-import { PlacementGroupType } from '@cdkx-io/hetzner';
+import { PlacementGroupType } from '@cdk-x/hetzner';
 
 // ---------------------------------------------------------------------------
 // Helpers

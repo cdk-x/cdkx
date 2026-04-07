@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { RebuildServer201Response } from '@cdkx-io/hetzner-sdk';
+import { RebuildServer201Response } from '@cdk-x/hetzner-sdk';
 
 const instance: RebuildServer201Response = {
   root_password,

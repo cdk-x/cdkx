@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { UpdateLoadBalancerRequest } from '@cdkx-io/hetzner-sdk';
+import { UpdateLoadBalancerRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: UpdateLoadBalancerRequest = {
   name,

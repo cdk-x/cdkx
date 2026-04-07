@@ -3,7 +3,7 @@
 `HtzVolume` manages a [Hetzner Cloud Volume](https://docs.hetzner.com/cloud/volumes/overview). Volumes are persistent block storage devices that exist independently of servers and can be formatted on creation.
 
 **Type:** `Hetzner::Storage::Volume`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -24,8 +24,8 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="7 8 9 10 11"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzVolume } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzVolume } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'StorageStack');

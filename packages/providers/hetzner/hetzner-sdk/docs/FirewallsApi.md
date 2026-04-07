@@ -23,7 +23,7 @@ import {
   FirewallsApi,
   Configuration,
   CreateFirewallRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallsApi(configuration);
@@ -73,7 +73,7 @@ Deletes the [Firewall](#tag/firewalls). #### Operation specific errors | Status 
 ### Example
 
 ```typescript
-import { FirewallsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FirewallsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallsApi(configuration);
@@ -121,7 +121,7 @@ Returns a single [Firewall](#tag/firewalls).
 ### Example
 
 ```typescript
-import { FirewallsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FirewallsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallsApi(configuration);
@@ -169,7 +169,7 @@ Returns all [Firewalls](#tag/firewalls). Use the provided URI parameters to modi
 ### Example
 
 ```typescript
-import { FirewallsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FirewallsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallsApi(configuration);
@@ -245,7 +245,7 @@ import {
   FirewallsApi,
   Configuration,
   UpdateFirewallRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallsApi(configuration);

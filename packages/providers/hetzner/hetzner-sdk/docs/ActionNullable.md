@@ -16,7 +16,7 @@
 ## Example
 
 ```typescript
-import { ActionNullable } from '@cdkx-io/hetzner-sdk';
+import { ActionNullable } from '@cdk-x/hetzner-sdk';
 
 const instance: ActionNullable = {
   id,

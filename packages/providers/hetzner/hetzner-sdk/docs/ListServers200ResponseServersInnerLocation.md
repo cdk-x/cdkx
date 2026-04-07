@@ -18,7 +18,7 @@ Location this Resource is located at.
 ## Example
 
 ```typescript
-import { ListServers200ResponseServersInnerLocation } from '@cdkx-io/hetzner-sdk';
+import { ListServers200ResponseServersInnerLocation } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInnerLocation = {
   id,

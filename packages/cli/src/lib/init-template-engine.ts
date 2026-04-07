@@ -30,11 +30,11 @@ const CDKX_SCRIPTS = {
 } as const;
 
 const CDKX_DEPENDENCIES = {
-  '@cdkx-io/core': 'latest',
+  '@cdk-x/core': 'latest',
 } as const;
 
 const CDKX_DEV_DEPENDENCIES = {
-  '@cdkx-io/cli': 'latest',
+  '@cdk-x/cli': 'latest',
   typescript: '^5.0.0',
   tsx: '^4.0.0',
 } as const;
@@ -223,7 +223,7 @@ export class InitTemplateEngine {
 
   private mainTsContent(): string {
     return [
-      "import { App, Stack } from '@cdkx-io/core';",
+      "import { App, Stack } from '@cdk-x/core';",
       '',
       'const app = new App();',
       "const stack = new Stack(app, 'MyStack');",

@@ -22,7 +22,7 @@
 ## Example
 
 ```typescript
-import { ListServerTypes200ResponseServerTypesInner } from '@cdkx-io/hetzner-sdk';
+import { ListServerTypes200ResponseServerTypesInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServerTypes200ResponseServerTypesInner = {
   id,

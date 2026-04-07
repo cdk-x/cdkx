@@ -96,7 +96,7 @@ describe('InitTemplateEngine — empty mode', () => {
       engine.generate({ dir: '/my/project', name: 'my-app', mode: 'empty' });
 
       const content = fs.written['/my/project/src/main.ts'];
-      expect(content).toContain("from '@cdkx-io/core'");
+      expect(content).toContain("from '@cdk-x/core'");
       expect(content).toContain('new App()');
       expect(content).toContain('new Stack(');
       expect(content).toContain('app.synth()');
@@ -121,11 +121,11 @@ describe('InitTemplateEngine — empty mode', () => {
         }),
       );
       expect(pkg.dependencies).toEqual(
-        expect.objectContaining({ '@cdkx-io/core': 'latest' }),
+        expect.objectContaining({ '@cdk-x/core': 'latest' }),
       );
       expect(pkg.devDependencies).toEqual(
         expect.objectContaining({
-          '@cdkx-io/cli': 'latest',
+          '@cdk-x/cli': 'latest',
           typescript: expect.any(String),
           tsx: expect.any(String),
         }),
@@ -209,24 +209,24 @@ describe('InitTemplateEngine — existing mode', () => {
   });
 
   describe('package.json merge — dependencies', () => {
-    it('adds @cdkx-io/core to dependencies without overwriting existing ones', () => {
+    it('adds @cdk-x/core to dependencies without overwriting existing ones', () => {
       const fs = makeExistingFs();
       const engine = new InitTemplateEngine(fs);
       engine.generate({ dir: '/p', name: 'p', mode: 'existing' });
 
       const pkg = JSON.parse(fs.written['/p/package.json']);
       expect(pkg.dependencies.lodash).toBe('^4.0.0');
-      expect(pkg.dependencies['@cdkx-io/core']).toBe('latest');
+      expect(pkg.dependencies['@cdk-x/core']).toBe('latest');
     });
 
-    it('adds @cdkx-io/cli, typescript, tsx to devDependencies without overwriting existing ones', () => {
+    it('adds @cdk-x/cli, typescript, tsx to devDependencies without overwriting existing ones', () => {
       const fs = makeExistingFs();
       const engine = new InitTemplateEngine(fs);
       engine.generate({ dir: '/p', name: 'p', mode: 'existing' });
 
       const pkg = JSON.parse(fs.written['/p/package.json']);
       expect(pkg.devDependencies.prettier).toBe('^3.0.0');
-      expect(pkg.devDependencies['@cdkx-io/cli']).toBe('latest');
+      expect(pkg.devDependencies['@cdk-x/cli']).toBe('latest');
       expect(pkg.devDependencies.typescript).toBeDefined();
       expect(pkg.devDependencies.tsx).toBeDefined();
     });

@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { ChangeZonePrimaryNameserversRequest } from '@cdkx-io/hetzner-sdk';
+import { ChangeZonePrimaryNameserversRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ChangeZonePrimaryNameserversRequest = {
   primary_nameservers,

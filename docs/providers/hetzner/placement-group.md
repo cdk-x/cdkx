@@ -3,7 +3,7 @@
 `HtzPlacementGroup` manages a [Hetzner Cloud Placement Group](https://docs.hetzner.com/cloud/placement-groups/overview). Placement groups control the physical placement of servers to improve availability — the `spread` type ensures each server in the group runs on a different physical host.
 
 **Type:** `Hetzner::Compute::PlacementGroup`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -28,8 +28,8 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="7 8 9 10"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzPlacementGroup, PlacementGroupType } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzPlacementGroup, PlacementGroupType } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'ComputeStack');
@@ -56,7 +56,7 @@ import {
   PlacementGroupType,
   ServerType,
   Location,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 const placementGroup = new HtzPlacementGroup(stack, 'AppGroup', {
   name: 'app-placement-group',

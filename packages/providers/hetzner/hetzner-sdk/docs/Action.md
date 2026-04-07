@@ -16,7 +16,7 @@
 ## Example
 
 ```typescript
-import { Action } from '@cdkx-io/hetzner-sdk';
+import { Action } from '@cdk-x/hetzner-sdk';
 
 const instance: Action = {
   id,

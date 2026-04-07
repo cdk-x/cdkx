@@ -23,7 +23,7 @@ import {
   CertificatesApi,
   Configuration,
   CreateCertificateRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CertificatesApi(configuration);
@@ -73,7 +73,7 @@ Deletes a Certificate.
 ### Example
 
 ```typescript
-import { CertificatesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { CertificatesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CertificatesApi(configuration);
@@ -121,7 +121,7 @@ Gets a specific Certificate object.
 ### Example
 
 ```typescript
-import { CertificatesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { CertificatesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CertificatesApi(configuration);
@@ -169,7 +169,7 @@ Returns all Certificate objects.
 ### Example
 
 ```typescript
-import { CertificatesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { CertificatesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CertificatesApi(configuration);
@@ -248,7 +248,7 @@ import {
   CertificatesApi,
   Configuration,
   UpdateCertificateRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CertificatesApi(configuration);

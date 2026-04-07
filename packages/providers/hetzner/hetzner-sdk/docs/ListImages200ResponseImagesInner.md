@@ -26,7 +26,7 @@
 ## Example
 
 ```typescript
-import { ListImages200ResponseImagesInner } from '@cdkx-io/hetzner-sdk';
+import { ListImages200ResponseImagesInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListImages200ResponseImagesInner = {
   id,

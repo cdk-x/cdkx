@@ -16,7 +16,7 @@
 ## Example
 
 ```typescript
-import { RRSet } from '@cdkx-io/hetzner-sdk';
+import { RRSet } from '@cdk-x/hetzner-sdk';
 
 const instance: RRSet = {
   id,

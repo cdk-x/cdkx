@@ -2,10 +2,10 @@ import type {
   ProviderAdapter,
   ProviderAdapterFactory,
   RuntimeResourceConfig,
-} from '@cdkx-io/engine';
-import { RuntimeAdapter } from '@cdkx-io/engine';
-import type { RuntimeLogger } from '@cdkx-io/core';
-import { RUNTIME_CONFIGS } from '@cdkx-io/hetzner';
+} from '@cdk-x/engine';
+import { RuntimeAdapter } from '@cdk-x/engine';
+import type { RuntimeLogger } from '@cdk-x/core';
+import { RUNTIME_CONFIGS } from '@cdk-x/hetzner';
 import { HetznerSdkFactory } from './hetzner-sdk-facade';
 import type {
   HetznerSdkOptions,

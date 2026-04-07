@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { CreateSshKeyRequest } from '@cdkx-io/hetzner-sdk';
+import { CreateSshKeyRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: CreateSshKeyRequest = {
   name,

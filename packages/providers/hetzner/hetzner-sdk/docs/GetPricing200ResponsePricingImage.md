@@ -11,7 +11,7 @@ Price of [Images](#tag/images).
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricingImage } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricingImage } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingImage = {
   price_per_gb_month,

@@ -12,7 +12,7 @@ IP address (v4).
 ## Example
 
 ```typescript
-import { ListLoadBalancers200ResponseLoadBalancersInnerPublicNetIpv4 } from '@cdkx-io/hetzner-sdk';
+import { ListLoadBalancers200ResponseLoadBalancersInnerPublicNetIpv4 } from '@cdk-x/hetzner-sdk';
 
 const instance: ListLoadBalancers200ResponseLoadBalancersInnerPublicNetIpv4 = {
   ip,

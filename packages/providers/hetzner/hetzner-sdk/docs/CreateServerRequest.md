@@ -23,7 +23,7 @@
 ## Example
 
 ```typescript
-import { CreateServerRequest } from '@cdkx-io/hetzner-sdk';
+import { CreateServerRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: CreateServerRequest = {
   name,

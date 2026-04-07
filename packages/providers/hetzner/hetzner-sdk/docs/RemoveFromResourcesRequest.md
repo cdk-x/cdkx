@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { RemoveFromResourcesRequest } from '@cdkx-io/hetzner-sdk';
+import { RemoveFromResourcesRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: RemoveFromResourcesRequest = {
   remove_from,

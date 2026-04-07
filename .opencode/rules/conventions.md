@@ -44,7 +44,7 @@ When the user asks to create a new library, follow these steps in order:
    ```bash
    yarn nx g @nx/js:library packages/<name> \
      --name=<name> \
-     --importPath=@cdkx-io/<name> \
+     --importPath=@cdk-x/<name> \
      --bundler=tsc \
      --publishable \
      --unitTestRunner=jest \
@@ -60,32 +60,32 @@ When the user asks to create a new library, follow these steps in order:
    standard:
    - `build` using `@nx/js:tsc` (outputPath, main, tsConfig, rootDir)
    - `format` and `format:check` using `nx:run-commands` + prettier (same
-     pattern as `@cdkx-io/core`)
+     pattern as `@cdk-x/core`)
    - `test` with `passWithNoTests: true`
 
-3. **Align `package.json`** — match `@cdkx-io/core` conventions:
+3. **Align `package.json`** — match `@cdk-x/core` conventions:
    - `"version": "0.1.0"`
    - Remove `"type": "module"` — all packages are CommonJS
    - `exports` must use `"require"` (not `"import"`)
    - Add `"publishConfig": { "access": "public" }`
    - Use `"tslib": "^2.8.1"` in dependencies
 
-4. **Align `tsconfig.lib.json`** — match `@cdkx-io/core`:
+4. **Align `tsconfig.lib.json`** — match `@cdk-x/core`:
    - Remove `"module": "nodenext"` and `"moduleResolution": "nodenext"` — use
      base defaults (`commonjs` / `node`)
    - Add `"declaration": true` and `"declarationMap": true`
    - Add `"test/**/*"` to the `exclude` list
 
-5. **Align `tsconfig.spec.json`** — match `@cdkx-io/core`:
+5. **Align `tsconfig.spec.json`** — match `@cdk-x/core`:
    - Remove `"module": "nodenext"` and `"moduleResolution": "nodenext"`
    - Add `"test/**/*.ts"` to `include`
 
 6. **Align `jest.config.cts`** — set `displayName` to the full package name
-   (e.g. `'@cdkx-io/engine'`), remove the `/* eslint-disable */` header comment.
+   (e.g. `'@cdk-x/engine'`), remove the `/* eslint-disable */` header comment.
 
 7. **Clean up generated stubs** — delete `src/lib/<name>.ts` and
    `src/lib/<name>.spec.ts`. Replace `src/index.ts` content with a simple
-   comment placeholder (`// @cdkx-io/<name> public API`).
+   comment placeholder (`// @cdk-x/<name> public API`).
 
 8. **Add to `nx.json` release group** — add the new package to the appropriate
    release group's `projects` array. New packages typically join the `core`

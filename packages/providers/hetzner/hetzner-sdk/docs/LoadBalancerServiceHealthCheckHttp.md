@@ -15,7 +15,7 @@ Additional configuration for protocol http.
 ## Example
 
 ```typescript
-import { LoadBalancerServiceHealthCheckHttp } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerServiceHealthCheckHttp } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerServiceHealthCheckHttp = {
   domain,

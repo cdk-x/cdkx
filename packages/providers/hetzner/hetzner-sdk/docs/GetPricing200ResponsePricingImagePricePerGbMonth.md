@@ -12,7 +12,7 @@ Price of [Images](#tag/images) per GB/month.
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricingImagePricePerGbMonth } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricingImagePricePerGbMonth } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingImagePricePerGbMonth = {
   net,

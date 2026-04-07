@@ -11,7 +11,7 @@ Configuration for type Server, required if type is `server`.
 ## Example
 
 ```typescript
-import { RemoveTargetRequestServer } from '@cdkx-io/hetzner-sdk';
+import { RemoveTargetRequestServer } from '@cdk-x/hetzner-sdk';
 
 const instance: RemoveTargetRequestServer = {
   id,

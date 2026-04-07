@@ -23,7 +23,7 @@ import {
   ZoneRRSetsApi,
   Configuration,
   CreateZoneRequestRrsetsInner,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetsApi(configuration);
@@ -76,7 +76,7 @@ Deletes an [RRSet](#tag/zone-rrsets) from the [Zone](#tag/zones). Only applicabl
 ### Example
 
 ```typescript
-import { ZoneRRSetsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZoneRRSetsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetsApi(configuration);
@@ -148,7 +148,7 @@ Returns a single [RRSet](#tag/zone-rrsets) from the [Zone](#tag/zones). Only app
 ### Example
 
 ```typescript
-import { ZoneRRSetsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZoneRRSetsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetsApi(configuration);
@@ -220,7 +220,7 @@ Returns all [RRSets](#tag/zone-rrsets) in the [Zone](#tag/zones). Use the provid
 ### Example
 
 ```typescript
-import { ZoneRRSetsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ZoneRRSetsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetsApi(configuration);
@@ -319,7 +319,7 @@ import {
   ZoneRRSetsApi,
   Configuration,
   UpdateZoneRrsetRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ZoneRRSetsApi(configuration);

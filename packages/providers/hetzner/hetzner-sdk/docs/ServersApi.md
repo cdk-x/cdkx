@@ -24,7 +24,7 @@ import {
   ServersApi,
   Configuration,
   CreateServerRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServersApi(configuration);
@@ -72,7 +72,7 @@ Deletes a Server. This immediately removes the Server from your account, and it 
 ### Example
 
 ```typescript
-import { ServersApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServersApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServersApi(configuration);
@@ -120,7 +120,7 @@ Returns a specific Server object. The Server must exist inside the Project.
 ### Example
 
 ```typescript
-import { ServersApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServersApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServersApi(configuration);
@@ -168,7 +168,7 @@ Get Metrics for specified Server. You must specify the type of metric to get: cp
 ### Example
 
 ```typescript
-import { ServersApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServersApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServersApi(configuration);
@@ -230,7 +230,7 @@ Returns all existing Server objects.
 ### Example
 
 ```typescript
-import { ServersApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ServersApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServersApi(configuration);
@@ -319,7 +319,7 @@ import {
   ServersApi,
   Configuration,
   UpdateServerRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ServersApi(configuration);

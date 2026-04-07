@@ -12,7 +12,7 @@
 ## Example
 
 ```typescript
-import { RemoveTargetRequest } from '@cdkx-io/hetzner-sdk';
+import { RemoveTargetRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: RemoveTargetRequest = {
   type,

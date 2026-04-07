@@ -1,5 +1,5 @@
 {
-  "name": "@cdkx-io/hetzner",
+  "name": "@cdk-x/hetzner",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/providers/hetzner/hetzner/src",
   "projectType": "library",
@@ -34,7 +34,7 @@
       "outputs": ["{workspaceRoot}/typedoc-out/hetzner"],
       "dependsOn": [
         {
-          "projects": ["@cdkx-io/core"],
+          "projects": ["@cdk-x/core"],
           "target": "build"
         }
       ],
@@ -59,7 +59,7 @@
       },
       "dependsOn": [
         {
-          "projects": ["@cdkx-io/spec-to-cdkx"],
+          "projects": ["@cdk-x/spec-to-cdkx"],
           "target": "build"
         }
       ]

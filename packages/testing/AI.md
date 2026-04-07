@@ -1,7 +1,7 @@
-# @cdkx-io/testing — Development Context
+# @cdk-x/testing — Development Context
 
 This file captures the full design, architecture, and implementation details of
-`@cdkx-io/testing` for future AI-assisted sessions. It is auto-loaded by OpenCode.
+`@cdk-x/testing` for future AI-assisted sessions. It is auto-loaded by OpenCode.
 
 > **Maintenance rule:** whenever code in `packages/testing` is modified —
 > classes, interfaces, file structure, conventions, or design decisions — this
@@ -9,14 +9,14 @@ This file captures the full design, architecture, and implementation details of
 
 ---
 
-## What is @cdkx-io/testing?
+## What is @cdk-x/testing?
 
-**@cdkx-io/testing** is the shared testing-utilities package for the cdkx
+**@cdk-x/testing** is the shared testing-utilities package for the cdkx
 monorepo. It provides reusable helpers — app/stack factories, provider stubs,
 resource object mothers, and synthesis utilities — that can be consumed by any
 provider package test suite without duplicating boilerplate.
 
-It is published as a peer of `@cdkx-io/core`, declared as a `peerDependency`
+It is published as a peer of `@cdk-x/core`, declared as a `peerDependency`
 (and `devDependency`) by packages that use it. It ships no production code —
 it is a pure test support library.
 
@@ -24,8 +24,8 @@ Consumer packages declare it as:
 
 ```json
 {
-  "peerDependencies": { "@cdkx-io/testing": "*" },
-  "devDependencies": { "@cdkx-io/testing": "*" }
+  "peerDependencies": { "@cdk-x/testing": "*" },
+  "devDependencies": { "@cdk-x/testing": "*" }
 }
 ```
 
@@ -44,8 +44,8 @@ import {
   TestStack,
   TestProvider,
   SynthHelpers,
-} from '@cdkx-io/testing';
-import { ProviderResource } from '@cdkx-io/core';
+} from '@cdk-x/testing';
+import { ProviderResource } from '@cdk-x/core';
 
 describe('MyResource', () => {
   it('synthesizes correctly', () => {
@@ -70,12 +70,12 @@ describe('MyResource', () => {
 
 Write to a fixed path and pass `cleanup = false` to `synthSnapshot`, or call
 `app.synth()` directly and read the files with `SynthHelpers.readJson()`. This
-is the pattern used by `@cdkx-io/hetzner`'s network topology test.
+is the pattern used by `@cdk-x/hetzner`'s network topology test.
 
 ```ts
 import * as path from 'node:path';
-import { App, Stack } from '@cdkx-io/core';
-import { SynthHelpers } from '@cdkx-io/testing';
+import { App, Stack } from '@cdk-x/core';
+import { SynthHelpers } from '@cdk-x/testing';
 
 const OUTDIR = path.resolve(__dirname, '../../cdkx.out');
 
@@ -113,7 +113,7 @@ import {
   TestProvider,
   TestResources,
   SynthHelpers,
-} from '@cdkx-io/testing';
+} from '@cdk-x/testing';
 
 const app = TestApp.default();
 const stack = TestStack.default(app, {});
@@ -130,8 +130,8 @@ Extend `TestApp` when the test needs custom resolvers registered at the `App`
 level (e.g. to test a provider's custom resolver logic):
 
 ```ts
-import { TestApp } from '@cdkx-io/testing';
-import { App } from '@cdkx-io/core';
+import { TestApp } from '@cdk-x/testing';
+import { App } from '@cdk-x/core';
 
 class AppWithCustomResolver extends TestApp {
   constructor() {
@@ -164,13 +164,13 @@ const app = new AppWithCustomResolver();
 
 ### `TestApp` (`src/lib/test-app.ts`)
 
-Extends `App` from `@cdkx-io/core`.
+Extends `App` from `@cdk-x/core`.
 
 | Member             | Description                                                            |
 | ------------------ | ---------------------------------------------------------------------- |
 | `static default()` | Creates a new `App` with no explicit `outdir` (uses the default path). |
 
-`App` (from `@cdkx-io/core`) defaults `outdir` to `'cdkx.out'` relative to
+`App` (from `@cdk-x/core`) defaults `outdir` to `'cdkx.out'` relative to
 `process.cwd()`. In tests this is fine — `SynthHelpers.synthSnapshot()` cleans
 it up, and `SynthHelpers.tmpDir()` + `new App({ outdir: tmpDir })` is
 available when isolation is required.
@@ -189,7 +189,7 @@ class AppWithGlobalResolver extends TestApp {
 
 ### `TestStack` (`src/lib/test-stack.ts`)
 
-Extends `Stack` from `@cdkx-io/core`.
+Extends `Stack` from `@cdk-x/core`.
 
 | Member                         | Description                                                        |
 | ------------------------------ | ------------------------------------------------------------------ |
@@ -303,9 +303,9 @@ package follows them identically.
 
 ```
 packages/testing/
-├── package.json                   name: @cdkx-io/testing (no "type" field — CommonJS)
-│                                  peerDependencies: @cdkx-io/core, tslib
-│                                  devDependencies: @cdkx-io/core
+├── package.json                   name: @cdk-x/testing (no "type" field — CommonJS)
+│                                  peerDependencies: @cdk-x/core, tslib
+│                                  devDependencies: @cdk-x/core
 ├── project.json                   Nx project configuration
 ├── AI.md                     ← this file
 └── src/

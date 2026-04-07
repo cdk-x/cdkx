@@ -1,5 +1,5 @@
-import { ResourceHandler, RuntimeContext } from '@cdkx-io/core';
-import { HetznerFirewall } from '@cdkx-io/hetzner';
+import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { HetznerFirewall } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 export interface HetznerFirewallState {

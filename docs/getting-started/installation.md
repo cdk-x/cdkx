@@ -10,7 +10,7 @@
 ## 1. Install the CLI
 
 ```bash
-npm install -g @cdkx-io/cli
+npm install -g @cdk-x/cli
 ```
 
 Verify it works:
@@ -41,7 +41,7 @@ The generated files:
 === "src/main.ts"
 
     ```typescript
-    import { App, Stack } from '@cdkx-io/core';
+    import { App, Stack } from '@cdk-x/core';
 
     const app = new App();
     const stack = new Stack(app, 'MyStack');
@@ -73,10 +73,10 @@ The generated files:
         "destroy": "cdkx destroy"
       },
       "dependencies": {
-        "@cdkx-io/core": "latest"
+        "@cdk-x/core": "latest"
       },
       "devDependencies": {
-        "@cdkx-io/cli": "latest",
+        "@cdk-x/cli": "latest",
         "typescript": "^5.0.0",
         "tsx": "^4.0.0"
       }
@@ -96,7 +96,7 @@ The core package provides the construct primitives. To deploy real infrastructur
 
 ```bash
 # Hetzner Cloud
-npm install @cdkx-io/hetzner
+npm install @cdk-x/hetzner
 ```
 
 Each provider has its own setup guide with credentials and examples. See [Providers](../providers/hetzner/index.md).

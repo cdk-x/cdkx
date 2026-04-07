@@ -12,7 +12,7 @@ Monthly price in this [Location](#tag/locations).
 ## Example
 
 ```typescript
-import { ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPriceMonthly } from '@cdkx-io/hetzner-sdk';
+import { ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPriceMonthly } from '@cdk-x/hetzner-sdk';
 
 const instance: ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPriceMonthly =
   {

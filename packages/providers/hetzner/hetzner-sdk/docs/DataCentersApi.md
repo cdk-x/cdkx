@@ -16,7 +16,7 @@ Returns a single [Data Center](#tag/data-centers).
 ### Example
 
 ```typescript
-import { DataCentersApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { DataCentersApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new DataCentersApi(configuration);
@@ -64,7 +64,7 @@ Returns all [Data Centers](#tag/data-centers).
 ### Example
 
 ```typescript
-import { DataCentersApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { DataCentersApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new DataCentersApi(configuration);

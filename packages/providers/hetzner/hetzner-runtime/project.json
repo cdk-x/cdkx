@@ -1,5 +1,5 @@
 {
-  "name": "@cdkx-io/hetzner-runtime",
+  "name": "@cdk-x/hetzner-runtime",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/providers/hetzner/hetzner-runtime/src",
   "projectType": "library",

@@ -18,7 +18,7 @@
 ## Example
 
 ```typescript
-import { CreateLoadBalancerRequest } from '@cdkx-io/hetzner-sdk';
+import { CreateLoadBalancerRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: CreateLoadBalancerRequest = {
   name,

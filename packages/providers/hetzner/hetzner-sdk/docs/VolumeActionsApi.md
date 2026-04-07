@@ -26,7 +26,7 @@ import {
   VolumeActionsApi,
   Configuration,
   AttachVolumeRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumeActionsApi(configuration);
@@ -83,7 +83,7 @@ import {
   VolumeActionsApi,
   Configuration,
   ChangeVolumeProtectionRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumeActionsApi(configuration);
@@ -136,7 +136,7 @@ Detaches a Volume from the Server it’s attached to. You may attach it to a Ser
 ### Example
 
 ```typescript
-import { VolumeActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { VolumeActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumeActionsApi(configuration);
@@ -184,7 +184,7 @@ Returns a specific Action for a Volume.
 ### Example
 
 ```typescript
-import { VolumeActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { VolumeActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumeActionsApi(configuration);
@@ -234,7 +234,7 @@ Returns a specific Action object.
 ### Example
 
 ```typescript
-import { VolumeActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { VolumeActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumeActionsApi(configuration);
@@ -282,7 +282,7 @@ Returns all Action objects for a Volume. You can `sort` the results by using the
 ### Example
 
 ```typescript
-import { VolumeActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { VolumeActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumeActionsApi(configuration);
@@ -360,7 +360,7 @@ Returns all Action objects. You can `sort` the results by using the sort URI par
 ### Example
 
 ```typescript
-import { VolumeActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { VolumeActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumeActionsApi(configuration);
@@ -442,7 +442,7 @@ import {
   VolumeActionsApi,
   Configuration,
   ResizeVolumeRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new VolumeActionsApi(configuration);

@@ -1,5 +1,5 @@
-import { RuntimeLogger } from '@cdkx-io/core';
-import { FloatingIpType, Location } from '@cdkx-io/hetzner';
+import { RuntimeLogger } from '@cdk-x/core';
+import { FloatingIpType, Location } from '@cdk-x/hetzner';
 import { HetznerFloatingIpHandler } from './floating-ip-handler';
 import { HetznerRuntimeContext } from '../../hetzner-runtime-context';
 import { HetznerSdk } from '../../hetzner-sdk-facade';

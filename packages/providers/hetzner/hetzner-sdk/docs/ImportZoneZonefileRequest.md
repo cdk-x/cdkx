@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { ImportZoneZonefileRequest } from '@cdkx-io/hetzner-sdk';
+import { ImportZoneZonefileRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ImportZoneZonefileRequest = {
   zonefile,

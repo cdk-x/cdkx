@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { UpdateFirewallRequest } from '@cdkx-io/hetzner-sdk';
+import { UpdateFirewallRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: UpdateFirewallRequest = {
   name,

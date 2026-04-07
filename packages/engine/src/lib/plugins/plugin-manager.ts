@@ -12,7 +12,7 @@ import type { ProviderAdapter, ProviderAdapterFactory } from '../adapter';
  * Add new providers here as they are implemented.
  */
 const PROVIDER_PACKAGES: Readonly<Record<string, string>> = {
-  hetzner: '@cdkx-io/hetzner-runtime',
+  hetzner: '@cdk-x/hetzner-runtime',
 };
 
 // ─── Error ────────────────────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ export interface PluginManagerDeps {
  * packages using a static registry.
  *
  * The manager maps provider identifiers (e.g. `'hetzner'`) to npm package
- * names (e.g. `'@cdkx-io/hetzner-runtime'`), dynamically `require()`s each
+ * names (e.g. `'@cdk-x/hetzner-runtime'`), dynamically `require()`s each
  * package, extracts the well-known `AdapterFactory` export, and calls
  * `factory.create(env)` to build the adapter.
  *

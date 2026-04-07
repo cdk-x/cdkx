@@ -1,5 +1,5 @@
-import { RuntimeLogger, StabilizationTimeoutError } from '@cdkx-io/core';
-import { ServerType } from '@cdkx-io/hetzner';
+import { RuntimeLogger, StabilizationTimeoutError } from '@cdk-x/core';
+import { ServerType } from '@cdk-x/hetzner';
 import { HetznerServerHandler } from './server-handler';
 import { HetznerRuntimeContext } from '../../hetzner-runtime-context';
 import { HetznerSdk } from '../../hetzner-sdk-facade';

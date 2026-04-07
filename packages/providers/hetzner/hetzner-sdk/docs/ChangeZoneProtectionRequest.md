@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { ChangeZoneProtectionRequest } from '@cdkx-io/hetzner-sdk';
+import { ChangeZoneProtectionRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ChangeZoneProtectionRequest = {
   _delete,

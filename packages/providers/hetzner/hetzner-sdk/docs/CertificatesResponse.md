@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { CertificatesResponse } from '@cdkx-io/hetzner-sdk';
+import { CertificatesResponse } from '@cdk-x/hetzner-sdk';
 
 const instance: CertificatesResponse = {
   certificates,

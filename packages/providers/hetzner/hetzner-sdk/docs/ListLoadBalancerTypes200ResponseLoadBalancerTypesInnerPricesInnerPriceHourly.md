@@ -12,7 +12,7 @@ Hourly price in this [Location](#tag/locations).
 ## Example
 
 ```typescript
-import { ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPriceHourly } from '@cdkx-io/hetzner-sdk';
+import { ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPriceHourly } from '@cdk-x/hetzner-sdk';
 
 const instance: ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInnerPriceHourly =
   {

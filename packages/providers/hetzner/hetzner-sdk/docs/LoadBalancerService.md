@@ -14,7 +14,7 @@
 ## Example
 
 ```typescript
-import { LoadBalancerService } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerService } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerService = {
   protocol,

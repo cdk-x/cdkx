@@ -2,7 +2,7 @@
 
 [![Status: Experimental](https://img.shields.io/badge/status-experimental-orange?style=flat-square)](https://github.com/cdk-x/cdkx)
 [![CI](https://github.com/cdk-x/cdkx/actions/workflows/ci.yml/badge.svg)](https://github.com/cdk-x/cdkx/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@cdkx-io/core?label=%40cdkx-io%2Fcore&style=flat-square)](https://www.npmjs.com/package/@cdkx-io/core)
+[![npm](https://img.shields.io/npm/v/@cdk-x/core?label=%40cdkx-io%2Fcore&style=flat-square)](https://www.npmjs.com/package/@cdk-x/core)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow?style=flat-square)](https://conventionalcommits.org)
 
@@ -13,8 +13,8 @@ A multi-provider CDK-like framework for TypeScript. Write your infrastructure as
 ## How it works
 
 ```typescript
-import { App, Stack } from '@cdkx-io/core';
-import { HtzNetwork, HtzSubnet } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzNetwork, HtzSubnet } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'MyStack');
@@ -49,9 +49,9 @@ Two phases:
 
 | Package | Description |
 |---------|-------------|
-| `@cdkx-io/core` | Construct primitives (`App`, `Stack`, `ProviderResource`), synthesis pipeline |
-| `@cdkx-io/cli` | CLI binary (`cdkx synth`, `cdkx deploy`, `cdkx destroy`) |
-| `@cdkx-io/hetzner` | Hetzner Cloud provider — Network, Subnet, Route, Server, Certificate |
+| `@cdk-x/core` | Construct primitives (`App`, `Stack`, `ProviderResource`), synthesis pipeline |
+| `@cdk-x/cli` | CLI binary (`cdkx synth`, `cdkx deploy`, `cdkx destroy`) |
+| `@cdk-x/hetzner` | Hetzner Cloud provider — Network, Subnet, Route, Server, Certificate |
 
 ## Documentation
 
@@ -64,8 +64,8 @@ Full documentation at **[docs.cdkx.com](https://docs.cdkx.com)**.
 ## Install
 
 ```bash
-npm install @cdkx-io/core @cdkx-io/hetzner
-npm install -g @cdkx-io/cli
+npm install @cdk-x/core @cdk-x/hetzner
+npm install -g @cdk-x/cli
 ```
 
 ## License

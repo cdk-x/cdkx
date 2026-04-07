@@ -1,7 +1,7 @@
-# @cdkx-io/hetzner — Development Context
+# @cdk-x/hetzner — Development Context
 
 This file captures the full design, architecture, and implementation details of
-`@cdkx-io/hetzner` for future AI-assisted sessions. It is auto-loaded by OpenCode.
+`@cdk-x/hetzner` for future AI-assisted sessions. It is auto-loaded by OpenCode.
 
 > **Maintenance rule:** whenever code in `packages/providers/hetzner/hetzner` is
 > modified — classes, interfaces, file structure, conventions, or design
@@ -9,25 +9,25 @@ This file captures the full design, architecture, and implementation details of
 
 ---
 
-## What is @cdkx-io/hetzner?
+## What is @cdk-x/hetzner?
 
-**@cdkx-io/hetzner** is the Hetzner Cloud provider package for cdkx. It extends
-`@cdkx-io/core` to allow synthesizing Hetzner Cloud resource manifests from a
+**@cdk-x/hetzner** is the Hetzner Cloud provider package for cdkx. It extends
+`@cdk-x/core` to allow synthesizing Hetzner Cloud resource manifests from a
 construct tree.
 
 ---
 
-> Part of the `core` release group — lock-stepped with `@cdkx-io/core`, tag `core-v{version}`.
+> Part of the `core` release group — lock-stepped with `@cdk-x/core`, tag `core-v{version}`.
 
 ---
 
 ## Codegen (`codegen` Nx target)
 
-The L1 constructs file is produced by the `codegen` run using `@cdkx-io/spec-to-cdkx`.
+The L1 constructs file is produced by the `codegen` run using `@cdk-x/spec-to-cdkx`.
 The generated file is committed to the repo.
 
 ```bash
-yarn nx run @cdkx-io/hetzner:codegen
+yarn nx run @cdk-x/hetzner:codegen
 ```
 
 This runs:
@@ -48,7 +48,7 @@ from the project root (`packages/providers/hetzner/hetzner/`). Reads schemas fro
 **When to re-run codegen:** whenever any `schemas/v1/*.schema.json` file is added,
 modified, or removed.
 
-**`codegen` depends on `@cdkx-io/spec-to-cdkx:build`** — the tool is always rebuilt before
+**`codegen` depends on `@cdk-x/spec-to-cdkx:build`** — the tool is always rebuilt before
 running codegen, so the dist bundle is always fresh.
 
 ---
@@ -106,16 +106,16 @@ HetznerResourceType.Networking.Network; // 'Hetzner::Networking::Network'
 HetznerResourceType.Compute.Server; // 'Hetzner::Compute::Server'
 ```
 
-See `@cdkx-io/spec-to-cdkx/AI.md` for the full code generation design.
+See `@cdk-x/spec-to-cdkx/AI.md` for the full code generation design.
 
 ---
 
 ## Generated Runtime Config (`runtime-config.generated.ts`)
 
-Auto-generated runtime configuration consumed by `@cdkx-io/hetzner-runtime`.
+Auto-generated runtime configuration consumed by `@cdk-x/hetzner-runtime`.
 
 ```ts
-import { RUNTIME_CONFIGS, RuntimeResourceConfig } from '@cdkx-io/hetzner';
+import { RUNTIME_CONFIGS, RuntimeResourceConfig } from '@cdk-x/hetzner';
 
 // RUNTIME_CONFIGS maps resource type → runtime configuration
 RUNTIME_CONFIGS['Hetzner::Networking::Network'];
@@ -129,7 +129,7 @@ RUNTIME_CONFIGS['Hetzner::Networking::Network'];
   - Multiple elements (e.g., `["/properties/networkId", "/properties/ipRange"]`): use `"physicalId"` (composite ID)
 - `createOnlyProperties` → determines `createOnlyProps` Set
 
-**Used by:** `HetznerRuntimeAdapterFactory` in `@cdkx-io/hetzner-runtime` to configure the `RuntimeAdapter`.
+**Used by:** `HetznerRuntimeAdapterFactory` in `@cdk-x/hetzner-runtime` to configure the `RuntimeAdapter`.
 
 ---
 
@@ -217,7 +217,7 @@ it to `common.schema.json`.
 
 ## `HetznerProvider` (`src/lib/provider/provider.ts`)
 
-The provider class wires `@cdkx-io/hetzner` into the cdkx construct tree.
+The provider class wires `@cdk-x/hetzner` into the cdkx construct tree.
 
 ```ts
 export interface HetznerProviderConfig {
@@ -248,7 +248,7 @@ export class HetznerProvider extends Provider {
 }
 ```
 
-- Extends `Provider` from `@cdkx-io/core`.
+- Extends `Provider` from `@cdk-x/core`.
 - `identifier = 'hetzner'` — written to `manifest.json` as the `provider` field
   for each stack artifact.
 - `getResolvers()`, `getSynthesizer()`, and `getEnvironment()` all inherit the
@@ -260,7 +260,7 @@ export class HetznerProvider extends Provider {
 ## Deployment Runtime
 
 The deployment runtime for Hetzner Cloud resources has been moved to the
-separate package `@cdkx-io/hetzner-runtime`. This package (`@cdkx-io/hetzner`)
+separate package `@cdk-x/hetzner-runtime`. This package (`@cdk-x/hetzner`)
 is responsible only for synthesizing resource manifests (construct tree → JSON).
 
 The runtime package implements the handler-based architecture using:
@@ -279,9 +279,9 @@ Exercises a realistic Hetzner network topology: 1 `HtzNetwork` + 2 `HtzSubnet`s 
 **Permanent output:** `packages/providers/hetzner/hetzner/cdkx.out/` — files are written
 by the test and **not cleaned up**, so they can be inspected after the test run.
 
-**Run:** `yarn nx test @cdkx-io/hetzner`
+**Run:** `yarn nx test @cdk-x/hetzner`
 
-**Dependencies:** `@cdkx-io/testing` (added as `devDependency` in `package.json`).
+**Dependencies:** `@cdk-x/testing` (added as `devDependency` in `package.json`).
 
 **Describe groups (36 tests total):**
 
@@ -326,10 +326,10 @@ addition specific to this package:
 
 ```
 packages/providers/hetzner/hetzner/
-├── package.json                        name: @cdkx-io/hetzner (no "type" field — CommonJS)
-│                                       dependencies: @cdkx-io/core, constructs, tslib
-│                                       peerDependencies: @cdkx-io/engine
-│                                       devDependencies: @cdkx-io/spec-to-cdkx, @cdkx-io/testing, @cdkx-io/engine
+├── package.json                        name: @cdk-x/hetzner (no "type" field — CommonJS)
+│                                       dependencies: @cdk-x/core, constructs, tslib
+│                                       peerDependencies: @cdk-x/engine
+│                                       devDependencies: @cdk-x/spec-to-cdkx, @cdk-x/testing, @cdk-x/engine
 ├── project.json                        Nx project config (includes codegen target)
 ├── tsconfig.json
 ├── tsconfig.lib.json
@@ -360,7 +360,7 @@ packages/providers/hetzner/hetzner/
 │       ├── generated/
 │       │   ├── index.ts                barrel — re-exports resources.generated.ts
 │       │   └── resources.generated.ts  AUTO-GENERATED — L1 constructs, enums, HetznerResourceType
-│       │                               regenerate with: yarn nx run @cdkx-io/hetzner:codegen
+│       │                               regenerate with: yarn nx run @cdk-x/hetzner:codegen
 │       └── provider/
 │           ├── provider.ts             HetznerProvider + HetznerProviderConfig
 │           └── index.ts                barrel

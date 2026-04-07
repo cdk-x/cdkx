@@ -28,7 +28,7 @@ export class LazyResolver implements IResolver {
  * Any object with a `resolve(context: ResolveContext): any` method is treated as a token,
  * regardless of its class hierarchy. This allows provider packages to define their own
  * token types (e.g. `SecretRef`, `ResourceAttribute`) without extending a base class from
- * `@cdkx-io/core`.
+ * `@cdk-x/core`.
  *
  * The resolver builds a `ResolveContext` (the IResolvable-facing interface) and passes it
  * to the object's `resolve()` method. The `ResolveContext.resolve()` function delegates back

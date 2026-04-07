@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { ChangeLoadBalancerProtectionRequest } from '@cdkx-io/hetzner-sdk';
+import { ChangeLoadBalancerProtectionRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ChangeLoadBalancerProtectionRequest = {
   _delete,

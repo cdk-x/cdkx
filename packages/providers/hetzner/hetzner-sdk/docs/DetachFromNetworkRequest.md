@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { DetachFromNetworkRequest } from '@cdkx-io/hetzner-sdk';
+import { DetachFromNetworkRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: DetachFromNetworkRequest = {
   network,

@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { RebuildServerRequest } from '@cdkx-io/hetzner-sdk';
+import { RebuildServerRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: RebuildServerRequest = {
   image,

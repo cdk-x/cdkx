@@ -1,4 +1,4 @@
-import { RuntimeLogger } from '@cdkx-io/core';
+import { RuntimeLogger } from '@cdk-x/core';
 import { HetznerNetworkHandler } from './network-handler';
 import { HetznerRuntimeContext } from '../../hetzner-runtime-context';
 import { HetznerSdk } from '../../hetzner-sdk-facade';

@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricingLoadBalancerTypesInner } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricingLoadBalancerTypesInner } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingLoadBalancerTypesInner = {
   id,

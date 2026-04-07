@@ -14,7 +14,7 @@ IPv6 network assigned to this Server and its reverse DNS entry.
 ## Example
 
 ```typescript
-import { ListServers200ResponseServersInnerPublicNetIpv6 } from '@cdkx-io/hetzner-sdk';
+import { ListServers200ResponseServersInnerPublicNetIpv6 } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInnerPublicNetIpv6 = {
   id,

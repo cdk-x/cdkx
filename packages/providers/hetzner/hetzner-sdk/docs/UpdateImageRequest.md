@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { UpdateImageRequest } from '@cdkx-io/hetzner-sdk';
+import { UpdateImageRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: UpdateImageRequest = {
   description,

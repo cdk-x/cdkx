@@ -18,7 +18,7 @@
 ## Example
 
 ```typescript
-import { ListDatacenters200ResponseDatacentersInnerLocation } from '@cdkx-io/hetzner-sdk';
+import { ListDatacenters200ResponseDatacentersInnerLocation } from '@cdk-x/hetzner-sdk';
 
 const instance: ListDatacenters200ResponseDatacentersInnerLocation = {
   id,

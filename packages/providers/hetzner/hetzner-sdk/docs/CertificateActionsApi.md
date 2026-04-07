@@ -19,7 +19,7 @@ Returns a specific Action for a Certificate. Only type `managed` Certificates ha
 ### Example
 
 ```typescript
-import { CertificateActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { CertificateActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CertificateActionsApi(configuration);
@@ -69,7 +69,7 @@ Returns a specific Action object.
 ### Example
 
 ```typescript
-import { CertificateActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { CertificateActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CertificateActionsApi(configuration);
@@ -117,7 +117,7 @@ Returns all Action objects for a Certificate. You can sort the results by using 
 ### Example
 
 ```typescript
-import { CertificateActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { CertificateActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CertificateActionsApi(configuration);
@@ -195,7 +195,7 @@ Returns all Action objects. You can `sort` the results by using the sort URI par
 ### Example
 
 ```typescript
-import { CertificateActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { CertificateActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CertificateActionsApi(configuration);
@@ -273,7 +273,7 @@ Retry a failed Certificate issuance or renewal. Only applicable if the type of t
 ### Example
 
 ```typescript
-import { CertificateActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { CertificateActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new CertificateActionsApi(configuration);

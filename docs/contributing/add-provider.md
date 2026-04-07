@@ -10,8 +10,8 @@ A provider in cdkx consists of two packages:
 
 | Package | Role |
 |---------|------|
-| `@cdkx-io/<name>` | **Synth package** — L1 construct classes, JSON schemas, codegen. Used by the user's TypeScript app at synth time. |
-| `@cdkx-io/<name>-runtime` | **Runtime package** — `ResourceHandler` implementations, SDK facade, `ProviderAdapterFactory`. Used by the engine at deploy time. |
+| `@cdk-x/<name>` | **Synth package** — L1 construct classes, JSON schemas, codegen. Used by the user's TypeScript app at synth time. |
+| `@cdk-x/<name>-runtime` | **Runtime package** — `ResourceHandler` implementations, SDK facade, `ProviderAdapterFactory`. Used by the engine at deploy time. |
 
 The split is intentional: synth packages have no runtime dependencies, so a user's app only imports lightweight construct code.
 
@@ -23,7 +23,7 @@ Generate the package with Nx:
 
 ```bash
 npx nx g @nx/js:library packages/providers/<name>/<name> \
-  --name=@cdkx-io/<name> --importPath=@cdkx-io/<name> \
+  --name=@cdk-x/<name> --importPath=@cdk-x/<name> \
   --bundler=tsc --publishable --unitTestRunner=jest \
   --linter=eslint --minimal --useProjectJson --no-interactive
 ```
@@ -35,7 +35,7 @@ Then align the generated files — see the **New library checklist** section in 
 Create `src/lib/provider/provider.ts`:
 
 ```typescript title="src/lib/provider/provider.ts" linenums="1" hl_lines="6 7"
-import { Provider } from '@cdkx-io/core';
+import { Provider } from '@cdk-x/core';
 
 export class MyCloudProvider extends Provider {
   readonly identifier = 'mycloud'; // (1)!
@@ -62,9 +62,9 @@ The `Provider` base class has three overridable methods:
 For providers that model their resources as JSON Schemas (recommended), set up the same codegen pipeline as Hetzner:
 
 1. Create `schemas/v1/` in the synth package root.
-2. Add a `codegen` target to `project.json` using `@cdkx-io/spec-to-cdkx`.
+2. Add a `codegen` target to `project.json` using `@cdk-x/spec-to-cdkx`.
 3. Write one schema per resource type. See [Add a Resource Handler](add-resource-handler.md) for the schema format.
-4. Run `npx nx run @cdkx-io/<name>:codegen` to generate the L1 construct classes.
+4. Run `npx nx run @cdk-x/<name>:codegen` to generate the L1 construct classes.
 
 !!! tip "Skipping codegen"
     You can write L1 constructs by hand by extending `ProviderResource` directly. Codegen is a convenience — it is not required. See [Construct](../concepts/construct.md) for the manual approach.
@@ -75,12 +75,12 @@ For providers that model their resources as JSON Schemas (recommended), set up t
 
 ```bash
 npx nx g @nx/js:library packages/providers/<name>/<name>-runtime \
-  --name=@cdkx-io/<name>-runtime --importPath=@cdkx-io/<name>-runtime \
+  --name=@cdk-x/<name>-runtime --importPath=@cdk-x/<name>-runtime \
   --bundler=tsc --publishable --unitTestRunner=jest \
   --linter=eslint --minimal --useProjectJson --no-interactive
 ```
 
-Apply the same alignment checklist. Add `@cdkx-io/core` and `@cdkx-io/engine` as dependencies.
+Apply the same alignment checklist. Add `@cdk-x/core` and `@cdk-x/engine` as dependencies.
 
 !!! info "New library checklist"
     The full alignment checklist (package.json, tsconfig, project.json, jest config) is documented in `CLAUDE.md` at the repository root under the **New library checklist** section.
@@ -110,7 +110,7 @@ export class MyCloudSdkFactory {
 ### `ProviderRuntime`
 
 ```typescript title="src/lib/my-cloud-provider-runtime.ts" linenums="1" hl_lines="9 10 11"
-import { ProviderRuntime } from '@cdkx-io/core';
+import { ProviderRuntime } from '@cdk-x/core';
 import { MyCloudSdk } from './my-cloud-sdk';
 import { MyServerHandler } from './handlers/server';
 
@@ -134,8 +134,8 @@ export class MyCloudProviderRuntime extends ProviderRuntime<MyCloudSdk> {
 This is the glue between the runtime package and the engine. It reads credentials from the environment and builds a `RuntimeAdapter`:
 
 ```typescript title="src/lib/my-cloud-runtime-adapter-factory.ts" linenums="1" hl_lines="9 10 11 12 13"
-import { RuntimeAdapter, ProviderAdapterFactory, ProviderAdapter } from '@cdkx-io/engine';
-import { RUNTIME_CONFIGS } from '@cdkx-io/<name>'; // (1)!
+import { RuntimeAdapter, ProviderAdapterFactory, ProviderAdapter } from '@cdk-x/engine';
+import { RUNTIME_CONFIGS } from '@cdk-x/<name>'; // (1)!
 import { MyCloudSdkFactory } from './my-cloud-sdk';
 import { MyCloudRuntimeContext } from './my-cloud-runtime-context';
 import { MyCloudProviderRuntime } from './my-cloud-provider-runtime';
@@ -166,12 +166,12 @@ export class MyCloudRuntimeAdapterFactory implements ProviderAdapterFactory {
 
 ## Step 3 — Register the factory with the engine
 
-The CLI discovers provider adapters through an `AdapterRegistry`. Open the registry configuration (in `@cdkx-io/cli`) and add your factory:
+The CLI discovers provider adapters through an `AdapterRegistry`. Open the registry configuration (in `@cdk-x/cli`) and add your factory:
 
 ```typescript linenums="1" hl_lines="4 8"
-import { AdapterRegistry } from '@cdkx-io/engine';
-import { HetznerRuntimeAdapterFactory } from '@cdkx-io/hetzner-runtime';
-import { MyCloudRuntimeAdapterFactory } from '@cdkx-io/<name>-runtime'; // add this
+import { AdapterRegistry } from '@cdk-x/engine';
+import { HetznerRuntimeAdapterFactory } from '@cdk-x/hetzner-runtime';
+import { MyCloudRuntimeAdapterFactory } from '@cdk-x/<name>-runtime'; // add this
 
 const registry = new AdapterRegistry()
   .register(new HetznerRuntimeAdapterFactory())
@@ -190,8 +190,8 @@ With the package scaffolding in place, add handlers for each resource type. See 
 
 | Package | Depends on |
 |---------|-----------|
-| `@cdkx-io/<name>` (synth) | `@cdkx-io/core`, `constructs`, `tslib` |
-| `@cdkx-io/<name>-runtime` | `@cdkx-io/core`, `@cdkx-io/engine`, `@cdkx-io/<name>` (for `RUNTIME_CONFIGS`) |
+| `@cdk-x/<name>` (synth) | `@cdk-x/core`, `constructs`, `tslib` |
+| `@cdk-x/<name>-runtime` | `@cdk-x/core`, `@cdk-x/engine`, `@cdk-x/<name>` (for `RUNTIME_CONFIGS`) |
 
 ---
 

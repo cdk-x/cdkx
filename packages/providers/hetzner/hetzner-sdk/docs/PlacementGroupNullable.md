@@ -16,7 +16,7 @@ The placement group the server is assigned to.
 ## Example
 
 ```typescript
-import { PlacementGroupNullable } from '@cdkx-io/hetzner-sdk';
+import { PlacementGroupNullable } from '@cdk-x/hetzner-sdk';
 
 const instance: PlacementGroupNullable = {
   id,

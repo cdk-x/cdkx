@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { ListVolumes200Response } from '@cdkx-io/hetzner-sdk';
+import { ListVolumes200Response } from '@cdk-x/hetzner-sdk';
 
 const instance: ListVolumes200Response = {
   volumes,

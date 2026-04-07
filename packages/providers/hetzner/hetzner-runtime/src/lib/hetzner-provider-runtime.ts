@@ -1,4 +1,4 @@
-import { ProviderRuntime } from '@cdkx-io/core';
+import { ProviderRuntime } from '@cdk-x/core';
 import { HetznerSdk } from './hetzner-sdk-facade';
 import {
   HetznerNetworkHandler,

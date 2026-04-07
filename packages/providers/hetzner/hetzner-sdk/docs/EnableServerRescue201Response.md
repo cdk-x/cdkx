@@ -12,7 +12,7 @@ The `root_password` key in the reply contains the root password that can be used
 ## Example
 
 ```typescript
-import { EnableServerRescue201Response } from '@cdkx-io/hetzner-sdk';
+import { EnableServerRescue201Response } from '@cdk-x/hetzner-sdk';
 
 const instance: EnableServerRescue201Response = {
   root_password,

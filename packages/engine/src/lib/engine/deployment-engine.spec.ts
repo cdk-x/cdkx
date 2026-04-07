@@ -17,7 +17,7 @@ import type {
   UpdateResult,
 } from '../adapter/provider-adapter';
 import type { AssemblyStack } from '../assembly/assembly-types';
-import type { Logger } from '@cdkx-io/logger';
+import type { Logger } from '@cdk-x/logger';
 import type { DeploymentPlan } from '../planner/deployment-plan';
 import type { EngineState } from '../state/engine-state';
 

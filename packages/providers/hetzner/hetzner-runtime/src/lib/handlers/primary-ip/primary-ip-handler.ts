@@ -1,9 +1,9 @@
-import { ResourceHandler, RuntimeContext } from '@cdkx-io/core';
+import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
 import {
   HetznerPrimaryIp,
   PrimaryIpAssigneeType,
   PrimaryIpType,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 /**

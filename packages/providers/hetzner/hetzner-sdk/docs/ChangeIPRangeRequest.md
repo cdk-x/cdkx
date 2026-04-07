@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { ChangeIPRangeRequest } from '@cdkx-io/hetzner-sdk';
+import { ChangeIPRangeRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ChangeIPRangeRequest = {
   ip_range,

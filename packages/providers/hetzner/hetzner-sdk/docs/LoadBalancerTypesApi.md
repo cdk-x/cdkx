@@ -16,7 +16,7 @@ Gets a specific Load Balancer type object.
 ### Example
 
 ```typescript
-import { LoadBalancerTypesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTypesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerTypesApi(configuration);
@@ -64,7 +64,7 @@ Gets all Load Balancer type objects.
 ### Example
 
 ```typescript
-import { LoadBalancerTypesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTypesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerTypesApi(configuration);

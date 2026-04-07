@@ -1,8 +1,8 @@
 import { readFileSync } from 'fs';
-import { type CdkxConfig } from '@cdkx-io/core';
+import { type CdkxConfig } from '@cdk-x/core';
 
 // Re-export CdkxConfig so existing CLI consumers don't break
-export { type CdkxConfig } from '@cdkx-io/core';
+export { type CdkxConfig } from '@cdk-x/core';
 
 /**
  * Read and parse a `cdkx.json` file from the given absolute path.

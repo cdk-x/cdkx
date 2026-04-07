@@ -7,8 +7,8 @@ Every cdkx program has at least one stack. Multiple stacks can coexist under the
 ## Basic usage
 
 ```typescript title="src/main.ts" linenums="1"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzNetwork, HtzSubnet } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzNetwork, HtzSubnet } from '@cdk-x/hetzner';
 
 const app = new App();
 

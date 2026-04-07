@@ -14,7 +14,7 @@ Public network information. The Server\'s IPv4 address can be found in `public_n
 ## Example
 
 ```typescript
-import { ListServers200ResponseServersInnerPublicNet } from '@cdkx-io/hetzner-sdk';
+import { ListServers200ResponseServersInnerPublicNet } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInnerPublicNet = {
   ipv4,

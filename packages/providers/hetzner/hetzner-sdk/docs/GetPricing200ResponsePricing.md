@@ -18,7 +18,7 @@
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricing } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricing } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricing = {
   currency,

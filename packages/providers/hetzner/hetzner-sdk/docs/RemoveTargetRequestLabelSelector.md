@@ -11,7 +11,7 @@ Configuration for label selector targets, required if type is `label_selector`.
 ## Example
 
 ```typescript
-import { RemoveTargetRequestLabelSelector } from '@cdkx-io/hetzner-sdk';
+import { RemoveTargetRequestLabelSelector } from '@cdk-x/hetzner-sdk';
 
 const instance: RemoveTargetRequestLabelSelector = {
   selector,

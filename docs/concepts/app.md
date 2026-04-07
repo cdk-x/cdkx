@@ -11,7 +11,7 @@ An **App** is the root of every cdkx program. It owns the construct tree, drives
 ## Basic usage
 
 ```typescript title="src/main.ts" linenums="1"
-import { App, Stack } from '@cdkx-io/core';
+import { App, Stack } from '@cdk-x/core';
 
 const app = new App(); // (1)!
 

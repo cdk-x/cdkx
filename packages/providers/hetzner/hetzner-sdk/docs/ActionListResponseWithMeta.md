@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { ActionListResponseWithMeta } from '@cdkx-io/hetzner-sdk';
+import { ActionListResponseWithMeta } from '@cdk-x/hetzner-sdk';
 
 const instance: ActionListResponseWithMeta = {
   actions,

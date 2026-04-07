@@ -12,7 +12,7 @@ Price of [Volumes](#tag/volumes) per GB/month.
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricingVolumePricePerGbMonth } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricingVolumePricePerGbMonth } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingVolumePricePerGbMonth = {
   net,

@@ -14,7 +14,7 @@
 ## Example
 
 ```typescript
-import { Rule } from '@cdkx-io/hetzner-sdk';
+import { Rule } from '@cdk-x/hetzner-sdk';
 
 const instance: Rule = {
   description,

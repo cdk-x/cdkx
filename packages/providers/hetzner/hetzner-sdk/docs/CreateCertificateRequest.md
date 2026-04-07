@@ -14,7 +14,7 @@
 ## Example
 
 ```typescript
-import { CreateCertificateRequest } from '@cdkx-io/hetzner-sdk';
+import { CreateCertificateRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: CreateCertificateRequest = {
   name,

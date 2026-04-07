@@ -2,7 +2,7 @@
   "entryPoints": ["src/index.ts"],
   "tsconfig": "tsconfig.lib.json",
   "out": "../../../../typedoc-out/hetzner",
-  "name": "@cdkx-io/hetzner",
+  "name": "@cdk-x/hetzner",
   "readme": "none",
   "skipErrorChecking": false,
   "excludePrivate": true,

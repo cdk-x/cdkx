@@ -18,7 +18,7 @@ Deletes an Image. Only Images of type `snapshot` and `backup` can be deleted.
 ### Example
 
 ```typescript
-import { ImagesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ImagesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ImagesApi(configuration);
@@ -66,7 +66,7 @@ Returns a specific Image object.
 ### Example
 
 ```typescript
-import { ImagesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ImagesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ImagesApi(configuration);
@@ -114,7 +114,7 @@ Returns all Image objects. You can select specific Image types only and sort the
 ### Example
 
 ```typescript
-import { ImagesApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ImagesApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ImagesApi(configuration);
@@ -205,7 +205,7 @@ import {
   ImagesApi,
   Configuration,
   UpdateImageRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ImagesApi(configuration);

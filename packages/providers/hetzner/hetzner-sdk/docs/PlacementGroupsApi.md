@@ -23,7 +23,7 @@ import {
   PlacementGroupsApi,
   Configuration,
   CreatePlacementGroupRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PlacementGroupsApi(configuration);
@@ -73,7 +73,7 @@ Deletes a Placement Group.
 ### Example
 
 ```typescript
-import { PlacementGroupsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PlacementGroupsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PlacementGroupsApi(configuration);
@@ -121,7 +121,7 @@ Gets a specific Placement Group object.
 ### Example
 
 ```typescript
-import { PlacementGroupsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PlacementGroupsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PlacementGroupsApi(configuration);
@@ -169,7 +169,7 @@ Returns all Placement Group objects.
 ### Example
 
 ```typescript
-import { PlacementGroupsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PlacementGroupsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PlacementGroupsApi(configuration);
@@ -248,7 +248,7 @@ import {
   PlacementGroupsApi,
   Configuration,
   UpdatePlacementGroupRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PlacementGroupsApi(configuration);

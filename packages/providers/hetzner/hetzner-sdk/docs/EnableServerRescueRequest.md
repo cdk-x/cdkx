@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { EnableServerRescueRequest } from '@cdkx-io/hetzner-sdk';
+import { EnableServerRescueRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: EnableServerRescueRequest = {
   type,

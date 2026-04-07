@@ -1,7 +1,7 @@
-# @cdkx-io/engine — Development Context
+# @cdk-x/engine — Development Context
 
 This file captures the full design, architecture, and implementation details of
-`@cdkx-io/engine` for future AI-assisted sessions. It is auto-loaded by OpenCode.
+`@cdk-x/engine` for future AI-assisted sessions. It is auto-loaded by OpenCode.
 
 > **Maintenance rule:** whenever code in `packages/engine` is modified — classes,
 > interfaces, file structure, conventions, or design decisions — this file must
@@ -9,13 +9,13 @@ This file captures the full design, architecture, and implementation details of
 
 ---
 
-## What is @cdkx-io/engine?
+## What is @cdk-x/engine?
 
-**@cdkx-io/engine** is the deployment runtime for cdkx. It reads the cloud assembly
+**@cdk-x/engine** is the deployment runtime for cdkx. It reads the cloud assembly
 produced by `app.synth()` — the `manifest.json` and per-stack JSON template files —
 and drives the actual infrastructure deployment against the target provider.
 
-The engine is a library consumed by `@cdkx-io/cli` (e.g. the `cdkx deploy` command
+The engine is a library consumed by `@cdk-x/cli` (e.g. the `cdkx deploy` command
 imports and calls it programmatically). It runs as async Node.js code in the same
 process as the CLI.
 
@@ -37,11 +37,11 @@ process as the CLI.
 Run tasks via Nx:
 
 ```bash
-yarn nx lint @cdkx-io/engine
-yarn nx test @cdkx-io/engine
-yarn nx build @cdkx-io/engine
-yarn nx run @cdkx-io/engine:format        # format src/ with prettier
-yarn nx run @cdkx-io/engine:format:check  # check formatting without writing
+yarn nx lint @cdk-x/engine
+yarn nx test @cdk-x/engine
+yarn nx build @cdk-x/engine
+yarn nx run @cdk-x/engine:format        # format src/ with prettier
+yarn nx run @cdk-x/engine:format:check  # check formatting without writing
 ```
 
 ---
@@ -75,9 +75,9 @@ CloudAssemblyReader          reads manifest.json + stack JSON files
            ├── EventBus            emits EngineEvent on every transition
            └── ProviderAdapter (interface)
                 ├── RuntimeAdapter<TSdk>    generic bridge to handler-based runtimes
-                │    └── ProviderRuntime<TSdk>  (from @cdkx-io/core — handler registry)
+                │    └── ProviderRuntime<TSdk>  (from @cdk-x/core — handler registry)
                 │         └── ResourceHandler   (one per resource type)
-                ├── HetznerAdapter   (in @cdkx-io/hetzner — low-level HTTP adapter)
+                ├── HetznerAdapter   (in @cdk-x/hetzner — low-level HTTP adapter)
                 └── KubernetesAdapter (future)
 ```
 
@@ -336,9 +336,9 @@ and should throw without making API calls if the resource configuration is inval
 
 ## RuntimeAdapter
 
-Generic bridge that adapts a handler-based `ProviderRuntime` (from `@cdkx-io/core`)
+Generic bridge that adapts a handler-based `ProviderRuntime` (from `@cdk-x/core`)
 to the `ProviderAdapter` interface consumed by `DeploymentEngine`. Provider runtime
-packages (e.g. `@cdkx-io/hetzner-runtime`) instantiate this class instead of
+packages (e.g. `@cdk-x/hetzner-runtime`) instantiate this class instead of
 implementing `ProviderAdapter` from scratch.
 
 ```ts
@@ -792,7 +792,7 @@ interface DeploymentEngineOptions {
   stateDir: string; // absolute path for engine-state.json — separate from assemblyDir
   stateManager?: EngineStateManager; // injectable for tests
   eventBus?: EventBus<EngineEvent>; // injectable for tests
-  logger?: Logger; // optional logger from @cdkx-io/logger — subscribes to EventBus
+  logger?: Logger; // optional logger from @cdk-x/logger — subscribes to EventBus
 }
 ```
 
@@ -817,8 +817,8 @@ Adapters that implement `setLogger()` can log their own events (e.g., HTTP reque
 Example usage:
 
 ```ts
-import { DeploymentEngine } from '@cdkx-io/engine';
-import { LoggerFactory } from '@cdkx-io/logger';
+import { DeploymentEngine } from '@cdk-x/engine';
+import { LoggerFactory } from '@cdk-x/logger';
 
 const logger = LoggerFactory.createFileLogger('/project/.cdkx');
 
@@ -832,17 +832,17 @@ const engine = new DeploymentEngine({
 
 ---
 
-## Relationship with @cdkx-io/core
+## Relationship with @cdk-x/core
 
-`@cdkx-io/engine` is a **consumer** of the cloud assembly format defined by
-`@cdkx-io/core`:
+`@cdk-x/engine` is a **consumer** of the cloud assembly format defined by
+`@cdk-x/core`:
 
-- `manifest.json` shape → defined by `CloudAssemblyManifest` in `@cdkx-io/core`
-- Stack template shape (`{ resources, outputs? }`) → defined by `JsonSynthesizer` in `@cdkx-io/core`
-- `{ ref, attr }` token contract → defined by `ResourceAttribute` in `@cdkx-io/core`
+- `manifest.json` shape → defined by `CloudAssemblyManifest` in `@cdk-x/core`
+- Stack template shape (`{ resources, outputs? }`) → defined by `JsonSynthesizer` in `@cdk-x/core`
+- `{ ref, attr }` token contract → defined by `ResourceAttribute` in `@cdk-x/core`
 - `outputKeys` in manifest → populated by `Stack.getOutputs()` + `JsonSynthesizer`
 
-The engine depends on `@cdkx-io/core` at runtime for the `RuntimeAdapter` bridge
+The engine depends on `@cdk-x/core` at runtime for the `RuntimeAdapter` bridge
 class, which imports `ProviderRuntime`, `RuntimeContext`, and `RuntimeLogger` from
 core. It also consumes the cloud assembly JSON file formats (manifest, stack
 templates, `{ ref, attr }` tokens) but does not import construct classes (`App`,
@@ -852,8 +852,8 @@ templates, `{ ref, attr }` tokens) but does not import construct classes (`App`,
 
 ## Release configuration
 
-Part of the `core` release group in `nx.json` — lock-stepped with `@cdkx-io/core`,
-`@cdkx-io/testing`, and `@cdkx-io/hetzner`. Tag pattern: `core-v{version}`.
+Part of the `core` release group in `nx.json` — lock-stepped with `@cdk-x/core`,
+`@cdk-x/testing`, and `@cdk-x/hetzner`. Tag pattern: `core-v{version}`.
 
 ---
 
@@ -867,7 +867,7 @@ package follows them identically:
 - No non-null assertions (`!`) — use guards or `?? []` patterns instead
 - CJS imports — extensionless local imports
 - Specs co-located — `foo/foo.spec.ts` next to `foo/foo.ts`
-- Prettier — run `yarn nx run @cdkx-io/engine:format` after any `.ts` change
+- Prettier — run `yarn nx run @cdk-x/engine:format` after any `.ts` change
 
 ### Dependency injection in tests
 
@@ -882,7 +882,7 @@ See `StatePersistence` / `StatePersistenceDeps` and `CloudAssemblyReader` /
 
 ```
 packages/engine/
-├── package.json          name: @cdkx-io/engine (no "type" field — CommonJS)
+├── package.json          name: @cdk-x/engine (no "type" field — CommonJS)
 ├── project.json          Nx project configuration (build, format, format:check, test)
 ├── tsconfig.json
 ├── tsconfig.lib.json

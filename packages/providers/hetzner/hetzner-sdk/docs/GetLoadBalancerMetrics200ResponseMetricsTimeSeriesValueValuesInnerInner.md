@@ -8,7 +8,7 @@
 ## Example
 
 ```typescript
-import { GetLoadBalancerMetrics200ResponseMetricsTimeSeriesValueValuesInnerInner } from '@cdkx-io/hetzner-sdk';
+import { GetLoadBalancerMetrics200ResponseMetricsTimeSeriesValueValuesInnerInner } from '@cdk-x/hetzner-sdk';
 
 const instance: GetLoadBalancerMetrics200ResponseMetricsTimeSeriesValueValuesInnerInner =
   {};

@@ -2,8 +2,8 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
-} from '@cdkx-io/core';
-import { FirewallRule, HetznerFirewallRules } from '@cdkx-io/hetzner';
+} from '@cdk-x/core';
+import { FirewallRule, HetznerFirewallRules } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 export interface HetznerFirewallRulesState {

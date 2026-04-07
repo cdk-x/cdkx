@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { GetActions4xxResponseError } from '@cdkx-io/hetzner-sdk';
+import { GetActions4xxResponseError } from '@cdk-x/hetzner-sdk';
 
 const instance: GetActions4xxResponseError = {
   code,

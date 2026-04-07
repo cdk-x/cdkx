@@ -16,7 +16,7 @@ Returns a [Location](#tag/locations).
 ### Example
 
 ```typescript
-import { LocationsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LocationsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LocationsApi(configuration);
@@ -64,7 +64,7 @@ Returns all [Locations](#tag/locations). Use the provided URI parameters to modi
 ### Example
 
 ```typescript
-import { LocationsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LocationsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LocationsApi(configuration);

@@ -12,7 +12,7 @@ Record of a [RRSet](#tag/zone-rrsets). The `value` is used to identify the recor
 ## Example
 
 ```typescript
-import { ModelRecord } from '@cdkx-io/hetzner-sdk';
+import { ModelRecord } from '@cdk-x/hetzner-sdk';
 
 const instance: ModelRecord = {
   value,

@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { CreateVolume201Response } from '@cdkx-io/hetzner-sdk';
+import { CreateVolume201Response } from '@cdk-x/hetzner-sdk';
 
 const instance: CreateVolume201Response = {
   volume,

@@ -25,7 +25,7 @@ import {
   FirewallActionsApi,
   Configuration,
   ApplyToResourcesRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallActionsApi(configuration);
@@ -78,7 +78,7 @@ Returns a specific [Action](#tag/actions) for a [Firewall](#tag/firewalls).
 ### Example
 
 ```typescript
-import { FirewallActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FirewallActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallActionsApi(configuration);
@@ -128,7 +128,7 @@ Returns the specific [Action](#tag/actions).
 ### Example
 
 ```typescript
-import { FirewallActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FirewallActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallActionsApi(configuration);
@@ -176,7 +176,7 @@ Returns all [Actions](#tag/actions) for the [Firewall](#tag/firewalls). Use the 
 ### Example
 
 ```typescript
-import { FirewallActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FirewallActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallActionsApi(configuration);
@@ -254,7 +254,7 @@ Returns all [Actions](#tag/actions) for [Firewalls](#tag/firewalls). Use the pro
 ### Example
 
 ```typescript
-import { FirewallActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FirewallActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallActionsApi(configuration);
@@ -336,7 +336,7 @@ import {
   FirewallActionsApi,
   Configuration,
   RemoveFromResourcesRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallActionsApi(configuration);
@@ -393,7 +393,7 @@ import {
   FirewallActionsApi,
   Configuration,
   SetRulesRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FirewallActionsApi(configuration);

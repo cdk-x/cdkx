@@ -1,4 +1,4 @@
-import { Provider } from '@cdkx-io/core';
+import { Provider } from '@cdk-x/core';
 
 // ─── HetznerProvider ──────────────────────────────────────────────────────────
 

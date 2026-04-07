@@ -6,11 +6,11 @@ Each package's reference opens in a separate TypeDoc HTML application:
 
 <div class="grid cards" markdown>
 
-- **[@cdkx-io/core](../api/core/index.html)**
+- **[@cdk-x/core](../api/core/index.html)**
 
     Construct primitives: `App`, `Stack`, `ProviderResource`, `Lazy`, `ResolverPipeline`, and all synthesis interfaces.
 
-- **[@cdkx-io/hetzner](../api/hetzner/index.html)**
+- **[@cdk-x/hetzner](../api/hetzner/index.html)**
 
     Hetzner Cloud L1 constructs: `HtzNetwork`, `HtzSubnet`, `HtzRoute`, `HtzServer`, `HtzCertificate`, and all supporting types.
 

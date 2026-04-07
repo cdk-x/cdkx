@@ -23,7 +23,7 @@ import {
   SSHKeysApi,
   Configuration,
   CreateSshKeyRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new SSHKeysApi(configuration);
@@ -71,7 +71,7 @@ Deletes an SSH key. It cannot be used anymore.
 ### Example
 
 ```typescript
-import { SSHKeysApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { SSHKeysApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new SSHKeysApi(configuration);
@@ -119,7 +119,7 @@ Returns a specific SSH key object.
 ### Example
 
 ```typescript
-import { SSHKeysApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { SSHKeysApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new SSHKeysApi(configuration);
@@ -167,7 +167,7 @@ Returns all SSH key objects.
 ### Example
 
 ```typescript
-import { SSHKeysApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { SSHKeysApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new SSHKeysApi(configuration);
@@ -238,7 +238,7 @@ import {
   SSHKeysApi,
   Configuration,
   UpdateSshKeyRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new SSHKeysApi(configuration);

@@ -53,7 +53,7 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/cdk-x/cdkx
     - icon: fontawesome/brands/npm
-      link: https://www.npmjs.com/package/@cdkx-io/cli
+      link: https://www.npmjs.com/package/@cdk-x/cli
 
 extra_css:
   - assets/extra.css

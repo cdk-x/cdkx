@@ -1,8 +1,8 @@
-import { RuntimeLogger } from '@cdkx-io/core';
+import { RuntimeLogger } from '@cdk-x/core';
 import {
   FirewallRuleDirection,
   FirewallRuleProtocol,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 import {
   HetznerFirewallRulesHandler,
   HetznerFirewallRulesState,

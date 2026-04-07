@@ -12,7 +12,7 @@ Error message for the Action if an error occurred, otherwise null.
 ## Example
 
 ```typescript
-import { ActionError } from '@cdkx-io/hetzner-sdk';
+import { ActionError } from '@cdk-x/hetzner-sdk';
 
 const instance: ActionError = {
   code,

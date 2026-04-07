@@ -1,5 +1,5 @@
-import type { Logger } from '@cdkx-io/logger';
-import type { StabilizeConfig } from '@cdkx-io/core';
+import type { Logger } from '@cdk-x/logger';
+import type { StabilizeConfig } from '@cdk-x/core';
 
 /**
  * Represents a single resource as the engine reads it from a stack template
@@ -91,7 +91,7 @@ export interface UpdateResult {
  *   for dependent resources
  *
  * Provider adapters live in their respective provider packages (e.g.
- * `@cdkx-io/hetzner` will ship a `HetznerAdapter`). The engine imports only this
+ * `@cdk-x/hetzner` will ship a `HetznerAdapter`). The engine imports only this
  * interface — it has no compile-time dependency on any concrete adapter.
  */
 export interface ProviderAdapter {
@@ -175,7 +175,7 @@ export interface ProviderAdapter {
  * Factory that instantiates a {@link ProviderAdapter} for a specific provider.
  *
  * Each provider package exports a concrete implementation (e.g.
- * `HetznerAdapterFactory` from `@cdkx-io/hetzner`). The CLI registers all
+ * `HetznerAdapterFactory` from `@cdk-x/hetzner`). The CLI registers all
  * factories in an `AdapterRegistry` at startup and uses them to build the
  * adapters map required by `DeploymentEngine`.
  *

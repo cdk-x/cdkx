@@ -3,7 +3,7 @@
 `HtzLoadBalancerTarget` registers a backend target with a [Hetzner Cloud Load Balancer](https://docs.hetzner.com/cloud/load-balancers/overview). Three target types are supported: a specific server, a label selector (dynamic group of servers), or a raw IP address.
 
 **Type:** `Hetzner::Compute::LoadBalancerTarget`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -27,8 +27,8 @@
 ## Create example — server target
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="13 14 15 16 17 18"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzLoadBalancer, HtzServer, HtzLoadBalancerTarget, LoadBalancerType, LoadBalancerTargetType, NetworkZone, ServerType } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzLoadBalancer, HtzServer, HtzLoadBalancerTarget, LoadBalancerType, LoadBalancerTargetType, NetworkZone, ServerType } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'LbStack');
@@ -63,7 +63,7 @@ app.synth();
 When the load balancer is on a private network, route traffic to the server's private IP for better security and lower latency:
 
 ```typescript linenums="1" hl_lines="17 18 19 20 21 22 23"
-import { HtzNetwork, HtzLoadBalancer, HtzServer, HtzLoadBalancerTarget, LoadBalancerType, LoadBalancerTargetType, NetworkZone, ServerType } from '@cdkx-io/hetzner';
+import { HtzNetwork, HtzLoadBalancer, HtzServer, HtzLoadBalancerTarget, LoadBalancerType, LoadBalancerTargetType, NetworkZone, ServerType } from '@cdk-x/hetzner';
 
 const network = new HtzNetwork(stack, 'Network', {
   name: 'my-network',
@@ -97,7 +97,7 @@ new HtzLoadBalancerTarget(stack, 'AppTarget', {
 ## Create example — label selector target
 
 ```typescript linenums="1" hl_lines="8 9 10 11 12"
-import { HtzLoadBalancerTarget, LoadBalancerTargetType } from '@cdkx-io/hetzner';
+import { HtzLoadBalancerTarget, LoadBalancerTargetType } from '@cdk-x/hetzner';
 
 new HtzLoadBalancerTarget(stack, 'WebTarget', {
   loadBalancerId: lb.attrLoadBalancerId,

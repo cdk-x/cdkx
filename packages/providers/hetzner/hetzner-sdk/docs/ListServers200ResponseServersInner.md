@@ -31,7 +31,7 @@
 ## Example
 
 ```typescript
-import { ListServers200ResponseServersInner } from '@cdkx-io/hetzner-sdk';
+import { ListServers200ResponseServersInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInner = {
   id,

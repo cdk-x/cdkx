@@ -3,7 +3,7 @@
 `HtzCertificate` manages a [Hetzner Cloud TLS certificate](https://docs.hetzner.com/cloud/load-balancers/faq/#can-i-use-my-own-certificate). Two types are supported: **uploaded** (you supply the PEM-encoded certificate and key) and **managed** (Hetzner requests and renews a Let's Encrypt certificate automatically).
 
 **Type:** `Hetzner::Security::Certificate`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -25,8 +25,8 @@
 ## Create example — managed certificate
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="7 8 9 10"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzCertificate, CertificateType } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzCertificate, CertificateType } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'SecurityStack');
@@ -64,7 +64,7 @@ new HtzCertificate(stack, 'Certificate', {
 Certificates are referenced by a Load Balancer HTTPS service:
 
 ```typescript linenums="1" hl_lines="8"
-import { HtzCertificate, HtzLoadBalancer, CertificateType } from '@cdkx-io/hetzner';
+import { HtzCertificate, HtzLoadBalancer, CertificateType } from '@cdk-x/hetzner';
 
 const cert = new HtzCertificate(stack, 'Cert', {
   name: 'my-cert',

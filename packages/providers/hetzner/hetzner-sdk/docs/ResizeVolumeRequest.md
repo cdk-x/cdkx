@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { ResizeVolumeRequest } from '@cdkx-io/hetzner-sdk';
+import { ResizeVolumeRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ResizeVolumeRequest = {
   size,

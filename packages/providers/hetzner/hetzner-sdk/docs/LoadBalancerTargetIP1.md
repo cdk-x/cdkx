@@ -11,7 +11,7 @@ Configuration for an IP target. It is only possible to use the (Public or vSwitc
 ## Example
 
 ```typescript
-import { LoadBalancerTargetIP1 } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTargetIP1 } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerTargetIP1 = {
   ip,

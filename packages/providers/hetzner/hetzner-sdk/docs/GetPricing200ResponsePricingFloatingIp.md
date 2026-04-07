@@ -11,7 +11,7 @@ Price of [Floating IPs](#tag/floating-ips). **Deprecated**: This field is deprec
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricingFloatingIp } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricingFloatingIp } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingFloatingIp = {
   price_monthly,

@@ -12,7 +12,7 @@ If issuance or renewal reports `failed`, this property contains information abou
 ## Example
 
 ```typescript
-import { CertificateStatusError } from '@cdkx-io/hetzner-sdk';
+import { CertificateStatusError } from '@cdk-x/hetzner-sdk';
 
 const instance: CertificateStatusError = {
   code,

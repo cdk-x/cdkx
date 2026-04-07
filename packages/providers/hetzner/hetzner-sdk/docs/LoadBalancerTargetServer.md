@@ -11,7 +11,7 @@ Server where the traffic should be routed to. Only present for target type \"ser
 ## Example
 
 ```typescript
-import { LoadBalancerTargetServer } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerTargetServer } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerTargetServer = {
   id,

@@ -26,7 +26,7 @@ import {
   PrimaryIPActionsApi,
   Configuration,
   PrimaryIPActionsAssignRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPActionsApi(configuration);
@@ -83,7 +83,7 @@ import {
   PrimaryIPActionsApi,
   Configuration,
   ListFloatingIps200ResponseFloatingIpsInnerDnsPtrInner,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPActionsApi(configuration);
@@ -140,7 +140,7 @@ import {
   PrimaryIPActionsApi,
   Configuration,
   ListFloatingIps200ResponseFloatingIpsInnerProtection,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPActionsApi(configuration);
@@ -193,7 +193,7 @@ Returns a specific [Action](#tag/actions) for a [Primary IP](#tag/primary-ips).
 ### Example
 
 ```typescript
-import { PrimaryIPActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPActionsApi(configuration);
@@ -243,7 +243,7 @@ Returns a single [Action](#tag/actions).
 ### Example
 
 ```typescript
-import { PrimaryIPActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPActionsApi(configuration);
@@ -291,7 +291,7 @@ Returns all [Actions](#tag/actions) for a [Primary IP](#tag/primary-ips). Use th
 ### Example
 
 ```typescript
-import { PrimaryIPActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPActionsApi(configuration);
@@ -369,7 +369,7 @@ Lists multiple [Actions](#tag/actions). Use the provided URI parameters to modif
 ### Example
 
 ```typescript
-import { PrimaryIPActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPActionsApi(configuration);
@@ -447,7 +447,7 @@ Unassign a [Primary IP](#tag/primary-ips) from a resource. A [Server](#tag/serve
 ### Example
 
 ```typescript
-import { PrimaryIPActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { PrimaryIPActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new PrimaryIPActionsApi(configuration);

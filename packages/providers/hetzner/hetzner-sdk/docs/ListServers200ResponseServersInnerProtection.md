@@ -12,7 +12,7 @@ Protection configuration for the Server.
 ## Example
 
 ```typescript
-import { ListServers200ResponseServersInnerProtection } from '@cdkx-io/hetzner-sdk';
+import { ListServers200ResponseServersInnerProtection } from '@cdk-x/hetzner-sdk';
 
 const instance: ListServers200ResponseServersInnerProtection = {
   _delete,

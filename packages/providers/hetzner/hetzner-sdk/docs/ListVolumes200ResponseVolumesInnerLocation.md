@@ -18,7 +18,7 @@ Location of the Volume. Volume can only be attached to Servers in the same Locat
 ## Example
 
 ```typescript
-import { ListVolumes200ResponseVolumesInnerLocation } from '@cdkx-io/hetzner-sdk';
+import { ListVolumes200ResponseVolumesInnerLocation } from '@cdk-x/hetzner-sdk';
 
 const instance: ListVolumes200ResponseVolumesInnerLocation = {
   id,

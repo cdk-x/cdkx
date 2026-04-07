@@ -13,7 +13,7 @@
 ## Example
 
 ```typescript
-import { ListNetworks200ResponseNetworksInnerSubnetsInner } from '@cdkx-io/hetzner-sdk';
+import { ListNetworks200ResponseNetworksInnerSubnetsInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListNetworks200ResponseNetworksInnerSubnetsInner = {
   type,

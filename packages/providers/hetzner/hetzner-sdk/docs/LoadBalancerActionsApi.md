@@ -35,7 +35,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   LoadBalancerService,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -92,7 +92,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   LoadBalancerTarget1,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -149,7 +149,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   AttachLoadBalancerToNetworkRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -206,7 +206,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   ChangeLoadBalancerAlgorithmRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -263,7 +263,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   ChangeLoadbalancerDnsPtrRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -320,7 +320,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   ChangeLoadBalancerProtectionRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -377,7 +377,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   ChangeTypeRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -434,7 +434,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   DeleteLoadBalancerServiceRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -491,7 +491,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   DetachLoadBalancerFromNetworkRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -544,7 +544,7 @@ Disable the public interface of a Load Balancer. The Load Balancer will be not a
 ### Example
 
 ```typescript
-import { LoadBalancerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -593,7 +593,7 @@ Enable the public interface of a Load Balancer. The Load Balancer will be access
 ### Example
 
 ```typescript
-import { LoadBalancerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -642,7 +642,7 @@ Returns a specific Action for a Load Balancer.
 ### Example
 
 ```typescript
-import { LoadBalancerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -692,7 +692,7 @@ Returns a specific Action object.
 ### Example
 
 ```typescript
-import { LoadBalancerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -740,7 +740,7 @@ Returns all Action objects for a Load Balancer. You can sort the results by usin
 ### Example
 
 ```typescript
-import { LoadBalancerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -818,7 +818,7 @@ Returns all Action objects. You can `sort` the results by using the sort URI par
 ### Example
 
 ```typescript
-import { LoadBalancerActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -900,7 +900,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   RemoveTargetRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);
@@ -957,7 +957,7 @@ import {
   LoadBalancerActionsApi,
   Configuration,
   UpdateLoadBalancerService,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new LoadBalancerActionsApi(configuration);

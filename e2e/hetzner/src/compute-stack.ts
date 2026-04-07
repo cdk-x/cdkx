@@ -1,4 +1,4 @@
-import { App, Stack, IResolvable, StackOutput } from '@cdkx-io/core';
+import { App, Stack, IResolvable, StackOutput } from '@cdk-x/core';
 import {
   HtzFloatingIpAssignment,
   HtzLoadBalancerService,
@@ -13,7 +13,7 @@ import {
   Location,
   PlacementGroupType,
   ServerType,
-} from '@cdkx-io/hetzner';
+} from '@cdk-x/hetzner';
 
 export interface ComputeStackProps {
   /** Token that resolves to the Hetzner network ID at deploy time. */

@@ -11,7 +11,7 @@ Algorithm of the Load Balancer.
 ## Example
 
 ```typescript
-import { LoadBalancerAlgorithm } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerAlgorithm } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerAlgorithm = {
   type,

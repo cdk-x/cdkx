@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { RequestServerConsole201Response } from '@cdkx-io/hetzner-sdk';
+import { RequestServerConsole201Response } from '@cdk-x/hetzner-sdk';
 
 const instance: RequestServerConsole201Response = {
   wss_url,

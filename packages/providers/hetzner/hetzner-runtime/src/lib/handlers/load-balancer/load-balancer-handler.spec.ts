@@ -1,5 +1,5 @@
-import { RuntimeLogger } from '@cdkx-io/core';
-import { LoadBalancerAlgorithmType, LoadBalancerType } from '@cdkx-io/hetzner';
+import { RuntimeLogger } from '@cdk-x/core';
+import { LoadBalancerAlgorithmType, LoadBalancerType } from '@cdk-x/hetzner';
 import {
   HetznerLoadBalancerHandler,
   HetznerLoadBalancerState,

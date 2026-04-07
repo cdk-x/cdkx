@@ -16,7 +16,7 @@ Returns a specific ISO object.
 ### Example
 
 ```typescript
-import { ISOsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ISOsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ISOsApi(configuration);
@@ -64,7 +64,7 @@ Returns all available ISO objects.
 ### Example
 
 ```typescript
-import { ISOsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ISOsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ISOsApi(configuration);

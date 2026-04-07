@@ -15,7 +15,7 @@ Configuration option for protocols http and https.
 ## Example
 
 ```typescript
-import { LoadBalancerServiceHTTP1 } from '@cdkx-io/hetzner-sdk';
+import { LoadBalancerServiceHTTP1 } from '@cdk-x/hetzner-sdk';
 
 const instance: LoadBalancerServiceHTTP1 = {
   cookie_name,

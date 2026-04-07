@@ -1,5 +1,5 @@
-import type { RuntimeLogger } from '@cdkx-io/core';
-import { RuntimeAdapter } from '@cdkx-io/engine';
+import type { RuntimeLogger } from '@cdk-x/core';
+import { RuntimeAdapter } from '@cdk-x/engine';
 import {
   HetznerRuntimeAdapterFactory,
   HetznerRuntimeAdapterFactoryDeps,

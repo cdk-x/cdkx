@@ -96,12 +96,12 @@ The skill supports three modes based on user input:
 | Scope          | Package                 | Directory Pattern                                                                      | When to use                         |
 | -------------- | ----------------------- | -------------------------------------------------------------------------------------- | ----------------------------------- |
 | `cdkx`         | Repo-level              | Root configs (`opencode.json`, `nx.json`, `.github/`, `.vscode/`, root `package.json`) | Root configs and repo-level changes |
-| `core`         | `@cdkx-io/core`         | `packages/core/**`                                                                     | Core package changes                |
-| `cli`          | `@cdkx-io/cli`          | `packages/cli/**`                                                                      | CLI package changes                 |
-| `engine`       | `@cdkx-io/engine`       | `packages/engine/**`                                                                   | Engine package changes              |
-| `testing`      | `@cdkx-io/testing`      | `packages/testing/**`                                                                  | Testing package changes             |
-| `hetzner`      | `@cdkx-io/hetzner`      | `packages/providers/hetzner/**`                                                        | Hetzner provider changes            |
-| `spec-to-cdkx` | `@cdkx-io/spec-to-cdkx` | `packages/tools/spec-to-cdkx/**`                                                       | Spec-to-cdkx tool changes           |
+| `core`         | `@cdk-x/core`         | `packages/core/**`                                                                     | Core package changes                |
+| `cli`          | `@cdk-x/cli`          | `packages/cli/**`                                                                      | CLI package changes                 |
+| `engine`       | `@cdk-x/engine`       | `packages/engine/**`                                                                   | Engine package changes              |
+| `testing`      | `@cdk-x/testing`      | `packages/testing/**`                                                                  | Testing package changes             |
+| `hetzner`      | `@cdk-x/hetzner`      | `packages/providers/hetzner/**`                                                        | Hetzner provider changes            |
+| `spec-to-cdkx` | `@cdk-x/spec-to-cdkx` | `packages/tools/spec-to-cdkx/**`                                                       | Spec-to-cdkx tool changes           |
 
 **Rule:** If changes affect multiple packages → **one commit per scope**.
 

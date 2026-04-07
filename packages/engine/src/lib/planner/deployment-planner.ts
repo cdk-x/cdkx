@@ -1,4 +1,4 @@
-import { CycleDetector } from '@cdkx-io/core';
+import { CycleDetector } from '@cdk-x/core';
 import type {
   AssemblyResource,
   AssemblyStack,

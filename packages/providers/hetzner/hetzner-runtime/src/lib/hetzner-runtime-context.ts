@@ -1,4 +1,4 @@
-import { RuntimeContext, RuntimeLogger } from '@cdkx-io/core';
+import { RuntimeContext, RuntimeLogger } from '@cdk-x/core';
 import { HetznerSdk } from './hetzner-sdk-facade';
 
 /**

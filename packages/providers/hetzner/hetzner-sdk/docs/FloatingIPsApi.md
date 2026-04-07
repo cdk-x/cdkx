@@ -23,7 +23,7 @@ import {
   FloatingIPsApi,
   Configuration,
   FloatingIPCreateRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPsApi(configuration);
@@ -73,7 +73,7 @@ Deletes a [Floating IP](#tag/floating-ips). If assigned to a [Server](#tag/serve
 ### Example
 
 ```typescript
-import { FloatingIPsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FloatingIPsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPsApi(configuration);
@@ -121,7 +121,7 @@ Returns a single [Floating IP](#tag/floating-ips).
 ### Example
 
 ```typescript
-import { FloatingIPsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FloatingIPsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPsApi(configuration);
@@ -169,7 +169,7 @@ List multiple [Floating IPs](#tag/floating-ips). Use the provided URI parameters
 ### Example
 
 ```typescript
-import { FloatingIPsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { FloatingIPsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPsApi(configuration);
@@ -237,7 +237,7 @@ import {
   FloatingIPsApi,
   Configuration,
   FloatingIPUpdateRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new FloatingIPsApi(configuration);

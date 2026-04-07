@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { GetLoadBalancerType200Response } from '@cdkx-io/hetzner-sdk';
+import { GetLoadBalancerType200Response } from '@cdk-x/hetzner-sdk';
 
 const instance: GetLoadBalancerType200Response = {
   load_balancer_type,

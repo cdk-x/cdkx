@@ -16,7 +16,7 @@ Service health check.
 ## Example
 
 ```typescript
-import { UpdateLoadBalancerServiceHealthCheck } from '@cdkx-io/hetzner-sdk';
+import { UpdateLoadBalancerServiceHealthCheck } from '@cdk-x/hetzner-sdk';
 
 const instance: UpdateLoadBalancerServiceHealthCheck = {
   protocol,

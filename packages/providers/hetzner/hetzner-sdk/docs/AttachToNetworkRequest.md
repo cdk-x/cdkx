@@ -12,7 +12,7 @@
 ## Example
 
 ```typescript
-import { AttachToNetworkRequest } from '@cdkx-io/hetzner-sdk';
+import { AttachToNetworkRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: AttachToNetworkRequest = {
   network,

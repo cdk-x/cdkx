@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { FloatingIPActionsAssignRequest } from '@cdkx-io/hetzner-sdk';
+import { FloatingIPActionsAssignRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: FloatingIPActionsAssignRequest = {
   server,

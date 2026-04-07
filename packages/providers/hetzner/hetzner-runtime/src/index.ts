@@ -1,4 +1,4 @@
-// @cdkx-io/hetzner-runtime public API
+// @cdk-x/hetzner-runtime public API
 export {
   HetznerSdkFactory,
   type HetznerSdk,

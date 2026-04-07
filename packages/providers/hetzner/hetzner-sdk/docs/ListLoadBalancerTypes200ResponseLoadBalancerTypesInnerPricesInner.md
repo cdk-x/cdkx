@@ -13,7 +13,7 @@
 ## Example
 
 ```typescript
-import { ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInner } from '@cdkx-io/hetzner-sdk';
+import { ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInner } from '@cdk-x/hetzner-sdk';
 
 const instance: ListLoadBalancerTypes200ResponseLoadBalancerTypesInnerPricesInner =
   {

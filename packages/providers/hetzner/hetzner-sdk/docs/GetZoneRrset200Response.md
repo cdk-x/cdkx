@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { GetZoneRrset200Response } from '@cdkx-io/hetzner-sdk';
+import { GetZoneRrset200Response } from '@cdk-x/hetzner-sdk';
 
 const instance: GetZoneRrset200Response = {
   rrset,

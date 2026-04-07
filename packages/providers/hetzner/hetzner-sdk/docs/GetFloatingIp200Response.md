@@ -9,7 +9,7 @@
 ## Example
 
 ```typescript
-import { GetFloatingIp200Response } from '@cdkx-io/hetzner-sdk';
+import { GetFloatingIp200Response } from '@cdk-x/hetzner-sdk';
 
 const instance: GetFloatingIp200Response = {
   floating_ip,

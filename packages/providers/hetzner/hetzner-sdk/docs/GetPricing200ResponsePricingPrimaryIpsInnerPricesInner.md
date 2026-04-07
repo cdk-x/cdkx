@@ -11,7 +11,7 @@
 ## Example
 
 ```typescript
-import { GetPricing200ResponsePricingPrimaryIpsInnerPricesInner } from '@cdkx-io/hetzner-sdk';
+import { GetPricing200ResponsePricingPrimaryIpsInnerPricesInner } from '@cdk-x/hetzner-sdk';
 
 const instance: GetPricing200ResponsePricingPrimaryIpsInnerPricesInner = {
   location,

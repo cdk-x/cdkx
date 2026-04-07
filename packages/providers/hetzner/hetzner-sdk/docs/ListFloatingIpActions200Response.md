@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { ListFloatingIpActions200Response } from '@cdkx-io/hetzner-sdk';
+import { ListFloatingIpActions200Response } from '@cdk-x/hetzner-sdk';
 
 const instance: ListFloatingIpActions200Response = {
   actions,

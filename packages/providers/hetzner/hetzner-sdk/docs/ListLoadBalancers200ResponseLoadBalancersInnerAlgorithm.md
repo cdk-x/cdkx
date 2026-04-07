@@ -11,7 +11,7 @@ Algorithm of the Load Balancer.
 ## Example
 
 ```typescript
-import { ListLoadBalancers200ResponseLoadBalancersInnerAlgorithm } from '@cdkx-io/hetzner-sdk';
+import { ListLoadBalancers200ResponseLoadBalancersInnerAlgorithm } from '@cdk-x/hetzner-sdk';
 
 const instance: ListLoadBalancers200ResponseLoadBalancersInnerAlgorithm = {
   type,

@@ -3,7 +3,7 @@
 `HtzLoadBalancerService` manages a listener on a [Hetzner Cloud Load Balancer](https://docs.hetzner.com/cloud/load-balancers/overview). Each service defines a port the load balancer listens on, the protocol it uses, an optional health check, and optional HTTP-specific settings.
 
 **Type:** `Hetzner::Compute::LoadBalancerService`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -80,8 +80,8 @@ The service does not have a standalone resource ID — it is identified by the c
 ## Create example — TCP listener
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="9 10 11 12 13 14"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzLoadBalancer, HtzLoadBalancerService, LoadBalancerType, LoadBalancerServiceProtocol, NetworkZone } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzLoadBalancer, HtzLoadBalancerService, LoadBalancerType, LoadBalancerServiceProtocol, NetworkZone } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'LbStack');
@@ -109,7 +109,7 @@ app.synth();
 ## Create example — HTTPS with health check
 
 ```typescript linenums="1" hl_lines="5 6 7 8 9 10 11 12 13 14 15 16 17 18"
-import { HtzCertificate, HtzLoadBalancerService, CertificateType, LoadBalancerServiceProtocol } from '@cdkx-io/hetzner';
+import { HtzCertificate, HtzLoadBalancerService, CertificateType, LoadBalancerServiceProtocol } from '@cdk-x/hetzner';
 
 const cert = new HtzCertificate(stack, 'Cert', {
   name: 'my-cert',

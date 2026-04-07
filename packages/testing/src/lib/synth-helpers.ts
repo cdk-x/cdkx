@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { App, ProviderResource } from '@cdkx-io/core';
+import { App, ProviderResource } from '@cdk-x/core';
 
 /**
  * Common utilities for synthesis tests.

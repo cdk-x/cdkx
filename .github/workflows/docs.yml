@@ -45,7 +45,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Generate TypeDoc API reference
-        run: npx nx run-many -t docs --projects=@cdkx-io/core,@cdkx-io/hetzner
+        run: npx nx run-many -t docs --projects=@cdk-x/core,@cdk-x/hetzner
 
       - name: Copy TypeDoc into docs directory
         run: |

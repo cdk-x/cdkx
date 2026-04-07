@@ -16,7 +16,7 @@ Returns a specific Action object.
 ### Example
 
 ```typescript
-import { ActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ActionsApi(configuration);
@@ -64,7 +64,7 @@ Returns multiple Action objects specified by the `id` parameter. **Note**: This 
 ### Example
 
 ```typescript
-import { ActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ActionsApi(configuration);

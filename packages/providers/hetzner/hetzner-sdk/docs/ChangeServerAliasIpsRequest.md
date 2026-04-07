@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { ChangeServerAliasIpsRequest } from '@cdkx-io/hetzner-sdk';
+import { ChangeServerAliasIpsRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ChangeServerAliasIpsRequest = {
   network,

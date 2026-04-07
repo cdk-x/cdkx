@@ -23,7 +23,7 @@ import {
   ImageActionsApi,
   Configuration,
   ChangeImageProtectionRequest,
-} from '@cdkx-io/hetzner-sdk';
+} from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ImageActionsApi(configuration);
@@ -76,7 +76,7 @@ Returns a specific Action for an Image.
 ### Example
 
 ```typescript
-import { ImageActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ImageActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ImageActionsApi(configuration);
@@ -126,7 +126,7 @@ Returns a specific Action object.
 ### Example
 
 ```typescript
-import { ImageActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ImageActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ImageActionsApi(configuration);
@@ -174,7 +174,7 @@ Returns all Action objects for an Image. You can sort the results by using the `
 ### Example
 
 ```typescript
-import { ImageActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ImageActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ImageActionsApi(configuration);
@@ -252,7 +252,7 @@ Returns all Action objects. You can `sort` the results by using the sort URI par
 ### Example
 
 ```typescript
-import { ImageActionsApi, Configuration } from '@cdkx-io/hetzner-sdk';
+import { ImageActionsApi, Configuration } from '@cdk-x/hetzner-sdk';
 
 const configuration = new Configuration();
 const apiInstance = new ImageActionsApi(configuration);

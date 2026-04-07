@@ -97,8 +97,8 @@ export class App extends Construct {
    * 3. Built-in `LazyResolver`
    * 4. Built-in `ImplicitTokenResolver`
    *
-   * This means a `@cdkx-io/github-actions` provider can register a resolver that turns
-   * `SecretRef` tokens into `${{ secrets.NAME }}` strings, while a `@cdkx-io/kubernetes`
+   * This means a `@cdk-x/github-actions` provider can register a resolver that turns
+   * `SecretRef` tokens into `${{ secrets.NAME }}` strings, while a `@cdk-x/kubernetes`
    * provider resolves the same token to `{ secretKeyRef: { name, key } }`.
    */
   public getResolverPipeline(provider: Provider): ResolverPipeline {

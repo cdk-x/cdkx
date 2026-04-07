@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { ChangeServerProtectionRequest } from '@cdkx-io/hetzner-sdk';
+import { ChangeServerProtectionRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: ChangeServerProtectionRequest = {
   _delete,

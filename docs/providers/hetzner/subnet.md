@@ -3,7 +3,7 @@
 `HtzSubnet` adds a subnet to an existing Hetzner Cloud network. Subnets carve out a CIDR block within the parent network and are bound to a network zone (region).
 
 **Type:** `Hetzner::Networking::Subnet`
-**Import:** `@cdkx-io/hetzner`
+**Import:** `@cdk-x/hetzner`
 
 ## Props
 
@@ -35,8 +35,8 @@
 ## Create example
 
 ```typescript title="src/main.ts" linenums="1" hl_lines="11 12 13"
-import { App, Stack } from '@cdkx-io/core';
-import { HtzNetwork, HtzSubnet, NetworkZone } from '@cdkx-io/hetzner';
+import { App, Stack } from '@cdk-x/core';
+import { HtzNetwork, HtzSubnet, NetworkZone } from '@cdk-x/hetzner';
 
 const app = new App();
 const stack = new Stack(app, 'NetworkStack');
@@ -64,7 +64,7 @@ app.synth();
 Servers that need to be on the private network reference the subnet's network ID:
 
 ```typescript linenums="1" hl_lines="7"
-import { HtzSubnet, HtzServer, ServerType, NetworkZone } from '@cdkx-io/hetzner';
+import { HtzSubnet, HtzServer, ServerType, NetworkZone } from '@cdk-x/hetzner';
 
 // subnet defined above ...
 

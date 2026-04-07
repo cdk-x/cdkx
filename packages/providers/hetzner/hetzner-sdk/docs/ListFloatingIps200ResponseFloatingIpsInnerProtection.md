@@ -11,7 +11,7 @@ Protection configuration for the Resource.
 ## Example
 
 ```typescript
-import { ListFloatingIps200ResponseFloatingIpsInnerProtection } from '@cdkx-io/hetzner-sdk';
+import { ListFloatingIps200ResponseFloatingIpsInnerProtection } from '@cdk-x/hetzner-sdk';
 
 const instance: ListFloatingIps200ResponseFloatingIpsInnerProtection = {
   _delete,

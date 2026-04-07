@@ -1,4 +1,4 @@
-import { ResourceHandler, RuntimeContext } from '@cdkx-io/core';
+import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 /**

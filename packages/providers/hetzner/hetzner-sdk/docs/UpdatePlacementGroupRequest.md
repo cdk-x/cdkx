@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { UpdatePlacementGroupRequest } from '@cdkx-io/hetzner-sdk';
+import { UpdatePlacementGroupRequest } from '@cdk-x/hetzner-sdk';
 
 const instance: UpdatePlacementGroupRequest = {
   name,

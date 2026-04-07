@@ -10,7 +10,7 @@
 ## Example
 
 ```typescript
-import { FirewallResponseAppliedToInnerAppliedToResourcesInner } from '@cdkx-io/hetzner-sdk';
+import { FirewallResponseAppliedToInnerAppliedToResourcesInner } from '@cdk-x/hetzner-sdk';
 
 const instance: FirewallResponseAppliedToInnerAppliedToResourcesInner = {
   type,
