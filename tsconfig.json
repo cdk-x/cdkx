@@ -26,6 +26,9 @@
     },
     {
       "path": "./packages/providers/hetzner/hetzner"
+    },
+    {
+      "path": "./packages/providers/ansible/ansible"
     }
   ]
 }

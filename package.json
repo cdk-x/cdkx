@@ -57,6 +57,7 @@
     "packages/*",
     "packages/tools/*",
     "packages/providers/hetzner/*",
-    "e2e/*"
+    "e2e/*",
+    "packages/providers/ansible/*"
   ]
 }
