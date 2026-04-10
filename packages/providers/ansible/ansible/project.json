@@ -1,0 +1,41 @@
+{
+  "name": "@cdk-x/ansible",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/providers/ansible/ansible/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/providers/ansible/ansible/dist",
+        "main": "packages/providers/ansible/ansible/src/index.ts",
+        "tsConfig": "packages/providers/ansible/ansible/tsconfig.lib.json",
+        "rootDir": "packages/providers/ansible/ansible/src"
+      }
+    },
+    "publish-local": {
+      "dependsOn": ["build"],
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["npm publish --registry http://localhost:4873"],
+        "cwd": "{projectRoot}/dist"
+      }
+    }
+  }
+}
