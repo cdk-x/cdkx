@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AnsibleTask",
+  "description": "Manages an Ansible Task — a single module invocation within a Play.",
+  "typeName": "Ansible::Content::Task",
+  "domain": "Content",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the Task."
+    },
+    "playId": {
+      "type": "string",
+      "description": "Reference to the parent Play."
+    },
+    "module": {
+      "type": "string",
+      "description": "Ansible module to invoke (e.g. apt, copy, template)."
+    },
+    "args": {
+      "type": "object",
+      "description": "Free-form arguments passed to the Ansible module."
+    },
+    "when": {
+      "type": "string",
+      "description": "Conditional expression that must evaluate to true for the task to run."
+    },
+    "notify": {
+      "type": "array",
+      "description": "List of handler names to notify when this task changes state.",
+      "items": { "type": "string" }
+    },
+    "register": {
+      "type": "string",
+      "description": "Variable name to store the task result in."
+    },
+    "tags": {
+      "type": "array",
+      "description": "Tags that can be used to selectively run or skip this task.",
+      "items": { "type": "string" }
+    },
+    "become": {
+      "type": "boolean",
+      "description": "Whether to run this task with privilege escalation (sudo)."
+    }
+  },
+  "required": ["name", "playId", "module"],
+  "primaryIdentifier": ["/properties/name"]
+}

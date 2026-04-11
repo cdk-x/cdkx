@@ -1,1 +1,1 @@
-export * from './lib/ansible.js';
+export * from './lib/generated';
