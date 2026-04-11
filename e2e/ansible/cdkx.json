@@ -1,0 +1,4 @@
+{
+  "app": "npx tsx src/main.ts",
+  "output": "cdkx.out"
+}

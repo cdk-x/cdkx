@@ -1,0 +1,20 @@
+{
+  "name": "ansible-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "synth": "cdkx synth",
+    "deploy": "cdkx deploy",
+    "destroy": "cdkx destroy"
+  },
+  "dependencies": {
+    "@cdk-x/core": "*",
+    "@cdk-x/hetzner": "*",
+    "@cdk-x/ansible": "*"
+  },
+  "devDependencies": {
+    "@cdk-x/cli": "*",
+    "typescript": "^5.0.0",
+    "tsx": "^4.0.0"
+  }
+}

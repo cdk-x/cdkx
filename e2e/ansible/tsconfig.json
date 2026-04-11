@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    {
+      "path": "../../packages/providers/ansible/ansible"
+    },
+    {
+      "path": "../../packages/providers/hetzner/hetzner"
+    },
+    {
+      "path": "../../packages/core"
+    },
+    {
+      "path": "../../packages/cli"
+    }
+  ]
+}
