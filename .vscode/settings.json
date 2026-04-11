@@ -9,7 +9,8 @@
     "hetzner-sdk",
     "hetzner-runtime",
     "spec-to-cdkx",
-    "ansible"
+    "ansible",
+    "e2e"
   ],
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
