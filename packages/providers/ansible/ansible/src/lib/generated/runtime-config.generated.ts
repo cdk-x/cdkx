@@ -37,6 +37,12 @@ export interface RuntimeResourceConfig {
  */
 export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
 
+  // Ansible::Inventory::Inventory
+  'Ansible::Inventory::Inventory': {
+    physicalIdKey: 'name',
+    createOnlyProps: new Set(),
+  },
+
   // Ansible::Execution::Play
   'Ansible::Execution::Play': {
     physicalIdKey: 'name',
@@ -45,6 +51,12 @@ export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
 
   // Ansible::Execution::Playbook
   'Ansible::Execution::Playbook': {
+    physicalIdKey: 'name',
+    createOnlyProps: new Set(),
+  },
+
+  // Ansible::Content::Role
+  'Ansible::Content::Role': {
     physicalIdKey: 'name',
     createOnlyProps: new Set(),
   },

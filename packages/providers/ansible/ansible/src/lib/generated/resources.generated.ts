@@ -14,6 +14,11 @@ import { Construct } from 'constructs';
  * Use these constants when constructing L1 resources to avoid typos.
  */
 export const AnsibleResourceType = {
+  /** Inventory resources. */
+  Inventory: {
+    /** `Ansible::Inventory::Inventory` */
+    Inventory: 'Ansible::Inventory::Inventory',
+  },
   /** Execution resources. */
   Execution: {
     /** `Ansible::Execution::Play` */
@@ -23,10 +28,84 @@ export const AnsibleResourceType = {
   },
   /** Content resources. */
   Content: {
+    /** `Ansible::Content::Role` */
+    Role: 'Ansible::Content::Role',
     /** `Ansible::Content::Task` */
     Task: 'Ansible::Content::Task',
   }
 } as const;
+
+// ==============================================================================
+// Inventory
+// ==============================================================================
+
+// --- Inventory ---
+/**
+ * Props for {@link AnsInventory}.
+ *
+ * Manages an Ansible Inventory — host list with token-aware hosts.
+ */
+export interface AnsibleInventory {
+  /**
+   * Name of the Inventory.
+   */
+  name: string;
+  /**
+   * Reference to the parent Playbook.
+   */
+  playbookId: string;
+  /**
+   * List of host addresses or IResolvable tokens (e.g. server IP attributes).
+   */
+  hosts?: (string | IResolvable)[];
+  /**
+   * Inventory group name.
+   */
+  group?: string;
+  /**
+   * Variables to apply to all hosts in this inventory.
+   */
+  vars?: Record<string, unknown>;
+}
+
+/**
+ * L1 construct for a Ansible Inventory resource.
+ *
+ * Manages an Ansible Inventory — host list with token-aware hosts.
+ */
+export class AnsInventory extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'Ansible::Inventory::Inventory';
+
+  public name: string;
+  public playbookId: string;
+  public hosts?: (string | IResolvable)[];
+  public group?: string;
+  public vars?: Record<string, unknown>;
+
+  constructor(scope: Construct, id: string, props: AnsibleInventory) {
+    super(scope, id, {
+      type: AnsInventory.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.name = props.name;
+    this.playbookId = props.playbookId;
+    this.hosts = props.hosts;
+    this.group = props.group;
+    this.vars = props.vars;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      name: this.name,
+      playbookId: this.playbookId,
+      hosts: this.hosts,
+      group: this.group,
+      vars: this.vars,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
 
 // ==============================================================================
 // Execution
@@ -150,6 +229,74 @@ export class AnsPlaybook extends ProviderResource {
 // ==============================================================================
 // Content
 // ==============================================================================
+
+// --- Role ---
+/**
+ * Props for {@link AnsRole}.
+ *
+ * Manages an Ansible Role — a reusable bundle (Galaxy or inline).
+ */
+export interface AnsibleRole {
+  /**
+   * Name of the Role.
+   */
+  name: string;
+  /**
+   * Reference to the parent Play.
+   */
+  playId: string;
+  /**
+   * Role source: 'galaxy' for a Galaxy role, 'inline' for tasks declared as child constructs.
+   */
+  source: string;
+  /**
+   * Galaxy role version. Omit to resolve to latest at deploy-time.
+   */
+  version?: string;
+  /**
+   * Variables to pass to the role.
+   */
+  vars?: Record<string, unknown>;
+}
+
+/**
+ * L1 construct for a Ansible Role resource.
+ *
+ * Manages an Ansible Role — a reusable bundle (Galaxy or inline).
+ */
+export class AnsRole extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'Ansible::Content::Role';
+
+  public name: string;
+  public playId: string;
+  public source: string;
+  public version?: string;
+  public vars?: Record<string, unknown>;
+
+  constructor(scope: Construct, id: string, props: AnsibleRole) {
+    super(scope, id, {
+      type: AnsRole.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.name = props.name;
+    this.playId = props.playId;
+    this.source = props.source;
+    this.version = props.version;
+    this.vars = props.vars;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      name: this.name,
+      playId: this.playId,
+      source: this.source,
+      version: this.version,
+      vars: this.vars,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
 
 // --- Task ---
 /**
