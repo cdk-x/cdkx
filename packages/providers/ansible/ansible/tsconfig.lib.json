@@ -17,6 +17,9 @@
       "path": "../../../core/tsconfig.lib.json"
     },
     {
+      "path": "../../../testing/tsconfig.lib.json"
+    },
+    {
       "path": "../../../tools/spec-to-cdkx/tsconfig.lib.json"
     }
   ],
