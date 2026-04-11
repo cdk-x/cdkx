@@ -36,6 +36,19 @@
         "commands": ["npm publish --registry http://localhost:4873"],
         "cwd": "{projectRoot}/dist"
       }
+    },
+    "codegen": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "spec-to-cdkx generate --prefix Ans --provider-name Ansible --resource-type-const AnsibleResourceType --runtime-config-output src/lib/generated/runtime-config.generated.ts",
+        "cwd": "{projectRoot}"
+      },
+      "dependsOn": [
+        {
+          "projects": ["@cdk-x/spec-to-cdkx"],
+          "target": "build"
+        }
+      ]
     }
   }
 }
