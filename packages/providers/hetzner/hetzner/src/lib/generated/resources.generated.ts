@@ -1712,6 +1712,11 @@ export class HtzServer extends ProviderResource {
    * Resolves to `{ ref: logicalId, attr: 'serverId' }` at synthesis time.
    */
   public readonly attrServerId: IResolvable;
+  /**
+   * The `publicIpv4` attribute of this resource.
+   * Resolves to `{ ref: logicalId, attr: 'publicIpv4' }` at synthesis time.
+   */
+  public readonly attrPublicIpv4: IResolvable;
 
   public name: string;
   public location?: Location;
@@ -1735,6 +1740,7 @@ export class HtzServer extends ProviderResource {
     });
     this.node.defaultChild = this;
     this.attrServerId = this.getAtt('serverId');
+    this.attrPublicIpv4 = this.getAtt('publicIpv4');
     this.name = props.name;
     this.location = props.location;
     this.datacenter = props.datacenter;
