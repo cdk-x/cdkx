@@ -1,13 +1,58 @@
 import { App, Stack } from '@cdk-x/core';
 import { SynthHelpers } from '@cdk-x/testing';
 import { AnsibleProvider } from './provider';
-import { AnsPlay, AnsPlaybook, AnsTask } from '../generated';
+import { AnsInventory, AnsPlay, AnsPlaybook, AnsRole, AnsTask } from '../generated';
 
 describe('AnsibleProvider', () => {
   it('has identifier "ansible"', () => {
     const provider = new AnsibleProvider();
 
     expect(provider.identifier).toBe('ansible');
+  });
+
+  it('serializes AnsRole source and version in the JSON manifest', () => {
+    const app = new App({ outdir: SynthHelpers.tmpDir() });
+    const stack = new Stack(app, 'AnsStack');
+
+    const play = new AnsPlay(stack, 'MyPlay', {
+      name: 'common',
+      playbookId: 'some-playbook-id',
+      hosts: 'all',
+    });
+    new AnsRole(stack, 'MyRole', {
+      name: 'nginx',
+      playId: play.logicalId,
+      source: 'galaxy',
+      version: '1.2.3',
+    });
+
+    const snapshot = SynthHelpers.synthSnapshot(app, 'AnsStack');
+    const resources = SynthHelpers.resourceValues(snapshot);
+    const role = resources.find((r) => r.type === 'Ansible::Content::Role');
+
+    expect(role).toBeDefined();
+    expect(role!.properties['source']).toBe('galaxy');
+    expect(role!.properties['version']).toBe('1.2.3');
+  });
+
+  it('serializes AnsInventory hosts array in the JSON manifest', () => {
+    const app = new App({ outdir: SynthHelpers.tmpDir() });
+    const stack = new Stack(app, 'AnsStack');
+
+    new AnsInventory(stack, 'MyInventory', {
+      name: 'prod',
+      playbookId: 'some-playbook-id',
+      hosts: ['10.0.0.1', '10.0.0.2'],
+    });
+
+    const snapshot = SynthHelpers.synthSnapshot(app, 'AnsStack');
+    const resources = SynthHelpers.resourceValues(snapshot);
+    const inventory = resources.find(
+      (r) => r.type === 'Ansible::Inventory::Inventory',
+    );
+
+    expect(inventory).toBeDefined();
+    expect(inventory!.properties['hosts']).toEqual(['10.0.0.1', '10.0.0.2']);
   });
 
   it('synthesizes a stack with playbook, play and two tasks', () => {
