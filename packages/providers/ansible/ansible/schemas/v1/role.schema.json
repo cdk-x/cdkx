@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AnsibleRole",
+  "description": "Manages an Ansible Role — a reusable bundle (Galaxy or inline).",
+  "typeName": "Ansible::Content::Role",
+  "domain": "Content",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Role."
+    },
+    "playId": {
+      "type": "string",
+      "description": "Reference to the parent Play."
+    },
+    "source": {
+      "type": "string",
+      "description": "Role source: 'galaxy' for a Galaxy role, 'inline' for tasks declared as child constructs."
+    },
+    "version": {
+      "type": "string",
+      "description": "Galaxy role version. Omit to resolve to latest at deploy-time."
+    },
+    "vars": {
+      "type": "object",
+      "description": "Variables to pass to the role."
+    }
+  },
+  "required": ["name", "playId", "source"],
+  "primaryIdentifier": ["/properties/name"]
+}

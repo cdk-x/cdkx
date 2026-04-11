@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AnsibleInventory",
+  "description": "Manages an Ansible Inventory — host list with token-aware hosts.",
+  "typeName": "Ansible::Inventory::Inventory",
+  "domain": "Inventory",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Inventory."
+    },
+    "playbookId": {
+      "type": "string",
+      "description": "Reference to the parent Playbook."
+    },
+    "hosts": {
+      "type": "array",
+      "description": "List of host addresses or IResolvable tokens (e.g. server IP attributes).",
+      "items": { "type": "string" }
+    },
+    "group": {
+      "type": "string",
+      "description": "Inventory group name."
+    },
+    "vars": {
+      "type": "object",
+      "description": "Variables to apply to all hosts in this inventory."
+    }
+  },
+  "required": ["name", "playbookId"],
+  "primaryIdentifier": ["/properties/name"]
+}
