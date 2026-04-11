@@ -1,5 +1,6 @@
 import { App, Stack } from '@cdk-x/core';
 import { SynthHelpers } from '@cdk-x/testing';
+import { HtzServer, ServerType } from '@cdk-x/hetzner';
 import { AnsibleProvider } from './provider';
 import { AnsInventory, AnsPlay, AnsPlaybook, AnsRole, AnsTask } from '../generated';
 
@@ -53,6 +54,79 @@ describe('AnsibleProvider', () => {
 
     expect(inventory).toBeDefined();
     expect(inventory!.properties['hosts']).toEqual(['10.0.0.1', '10.0.0.2']);
+  });
+
+  it('serializes AnsInventory hosts as a cross-resource ref token', () => {
+    const app = new App({ outdir: SynthHelpers.tmpDir() });
+    const stack = new Stack(app, 'AnsStack');
+
+    const server = new HtzServer(stack, 'MyServer', {
+      name: 'web-01',
+      serverType: ServerType.CX22,
+      image: 'ubuntu-24.04',
+    });
+    const playbook = new AnsPlaybook(stack, 'MyPlaybook', { name: 'site' });
+    new AnsInventory(stack, 'MyInventory', {
+      name: 'prod',
+      playbookId: playbook.logicalId,
+      hosts: [server.attrPublicIpv4],
+    });
+
+    const snapshot = SynthHelpers.synthSnapshot(app, 'AnsStack');
+    const resources = SynthHelpers.resourceValues(snapshot);
+    const inventory = resources.find(
+      (r) => r.type === 'Ansible::Inventory::Inventory',
+    );
+
+    expect(inventory).toBeDefined();
+    const hosts = inventory!.properties['hosts'] as unknown[];
+    expect(hosts).toHaveLength(1);
+    expect(hosts[0]).toEqual({ ref: server.logicalId, attr: 'publicIpv4' });
+  });
+
+  it('produces dependsOn when task2 depends on task1', () => {
+    const app = new App({ outdir: SynthHelpers.tmpDir() });
+    const stack = new Stack(app, 'AnsStack');
+
+    const play = new AnsPlay(stack, 'MyPlay', {
+      name: 'common',
+      playbookId: 'some-id',
+      hosts: 'all',
+    });
+    const task1 = new AnsTask(stack, 'Task1', {
+      name: 'install nginx',
+      playId: play.logicalId,
+      module: 'apt',
+    });
+    const task2 = new AnsTask(stack, 'Task2', {
+      name: 'start nginx',
+      playId: play.logicalId,
+      module: 'service',
+    });
+    task2.addDependency(task1);
+
+    const snapshot = SynthHelpers.synthSnapshot(app, 'AnsStack');
+    const resources = snapshot['resources'] as Record<
+      string,
+      { type: string; dependsOn?: string[] }
+    >;
+    const task2Entry = resources[task2.logicalId];
+
+    expect(task2Entry.dependsOn).toContain(task1.logicalId);
+  });
+
+  it('allows cross-provider dependency from AnsPlaybook to HtzServer', () => {
+    const app = new App({ outdir: SynthHelpers.tmpDir() });
+    const stack = new Stack(app, 'AnsStack');
+
+    const server = new HtzServer(stack, 'MyServer', {
+      name: 'web-01',
+      serverType: ServerType.CX22,
+      image: 'ubuntu-24.04',
+    });
+    const playbook = new AnsPlaybook(stack, 'MyPlaybook', { name: 'site' });
+
+    expect(() => playbook.addDependency(server)).not.toThrow();
   });
 
   it('synthesizes a stack with playbook, play and two tasks', () => {
