@@ -150,6 +150,6 @@
     "/properties/automount",
     "/properties/publicNet"
   ],
-  "readOnlyProperties": ["/properties/serverId"],
+  "readOnlyProperties": ["/properties/serverId", "/properties/publicIpv4"],
   "primaryIdentifier": ["/properties/serverId"]
 }
