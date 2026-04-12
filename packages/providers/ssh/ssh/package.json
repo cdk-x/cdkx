@@ -20,7 +20,14 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
+    "@cdk-x/core": "^0.2.0",
     "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@cdk-x/testing": "^0.2.0"
+  },
+  "peerDependencies": {
+    "constructs": "^10.4.2"
   },
   "publishConfig": {
     "access": "public"

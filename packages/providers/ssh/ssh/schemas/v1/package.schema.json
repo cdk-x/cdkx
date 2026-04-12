@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SshPackage",
+  "description": "Ensures an OS package is installed on the target host declared by the referenced Runbook.",
+  "typeName": "SSH::System::Package",
+  "domain": "System",
+  "additionalProperties": false,
+  "properties": {
+    "packageName": {
+      "type": "string",
+      "description": "Name of the OS package to install (e.g. 'nginx')."
+    },
+    "runbookId": {
+      "type": "string",
+      "description": "executionId of the SSH::Exec::Runbook that owns this task."
+    },
+    "host": {
+      "type": "string",
+      "description": "SSH host — resolved from Runbook via attrHost."
+    },
+    "port": {
+      "type": "integer",
+      "description": "SSH port — resolved from Runbook via attrPort."
+    },
+    "user": {
+      "type": "string",
+      "description": "SSH username — resolved from Runbook via attrUser."
+    },
+    "privateKeyPath": {
+      "type": "string",
+      "description": "Private key path — resolved from Runbook via attrPrivateKeyPath."
+    },
+    "executionId": {
+      "type": "string",
+      "description": "Unique identifier assigned by the runtime on create."
+    }
+  },
+  "required": ["packageName", "runbookId", "host", "user", "privateKeyPath"],
+  "readOnlyProperties": ["/properties/executionId"],
+  "primaryIdentifier": ["/properties/executionId"]
+}

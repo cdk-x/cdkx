@@ -28,6 +28,19 @@
         "command": "prettier --check \"{projectRoot}/src/**/*.{ts,json,md}\"",
         "cwd": "{workspaceRoot}"
       }
+    },
+    "codegen": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "spec-to-cdkx generate --prefix Ssh --provider-name SSH --resource-type-const SshResourceType --runtime-config-output src/lib/generated/runtime-config.generated.ts",
+        "cwd": "{projectRoot}"
+      },
+      "dependsOn": [
+        {
+          "projects": ["@cdk-x/spec-to-cdkx"],
+          "target": "build"
+        }
+      ]
     }
   }
 }

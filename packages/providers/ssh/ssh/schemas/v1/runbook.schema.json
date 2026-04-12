@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SshRunbook",
+  "description": "Declares an SSH target host. Validates connectivity on create and exposes connection attributes to dependent task resources.",
+  "typeName": "SSH::Exec::Runbook",
+  "domain": "Exec",
+  "additionalProperties": false,
+  "properties": {
+    "runbookId": {
+      "type": "string",
+      "description": "Unique identifier assigned by the runtime on create."
+    },
+    "host": {
+      "type": "string",
+      "description": "Hostname or IP address of the remote machine."
+    },
+    "port": {
+      "type": "integer",
+      "description": "SSH port. Defaults to 22.",
+      "default": 22
+    },
+    "user": {
+      "type": "string",
+      "description": "SSH username."
+    },
+    "privateKeyPath": {
+      "type": "string",
+      "description": "Absolute path to the private key file on the machine running cdkx deploy."
+    },
+    "executionId": {
+      "type": "string",
+      "description": "Unique identifier assigned by the runtime on create."
+    }
+  },
+  "required": ["runbookId", "host", "user", "privateKeyPath"],
+  "createOnlyProperties": [
+    "/properties/runbookId",
+    "/properties/host",
+    "/properties/user",
+    "/properties/privateKeyPath"
+  ],
+  "readOnlyProperties": [
+    "/properties/executionId",
+    "/properties/privateKeyPath"
+  ],
+  "primaryIdentifier": ["/properties/executionId"]
+}
