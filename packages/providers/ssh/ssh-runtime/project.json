@@ -1,0 +1,33 @@
+{
+  "name": "@cdk-x/ssh-runtime",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/providers/ssh/ssh-runtime/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/providers/ssh/ssh-runtime/dist",
+        "main": "packages/providers/ssh/ssh-runtime/src/index.ts",
+        "tsConfig": "packages/providers/ssh/ssh-runtime/tsconfig.lib.json",
+        "rootDir": "packages/providers/ssh/ssh-runtime/src"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}
