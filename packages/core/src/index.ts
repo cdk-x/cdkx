@@ -38,3 +38,6 @@ export * from './lib/runtime';
 
 // Config: CdkxConfig interface (shared between engine and CLI)
 export * from './lib/config';
+
+// Asset: file bundling construct
+export * from './lib/asset';
