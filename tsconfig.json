@@ -36,6 +36,15 @@
     },
     {
       "path": "./packages/providers/multipass/multipass-runtime"
+    },
+    {
+      "path": "./packages/providers/ssh/ssh-sdk"
+    },
+    {
+      "path": "./packages/providers/ssh/ssh"
+    },
+    {
+      "path": "./packages/providers/ssh/ssh-runtime"
     }
   ]
 }

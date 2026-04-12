@@ -55,6 +55,19 @@
   ],
   "release": {
     "projectsRelationship": "fixed",
+    "projects": [
+      "@cdk-x/core",
+      "@cdk-x/engine",
+      "@cdk-x/testing",
+      "@cdk-x/hetzner",
+      "@cdk-x/hetzner-sdk",
+      "@cdk-x/hetzner-runtime",
+      "@cdk-x/ssh",
+      "@cdk-x/ssh-sdk",
+      "@cdk-x/ssh-runtime",
+      "@cdk-x/cli",
+      "@cdk-x/spec-to-cdkx"
+    ],
     "releaseTag": {
       "pattern": "v{version}"
     },
