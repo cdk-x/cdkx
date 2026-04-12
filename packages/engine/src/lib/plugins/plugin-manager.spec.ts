@@ -28,6 +28,40 @@ describe('PluginManager', () => {
       const ids = PluginManager.registeredProviders();
       expect(ids).toContain('hetzner');
     });
+
+    it('includes ssh', () => {
+      expect(PluginManager.registeredProviders()).toContain('ssh');
+    });
+  });
+
+  describe('buildAdapters — ssh provider', () => {
+    it('resolves ssh to @cdk-x/ssh-runtime', () => {
+      let loadedPackage: string | undefined;
+      const fakeModule = {
+        AdapterFactory: class implements ProviderAdapterFactory {
+          readonly providerId = 'ssh';
+          create(): ProviderAdapter {
+            return {
+              create: jest.fn(),
+              update: jest.fn(),
+              delete: jest.fn(),
+              getOutput: jest.fn(),
+            } as unknown as ProviderAdapter;
+          }
+        },
+      };
+
+      const manager = new PluginManager({
+        requireModule: (id: string) => {
+          loadedPackage = id;
+          return fakeModule;
+        },
+      });
+
+      manager.buildAdapters(['ssh'], {});
+
+      expect(loadedPackage).toBe('@cdk-x/ssh-runtime');
+    });
   });
 
   // ── buildAdapters — happy path ────────────────────────────────────

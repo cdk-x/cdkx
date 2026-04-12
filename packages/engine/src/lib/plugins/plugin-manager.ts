@@ -14,6 +14,7 @@ import type { ProviderAdapter, ProviderAdapterFactory } from '../adapter';
 const PROVIDER_PACKAGES: Readonly<Record<string, string>> = {
   hetzner: '@cdk-x/hetzner-runtime',
   multipass: '@cdk-x/multipass-runtime',
+  ssh: '@cdk-x/ssh-runtime',
 };
 
 // ─── Error ────────────────────────────────────────────────────────────────────
