@@ -192,6 +192,21 @@ export class ProviderResource extends Construct {
   }
 
   /**
+   * Returns the raw (pre-resolution) output data for this resource.
+   *
+   * Used by file-rendering synthesizers (e.g. `YamlFileSynthesizer`) as the
+   * output shape instead of `toJson()`. Unlike `toJson()`, no resolution or
+   * sanitization is applied — `{ ref, attr }` tokens remain as-is so that
+   * the synthesizer can inspect them for composition.
+   *
+   * Delegates to `renderProperties()`, so L1 subclasses that override
+   * `renderProperties()` automatically get the correct output here too.
+   */
+  public toOutputData(): unknown {
+    return this.renderProperties();
+  }
+
+  /**
    * Synthesizes this resource to a plain JSON-serializable object.
    *
    * Uses the resolver pipeline from the root `App` to resolve all `Lazy` values and
