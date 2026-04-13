@@ -132,6 +132,22 @@ export class ProviderResource extends Construct {
   }
 
   /**
+   * Returns an `IResolvable` that resolves to `{ ref: logicalId }` — a
+   * whole-object reference token used by file-rendering synthesizers
+   * (e.g. `YamlFileSynthesizer`) to compose this resource's full output
+   * into a parent resource's array field.
+   *
+   * Unlike `getAtt()`, no `attr` is included. The synthesizer resolves
+   * the token to the complete resolved data of the referenced resource.
+   */
+  public get ref(): IResolvable {
+    const logicalId = this.logicalId;
+    return {
+      resolve: () => ({ ref: logicalId }),
+    };
+  }
+
+  /**
    * Returns the properties object used during synthesis.
    *
    * The base implementation returns `this.properties` (the value passed to the
