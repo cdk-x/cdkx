@@ -1,23 +1,20 @@
-import { App, Stack, YamlFileSynthesizer } from '@cdk-x/core';
+import { Workspace, YamlFile } from '@cdk-x/core';
 import { MltConfig, MltInstance, MltMount, MltNetwork } from '@cdk-x/multipass';
 
-const app = new App();
+const workspace = new Workspace();
 
-const stack = new Stack(app, 'DevVMs', {
-  synthesizer: new YamlFileSynthesizer({
-    outputDir: '.',
-    fileName: 'multipass.yaml',
-  }),
+const multipass = new YamlFile(workspace, 'DevVMs', {
+  fileName: 'multipass.yaml',
 });
 
-const bridge = new MltNetwork(stack, 'Bridge', { name: 'bridge', mode: 'auto' });
+const bridge = new MltNetwork(multipass, 'Bridge', { name: 'bridge', mode: 'auto' });
 
-const codeMount = new MltMount(stack, 'CodeMount', {
+const codeMount = new MltMount(multipass, 'CodeMount', {
   source: '/Users/antonio/code',
   target: '/home/ubuntu/code',
 });
 
-const devVm = new MltInstance(stack, 'DevVm', {
+const devVm = new MltInstance(multipass, 'DevVm', {
   name: 'dev',
   image: 'jammy',
   cpus: 4,
@@ -27,8 +24,8 @@ const devVm = new MltInstance(stack, 'DevVm', {
   mounts: [codeMount.ref],
 });
 
-new MltConfig(stack, 'Config', {
+new MltConfig(multipass, 'Config', {
   instances: [devVm.ref],
 });
 
-app.synth();
+workspace.synth();
