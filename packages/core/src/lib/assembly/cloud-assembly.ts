@@ -5,10 +5,11 @@ import * as path from 'node:path';
 export const MANIFEST_VERSION = '1.0.0';
 
 /**
- * Artifact type discriminator. Currently only `'cdkx:stack'` is defined.
- * Future types may include `'cdkx:asset-manifest'`, `'cdkx:tree'`, etc.
+ * Artifact type discriminator.
+ * - `'cdkx:stack'` — a cloud-deploy stack (JSON template, processed by the engine).
+ * - `'cdkx:local-files'` — a file-rendering stack (YAML files written to the repo, not deployed).
  */
-export type ArtifactType = 'cdkx:stack';
+export type ArtifactType = 'cdkx:stack' | 'cdkx:local-files';
 
 /**
  * Describes a single stack artifact in the synthesis output.
@@ -96,6 +97,12 @@ export interface AddArtifactOptions {
    * template. When present, the engine uses these to order deployment waves.
    */
   readonly dependencies?: string[];
+
+  /**
+   * Artifact type. Defaults to `'cdkx:stack'` when omitted.
+   * File-rendering synthesizers (e.g. `YamlFileSynthesizer`) pass `'cdkx:local-files'`.
+   */
+  readonly artifactType?: ArtifactType;
 }
 
 /**
@@ -138,7 +145,7 @@ export class CloudAssemblyBuilder {
       );
     }
     const artifact: StackArtifact = {
-      type: 'cdkx:stack',
+      type: options.artifactType ?? 'cdkx:stack',
       properties: { templateFile: options.templateFile },
       ...(options.displayName !== undefined
         ? { displayName: options.displayName }
