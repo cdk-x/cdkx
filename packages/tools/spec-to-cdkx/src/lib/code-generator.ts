@@ -306,6 +306,11 @@ export class CodeGenerator {
     _enums: Array<[string, JsonSchema]>,
   ): void {
     const { resourceName, description, properties, required } = resource;
+
+    // Skip emitting an empty props interface — it would trigger no-empty-interface lint errors.
+    // Resources with no writable properties use no props parameter at all (see emitL1Class).
+    if (Object.keys(properties).length === 0) return;
+
     const interfaceName = `${opts.providerName}${resourceName}`;
 
     if (description) {
@@ -415,12 +420,17 @@ export class CodeGenerator {
 
     if (writableProps.length > 0) lines.push('');
 
-    // Constructor — omit `= {}` default when any props are required
+    // Constructor — omit props parameter entirely when there are no writable props
+    // (avoids unused-vars lint error and empty-interface lint error on the props type).
+    // When there are writable props, omit the `= {}` default if any are required.
     const hasRequired = required.length > 0;
-    const propsArg = hasRequired
-      ? `props: ${propsInterface}`
-      : `props: ${propsInterface} = {}`;
-    lines.push(`  constructor(scope: Construct, id: string, ${propsArg}) {`);
+    const propsArg =
+      writableProps.length === 0
+        ? ''
+        : hasRequired
+          ? `, props: ${propsInterface}`
+          : `, props: ${propsInterface} = {}`;
+    lines.push(`  constructor(scope: Construct, id: string${propsArg}) {`);
     lines.push(`    super(scope, id, {`);
     lines.push(`      type: ${className}.RESOURCE_TYPE_NAME,`);
     lines.push(`    });`);

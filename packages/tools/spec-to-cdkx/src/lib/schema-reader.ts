@@ -173,6 +173,14 @@ export class SchemaReader {
       }
     }
 
+    // Pre-process whole-file array $refs (e.g. items: { $ref: "./vm.schema.json" }).
+    // Transforms them in-place to same-file refs (#/definitions/ResourceName) and
+    // injects the referenced schema's writable properties as a definition in globalDefs.
+    const injectedPerFile = SchemaReader.injectWholeFileArrayRefDefs(
+      parsed,
+      globalDefs,
+    );
+
     // Build ResourceSchema for each file that has a typeName.
     const results: ResourceSchema[] = [];
     for (const { file, basename, schema } of parsed) {
@@ -210,7 +218,11 @@ export class SchemaReader {
         }
       }
       // Capture the names of definitions that belong to THIS file before merging globals.
-      const localDefinitionNames = Object.keys(localDefs);
+      // Also include definitions injected from whole-file array $refs.
+      const localDefinitionNames = [
+        ...Object.keys(localDefs),
+        ...(injectedPerFile.get(basename) ?? []),
+      ];
       // Merge global defs that are referenced by this schema's properties.
       for (const [k, v] of Object.entries(globalDefs)) {
         if (!localDefs[k]) {
@@ -257,6 +269,90 @@ export class SchemaReader {
       const parts = p.split('/');
       return parts[parts.length - 1] ?? p;
     });
+  }
+
+  /**
+   * Pre-processes array properties whose `items.$ref` points to a whole schema
+   * file (e.g. `"./vm.schema.json"`, no `#` fragment).
+   *
+   * For each such ref:
+   * 1. Locates the referenced schema in `parsed`.
+   * 2. Builds a definition object from its writable properties (i.e. excluding
+   *    any listed in `readOnlyProperties`) and injects it into `globalDefs`
+   *    under the referenced schema's resource name (last segment of `typeName`).
+   * 3. Transforms the `items.$ref` in-place to a same-file ref
+   *    (`#/definitions/<ResourceName>`) so the existing resolution pipeline
+   *    picks it up correctly.
+   *
+   * Returns a map from schema basename → list of injected definition names,
+   * so callers can include those names in `localDefinitionNames`.
+   */
+  private static injectWholeFileArrayRefDefs(
+    parsed: Array<{ file: string; basename: string; schema: JsonSchema }>,
+    globalDefs: Record<string, JsonSchema>,
+  ): Map<string, string[]> {
+    const injectedPerFile = new Map<string, string[]>();
+    const byBasename = new Map(parsed.map((p) => [p.basename, p]));
+
+    for (const { basename, schema } of parsed) {
+      if (!schema.properties) continue;
+      const injectedForThis: string[] = [];
+
+      for (const prop of Object.values(schema.properties)) {
+        if (prop.type !== 'array') continue;
+        const items = prop.items;
+        if (!items?.$ref) continue;
+        const ref = items.$ref;
+
+        // Only handle whole-file refs — skip same-file (#/) and cross-file
+        // definition refs (containing #/).
+        if (ref.startsWith('#/') || ref.includes('#/')) continue;
+
+        const refBasename = path.basename(ref);
+        const refEntry = byBasename.get(refBasename);
+        if (!refEntry?.schema.typeName) continue;
+
+        const parts = refEntry.schema.typeName.split('::');
+        const resourceName = parts[parts.length - 1];
+        if (!resourceName) continue;
+
+        // Inject as a definition only once per resource name.
+        if (!globalDefs[resourceName]) {
+          const readOnlyNames = SchemaReader.extractPropNames(
+            refEntry.schema.readOnlyProperties ?? [],
+          );
+          const writableProps: Record<string, JsonSchemaProperty> = {};
+          for (const [k, v] of Object.entries(
+            refEntry.schema.properties ?? {},
+          )) {
+            if (!readOnlyNames.includes(k)) {
+              writableProps[k] = v as JsonSchemaProperty;
+            }
+          }
+          globalDefs[resourceName] = {
+            type: 'object',
+            description: refEntry.schema.description,
+            properties: writableProps,
+            required: (refEntry.schema.required ?? []).filter(
+              (r) => !readOnlyNames.includes(r),
+            ),
+          };
+        }
+
+        // Transform the items.$ref in-place to a same-file ref.
+        items.$ref = `#/definitions/${resourceName}`;
+
+        if (!injectedForThis.includes(resourceName)) {
+          injectedForThis.push(resourceName);
+        }
+      }
+
+      if (injectedForThis.length > 0) {
+        injectedPerFile.set(basename, injectedForThis);
+      }
+    }
+
+    return injectedPerFile;
   }
 
   /**
