@@ -203,6 +203,10 @@ export class TypeMapper {
     }
 
     if (items.type) {
+      // Plain object items with no sub-properties are reference arrays (IResolvable[])
+      if (items.type === 'object' && !items.properties) {
+        return 'IResolvable';
+      }
       const primitive = TypeMapper.mapPrimitive(items.type);
       if (primitive === 'number' || primitive === 'string') {
         return `${primitive} | IResolvable`;
