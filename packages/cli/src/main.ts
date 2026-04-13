@@ -4,6 +4,7 @@ import { synthCommand } from './commands/synth/index.js';
 import { deployCommand } from './commands/deploy/index.js';
 import { destroyCommand } from './commands/destroy/index.js';
 import { initCommand } from './commands/init/index.js';
+import { projectCommand } from './commands/project/index.js';
 
 const { version } = require('../package.json') as { version: string };
 
@@ -33,6 +34,7 @@ program
 
 program.addCommand(initCommand);
 program.addCommand(synthCommand);
+program.addCommand(projectCommand);
 program.addCommand(deployCommand);
 program.addCommand(destroyCommand);
 
