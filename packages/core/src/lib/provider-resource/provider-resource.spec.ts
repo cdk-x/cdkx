@@ -232,6 +232,41 @@ describe('ProviderResource', () => {
     });
   });
 
+  describe('toOutputData()', () => {
+    it('returns raw properties when properties are set', () => {
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+        properties: { name: 'hello', count: 3 },
+      });
+      expect(resource.toOutputData()).toEqual({ name: 'hello', count: 3 });
+    });
+
+    it('returns {} when no properties are given', () => {
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+      });
+      expect(resource.toOutputData()).toEqual({});
+    });
+
+    it('delegates to renderProperties() override in subclasses', () => {
+      class MyL1 extends ProviderResource {
+        public name = 'from-member';
+
+        constructor() {
+          super(stack, 'MyL1', { type: 'test::MyType' });
+        }
+
+        protected override renderProperties(): Record<string, PropertyValue> {
+          return { name: this.name } as Record<string, PropertyValue>;
+        }
+      }
+
+      const l1 = new MyL1();
+      l1.name = 'mutated';
+      expect(l1.toOutputData()).toEqual({ name: 'mutated' });
+    });
+  });
+
   describe('dependsOn in toJson()', () => {
     it('omits dependsOn when there are no dependencies', () => {
       const resource = new ProviderResource(stack, 'Res', {
