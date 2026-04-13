@@ -122,6 +122,21 @@ describe('ProviderResource', () => {
     });
   });
 
+  describe('ref', () => {
+    it('returns an IResolvable that resolves to { ref: logicalId } with no attr', () => {
+      const resource = new ProviderResource(stack, 'Res', {
+        type: 'test::Type',
+      });
+      const token = resource.ref;
+      const resolved = token.resolve(
+        undefined as unknown as Parameters<IResolvable['resolve']>[0],
+      ) as Record<string, unknown>;
+      expect(resolved['ref']).toBe(resource.logicalId);
+      expect(resolved['attr']).toBeUndefined();
+      expect(Object.keys(resolved)).toEqual(['ref']);
+    });
+  });
+
   describe('toJson()', () => {
     it('returns a keyed object with logicalId as the key', () => {
       const resource = new ProviderResource(stack, 'Res', {
