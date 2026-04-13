@@ -233,6 +233,18 @@ export abstract class YamlSynthesizer extends BaseStackSynthesizer {
 export interface YamlFileSynthesizerOptions {
   /** Absolute or relative path to the directory where YAML files will be written. */
   readonly outputDir: string;
+
+  /**
+   * Optional output filename override for the synthesized YAML file.
+   * When set, this filename is used instead of deriving it from the resource's
+   * `name` property or logicalId. Follows the one-stack-per-file model.
+   *
+   * @example
+   * ```ts
+   * new YamlFileSynthesizer({ outputDir: '.', fileName: 'multipass.yaml' })
+   * ```
+   */
+  readonly fileName?: string;
 }
 
 /**
@@ -257,13 +269,15 @@ export interface YamlFileSynthesizerOptions {
  */
 export class YamlFileSynthesizer extends YamlSynthesizer {
   private readonly outputDir: string;
+  private readonly fileName?: string;
 
   constructor(options: YamlFileSynthesizerOptions) {
     super();
     this.outputDir = options.outputDir;
+    this.fileName = options.fileName;
   }
 
-  public synthesize(session: ISynthesisSession): void {
+  public synthesize(): void {
     const resources = this.stack.getProviderResources();
 
     // Build a map from logicalId → resource for sibling lookup
@@ -317,25 +331,28 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
     }
 
     // Detect filename collisions before writing anything
-    const fileNames = new Set<string>();
+    const usedFileNames = new Set<string>();
     for (const root of roots) {
       const name = this.deriveFileName(
         resolvedDataOf.get(root.logicalId) ?? {},
         root.logicalId,
       );
-      if (fileNames.has(name)) {
+      if (usedFileNames.has(name)) {
         throw new Error(
           `YamlFileSynthesizer: filename collision — two or more root resources ` +
-            `would produce '${name}'. Set a unique 'outputFileName' on each resource.`,
+            `would produce '${name}'. Use the fileNames option to assign unique filenames.`,
         );
       }
-      fileNames.add(name);
+      usedFileNames.add(name);
     }
 
     // Write one file per root resource
     for (const root of roots) {
       const rootResolved = resolvedDataOf.get(root.logicalId) ?? {};
-      const fileName = this.deriveFileName(rootResolved, root.logicalId);
+      const fileName = this.deriveFileName(
+        rootResolved,
+        root.logicalId,
+      );
       const content = this.buildRootContent(
         rootResolved,
         childrenOf.get(root.logicalId) ?? [],
@@ -345,13 +362,6 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
       const yamlContent = this.serialize(content);
       this.writeFileTo(this.outputDir, fileName, yamlContent);
     }
-
-    session.assembly.addArtifact({
-      id: this.stack.artifactId,
-      templateFile: `${this.stack.artifactId}.local-files`,
-      displayName: this.stack.displayName,
-      artifactType: 'cdkx:local-files',
-    });
   }
 
   /**
@@ -369,7 +379,6 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
     const result: Record<string, unknown> = {};
 
     for (const [field, value] of Object.entries(rootData)) {
-      if (field === 'outputFileName') continue;
       if (rootTokenFields.has(field)) continue;
       result[field] = value;
     }
@@ -394,19 +403,19 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
   }
 
   /**
-   * Derives the YAML output filename for a root resource from its already-resolved data.
+   * Derives the YAML output filename for a root resource.
    *
    * Priority:
-   * 1. `outputFileName` property (plain string)
-   * 2. `${name}.yaml` when `name` property exists
+   * 1. `fileName` option (synthesizer-level override)
+   * 2. `${name}.yaml` when a `name` property exists in the resolved data
    * 3. `${logicalId}.yaml`
    */
   private deriveFileName(
     data: Record<string, unknown>,
     logicalId: string,
   ): string {
-    if (typeof data['outputFileName'] === 'string') {
-      return data['outputFileName'];
+    if (typeof this.fileName === 'string') {
+      return this.fileName;
     }
     if (typeof data['name'] === 'string') {
       return `${data['name']}.yaml`;
