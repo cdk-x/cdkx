@@ -14,6 +14,13 @@ import { Construct } from 'constructs';
  * Use these constants when constructing L1 resources to avoid typos.
  */
 export const MultipassResourceType = {
+  /** VM resources. */
+  VM: {
+    /** `Multipass::VM::Mount` */
+    Mount: 'Multipass::VM::Mount',
+    /** `Multipass::VM::Network` */
+    Network: 'Multipass::VM::Network',
+  },
   /** Compute resources. */
   Compute: {
     /** `Multipass::Compute::Config` */
@@ -24,10 +31,127 @@ export const MultipassResourceType = {
 } as const;
 
 // ==============================================================================
+// VM
+// ==============================================================================
+
+// --- Mount ---
+/**
+ * Props for {@link MltMount}.
+ *
+ * A host-to-guest directory mount that can be referenced by one or more MltInstance resources.
+ */
+export interface MultipassMount {
+  /**
+   * Absolute path on the host machine.
+   */
+  source: string;
+  /**
+   * Absolute path inside the guest VM.
+   */
+  target?: string;
+}
+
+/**
+ * L1 construct for a Multipass Mount resource.
+ *
+ * A host-to-guest directory mount that can be referenced by one or more MltInstance resources.
+ */
+export class MltMount extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'Multipass::VM::Mount';
+
+  public source: string;
+  public target?: string;
+
+  constructor(scope: Construct, id: string, props: MultipassMount) {
+    super(scope, id, {
+      type: MltMount.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.source = props.source;
+    this.target = props.target;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      source: this.source,
+      target: this.target,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
+
+// --- Network ---
+/**
+ * Props for {@link MltNetwork}.
+ *
+ * A Multipass network interface that can be referenced by one or more MltInstance resources.
+ */
+export interface MultipassNetwork {
+  /**
+   * Name of the host network interface (e.g. 'bridge', 'en0').
+   */
+  name: string;
+  /**
+   * Network mode.
+   */
+  mode?: 'auto' | 'manual';
+  /**
+   * Optional MAC address override.
+   */
+  mac?: string;
+}
+
+/**
+ * L1 construct for a Multipass Network resource.
+ *
+ * A Multipass network interface that can be referenced by one or more MltInstance resources.
+ */
+export class MltNetwork extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'Multipass::VM::Network';
+
+  public name: string;
+  public mode?: 'auto' | 'manual';
+  public mac?: string;
+
+  constructor(scope: Construct, id: string, props: MultipassNetwork) {
+    super(scope, id, {
+      type: MltNetwork.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.name = props.name;
+    this.mode = props.mode;
+    this.mac = props.mac;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      name: this.name,
+      mode: this.mode,
+      mac: this.mac,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
+
+// ==============================================================================
 // Compute
 // ==============================================================================
 
 // --- Config ---
+/**
+ * Props for {@link MltConfig}.
+ *
+ * Multipass configuration root. Acts as the parent resource that groups MltInstance resources into a single synthesized YAML file.
+ */
+export interface MultipassConfig {
+  /**
+   * VM instances to include. Each entry is a reference to an MltInstance resource via resource.ref.
+   */
+  instances?: IResolvable[];
+}
+
 /**
  * L1 construct for a Multipass Config resource.
  *
@@ -43,16 +167,20 @@ export class MltConfig extends ProviderResource {
    */
   public readonly attrConfigId: IResolvable;
 
-  constructor(scope: Construct, id: string) {
+  public instances?: IResolvable[];
+
+  constructor(scope: Construct, id: string, props: MultipassConfig = {}) {
     super(scope, id, {
       type: MltConfig.RESOURCE_TYPE_NAME,
     });
     this.node.defaultChild = this;
     this.attrConfigId = this.getAtt('configId');
+    this.instances = props.instances;
   }
 
   protected override renderProperties(): Record<string, PropertyValue> {
     return {
+      instances: this.instances,
     } as unknown as Record<string, PropertyValue>;
   }
 }
@@ -94,9 +222,13 @@ export interface MultipassInstance {
    */
   timeout?: number;
   /**
-   * Reference to the parent MltConfig resource. When set, this instance is nested under that config in the synthesized YAML.
+   * Network interfaces to attach. Each entry is a reference to an MltNetwork resource via resource.ref.
    */
-  configId?: number | IResolvable;
+  networks?: IResolvable[];
+  /**
+   * Host-to-guest directory mounts. Each entry is a reference to an MltMount resource via resource.ref.
+   */
+  mounts?: IResolvable[];
 }
 
 /**
@@ -121,7 +253,8 @@ export class MltInstance extends ProviderResource {
   public disk?: string;
   public bridged?: boolean;
   public timeout?: number;
-  public configId?: number | IResolvable;
+  public networks?: IResolvable[];
+  public mounts?: IResolvable[];
 
   constructor(scope: Construct, id: string, props: MultipassInstance) {
     super(scope, id, {
@@ -136,7 +269,8 @@ export class MltInstance extends ProviderResource {
     this.disk = props.disk;
     this.bridged = props.bridged;
     this.timeout = props.timeout;
-    this.configId = props.configId;
+    this.networks = props.networks;
+    this.mounts = props.mounts;
   }
 
   protected override renderProperties(): Record<string, PropertyValue> {
@@ -148,7 +282,8 @@ export class MltInstance extends ProviderResource {
       disk: this.disk,
       bridged: this.bridged,
       timeout: this.timeout,
-      configId: this.configId,
+      networks: this.networks,
+      mounts: this.mounts,
     } as unknown as Record<string, PropertyValue>;
   }
 }

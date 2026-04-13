@@ -5,7 +5,13 @@
   "typeName": "Multipass::Compute::Config",
   "domain": "Compute",
   "additionalProperties": false,
-  "properties": {},
+  "properties": {
+    "instances": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "VM instances to include. Each entry is a reference to an MltInstance resource via resource.ref."
+    }
+  },
   "readOnlyProperties": ["/properties/configId"],
   "primaryIdentifier": ["/properties/configId"]
 }
