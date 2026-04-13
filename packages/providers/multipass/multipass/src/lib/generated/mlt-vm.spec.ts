@@ -4,7 +4,13 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as yaml from 'js-yaml';
-import { MltInstance, MltProvider } from '../../index';
+import {
+  MltConfig,
+  MltInstance,
+  MltMount,
+  MltNetwork,
+  MltProvider,
+} from '../../index';
 
 function tmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'cdkx-mlt-test-'));
@@ -118,6 +124,166 @@ describe('MltInstance', () => {
     it('MltProvider.identifier is "multipass"', () => {
       const provider = new MltProvider();
       expect(provider.identifier).toBe('multipass');
+    });
+  });
+
+  describe('MltNetwork', () => {
+    it('is importable with correct props', () => {
+      const app = new TestApp();
+      const stack = new TestStack(app, 'S', {});
+      const net = new MltNetwork(stack, 'Net', { name: 'bridge', mode: 'auto' });
+      expect(net.name).toBe('bridge');
+      expect(net.mode).toBe('auto');
+      expect(MltNetwork.RESOURCE_TYPE_NAME).toBe('Multipass::VM::Network');
+    });
+  });
+
+  describe('MltMount', () => {
+    it('is importable with correct props', () => {
+      const app = new TestApp();
+      const stack = new TestStack(app, 'S', {});
+      const mount = new MltMount(stack, 'Mnt', {
+        source: '/Users/antonio/code',
+        target: '/home/ubuntu/code',
+      });
+      expect(mount.source).toBe('/Users/antonio/code');
+      expect(mount.target).toBe('/home/ubuntu/code');
+      expect(MltMount.RESOURCE_TYPE_NAME).toBe('Multipass::VM::Mount');
+    });
+  });
+
+  describe('composition end-to-end', () => {
+    it('VM + network + mount → single YAML with networks and mounts nested', () => {
+      const outputDir = tmpDir();
+      const app = new TestApp();
+      const stack = new TestStack(app, 'S', {
+        synthesizer: new YamlFileSynthesizer({ outputDir }),
+      });
+
+      const net = new MltNetwork(stack, 'Net', { name: 'bridge', mode: 'auto' });
+      const mount = new MltMount(stack, 'Mnt', {
+        source: '/Users/antonio/code',
+        target: '/home/ubuntu/code',
+      });
+      new MltInstance(stack, 'Vm', {
+        name: 'dev',
+        cpus: 4,
+        memory: '8G',
+        disk: '40G',
+        networks: [net.ref],
+        mounts: [mount.ref],
+      });
+
+      app.synth();
+
+      const content = yaml.load(
+        fs.readFileSync(path.join(outputDir, 'dev.yaml'), 'utf-8'),
+      ) as Record<string, unknown>;
+
+      expect(content['name']).toBe('dev');
+      expect(content['cpus']).toBe(4);
+
+      const networks = content['networks'] as Record<string, unknown>[];
+      expect(Array.isArray(networks)).toBe(true);
+      expect(networks).toHaveLength(1);
+      expect(networks[0]['name']).toBe('bridge');
+      expect(networks[0]['mode']).toBe('auto');
+
+      const mounts = content['mounts'] as Record<string, unknown>[];
+      expect(Array.isArray(mounts)).toBe(true);
+      expect(mounts).toHaveLength(1);
+      expect(mounts[0]['source']).toBe('/Users/antonio/code');
+      expect(mounts[0]['target']).toBe('/home/ubuntu/code');
+
+      fs.rmSync(outputDir, { recursive: true });
+    });
+
+    it('only one YAML file is produced (network and mount are absorbed)', () => {
+      const outputDir = tmpDir();
+      const app = new TestApp();
+      const stack = new TestStack(app, 'S', {
+        synthesizer: new YamlFileSynthesizer({ outputDir }),
+      });
+
+      const net = new MltNetwork(stack, 'Net', { name: 'bridge' });
+      const mount = new MltMount(stack, 'Mnt', { source: '/code' });
+      new MltInstance(stack, 'Vm', {
+        name: 'dev',
+        networks: [net.ref],
+        mounts: [mount.ref],
+      });
+
+      app.synth();
+
+      const files = fs.readdirSync(outputDir).filter((f) => f.endsWith('.yaml'));
+      expect(files).toEqual(['dev.yaml']);
+      fs.rmSync(outputDir, { recursive: true });
+    });
+
+    it('same network referenced by two VMs appears in both YAMLs', () => {
+      const outputDir = tmpDir();
+      const app = new TestApp();
+      const stack = new TestStack(app, 'S', {
+        synthesizer: new YamlFileSynthesizer({ outputDir }),
+      });
+
+      const net = new MltNetwork(stack, 'Net', { name: 'bridge' });
+      new MltInstance(stack, 'Vm1', { name: 'dev', networks: [net.ref] });
+      new MltInstance(stack, 'Vm2', { name: 'test', networks: [net.ref] });
+
+      app.synth();
+
+      const dev = yaml.load(
+        fs.readFileSync(path.join(outputDir, 'dev.yaml'), 'utf-8'),
+      ) as Record<string, unknown>;
+      const test = yaml.load(
+        fs.readFileSync(path.join(outputDir, 'test.yaml'), 'utf-8'),
+      ) as Record<string, unknown>;
+
+      expect((dev['networks'] as Record<string, unknown>[])[0]['name']).toBe('bridge');
+      expect((test['networks'] as Record<string, unknown>[])[0]['name']).toBe('bridge');
+
+      const files = fs.readdirSync(outputDir).filter((f) => f.endsWith('.yaml'));
+      expect(files.sort()).toEqual(['dev.yaml', 'test.yaml']);
+      fs.rmSync(outputDir, { recursive: true });
+    });
+
+    it('MltConfig with instances produces a single file with nested VMs', () => {
+      const outputDir = tmpDir();
+      const app = new TestApp();
+      const stack = new TestStack(app, 'S', {
+        synthesizer: new YamlFileSynthesizer({
+          outputDir,
+          fileName: 'multipass.yaml',
+        }),
+      });
+
+      const net = new MltNetwork(stack, 'Net', { name: 'bridge', mode: 'auto' });
+      const vm = new MltInstance(stack, 'Vm', {
+        name: 'dev',
+        cpus: 4,
+        networks: [net.ref],
+      });
+      new MltConfig(stack, 'Cfg', { instances: [vm.ref] });
+
+      app.synth();
+
+      const files = fs.readdirSync(outputDir).filter((f) => f.endsWith('.yaml'));
+      expect(files).toEqual(['multipass.yaml']);
+
+      const content = yaml.load(
+        fs.readFileSync(path.join(outputDir, 'multipass.yaml'), 'utf-8'),
+      ) as Record<string, unknown>;
+
+      const instances = content['instances'] as Record<string, unknown>[];
+      expect(instances).toHaveLength(1);
+      expect(instances[0]['name']).toBe('dev');
+      expect(instances[0]['cpus']).toBe(4);
+
+      const networks = instances[0]['networks'] as Record<string, unknown>[];
+      expect(networks[0]['name']).toBe('bridge');
+      expect(networks[0]['mode']).toBe('auto');
+      fs.rmSync(outputDir, { recursive: true });
     });
   });
 });
