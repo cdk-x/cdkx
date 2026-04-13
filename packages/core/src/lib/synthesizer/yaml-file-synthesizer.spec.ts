@@ -2,25 +2,20 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import * as yaml from 'js-yaml';
-import { YamlFileSynthesizer, ISynthesisSession } from './synthesizer';
-import { CloudAssemblyBuilder } from '../assembly/cloud-assembly';
+import { YamlFileSynthesizer } from './synthesizer';
 import { ProviderResource } from '../provider-resource/provider-resource';
+import { Stack } from '../stack/stack';
 import { makeApp, makeStack } from '../../../test/helpers';
 
 function tmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'cdkx-yaml-synth-test-'));
 }
 
-function makeSession(outdir: string): ISynthesisSession {
-  return { outdir, assembly: new CloudAssemblyBuilder(outdir) };
-}
-
 describe('YamlFileSynthesizer', () => {
   describe('single root resource → one YAML file', () => {
     it('writes a .yaml file named after the resource name property', () => {
       const outputDir = tmpDir();
-      const outdir = tmpDir();
-      const app = makeApp(outdir);
+      const app = makeApp();
       const stack = makeStack(app, 'TestStack');
       new ProviderResource(stack, 'Vm', {
         type: 'Multipass::VM::Instance',
@@ -29,17 +24,15 @@ describe('YamlFileSynthesizer', () => {
 
       const synth = new YamlFileSynthesizer({ outputDir });
       synth.bind(stack);
-      synth.synthesize(makeSession(outdir));
+      synth.synthesize();
 
       expect(fs.existsSync(path.join(outputDir, 'dev.yaml'))).toBe(true);
       fs.rmSync(outputDir, { recursive: true });
-      fs.rmSync(outdir, { recursive: true });
     });
 
     it('YAML content contains the resource properties', () => {
       const outputDir = tmpDir();
-      const outdir = tmpDir();
-      const app = makeApp(outdir);
+      const app = makeApp();
       const stack = makeStack(app, 'TestStack');
       new ProviderResource(stack, 'Vm', {
         type: 'Multipass::VM::Instance',
@@ -48,7 +41,7 @@ describe('YamlFileSynthesizer', () => {
 
       const synth = new YamlFileSynthesizer({ outputDir });
       synth.bind(stack);
-      synth.synthesize(makeSession(outdir));
+      synth.synthesize();
 
       const content = yaml.load(
         fs.readFileSync(path.join(outputDir, 'dev.yaml'), 'utf-8'),
@@ -57,13 +50,11 @@ describe('YamlFileSynthesizer', () => {
       expect(content['cpus']).toBe(2);
       expect(content['memory']).toBe('2G');
       fs.rmSync(outputDir, { recursive: true });
-      fs.rmSync(outdir, { recursive: true });
     });
 
     it('falls back to logicalId.yaml when no name property', () => {
       const outputDir = tmpDir();
-      const outdir = tmpDir();
-      const app = makeApp(outdir);
+      const app = makeApp();
       const stack = makeStack(app, 'TestStack');
       const resource = new ProviderResource(stack, 'Vm', {
         type: 'Multipass::VM::Instance',
@@ -72,19 +63,57 @@ describe('YamlFileSynthesizer', () => {
 
       const synth = new YamlFileSynthesizer({ outputDir });
       synth.bind(stack);
-      synth.synthesize(makeSession(outdir));
+      synth.synthesize();
 
       expect(
         fs.existsSync(path.join(outputDir, `${resource.logicalId}.yaml`)),
       ).toBe(true);
       fs.rmSync(outputDir, { recursive: true });
-      fs.rmSync(outdir, { recursive: true });
     });
 
-    it('registers a cdkx:local-files artifact in the assembly', () => {
+    it('does not register any artifact in the cloud assembly', () => {
       const outputDir = tmpDir();
-      const outdir = tmpDir();
-      const app = makeApp(outdir);
+      const app = makeApp();
+      const stack = new Stack(app, 'TestStack', {
+        synthesizer: new YamlFileSynthesizer({ outputDir }),
+      });
+      new ProviderResource(stack, 'Vm', {
+        type: 'Multipass::VM::Instance',
+        properties: { name: 'dev' },
+      });
+
+      const assembly = app.synth();
+
+      expect(assembly.getStack('TestStack')).toBeUndefined();
+      fs.rmSync(outputDir, { recursive: true });
+    });
+  });
+
+  describe('fileName option overrides derived filename', () => {
+    it('uses fileName as the output filename', () => {
+      const outputDir = tmpDir();
+      const app = makeApp();
+      const stack = makeStack(app, 'TestStack');
+      new ProviderResource(stack, 'Vm', {
+        type: 'Multipass::VM::Instance',
+        properties: { name: 'dev' },
+      });
+
+      const synth = new YamlFileSynthesizer({
+        outputDir,
+        fileName: 'multipass.yaml',
+      });
+      synth.bind(stack);
+      synth.synthesize();
+
+      expect(fs.existsSync(path.join(outputDir, 'multipass.yaml'))).toBe(true);
+      expect(fs.existsSync(path.join(outputDir, 'dev.yaml'))).toBe(false);
+      fs.rmSync(outputDir, { recursive: true });
+    });
+
+    it('falls back to name-based filename when fileName is not set', () => {
+      const outputDir = tmpDir();
+      const app = makeApp();
       const stack = makeStack(app, 'TestStack');
       new ProviderResource(stack, 'Vm', {
         type: 'Multipass::VM::Instance',
@@ -93,22 +122,17 @@ describe('YamlFileSynthesizer', () => {
 
       const synth = new YamlFileSynthesizer({ outputDir });
       synth.bind(stack);
-      const session = makeSession(outdir);
-      synth.synthesize(session);
+      synth.synthesize();
 
-      const assembly = session.assembly.buildAssembly();
-      const artifact = assembly.getStack('TestStack');
-      expect(artifact?.type).toBe('cdkx:local-files');
+      expect(fs.existsSync(path.join(outputDir, 'dev.yaml'))).toBe(true);
       fs.rmSync(outputDir, { recursive: true });
-      fs.rmSync(outdir, { recursive: true });
     });
   });
 
   describe('root + child → composed YAML', () => {
     it('nests child under pluralised type-name key in parent YAML', () => {
       const outputDir = tmpDir();
-      const outdir = tmpDir();
-      const app = makeApp(outdir);
+      const app = makeApp();
       const stack = makeStack(app, 'TestStack');
 
       const vm = new ProviderResource(stack, 'Vm', {
@@ -127,7 +151,7 @@ describe('YamlFileSynthesizer', () => {
 
       const synth = new YamlFileSynthesizer({ outputDir });
       synth.bind(stack);
-      synth.synthesize(makeSession(outdir));
+      synth.synthesize();
 
       const content = yaml.load(
         fs.readFileSync(path.join(outputDir, 'dev.yaml'), 'utf-8'),
@@ -139,13 +163,11 @@ describe('YamlFileSynthesizer', () => {
       expect(networks[0]['name']).toBe('eth0');
       expect(networks[0]['mode']).toBe('auto');
       fs.rmSync(outputDir, { recursive: true });
-      fs.rmSync(outdir, { recursive: true });
     });
 
     it('does not produce a separate file for the child resource', () => {
       const outputDir = tmpDir();
-      const outdir = tmpDir();
-      const app = makeApp(outdir);
+      const app = makeApp();
       const stack = makeStack(app, 'TestStack');
 
       const vm = new ProviderResource(stack, 'Vm', {
@@ -159,7 +181,7 @@ describe('YamlFileSynthesizer', () => {
 
       const synth = new YamlFileSynthesizer({ outputDir });
       synth.bind(stack);
-      synth.synthesize(makeSession(outdir));
+      synth.synthesize();
 
       const files = fs
         .readdirSync(outputDir)
@@ -167,59 +189,13 @@ describe('YamlFileSynthesizer', () => {
       expect(files).toHaveLength(1);
       expect(files[0]).toBe('dev.yaml');
       fs.rmSync(outputDir, { recursive: true });
-      fs.rmSync(outdir, { recursive: true });
-    });
-  });
-
-  describe('outputFileName overrides derived filename', () => {
-    it('uses outputFileName when set as a plain string property', () => {
-      const outputDir = tmpDir();
-      const outdir = tmpDir();
-      const app = makeApp(outdir);
-      const stack = makeStack(app, 'TestStack');
-      new ProviderResource(stack, 'Vm', {
-        type: 'Multipass::VM::Instance',
-        properties: { name: 'dev', outputFileName: 'my-vm.yaml' },
-      });
-
-      const synth = new YamlFileSynthesizer({ outputDir });
-      synth.bind(stack);
-      synth.synthesize(makeSession(outdir));
-
-      expect(fs.existsSync(path.join(outputDir, 'my-vm.yaml'))).toBe(true);
-      expect(fs.existsSync(path.join(outputDir, 'dev.yaml'))).toBe(false);
-      fs.rmSync(outputDir, { recursive: true });
-      fs.rmSync(outdir, { recursive: true });
-    });
-
-    it('excludes outputFileName field from YAML content', () => {
-      const outputDir = tmpDir();
-      const outdir = tmpDir();
-      const app = makeApp(outdir);
-      const stack = makeStack(app, 'TestStack');
-      new ProviderResource(stack, 'Vm', {
-        type: 'Multipass::VM::Instance',
-        properties: { name: 'dev', outputFileName: 'my-vm.yaml' },
-      });
-
-      const synth = new YamlFileSynthesizer({ outputDir });
-      synth.bind(stack);
-      synth.synthesize(makeSession(outdir));
-
-      const content = yaml.load(
-        fs.readFileSync(path.join(outputDir, 'my-vm.yaml'), 'utf-8'),
-      ) as Record<string, unknown>;
-      expect(content['outputFileName']).toBeUndefined();
-      fs.rmSync(outputDir, { recursive: true });
-      fs.rmSync(outdir, { recursive: true });
     });
   });
 
   describe('filename collision → throws', () => {
     it('throws when two root resources would produce the same filename', () => {
       const outputDir = tmpDir();
-      const outdir = tmpDir();
-      const app = makeApp(outdir);
+      const app = makeApp();
       const stack = makeStack(app, 'TestStack');
       new ProviderResource(stack, 'VmA', {
         type: 'Multipass::VM::Instance',
@@ -232,19 +208,15 @@ describe('YamlFileSynthesizer', () => {
 
       const synth = new YamlFileSynthesizer({ outputDir });
       synth.bind(stack);
-      expect(() => synth.synthesize(makeSession(outdir))).toThrow(
-        /filename collision/,
-      );
+      expect(() => synth.synthesize()).toThrow(/filename collision/);
       fs.rmSync(outputDir, { recursive: true });
-      fs.rmSync(outdir, { recursive: true });
     });
   });
 
   describe('{ ref, attr } token fields excluded from YAML output', () => {
     it('excludes token fields from child YAML content', () => {
       const outputDir = tmpDir();
-      const outdir = tmpDir();
-      const app = makeApp(outdir);
+      const app = makeApp();
       const stack = makeStack(app, 'TestStack');
 
       const vm = new ProviderResource(stack, 'Vm', {
@@ -258,7 +230,7 @@ describe('YamlFileSynthesizer', () => {
 
       const synth = new YamlFileSynthesizer({ outputDir });
       synth.bind(stack);
-      synth.synthesize(makeSession(outdir));
+      synth.synthesize();
 
       const content = yaml.load(
         fs.readFileSync(path.join(outputDir, 'dev.yaml'), 'utf-8'),
@@ -268,7 +240,6 @@ describe('YamlFileSynthesizer', () => {
       expect(networks[0]['vmId']).toBeUndefined();
       expect(networks[0]['name']).toBe('eth0');
       fs.rmSync(outputDir, { recursive: true });
-      fs.rmSync(outdir, { recursive: true });
     });
   });
 });
