@@ -192,6 +192,134 @@ describe('YamlFileSynthesizer', () => {
     });
   });
 
+  describe('root + { ref } whole-object tokens in arrays → composed YAML', () => {
+    it('resolves { ref } token in array to the full object of the referenced resource', () => {
+      const outputDir = tmpDir();
+      const app = makeApp();
+      const stack = makeStack(app, 'TestStack');
+
+      const network = new ProviderResource(stack, 'Net', {
+        type: 'Multipass::VM::Network',
+        properties: { name: 'bridge', mode: 'auto' },
+      });
+      new ProviderResource(stack, 'Vm', {
+        type: 'Multipass::VM::Instance',
+        properties: { name: 'dev', networks: [network.ref] },
+      });
+
+      const synth = new YamlFileSynthesizer({ outputDir });
+      synth.bind(stack);
+      synth.synthesize();
+
+      const content = yaml.load(
+        fs.readFileSync(path.join(outputDir, 'dev.yaml'), 'utf-8'),
+      ) as Record<string, unknown>;
+      const networks = content['networks'] as Record<string, unknown>[];
+      expect(Array.isArray(networks)).toBe(true);
+      expect(networks).toHaveLength(1);
+      expect(networks[0]['name']).toBe('bridge');
+      expect(networks[0]['mode']).toBe('auto');
+      fs.rmSync(outputDir, { recursive: true });
+    });
+
+    it('does not produce a separate file for the referenced resource', () => {
+      const outputDir = tmpDir();
+      const app = makeApp();
+      const stack = makeStack(app, 'TestStack');
+
+      const network = new ProviderResource(stack, 'Net', {
+        type: 'Multipass::VM::Network',
+        properties: { name: 'bridge', mode: 'auto' },
+      });
+      new ProviderResource(stack, 'Vm', {
+        type: 'Multipass::VM::Instance',
+        properties: { name: 'dev', networks: [network.ref] },
+      });
+
+      const synth = new YamlFileSynthesizer({ outputDir });
+      synth.bind(stack);
+      synth.synthesize();
+
+      const files = fs.readdirSync(outputDir).filter((f) => f.endsWith('.yaml'));
+      expect(files).toHaveLength(1);
+      expect(files[0]).toBe('dev.yaml');
+      fs.rmSync(outputDir, { recursive: true });
+    });
+
+    it('two resources referencing the same { ref } token both absorb the referenced resource', () => {
+      const outputDir = tmpDir();
+      const app = makeApp();
+      const stack = makeStack(app, 'TestStack');
+
+      const network = new ProviderResource(stack, 'Net', {
+        type: 'Multipass::VM::Network',
+        properties: { name: 'bridge' },
+      });
+      new ProviderResource(stack, 'Vm1', {
+        type: 'Multipass::VM::Instance',
+        properties: { name: 'dev', networks: [network.ref] },
+      });
+      new ProviderResource(stack, 'Vm2', {
+        type: 'Multipass::VM::Instance',
+        properties: { name: 'test', networks: [network.ref] },
+      });
+
+      const synth = new YamlFileSynthesizer({ outputDir });
+      synth.bind(stack);
+      synth.synthesize();
+
+      const files = fs.readdirSync(outputDir).filter((f) => f.endsWith('.yaml'));
+      expect(files).toHaveLength(2);
+      expect(files.sort()).toEqual(['dev.yaml', 'test.yaml']);
+
+      const dev = yaml.load(
+        fs.readFileSync(path.join(outputDir, 'dev.yaml'), 'utf-8'),
+      ) as Record<string, unknown>;
+      const test = yaml.load(
+        fs.readFileSync(path.join(outputDir, 'test.yaml'), 'utf-8'),
+      ) as Record<string, unknown>;
+      expect((dev['networks'] as Record<string, unknown>[])[0]['name']).toBe('bridge');
+      expect((test['networks'] as Record<string, unknown>[])[0]['name']).toBe('bridge');
+      fs.rmSync(outputDir, { recursive: true });
+    });
+
+    it('resolves nested { ref } tokens (instance referenced by config)', () => {
+      const outputDir = tmpDir();
+      const app = makeApp();
+      const stack = makeStack(app, 'TestStack');
+
+      const network = new ProviderResource(stack, 'Net', {
+        type: 'Multipass::VM::Network',
+        properties: { name: 'bridge' },
+      });
+      const vm = new ProviderResource(stack, 'Vm', {
+        type: 'Multipass::VM::Instance',
+        properties: { name: 'dev', networks: [network.ref] },
+      });
+      new ProviderResource(stack, 'Cfg', {
+        type: 'Multipass::Compute::Config',
+        properties: { instances: [vm.ref] },
+      });
+
+      const synth = new YamlFileSynthesizer({ outputDir });
+      synth.bind(stack);
+      synth.synthesize();
+
+      const files = fs.readdirSync(outputDir).filter((f) => f.endsWith('.yaml'));
+      expect(files).toHaveLength(1);
+
+      const content = yaml.load(
+        fs.readFileSync(path.join(outputDir, files[0]), 'utf-8'),
+      ) as Record<string, unknown>;
+      const instances = content['instances'] as Record<string, unknown>[];
+      expect(instances).toHaveLength(1);
+      expect(instances[0]['name']).toBe('dev');
+      const networks = instances[0]['networks'] as Record<string, unknown>[];
+      expect(networks[0]['name']).toBe('bridge');
+      fs.rmSync(outputDir, { recursive: true });
+    });
+  });
+
   describe('filename collision → throws', () => {
     it('throws when two root resources would produce the same filename', () => {
       const outputDir = tmpDir();
