@@ -34,13 +34,18 @@
       "type": "integer",
       "description": "Launch timeout in seconds."
     },
-    "configId": {
-      "type": "integer",
-      "description": "Reference to the parent MltConfig resource. When set, this instance is nested under that config in the synthesized YAML."
+    "networks": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Network interfaces to attach. Each entry is a reference to an MltNetwork resource via resource.ref."
+    },
+    "mounts": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Host-to-guest directory mounts. Each entry is a reference to an MltMount resource via resource.ref."
     }
   },
   "required": ["name"],
-  "createOnlyProperties": ["/properties/configId"],
   "readOnlyProperties": ["/properties/vmId"],
   "primaryIdentifier": ["/properties/vmId"]
 }
