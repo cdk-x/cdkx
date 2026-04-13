@@ -287,8 +287,8 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
     }
 
     // Resolve each resource's output data through the pipeline so that
-    // IResolvable instances become plain { ref, attr } objects (and Lazy
-    // values are produced) before we inspect or serialize them.
+    // IResolvable instances become plain { ref, attr } / { ref } objects
+    // before we inspect or serialize them.
     const resolvedDataOf = new Map<string, Record<string, unknown>>();
     for (const resource of resources) {
       const raw = resource.toOutputData();
@@ -299,16 +299,18 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
       );
     }
 
-    // Determine parent-child relationships by scanning { ref, attr } tokens
-    // in each resource's resolved output data.
+    // --- Pass 1: { ref, attr } child-composition (resource as child of another) ---
+    // A resource is a child when one of its top-level fields IS a { ref, attr } token
+    // pointing to a sibling. The token field is excluded from the child's output and
+    // the child is nested under the sibling's YAML under a pluralised type-name key.
     const parentOf = new Map<string, string>(); // childLogicalId → parentLogicalId
-    const refFieldsOf = new Map<string, Set<string>>(); // logicalId → field names that are tokens
+    const refFieldsOf = new Map<string, Set<string>>(); // logicalId → token field names
 
     for (const resource of resources) {
       const data = resolvedDataOf.get(resource.logicalId) ?? {};
       const tokenFields = new Set<string>();
       for (const [field, value] of Object.entries(data)) {
-        const ref = this.extractRef(value);
+        const ref = this.extractRefAttr(value);
         if (ref !== null && byId.has(ref)) {
           parentOf.set(resource.logicalId, ref);
           tokenFields.add(field);
@@ -317,11 +319,21 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
       refFieldsOf.set(resource.logicalId, tokenFields);
     }
 
-    // Partition into roots and children
-    const roots = resources.filter((r) => !parentOf.has(r.logicalId));
+    // --- Pass 2: { ref } whole-object absorption ---
+    // A resource is absorbed when another resource's array field contains
+    // { ref: logicalId } (no attr) tokens pointing to it. Absorbed resources
+    // do not produce their own files; their full resolved data is inlined into
+    // the referencing resource's array field.
+    const absorbedIds = new Set<string>();
+    this.collectAbsorbedIds(resources, resolvedDataOf, byId, absorbedIds);
+
+    // Partition into roots: neither a child nor absorbed
+    const roots = resources.filter(
+      (r) => !parentOf.has(r.logicalId) && !absorbedIds.has(r.logicalId),
+    );
     const children = resources.filter((r) => parentOf.has(r.logicalId));
 
-    // Group children by parent
+    // Group { ref, attr } children by parent
     const childrenOf = new Map<string, ProviderResource[]>();
     for (const child of children) {
       const parentId = parentOf.get(child.logicalId) ?? '';
@@ -349,18 +361,42 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
     // Write one file per root resource
     for (const root of roots) {
       const rootResolved = resolvedDataOf.get(root.logicalId) ?? {};
-      const fileName = this.deriveFileName(
-        rootResolved,
-        root.logicalId,
-      );
+      const fileName = this.deriveFileName(rootResolved, root.logicalId);
       const content = this.buildRootContent(
         rootResolved,
         childrenOf.get(root.logicalId) ?? [],
         resolvedDataOf,
         refFieldsOf,
+        byId,
       );
       const yamlContent = this.serialize(content);
       this.writeFileTo(this.outputDir, fileName, yamlContent);
+    }
+  }
+
+  /**
+   * Walks all resources and marks as absorbed any resource whose logicalId
+   * appears as a `{ ref }` (no attr) token inside an array field of another
+   * resource. A resource may be absorbed by multiple parents simultaneously
+   * (shared reference).
+   */
+  private collectAbsorbedIds(
+    resources: ProviderResource[],
+    resolvedDataOf: Map<string, Record<string, unknown>>,
+    byId: Map<string, ProviderResource>,
+    absorbedIds: Set<string>,
+  ): void {
+    for (const resource of resources) {
+      const data = resolvedDataOf.get(resource.logicalId) ?? {};
+      for (const value of Object.values(data)) {
+        if (!Array.isArray(value)) continue;
+        for (const item of value) {
+          const ref = this.extractWholeRef(item);
+          if (ref !== null && byId.has(ref)) {
+            absorbedIds.add(ref);
+          }
+        }
+      }
     }
   }
 
@@ -373,17 +409,15 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
     children: ProviderResource[],
     resolvedDataOf: Map<string, Record<string, unknown>>,
     refFieldsOf: Map<string, Set<string>>,
+    byId: Map<string, ProviderResource>,
   ): Record<string, unknown> {
-    const rootTokenFields = new Set<string>();
-    // rootData has no token fields (it is the root) but filter outputFileName
     const result: Record<string, unknown> = {};
 
     for (const [field, value] of Object.entries(rootData)) {
-      if (rootTokenFields.has(field)) continue;
-      result[field] = value;
+      result[field] = this.resolveWholeRefs(value, resolvedDataOf, byId);
     }
 
-    // Compose children
+    // Compose { ref, attr } children under their pluralised type-name key
     for (const child of children) {
       const compositionKey = this.deriveCompositionKey(child.type);
       const childData = resolvedDataOf.get(child.logicalId) ?? {};
@@ -400,6 +434,37 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
     }
 
     return result;
+  }
+
+  /**
+   * Recursively replaces `{ ref }` (whole-object) tokens with the full resolved
+   * data of the referenced resource. Handles arrays and nested objects.
+   */
+  private resolveWholeRefs(
+    value: unknown,
+    resolvedDataOf: Map<string, Record<string, unknown>>,
+    byId: Map<string, ProviderResource>,
+  ): unknown {
+    if (Array.isArray(value)) {
+      return value.map((item) => {
+        const ref = this.extractWholeRef(item);
+        if (ref !== null && byId.has(ref)) {
+          const refData = resolvedDataOf.get(ref) ?? {};
+          // Recursively resolve nested whole-refs inside the absorbed resource
+          return this.resolveWholeRefs(refData, resolvedDataOf, byId);
+        }
+        return this.resolveWholeRefs(item, resolvedDataOf, byId);
+      });
+    }
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      const obj = value as Record<string, unknown>;
+      const result: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(obj)) {
+        result[k] = this.resolveWholeRefs(v, resolvedDataOf, byId);
+      }
+      return result;
+    }
+    return value;
   }
 
   /**
@@ -463,7 +528,7 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
    * If `value` is a `{ ref: string, attr: string }` token object, returns
    * the `ref` string. Otherwise returns `null`.
    */
-  private extractRef(value: unknown): string | null {
+  private extractRefAttr(value: unknown): string | null {
     if (value === null || typeof value !== 'object' || Array.isArray(value)) {
       return null;
     }
@@ -472,6 +537,25 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
       typeof obj['ref'] === 'string' &&
       typeof obj['attr'] === 'string' &&
       Object.keys(obj).length === 2
+    ) {
+      return obj['ref'];
+    }
+    return null;
+  }
+
+  /**
+   * If `value` is a `{ ref: string }` whole-object token (no `attr`), returns
+   * the `ref` string. Otherwise returns `null`.
+   */
+  private extractWholeRef(value: unknown): string | null {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+      return null;
+    }
+    const obj = value as Record<string, unknown>;
+    if (
+      typeof obj['ref'] === 'string' &&
+      !('attr' in obj) &&
+      Object.keys(obj).length === 1
     ) {
       return obj['ref'];
     }
