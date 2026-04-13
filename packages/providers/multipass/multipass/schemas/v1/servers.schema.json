@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MultipassConfig",
+  "description": "Multipass configuration root. Acts as the parent resource that groups MltInstance resources into a single synthesized YAML file.",
+  "typeName": "Multipass::Compute::Config",
+  "domain": "Compute",
+  "additionalProperties": false,
+  "properties": {},
+  "readOnlyProperties": ["/properties/configId"],
+  "primaryIdentifier": ["/properties/configId"]
+}

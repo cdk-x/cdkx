@@ -1,0 +1,54 @@
+{
+  "name": "@cdk-x/multipass",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/providers/multipass/multipass/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check \"{projectRoot}/src/**/*.{ts,json,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/providers/multipass/multipass/dist",
+        "main": "packages/providers/multipass/multipass/src/index.ts",
+        "tsConfig": "packages/providers/multipass/multipass/tsconfig.lib.json",
+        "rootDir": "packages/providers/multipass/multipass/src"
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/providers/multipass/multipass/jest.config.cts",
+        "passWithNoTests": true
+      }
+    },
+    "codegen": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "spec-to-cdkx generate --prefix Mlt --provider-name Multipass --resource-type-const MultipassResourceType",
+        "cwd": "{projectRoot}"
+      },
+      "dependsOn": [
+        {
+          "projects": ["@cdk-x/spec-to-cdkx"],
+          "target": "build"
+        }
+      ]
+    }
+  }
+}
