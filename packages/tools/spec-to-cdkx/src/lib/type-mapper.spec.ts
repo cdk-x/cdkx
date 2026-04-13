@@ -119,6 +119,16 @@ describe('TypeMapper', () => {
       ).toBe('(string | IResolvable)[]');
     });
 
+    it('maps array with plain object items (no properties) to IResolvable[]', () => {
+      expect(
+        TypeMapper.mapType(
+          { type: 'array', items: { type: 'object' } },
+          ctx,
+          'networks',
+        ),
+      ).toBe('IResolvable[]');
+    });
+
     it('maps array with $ref items', () => {
       expect(
         TypeMapper.mapType(
