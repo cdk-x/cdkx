@@ -1,6 +1,6 @@
 {
   "name": "@cdk-x/multipass",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -16,13 +16,13 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
-    "@cdk-x/core": "0.3.0",
+    "@cdk-x/core": "0.3.1",
     "constructs": "^10.4.2",
     "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@cdk-x/spec-to-cdkx": "0.3.0",
-    "@cdk-x/testing": "0.3.0"
+    "@cdk-x/spec-to-cdkx": "0.3.1",
+    "@cdk-x/testing": "0.3.1"
   },
   "publishConfig": {
     "access": "public"

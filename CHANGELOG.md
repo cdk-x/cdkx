@@ -1,3 +1,9 @@
+## 0.3.1 (2026-04-14)
+
+### 🩹 Fixes
+
+- **cli:** make --workspace flag additive instead of exclusive ([6ea49f2](https://github.com/cdk-x/cdkx/commit/6ea49f2))
+
 ## 0.3.0 (2026-04-14)
 
 ### 🚀 Features
