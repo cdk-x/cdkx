@@ -13,6 +13,7 @@ export interface InitContext {
   readonly name: string;
   readonly mode: InitMode;
   readonly force?: boolean;
+  readonly workspace?: boolean;
 }
 
 export interface InitResult {
@@ -73,31 +74,37 @@ export class InitTemplateEngine {
   // ─── Private ──────────────────────────────────────────────────────────────
 
   private generateEmpty(context: InitContext): InitResult {
-    const { dir } = context;
+    const { dir, workspace } = context;
     const created: string[] = [];
 
     const tsconfigJson = `${dir}/tsconfig.json`;
     this.fs.writeFile(tsconfigJson, this.tsconfigContent());
     created.push(tsconfigJson);
 
-    this.fs.mkdir(`${dir}/src`, { recursive: true });
-    const mainTs = `${dir}/src/main.ts`;
-    this.fs.writeFile(mainTs, this.mainTsContent());
-    created.push(mainTs);
+    if (workspace) {
+      const cdkxrc = `${dir}/.cdkxrc.ts`;
+      this.fs.writeFile(cdkxrc, this.cdkxrcContent());
+      created.push(cdkxrc);
+    } else {
+      this.fs.mkdir(`${dir}/src`, { recursive: true });
+      const mainTs = `${dir}/src/main.ts`;
+      this.fs.writeFile(mainTs, this.mainTsContent());
+      created.push(mainTs);
+    }
 
     const packageJson = `${dir}/package.json`;
     this.fs.writeFile(packageJson, this.packageJsonContent(context.name));
     created.push(packageJson);
 
     const cdkxJson = `${dir}/cdkx.json`;
-    this.fs.writeFile(cdkxJson, this.cdkxJsonContent());
+    this.fs.writeFile(cdkxJson, this.cdkxJsonContent(workspace));
     created.push(cdkxJson);
 
     return { created, skipped: [], merged: [] };
   }
 
   private generateExisting(context: InitContext): InitResult {
-    const { dir, force } = context;
+    const { dir, force, workspace } = context;
     const created: string[] = [];
     const skipped: string[] = [];
     const merged: string[] = [];
@@ -111,14 +118,25 @@ export class InitTemplateEngine {
       skipped.push(tsconfigJson);
     }
 
-    // src/main.ts — skip unless force
-    this.fs.mkdir(`${dir}/src`, { recursive: true });
-    const mainTs = `${dir}/src/main.ts`;
-    if (!this.fs.exists(mainTs) || force) {
-      this.fs.writeFile(mainTs, this.mainTsContent());
-      created.push(mainTs);
+    if (workspace) {
+      // .cdkxrc.ts — skip unless force
+      const cdkxrc = `${dir}/.cdkxrc.ts`;
+      if (!this.fs.exists(cdkxrc) || force) {
+        this.fs.writeFile(cdkxrc, this.cdkxrcContent());
+        created.push(cdkxrc);
+      } else {
+        skipped.push(cdkxrc);
+      }
     } else {
-      skipped.push(mainTs);
+      // src/main.ts — skip unless force
+      this.fs.mkdir(`${dir}/src`, { recursive: true });
+      const mainTs = `${dir}/src/main.ts`;
+      if (!this.fs.exists(mainTs) || force) {
+        this.fs.writeFile(mainTs, this.mainTsContent());
+        created.push(mainTs);
+      } else {
+        skipped.push(mainTs);
+      }
     }
 
     // package.json — always merge
@@ -134,7 +152,7 @@ export class InitTemplateEngine {
     // cdkx.json — skip if exists
     const cdkxJson = `${dir}/cdkx.json`;
     if (!this.fs.exists(cdkxJson)) {
-      this.fs.writeFile(cdkxJson, this.cdkxJsonContent());
+      this.fs.writeFile(cdkxJson, this.cdkxJsonContent(workspace));
       created.push(cdkxJson);
     } else {
       skipped.push(cdkxJson);
@@ -144,7 +162,7 @@ export class InitTemplateEngine {
   }
 
   private generateNx(context: InitContext): InitResult {
-    const { dir, name, force } = context;
+    const { dir, name, force, workspace } = context;
     const created: string[] = [];
     const skipped: string[] = [];
 
@@ -157,14 +175,25 @@ export class InitTemplateEngine {
       skipped.push(tsconfigJson);
     }
 
-    // src/main.ts — skip unless force
-    this.fs.mkdir(`${dir}/src`, { recursive: true });
-    const mainTs = `${dir}/src/main.ts`;
-    if (!this.fs.exists(mainTs) || force) {
-      this.fs.writeFile(mainTs, this.mainTsContent());
-      created.push(mainTs);
+    if (workspace) {
+      // .cdkxrc.ts — skip unless force
+      const cdkxrc = `${dir}/.cdkxrc.ts`;
+      if (!this.fs.exists(cdkxrc) || force) {
+        this.fs.writeFile(cdkxrc, this.cdkxrcContent());
+        created.push(cdkxrc);
+      } else {
+        skipped.push(cdkxrc);
+      }
     } else {
-      skipped.push(mainTs);
+      // src/main.ts — skip unless force
+      this.fs.mkdir(`${dir}/src`, { recursive: true });
+      const mainTs = `${dir}/src/main.ts`;
+      if (!this.fs.exists(mainTs) || force) {
+        this.fs.writeFile(mainTs, this.mainTsContent());
+        created.push(mainTs);
+      } else {
+        skipped.push(mainTs);
+      }
     }
 
     // package.json — always create
@@ -174,7 +203,7 @@ export class InitTemplateEngine {
 
     // cdkx.json — always create
     const cdkxJson = `${dir}/cdkx.json`;
-    this.fs.writeFile(cdkxJson, this.cdkxJsonContent());
+    this.fs.writeFile(cdkxJson, this.cdkxJsonContent(workspace));
     created.push(cdkxJson);
 
     // project.json — always create
@@ -250,12 +279,20 @@ export class InitTemplateEngine {
     );
   }
 
-  private cdkxJsonContent(): string {
-    return JSON.stringify(
-      { app: 'npx tsx src/main.ts', output: 'cdkx.out' },
-      null,
-      2,
-    );
+  private cdkxJsonContent(workspace?: boolean): string {
+    const app = workspace ? 'npx tsx .cdkxrc.ts' : 'npx tsx src/main.ts';
+    return JSON.stringify({ app, output: 'cdkx.out' }, null, 2);
+  }
+
+  private cdkxrcContent(): string {
+    return [
+      "import { Workspace, YamlFile } from '@cdk-x/core';",
+      '',
+      'const workspace = new Workspace();',
+      '',
+      'workspace.synth();',
+      '',
+    ].join('\n');
   }
 
   private projectJsonContent(name: string): string {

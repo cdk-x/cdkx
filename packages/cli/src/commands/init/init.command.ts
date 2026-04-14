@@ -91,6 +91,10 @@ export class InitCommand extends BaseCommand {
         '--force',
         'Overwrite existing files (src/main.ts, tsconfig.json)',
       )
+      .option(
+        '--workspace',
+        'Create a .cdkxrc.ts workspace config instead of src/main.ts',
+      )
       .option('--no-install', 'Skip package manager install step')
       .action(
         async (
@@ -100,6 +104,7 @@ export class InitCommand extends BaseCommand {
             mode?: string;
             packageManager?: string;
             force?: boolean;
+            workspace?: boolean;
             install: boolean;
           },
         ) => {
@@ -115,6 +120,7 @@ export class InitCommand extends BaseCommand {
       mode?: string;
       packageManager?: string;
       force?: boolean;
+      workspace?: boolean;
       install: boolean;
     },
   ): Promise<void> {
@@ -131,7 +137,13 @@ export class InitCommand extends BaseCommand {
       this.detectMode(dir, fs.exists.bind(fs));
 
     const engine = new InitTemplateEngine(fs);
-    const result = engine.generate({ dir, name, mode, force: options.force });
+    const result = engine.generate({
+      dir,
+      name,
+      mode,
+      force: options.force,
+      workspace: options.workspace,
+    });
 
     for (const file of result.created) {
       console.log(chalk.green('✔') + ` Created ${file}`);
