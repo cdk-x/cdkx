@@ -4,9 +4,3 @@ instances:
     cpus: 4
     memory: 4G
     disk: 20G
-    networks:
-      - name: bridge
-        mode: auto
-    mounts:
-      - source: /Users/antonio/code
-        target: /home/ubuntu/code
