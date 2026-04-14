@@ -1,3 +1,9 @@
+## 0.4.0 (2026-04-14)
+
+### 🚀 Features
+
+- **cdkx:** build full packages before nx  release ([3157486](https://github.com/cdk-x/cdkx/commit/3157486))
+
 ## 0.3.1 (2026-04-14)
 
 ### 🩹 Fixes
