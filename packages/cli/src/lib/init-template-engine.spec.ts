@@ -498,6 +498,132 @@ describe('InitTemplateEngine.detectMode', () => {
   });
 });
 
+describe('InitTemplateEngine — --workspace flag', () => {
+  describe('empty mode', () => {
+    it('creates .cdkxrc.ts instead of src/main.ts', () => {
+      const fs = makeMockFs();
+      const engine = new InitTemplateEngine(fs);
+
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'empty',
+        workspace: true,
+      });
+
+      expect(result.created).toContain('/p/.cdkxrc.ts');
+      expect(result.created).not.toContain('/p/src/main.ts');
+      expect(fs.written['/p/.cdkxrc.ts']).toBeDefined();
+      expect(fs.written['/p/src/main.ts']).toBeUndefined();
+    });
+
+    it('sets cdkx.json app to npx tsx .cdkxrc.ts', () => {
+      const fs = makeMockFs();
+      const engine = new InitTemplateEngine(fs);
+
+      engine.generate({ dir: '/p', name: 'p', mode: 'empty', workspace: true });
+
+      const cdkxJson = JSON.parse(fs.written['/p/cdkx.json']);
+      expect(cdkxJson.app).toBe('npx tsx .cdkxrc.ts');
+    });
+
+    it('.cdkxrc.ts content imports Workspace and YamlFile from @cdk-x/core', () => {
+      const fs = makeMockFs();
+      const engine = new InitTemplateEngine(fs);
+
+      engine.generate({ dir: '/p', name: 'p', mode: 'empty', workspace: true });
+
+      const content = fs.written['/p/.cdkxrc.ts'];
+      expect(content).toContain("from '@cdk-x/core'");
+      expect(content).toContain('Workspace');
+      expect(content).toContain('YamlFile');
+      expect(content).toContain('new Workspace()');
+      expect(content).toContain('workspace.synth()');
+    });
+  });
+
+  describe('default (no --workspace)', () => {
+    it('sets cdkx.json app to npx tsx src/main.ts', () => {
+      const fs = makeMockFs();
+      const engine = new InitTemplateEngine(fs);
+
+      engine.generate({ dir: '/p', name: 'p', mode: 'empty' });
+
+      const cdkxJson = JSON.parse(fs.written['/p/cdkx.json']);
+      expect(cdkxJson.app).toBe('npx tsx src/main.ts');
+    });
+
+    it('creates src/main.ts and not .cdkxrc.ts', () => {
+      const fs = makeMockFs();
+      const engine = new InitTemplateEngine(fs);
+
+      const result = engine.generate({ dir: '/p', name: 'p', mode: 'empty' });
+
+      expect(result.created).toContain('/p/src/main.ts');
+      expect(result.created).not.toContain('/p/.cdkxrc.ts');
+    });
+  });
+
+  describe('existing mode', () => {
+    function makeExistingFsForWorkspace(): ReturnType<typeof makeMockFs> {
+      return makeMockFs({
+        exists: (p) => p === '/p/package.json',
+        readFile: () => JSON.stringify({ name: 'p' }),
+      });
+    }
+
+    it('creates .cdkxrc.ts instead of src/main.ts', () => {
+      const fs = makeExistingFsForWorkspace();
+      const engine = new InitTemplateEngine(fs);
+
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'existing',
+        workspace: true,
+      });
+
+      expect(result.created).toContain('/p/.cdkxrc.ts');
+      expect(result.created).not.toContain('/p/src/main.ts');
+    });
+
+    it('skips .cdkxrc.ts if it already exists', () => {
+      const fs = makeMockFs({
+        exists: (p) => p === '/p/package.json' || p === '/p/.cdkxrc.ts',
+        readFile: () => JSON.stringify({ name: 'p' }),
+      });
+      const engine = new InitTemplateEngine(fs);
+
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'existing',
+        workspace: true,
+      });
+
+      expect(result.skipped).toContain('/p/.cdkxrc.ts');
+      expect(fs.written['/p/.cdkxrc.ts']).toBeUndefined();
+    });
+  });
+
+  describe('nx mode', () => {
+    it('creates .cdkxrc.ts instead of src/main.ts', () => {
+      const fs = makeMockFs();
+      const engine = new InitTemplateEngine(fs);
+
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'nx',
+        workspace: true,
+      });
+
+      expect(result.created).toContain('/p/.cdkxrc.ts');
+      expect(result.created).not.toContain('/p/src/main.ts');
+    });
+  });
+});
+
 describe('InitTemplateEngine.detectPackageManager', () => {
   it('returns yarn when yarn.lock is present', () => {
     const result = InitTemplateEngine.detectPackageManager(
