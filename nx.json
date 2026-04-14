@@ -58,6 +58,9 @@
     "releaseTag": {
       "pattern": "v{version}"
     },
+    "conventionalCommits": {
+      "useCommitScope": false
+    },
     "version": {
       "preVersionCommand": "yarn nx run-many -t build --projects={projectName}",
       "conventionalCommits": true,
