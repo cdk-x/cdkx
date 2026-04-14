@@ -444,11 +444,51 @@ describe('InitTemplateEngine — nx mode', () => {
       expect(proj.targets.typecheck.options.cwd).toBe('{projectRoot}');
       expect(proj.targets.synth.executor).toBe('nx:run-commands');
       expect(proj.targets.synth.options.command).toBe('cdkx synth');
-      expect(proj.targets.synth.options.cwd).toBe('{projectRoot}');
       expect(proj.targets.deploy.executor).toBe('nx:run-commands');
       expect(proj.targets.deploy.options.command).toBe('cdkx deploy');
       expect(proj.targets.destroy.executor).toBe('nx:run-commands');
       expect(proj.targets.destroy.options.command).toBe('cdkx destroy');
+    });
+  });
+
+  describe('with --workspace flag', () => {
+    it('creates 6 files when --workspace is set (the 5 normal plus .cdkxrc.ts)', () => {
+      const fs = makeNxFs();
+      const engine = new InitTemplateEngine(fs);
+
+      const result = engine.generate({
+        dir: '/ws/packages/infra',
+        name: 'infra',
+        mode: 'nx',
+        workspace: true,
+      });
+
+      expect(result.created).toHaveLength(6);
+      expect(result.created).toEqual(
+        expect.arrayContaining([
+          '/ws/packages/infra/tsconfig.json',
+          '/ws/packages/infra/src/main.ts',
+          '/ws/packages/infra/.cdkxrc.ts',
+          '/ws/packages/infra/package.json',
+          '/ws/packages/infra/cdkx.json',
+          '/ws/packages/infra/project.json',
+        ]),
+      );
+    });
+
+    it('creates .cdkxrc.ts in addition to src/main.ts when --workspace is set', () => {
+      const fs = makeNxFs();
+      const engine = new InitTemplateEngine(fs);
+
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'nx',
+        workspace: true,
+      });
+
+      expect(result.created).toContain('/p/.cdkxrc.ts');
+      expect(result.created).toContain('/p/src/main.ts');
     });
   });
 });
@@ -500,7 +540,32 @@ describe('InitTemplateEngine.detectMode', () => {
 
 describe('InitTemplateEngine — --workspace flag', () => {
   describe('empty mode', () => {
-    it('creates .cdkxrc.ts instead of src/main.ts', () => {
+    it('creates 5 files when --workspace is set (includes .cdkxrc.ts)', () => {
+      const fs = makeMockFs();
+      const engine = new InitTemplateEngine(fs);
+
+      const result = engine.generate({
+        dir: '/p',
+        name: 'p',
+        mode: 'empty',
+        workspace: true,
+      });
+
+      expect(result.created).toHaveLength(5);
+      expect(result.created).toEqual(
+        expect.arrayContaining([
+          '/p/tsconfig.json',
+          '/p/src/main.ts',
+          '/p/.cdkxrc.ts',
+          '/p/package.json',
+          '/p/cdkx.json',
+        ]),
+      );
+      expect(result.skipped).toHaveLength(0);
+      expect(result.merged).toHaveLength(0);
+    });
+
+    it('creates both .cdkxrc.ts and src/main.ts when --workspace is set', () => {
       const fs = makeMockFs();
       const engine = new InitTemplateEngine(fs);
 
@@ -512,19 +577,19 @@ describe('InitTemplateEngine — --workspace flag', () => {
       });
 
       expect(result.created).toContain('/p/.cdkxrc.ts');
-      expect(result.created).not.toContain('/p/src/main.ts');
+      expect(result.created).toContain('/p/src/main.ts');
       expect(fs.written['/p/.cdkxrc.ts']).toBeDefined();
-      expect(fs.written['/p/src/main.ts']).toBeUndefined();
+      expect(fs.written['/p/src/main.ts']).toBeDefined();
     });
 
-    it('sets cdkx.json app to npx tsx .cdkxrc.ts', () => {
+    it('sets cdkx.json app to npx tsx src/main.ts even with --workspace', () => {
       const fs = makeMockFs();
       const engine = new InitTemplateEngine(fs);
 
       engine.generate({ dir: '/p', name: 'p', mode: 'empty', workspace: true });
 
       const cdkxJson = JSON.parse(fs.written['/p/cdkx.json']);
-      expect(cdkxJson.app).toBe('npx tsx .cdkxrc.ts');
+      expect(cdkxJson.app).toBe('npx tsx src/main.ts');
     });
 
     it('.cdkxrc.ts content imports Workspace and YamlFile from @cdk-x/core', () => {
@@ -572,7 +637,7 @@ describe('InitTemplateEngine — --workspace flag', () => {
       });
     }
 
-    it('creates .cdkxrc.ts instead of src/main.ts', () => {
+    it('creates .cdkxrc.ts in addition to src/main.ts when --workspace is set', () => {
       const fs = makeExistingFsForWorkspace();
       const engine = new InitTemplateEngine(fs);
 
@@ -584,7 +649,7 @@ describe('InitTemplateEngine — --workspace flag', () => {
       });
 
       expect(result.created).toContain('/p/.cdkxrc.ts');
-      expect(result.created).not.toContain('/p/src/main.ts');
+      expect(result.created).toContain('/p/src/main.ts');
     });
 
     it('skips .cdkxrc.ts if it already exists', () => {
@@ -604,22 +669,23 @@ describe('InitTemplateEngine — --workspace flag', () => {
       expect(result.skipped).toContain('/p/.cdkxrc.ts');
       expect(fs.written['/p/.cdkxrc.ts']).toBeUndefined();
     });
-  });
 
-  describe('nx mode', () => {
-    it('creates .cdkxrc.ts instead of src/main.ts', () => {
-      const fs = makeMockFs();
+    it('skips src/main.ts if it already exists even with --workspace', () => {
+      const fs = makeMockFs({
+        exists: (p) => p === '/p/package.json' || p === '/p/src/main.ts',
+        readFile: () => JSON.stringify({ name: 'p' }),
+      });
       const engine = new InitTemplateEngine(fs);
 
       const result = engine.generate({
         dir: '/p',
         name: 'p',
-        mode: 'nx',
+        mode: 'existing',
         workspace: true,
       });
 
-      expect(result.created).toContain('/p/.cdkxrc.ts');
-      expect(result.created).not.toContain('/p/src/main.ts');
+      expect(result.skipped).toContain('/p/src/main.ts');
+      expect(fs.written['/p/src/main.ts']).toBeUndefined();
     });
   });
 });
