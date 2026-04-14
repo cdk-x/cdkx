@@ -1,3 +1,26 @@
+## 0.3.0 (2026-04-14)
+
+### 🚀 Features
+
+- **cdkx:** add multipass to repository ([5b05d7c](https://github.com/cdk-x/cdkx/commit/5b05d7c))
+- **cli:** add ProjectCommand with metadata and execution tests ([2c05a11](https://github.com/cdk-x/cdkx/commit/2c05a11))
+- **cli:** add multipass subcommand group with launch, start, stop, and delete ([e63d2d6](https://github.com/cdk-x/cdkx/commit/e63d2d6))
+- **cli:** add --workspace flag to init to scaffold .cdkxrc.ts ([dd3ba29](https://github.com/cdk-x/cdkx/commit/dd3ba29))
+- **core:** add toOutputData() to ProviderResource ([bfdd5ea](https://github.com/cdk-x/cdkx/commit/bfdd5ea))
+- **core:** add synthesizer hierarchy — BaseStackSynthesizer, YamlSynthesizer, YamlFileSynthesizer ([28206f5](https://github.com/cdk-x/cdkx/commit/28206f5))
+- **core:** add fileName option to YamlFileSynthesizer for custom output filenames ([736b732](https://github.com/cdk-x/cdkx/commit/736b732))
+- **core:** add ref getter to ProviderResource for whole-object composition ([d4f43c9](https://github.com/cdk-x/cdkx/commit/d4f43c9))
+- **core:** handle { ref } whole-object tokens in YamlFileSynthesizer arrays ([8351393](https://github.com/cdk-x/cdkx/commit/8351393))
+- **core:** add Workspace and YamlFile user-facing abstractions ([44bbe4a](https://github.com/cdk-x/cdkx/commit/44bbe4a))
+- **multipass:** add Multipass provider with L1 constructs for local development VMs ([11b4d43](https://github.com/cdk-x/cdkx/commit/11b4d43))
+- **multipass:** add MltNetwork and MltMount with ref-based composition ([9c1dbd0](https://github.com/cdk-x/cdkx/commit/9c1dbd0))
+- **spec-to-cdkx:** enhance SchemaReader to handle whole-file array $refs and inject definitions ([e06d59b](https://github.com/cdk-x/cdkx/commit/e06d59b))
+- **spec-to-cdkx:** map array-of-plain-object items to IResolvable[] ([f867943](https://github.com/cdk-x/cdkx/commit/f867943))
+
+### 🩹 Fixes
+
+- **core:** suppress lint errors for WorkspaceProps and remove stale eslint-disable directives ([d091f08](https://github.com/cdk-x/cdkx/commit/d091f08))
+
 ## 0.2.0 (2026-04-07)
 
 ### 🚀 Features
