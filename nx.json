@@ -62,7 +62,7 @@
       "useCommitScope": false
     },
     "version": {
-      "preVersionCommand": "yarn nx run-many -t build --projects={projectName}",
+      "preVersionCommand": "yarn nx run-many -t build",
       "conventionalCommits": true,
       "fallbackCurrentVersionResolver": "disk",
       "preserveMatchingDependencyRanges": false,
