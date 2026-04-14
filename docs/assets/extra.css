@@ -1,5 +1,14 @@
 /* cdkx custom styles */
 
+/* Hide individual provider tabs from the top navigation bar.
+   They remain in the nav tree so each provider gets its own
+   isolated left sidebar when browsing its pages. Users reach
+   providers through the Providers landing page (cards). */
+.md-tabs__item:has(> .md-tabs__link[href*="hetzner"]),
+.md-tabs__item:has(> .md-tabs__link[href*="multipass"]) {
+  display: none;
+}
+
 :root {
   --md-primary-fg-color: #3f51b5;
   --md-primary-fg-color--light: #5c6bc0;

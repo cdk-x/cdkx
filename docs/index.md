@@ -33,9 +33,25 @@ Two phases:
 
 ## Providers
 
-| Provider | Status | Resources |
-|----------|--------|-----------|
-| [Hetzner Cloud](providers/hetzner/index.md) | Alpha | Network, Subnet, Route, Server, Certificate |
+<div class="grid cards" markdown>
+
+-   **Hetzner Cloud**
+
+    ---
+
+    Networks, servers, load balancers, volumes, and more. Deploys via the Hetzner Cloud API.
+
+    [:octicons-arrow-right-24: Hetzner Cloud](providers/hetzner/index.md)
+
+-   **Multipass**
+
+    ---
+
+    Local Ubuntu VMs using Canonical Multipass. No cloud account required.
+
+    [:octicons-arrow-right-24: Multipass](providers/multipass/index.md)
+
+</div>
 
 ## Quick links
 
