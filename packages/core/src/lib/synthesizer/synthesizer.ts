@@ -214,7 +214,6 @@ export class JsonSynthesizer extends BaseStackSynthesizer {
  */
 export class YamlSerializer {
   public static dump(data: unknown): string {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const yaml = require('js-yaml') as { dump: (data: unknown) => string };
     return yaml.dump(data);
   }
@@ -494,7 +493,6 @@ export class YamlFileSynthesizer extends YamlSynthesizer {
    */
   private resolveData(data: unknown, resource: ProviderResource): unknown {
     // Lazily import to avoid circular deps — same pattern as ProviderResource.toJson()
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { ResolverPipeline } =
       require('../resolvables/resolver-pipeline') as {
         ResolverPipeline: {
