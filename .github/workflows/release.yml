@@ -3,11 +3,6 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      group:
-        description: 'Release group (core, cli, or leave empty for all)'
-        required: false
-        type: string
-        default: ''
       dryRun:
         description: 'Dry run'
         required: false
@@ -49,23 +44,8 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Build release command
-        id: build-command
-        run: |
-          COMMAND="yarn nx release --yes"
-
-          if [ -n "${{ github.event.inputs.group }}" ]; then
-            COMMAND="$COMMAND --groups=${{ github.event.inputs.group }}"
-          fi
-
-          if [ "${{ github.event.inputs.dryRun }}" = "true" ]; then
-            COMMAND="$COMMAND --dry-run"
-          fi
-
-          echo "command=$COMMAND" >> $GITHUB_OUTPUT
-
       - name: Run release
-        run: ${{ steps.build-command.outputs.command }}
+        run: yarn nx release --yes${{ github.event.inputs.dryRun == 'true' && ' --dry-run' || '' }}
         env:
           NPM_CONFIG_PROVENANCE: true
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
@@ -85,7 +65,6 @@ jobs:
     needs: [release]
     if: |
       github.event.inputs.dryRun != 'true' &&
-      (github.event.inputs.group == '' || github.event.inputs.group == 'core') &&
       needs.release.outputs.core_version != ''
     uses: ./.github/workflows/docs.yml
     with:
