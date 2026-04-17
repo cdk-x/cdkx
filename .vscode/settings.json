@@ -9,7 +9,9 @@
     "hetzner-sdk",
     "hetzner-runtime",
     "spec-to-cdkx",
-    "multipass"
+    "multipass",
+    "multipass-sdk",
+    "multipass-runtime"
   ],
   "editor.formatOnSave": true,
   "editor.indentSize": 2,

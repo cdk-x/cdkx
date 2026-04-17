@@ -30,6 +30,12 @@
     },
     {
       "path": "./packages/providers/multipass/multipass"
+    },
+    {
+      "path": "./packages/providers/multipass/multipass-sdk"
+    },
+    {
+      "path": "./packages/providers/multipass/multipass-runtime"
     }
   ]
 }
