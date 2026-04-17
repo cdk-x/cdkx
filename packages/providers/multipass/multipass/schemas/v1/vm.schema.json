@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "MultipassVm",
-  "description": "Declares a Multipass virtual machine. Synthesizes a YAML configuration file committed to the repository.",
+  "description": "Declares a Multipass virtual machine managed by cdkx deploy/destroy.",
   "typeName": "Multipass::Compute::Instance",
   "domain": "Compute",
   "additionalProperties": false,
@@ -43,9 +43,25 @@
       "type": "array",
       "items": { "type": "object" },
       "description": "Host-to-guest directory mounts. Each entry is a reference to an MltMount resource via resource.ref."
+    },
+    "cloudInit": {
+      "type": "string",
+      "description": "Cloud-init user-data string passed to the instance at launch time."
     }
   },
   "required": ["name"],
-  "readOnlyProperties": ["/properties/vmId"],
-  "primaryIdentifier": ["/properties/vmId"]
+  "readOnlyProperties": ["/properties/ipAddress", "/properties/sshUser"],
+  "createOnlyProperties": [
+    "/properties/name",
+    "/properties/image",
+    "/properties/cpus",
+    "/properties/memory",
+    "/properties/disk",
+    "/properties/bridged",
+    "/properties/timeout",
+    "/properties/networks",
+    "/properties/mounts",
+    "/properties/cloudInit"
+  ],
+  "primaryIdentifier": ["/properties/name"]
 }

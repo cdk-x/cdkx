@@ -23,8 +23,6 @@ export const MultipassResourceType = {
   },
   /** Compute resources. */
   Compute: {
-    /** `Multipass::Compute::Config` */
-    Config: 'Multipass::Compute::Config',
     /** `Multipass::Compute::Instance` */
     Instance: 'Multipass::Compute::Instance',
   }
@@ -139,58 +137,11 @@ export class MltNetwork extends ProviderResource {
 // Compute
 // ==============================================================================
 
-// --- Config ---
-/**
- * Props for {@link MltConfig}.
- *
- * Multipass configuration root. Acts as the parent resource that groups MltInstance resources into a single synthesized YAML file.
- */
-export interface MultipassConfig {
-  /**
-   * VM instances to include. Each entry is a reference to an MltInstance resource via resource.ref.
-   */
-  instances?: IResolvable[];
-}
-
-/**
- * L1 construct for a Multipass Config resource.
- *
- * Multipass configuration root. Acts as the parent resource that groups MltInstance resources into a single synthesized YAML file.
- */
-export class MltConfig extends ProviderResource {
-  /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Multipass::Compute::Config';
-
-  /**
-   * The `configId` attribute of this resource.
-   * Resolves to `{ ref: logicalId, attr: 'configId' }` at synthesis time.
-   */
-  public readonly attrConfigId: IResolvable;
-
-  public instances?: IResolvable[];
-
-  constructor(scope: Construct, id: string, props: MultipassConfig = {}) {
-    super(scope, id, {
-      type: MltConfig.RESOURCE_TYPE_NAME,
-    });
-    this.node.defaultChild = this;
-    this.attrConfigId = this.getAtt('configId');
-    this.instances = props.instances;
-  }
-
-  protected override renderProperties(): Record<string, PropertyValue> {
-    return {
-      instances: this.instances,
-    } as unknown as Record<string, PropertyValue>;
-  }
-}
-
-
 // --- Instance ---
 /**
  * Props for {@link MltInstance}.
  *
- * Declares a Multipass virtual machine. Synthesizes a YAML configuration file committed to the repository.
+ * Declares a Multipass virtual machine managed by cdkx deploy/destroy.
  */
 export interface MultipassInstance {
   /**
@@ -229,22 +180,31 @@ export interface MultipassInstance {
    * Host-to-guest directory mounts. Each entry is a reference to an MltMount resource via resource.ref.
    */
   mounts?: IResolvable[];
+  /**
+   * Cloud-init user-data string passed to the instance at launch time.
+   */
+  cloudInit?: string;
 }
 
 /**
  * L1 construct for a Multipass Instance resource.
  *
- * Declares a Multipass virtual machine. Synthesizes a YAML configuration file committed to the repository.
+ * Declares a Multipass virtual machine managed by cdkx deploy/destroy.
  */
 export class MltInstance extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
   public static readonly RESOURCE_TYPE_NAME = 'Multipass::Compute::Instance';
 
   /**
-   * The `vmId` attribute of this resource.
-   * Resolves to `{ ref: logicalId, attr: 'vmId' }` at synthesis time.
+   * The `ipAddress` attribute of this resource.
+   * Resolves to `{ ref: logicalId, attr: 'ipAddress' }` at synthesis time.
    */
-  public readonly attrVmId: IResolvable;
+  public readonly attrIpAddress: IResolvable;
+  /**
+   * The `sshUser` attribute of this resource.
+   * Resolves to `{ ref: logicalId, attr: 'sshUser' }` at synthesis time.
+   */
+  public readonly attrSshUser: IResolvable;
 
   public name: string;
   public image?: string;
@@ -255,13 +215,15 @@ export class MltInstance extends ProviderResource {
   public timeout?: number;
   public networks?: IResolvable[];
   public mounts?: IResolvable[];
+  public cloudInit?: string;
 
   constructor(scope: Construct, id: string, props: MultipassInstance) {
     super(scope, id, {
       type: MltInstance.RESOURCE_TYPE_NAME,
     });
     this.node.defaultChild = this;
-    this.attrVmId = this.getAtt('vmId');
+    this.attrIpAddress = this.getAtt('ipAddress');
+    this.attrSshUser = this.getAtt('sshUser');
     this.name = props.name;
     this.image = props.image;
     this.cpus = props.cpus;
@@ -271,6 +233,7 @@ export class MltInstance extends ProviderResource {
     this.timeout = props.timeout;
     this.networks = props.networks;
     this.mounts = props.mounts;
+    this.cloudInit = props.cloudInit;
   }
 
   protected override renderProperties(): Record<string, PropertyValue> {
@@ -284,6 +247,7 @@ export class MltInstance extends ProviderResource {
       timeout: this.timeout,
       networks: this.networks,
       mounts: this.mounts,
+      cloudInit: this.cloudInit,
     } as unknown as Record<string, PropertyValue>;
   }
 }
