@@ -1,0 +1,40 @@
+{
+  "name": "multipass-e2e",
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "synth": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        {
+          "projects": ["@cdk-x/cli", "@cdk-x/core", "@cdk-x/multipass"],
+          "target": "build"
+        }
+      ],
+      "options": {
+        "command": "cdkx synth",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["synth"],
+      "options": {
+        "command": "cdkx deploy",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "destroy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cdkx destroy",
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}
