@@ -40,7 +40,7 @@
     "codegen": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "spec-to-cdkx generate --prefix Mlt --provider-name Multipass --resource-type-const MultipassResourceType",
+        "command": "spec-to-cdkx generate --prefix Mlt --provider-name Multipass --resource-type-const MultipassResourceType --runtime-config-output src/lib/generated/runtime-config.generated.ts",
         "cwd": "{projectRoot}"
       },
       "dependsOn": [
