@@ -1,11 +1,6 @@
 import { IResolvable } from '@cdk-x/core';
 import { TestApp, TestStack } from '@cdk-x/testing';
-import {
-  MltInstance,
-  MltMount,
-  MltNetwork,
-  MltProvider,
-} from '../../index';
+import { MltInstance, MltProvider } from '../../index';
 
 describe('MltInstance', () => {
   describe('props and attributes', () => {
@@ -69,34 +64,6 @@ describe('MltInstance', () => {
     });
   });
 
-  describe('MltNetwork', () => {
-    it('is importable with correct props', () => {
-      const app = new TestApp();
-      const stack = new TestStack(app, 'S', {});
-      const net = new MltNetwork(stack, 'Net', {
-        name: 'bridge',
-        mode: 'auto',
-      });
-      expect(net.name).toBe('bridge');
-      expect(net.mode).toBe('auto');
-      expect(MltNetwork.RESOURCE_TYPE_NAME).toBe('Multipass::VM::Network');
-    });
-  });
-
-  describe('MltMount', () => {
-    it('is importable with correct props', () => {
-      const app = new TestApp();
-      const stack = new TestStack(app, 'S', {});
-      const mount = new MltMount(stack, 'Mnt', {
-        source: '/Users/antonio/code',
-        target: '/home/ubuntu/code',
-      });
-      expect(mount.source).toBe('/Users/antonio/code');
-      expect(mount.target).toBe('/home/ubuntu/code');
-      expect(MltMount.RESOURCE_TYPE_NAME).toBe('Multipass::VM::Mount');
-    });
-  });
-
   describe('synthesis', () => {
     it('synthesises without errors and includes cloudInit in rendered props', () => {
       const app = new TestApp();
@@ -111,15 +78,13 @@ describe('MltInstance', () => {
       expect(() => app.synth()).not.toThrow();
     });
 
-    it('networks and mounts are attached and synthesise without errors', () => {
+    it('synthesises with inline networks and mounts without errors', () => {
       const app = new TestApp();
       const stack = new TestStack(app, 'S', {});
-      const net = new MltNetwork(stack, 'Net', { name: 'bridge', mode: 'auto' });
-      const mount = new MltMount(stack, 'Mnt', { source: '/code' });
       new MltInstance(stack, 'Vm', {
         name: 'dev',
-        networks: [net.ref],
-        mounts: [mount.ref],
+        networks: [{ name: 'bridge', mode: 'auto' }],
+        mounts: [{ source: '/code', target: '/home/ubuntu/code' }],
       });
       expect(() => app.synth()).not.toThrow();
     });
