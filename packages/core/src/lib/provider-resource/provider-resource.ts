@@ -104,6 +104,13 @@ export class ProviderResource extends Construct {
   /** The raw (pre-resolution) properties for this resource. Used by the base `renderProperties()` implementation. */
   protected readonly properties?: Record<string, PropertyValue>;
 
+  /**
+   * An `IResolvable` that resolves to the CRN (Cloud Resource Name) of this resource.
+   * Returns a `{ ref, attr }` token that the engine resolves at deploy time to the
+   * actual CRN string constructed by the handler.
+   */
+  public readonly attrCrn: IResolvable;
+
   private readonly _dependencies: ProviderResource[] = [];
 
   constructor(scope: Construct, id: string, props: ProviderResourceProps) {
@@ -112,6 +119,7 @@ export class ProviderResource extends Construct {
     this.logicalId = makeUniqueId(this.node.path.split('/'));
     this.type = props.type;
     this.properties = props.properties;
+    this.attrCrn = this.getAtt('crn');
   }
 
   /**
