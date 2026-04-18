@@ -131,9 +131,19 @@ export class RuntimeAdapter<TSdk> implements ProviderAdapter {
     const config = this.requireConfig(resource.type);
     const stateRecord = state as Record<string, unknown>;
 
+    // Build CRN if the handler implements buildCrn()
+    let crn: string | undefined;
+    try {
+      crn = handler.buildCrn(resource.properties, state);
+    } catch {
+      // Handler does not implement buildCrn() - CRN will be undefined
+      crn = undefined;
+    }
+
     return {
       physicalId: String(stateRecord[config.physicalIdKey]),
       outputs: stateRecord,
+      crn,
     };
   }
 
