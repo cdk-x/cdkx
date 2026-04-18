@@ -16,6 +16,16 @@ export abstract class ResourceHandler<TProps, TState, TSdk> {
   abstract get(ctx: RuntimeContext<TSdk>, props: TProps): Promise<TState>;
 
   /**
+   * Build the CRN (Cloud Resource Name) for this resource.
+   * Called by the RuntimeAdapter after create() to include the CRN in CreateResult.
+   *
+   * @param props - The resource properties (includes typeName for parsing)
+   * @param state - The resource state returned by create() (includes resourceId)
+   * @returns The CRN string in format: crn:cdkx:<provider>:<domain>[:<region>][:<account>]:<resource-type>/<resource-id>
+   */
+  abstract buildCrn(props: TProps, state: TState): string;
+
+  /**
    * Poll `check` until the resource reaches a stable, usable state.
    *
    * Returns immediately when `check` returns `{ status: 'ready' }`.
