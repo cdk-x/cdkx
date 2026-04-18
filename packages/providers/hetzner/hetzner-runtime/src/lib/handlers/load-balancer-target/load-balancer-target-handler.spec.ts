@@ -43,7 +43,9 @@ function stubSdk(
 ): HetznerSdk {
   return {
     actions: {
-      getAction: jest.fn().mockResolvedValue({ data: { action: fakeAction() } }),
+      getAction: jest
+        .fn()
+        .mockResolvedValue({ data: { action: fakeAction() } }),
       ...actionsOverrides,
     },
     loadBalancers: {
@@ -398,7 +400,11 @@ describe('HetznerLoadBalancerTargetHandler', () => {
       await expect(
         handler.update(
           ctx,
-          { loadBalancerId: 10, type: LoadBalancerTargetType.SERVER, serverId: 99 },
+          {
+            loadBalancerId: 10,
+            type: LoadBalancerTargetType.SERVER,
+            serverId: 99,
+          },
           baseState,
         ),
       ).rejects.toThrow(/invariant/i);

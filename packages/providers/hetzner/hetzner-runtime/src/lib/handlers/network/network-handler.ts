@@ -1,4 +1,4 @@
-import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { ResourceHandler, RuntimeContext, Crn } from '@cdk-x/core';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
 /**
@@ -168,5 +168,19 @@ export class HetznerNetworkHandler extends ResourceHandler<
       labels: network.labels ?? {},
       exposeRoutesToVswitch: network.expose_routes_to_vswitch,
     };
+  }
+
+  buildCrn(_props: HetznerNetworkProps, state: HetznerNetworkState): string {
+    // Parse typeName: Hetzner::Networking::Network
+    // For now, hardcode the values as we don't have typeName in props
+    // In the future, typeName should be passed via props
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'networking',
+      // Region is not available in Network state, will be empty for now
+      // ProjectId is out of scope for this iteration
+      resourceType: 'network',
+      resourceId: String(state.networkId),
+    });
   }
 }

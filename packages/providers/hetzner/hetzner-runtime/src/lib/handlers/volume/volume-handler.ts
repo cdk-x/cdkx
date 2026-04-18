@@ -1,4 +1,4 @@
-import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { ResourceHandler, RuntimeContext, Crn } from '@cdk-x/core';
 import { HetznerVolume } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -124,5 +124,14 @@ export class HetznerVolumeHandler extends ResourceHandler<
       format: volume.format ?? undefined,
       labels: volume.labels ?? {},
     };
+  }
+
+  buildCrn(_props: HetznerVolume, state: HetznerVolumeState): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'storage',
+      resourceType: 'volume',
+      resourceId: String(state.volumeId),
+    });
   }
 }

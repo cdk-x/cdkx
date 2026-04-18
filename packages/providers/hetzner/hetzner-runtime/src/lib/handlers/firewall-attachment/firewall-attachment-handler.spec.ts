@@ -90,11 +90,12 @@ describe('HetznerFirewallAttachmentHandler', () => {
 
       await handler.create(ctx, { firewallId: 100, serverId: 7 });
 
-      expect(
-        sdk.firewallActions.applyFirewallToResources,
-      ).toHaveBeenCalledWith(100, {
-        apply_to: [{ type: 'server', server: { id: 7 } }],
-      });
+      expect(sdk.firewallActions.applyFirewallToResources).toHaveBeenCalledWith(
+        100,
+        {
+          apply_to: [{ type: 'server', server: { id: 7 } }],
+        },
+      );
     });
 
     it('returns state with physicalId, firewallId, serverId', async () => {
@@ -150,13 +151,17 @@ describe('HetznerFirewallAttachmentHandler', () => {
         labelSelector: 'env=prod',
       });
 
-      expect(
-        sdk.firewallActions.applyFirewallToResources,
-      ).toHaveBeenCalledWith(100, {
-        apply_to: [
-          { type: 'label_selector', label_selector: { selector: 'env=prod' } },
-        ],
-      });
+      expect(sdk.firewallActions.applyFirewallToResources).toHaveBeenCalledWith(
+        100,
+        {
+          apply_to: [
+            {
+              type: 'label_selector',
+              label_selector: { selector: 'env=prod' },
+            },
+          ],
+        },
+      );
     });
 
     it('returns state with physicalId encoding label_selector', async () => {

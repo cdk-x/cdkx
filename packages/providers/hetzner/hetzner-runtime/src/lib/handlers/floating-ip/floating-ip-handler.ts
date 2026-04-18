@@ -1,4 +1,4 @@
-import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { ResourceHandler, RuntimeContext, Crn } from '@cdk-x/core';
 import { HetznerFloatingIp, Location } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -151,5 +151,14 @@ export class HetznerFloatingIpHandler extends ResourceHandler<
       homeLocation: ip.home_location.name as Location,
       labels: ip.labels ?? {},
     };
+  }
+
+  buildCrn(_props: HetznerFloatingIp, state: HetznerFloatingIpState): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'networking',
+      resourceType: 'floating-ip',
+      resourceId: String(state.floatingIpId),
+    });
   }
 }

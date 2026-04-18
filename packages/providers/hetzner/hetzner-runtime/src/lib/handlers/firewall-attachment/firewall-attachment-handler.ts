@@ -2,6 +2,7 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
+  Crn,
 } from '@cdk-x/core';
 import { HetznerFirewallAttachment } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
@@ -171,7 +172,11 @@ export class HetznerFirewallAttachmentHandler extends ResourceHandler<
   }
 
   private matchesPhysicalId(
-    entry: { type: string; server?: { id: number } | null; label_selector?: { selector: string } | null },
+    entry: {
+      type: string;
+      server?: { id: number } | null;
+      label_selector?: { selector: string } | null;
+    },
     physicalId: string,
     firewallId: number,
   ): boolean {
@@ -207,5 +212,21 @@ export class HetznerFirewallAttachmentHandler extends ResourceHandler<
         reason: `Hetzner action ${actionId} ended with status '${status}'`,
       };
     }, ctx.stabilizeConfig);
+  }
+
+  buildCrn(
+    _props: HetznerFirewallAttachment,
+    state: HetznerFirewallAttachmentState,
+  ): string {
+    const attachmentId =
+      state.serverId !== undefined
+        ? `server/${state.serverId}`
+        : `label-selector/${state.labelSelector}`;
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'security',
+      resourceType: 'firewall-attachment',
+      resourceId: `${state.firewallId}/${attachmentId}`,
+    });
   }
 }

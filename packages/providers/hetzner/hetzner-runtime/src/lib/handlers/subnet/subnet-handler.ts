@@ -2,6 +2,7 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
+  Crn,
 } from '@cdk-x/core';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -217,5 +218,14 @@ export class HetznerSubnetHandler extends ResourceHandler<
         reason: `Hetzner action ${actionId} ended with status '${status}'`,
       };
     }, ctx.stabilizeConfig);
+  }
+
+  buildCrn(_props: HetznerSubnetProps, state: HetznerSubnetState): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'networking',
+      resourceType: 'subnet',
+      resourceId: `network/${state.networkId}/${state.ipRange}`,
+    });
   }
 }

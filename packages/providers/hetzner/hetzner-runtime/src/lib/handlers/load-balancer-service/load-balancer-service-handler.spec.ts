@@ -45,7 +45,9 @@ function stubSdk(
 ): HetznerSdk {
   return {
     actions: {
-      getAction: jest.fn().mockResolvedValue({ data: { action: fakeAction() } }),
+      getAction: jest
+        .fn()
+        .mockResolvedValue({ data: { action: fakeAction() } }),
       ...actionsOverrides,
     },
     loadBalancers: {
@@ -218,12 +220,17 @@ describe('HetznerLoadBalancerServiceHandler', () => {
     it('calls getLoadBalancer and finds service by listenPort', async () => {
       const sdk = stubSdk({
         getLoadBalancer: jest.fn().mockResolvedValue({
-          data: { load_balancer: { services: [fakeService({ listen_port: 80 })] } },
+          data: {
+            load_balancer: { services: [fakeService({ listen_port: 80 })] },
+          },
         }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
-      const state = await handler.get(ctx, { loadBalancerId: 10, listenPort: 80 });
+      const state = await handler.get(ctx, {
+        loadBalancerId: 10,
+        listenPort: 80,
+      });
 
       expect(sdk.loadBalancers.getLoadBalancer).toHaveBeenCalledWith(10);
       expect(state.listenPort).toBe(80);

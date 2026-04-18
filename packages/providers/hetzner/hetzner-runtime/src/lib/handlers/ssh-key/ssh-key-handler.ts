@@ -1,4 +1,4 @@
-import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { ResourceHandler, RuntimeContext, Crn } from '@cdk-x/core';
 import { HetznerSshKey } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -148,5 +148,14 @@ export class HetznerSshKeyHandler extends ResourceHandler<
       fingerprint: key.fingerprint,
       labels: key.labels ?? {},
     };
+  }
+
+  buildCrn(_props: HetznerSshKey, state: HetznerSshKeyState): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'security',
+      resourceType: 'ssh-key',
+      resourceId: String(state.sshKeyId),
+    });
   }
 }

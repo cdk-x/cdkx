@@ -2,6 +2,7 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
+  Crn,
 } from '@cdk-x/core';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -118,5 +119,17 @@ export class HetznerFloatingIpAssignmentHandler extends ResourceHandler<
         reason: `Hetzner action ${actionId} ended with status '${status}'`,
       };
     }, ctx.stabilizeConfig);
+  }
+
+  buildCrn(
+    _props: HetznerFloatingIpAssignmentProps,
+    state: HetznerFloatingIpAssignmentState,
+  ): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'networking',
+      resourceType: 'floating-ip-assignment',
+      resourceId: `${state.floatingIpId}/${state.serverId}`,
+    });
   }
 }

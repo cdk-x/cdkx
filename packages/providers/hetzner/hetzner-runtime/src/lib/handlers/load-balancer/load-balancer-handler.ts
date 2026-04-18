@@ -1,4 +1,9 @@
-import { ResourceHandler, RuntimeContext, StabilizeStatus } from '@cdk-x/core';
+import {
+  ResourceHandler,
+  RuntimeContext,
+  StabilizeStatus,
+  Crn,
+} from '@cdk-x/core';
 import { HetznerLoadBalancer } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -29,7 +34,9 @@ export class HetznerLoadBalancerHandler extends ResourceHandler<
         load_balancer_type: props.loadBalancerType,
         labels: props.labels,
         algorithm: props.algorithm
-          ? { type: props.algorithm.type as 'round_robin' | 'least_connections' }
+          ? {
+              type: props.algorithm.type as 'round_robin' | 'least_connections',
+            }
           : undefined,
         network_zone: props.networkZone,
         location: props.location,
@@ -50,10 +57,9 @@ export class HetznerLoadBalancerHandler extends ResourceHandler<
       let attachResponse;
       try {
         attachResponse =
-          await ctx.sdk.loadBalancerActions.attachLoadBalancerToNetwork(
-            lb.id,
-            { network: props.networkId as number },
-          );
+          await ctx.sdk.loadBalancerActions.attachLoadBalancerToNetwork(lb.id, {
+            network: props.networkId as number,
+          });
       } catch (err) {
         ctx.logger.error('provider.handler.load-balancer.attach.error', {
           loadBalancerId: lb.id,
@@ -234,5 +240,17 @@ export class HetznerLoadBalancerHandler extends ResourceHandler<
     return err && typeof err === 'object' && 'response' in err
       ? (err as { response?: { data?: unknown } }).response?.data
       : undefined;
+  }
+
+  buildCrn(
+    _props: HetznerLoadBalancer,
+    state: HetznerLoadBalancerState,
+  ): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'compute',
+      resourceType: 'load-balancer',
+      resourceId: String(state.loadBalancerId),
+    });
   }
 }

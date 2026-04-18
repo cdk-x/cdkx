@@ -1,4 +1,9 @@
-import { ResourceHandler, RuntimeContext, StabilizeStatus } from '@cdk-x/core';
+import {
+  ResourceHandler,
+  RuntimeContext,
+  StabilizeStatus,
+  Crn,
+} from '@cdk-x/core';
 import { HetznerLoadBalancerService } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -172,5 +177,17 @@ export class HetznerLoadBalancerServiceHandler extends ResourceHandler<
     return err && typeof err === 'object' && 'response' in err
       ? (err as { response?: { data?: unknown } }).response?.data
       : undefined;
+  }
+
+  buildCrn(
+    _props: HetznerLoadBalancerService,
+    state: HetznerLoadBalancerServiceState,
+  ): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'compute',
+      resourceType: 'load-balancer-service',
+      resourceId: `${state.loadBalancerId}/${state.listenPort}`,
+    });
   }
 }
