@@ -1,4 +1,4 @@
-import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { ResourceHandler, RuntimeContext, Crn } from '@cdk-x/core';
 import type { MultipassSdk } from '../../multipass-cli-facade';
 import type { MultipassLaunchOpts } from '@cdk-x/multipass-sdk';
 
@@ -114,5 +114,17 @@ export class MultipassInstanceHandler extends ResourceHandler<
       ipAddress: info.ipAddress,
       sshUser: info.sshUser,
     };
+  }
+
+  buildCrn(
+    _props: MultipassInstanceProps,
+    state: MultipassInstanceState,
+  ): string {
+    return Crn.format({
+      provider: 'multipass',
+      domain: 'compute',
+      resourceType: 'instance',
+      resourceId: state.name,
+    });
   }
 }
