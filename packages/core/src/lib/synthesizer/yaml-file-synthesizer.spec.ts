@@ -240,7 +240,9 @@ describe('YamlFileSynthesizer', () => {
       synth.bind(stack);
       synth.synthesize();
 
-      const files = fs.readdirSync(outputDir).filter((f) => f.endsWith('.yaml'));
+      const files = fs
+        .readdirSync(outputDir)
+        .filter((f) => f.endsWith('.yaml'));
       expect(files).toHaveLength(1);
       expect(files[0]).toBe('dev.yaml');
       fs.rmSync(outputDir, { recursive: true });
@@ -268,7 +270,9 @@ describe('YamlFileSynthesizer', () => {
       synth.bind(stack);
       synth.synthesize();
 
-      const files = fs.readdirSync(outputDir).filter((f) => f.endsWith('.yaml'));
+      const files = fs
+        .readdirSync(outputDir)
+        .filter((f) => f.endsWith('.yaml'));
       expect(files).toHaveLength(2);
       expect(files.sort()).toEqual(['dev.yaml', 'test.yaml']);
 
@@ -278,8 +282,12 @@ describe('YamlFileSynthesizer', () => {
       const test = yaml.load(
         fs.readFileSync(path.join(outputDir, 'test.yaml'), 'utf-8'),
       ) as Record<string, unknown>;
-      expect((dev['networks'] as Record<string, unknown>[])[0]['name']).toBe('bridge');
-      expect((test['networks'] as Record<string, unknown>[])[0]['name']).toBe('bridge');
+      expect((dev['networks'] as Record<string, unknown>[])[0]['name']).toBe(
+        'bridge',
+      );
+      expect((test['networks'] as Record<string, unknown>[])[0]['name']).toBe(
+        'bridge',
+      );
       fs.rmSync(outputDir, { recursive: true });
     });
 
@@ -305,7 +313,9 @@ describe('YamlFileSynthesizer', () => {
       synth.bind(stack);
       synth.synthesize();
 
-      const files = fs.readdirSync(outputDir).filter((f) => f.endsWith('.yaml'));
+      const files = fs
+        .readdirSync(outputDir)
+        .filter((f) => f.endsWith('.yaml'));
       expect(files).toHaveLength(1);
 
       const content = yaml.load(
