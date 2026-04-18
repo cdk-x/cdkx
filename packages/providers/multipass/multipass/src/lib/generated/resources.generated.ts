@@ -14,13 +14,6 @@ import { Construct } from 'constructs';
  * Use these constants when constructing L1 resources to avoid typos.
  */
 export const MultipassResourceType = {
-  /** VM resources. */
-  VM: {
-    /** `Multipass::VM::Mount` */
-    Mount: 'Multipass::VM::Mount',
-    /** `Multipass::VM::Network` */
-    Network: 'Multipass::VM::Network',
-  },
   /** Compute resources. */
   Compute: {
     /** `Multipass::Compute::Instance` */
@@ -29,65 +22,16 @@ export const MultipassResourceType = {
 } as const;
 
 // ==============================================================================
-// VM
+// Compute
 // ==============================================================================
 
-// --- Mount ---
+// --- Instance ---
 /**
- * Props for {@link MltMount}.
- *
- * A host-to-guest directory mount that can be referenced by one or more MltInstance resources.
+ * A network interface to attach at launch time.
  */
-export interface MultipassMount {
+export interface InstanceNetwork {
   /**
-   * Absolute path on the host machine.
-   */
-  source: string;
-  /**
-   * Absolute path inside the guest VM.
-   */
-  target?: string;
-}
-
-/**
- * L1 construct for a Multipass Mount resource.
- *
- * A host-to-guest directory mount that can be referenced by one or more MltInstance resources.
- */
-export class MltMount extends ProviderResource {
-  /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Multipass::VM::Mount';
-
-  public source: string;
-  public target?: string;
-
-  constructor(scope: Construct, id: string, props: MultipassMount) {
-    super(scope, id, {
-      type: MltMount.RESOURCE_TYPE_NAME,
-    });
-    this.node.defaultChild = this;
-    this.source = props.source;
-    this.target = props.target;
-  }
-
-  protected override renderProperties(): Record<string, PropertyValue> {
-    return {
-      source: this.source,
-      target: this.target,
-    } as unknown as Record<string, PropertyValue>;
-  }
-}
-
-
-// --- Network ---
-/**
- * Props for {@link MltNetwork}.
- *
- * A Multipass network interface that can be referenced by one or more MltInstance resources.
- */
-export interface MultipassNetwork {
-  /**
-   * Name of the host network interface (e.g. 'bridge', 'en0').
+   * Name of the host network interface (e.g. 'en0', 'bridge0').
    */
   name: string;
   /**
@@ -101,43 +45,19 @@ export interface MultipassNetwork {
 }
 
 /**
- * L1 construct for a Multipass Network resource.
- *
- * A Multipass network interface that can be referenced by one or more MltInstance resources.
+ * A host-to-guest directory mount.
  */
-export class MltNetwork extends ProviderResource {
-  /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Multipass::VM::Network';
-
-  public name: string;
-  public mode?: 'auto' | 'manual';
-  public mac?: string;
-
-  constructor(scope: Construct, id: string, props: MultipassNetwork) {
-    super(scope, id, {
-      type: MltNetwork.RESOURCE_TYPE_NAME,
-    });
-    this.node.defaultChild = this;
-    this.name = props.name;
-    this.mode = props.mode;
-    this.mac = props.mac;
-  }
-
-  protected override renderProperties(): Record<string, PropertyValue> {
-    return {
-      name: this.name,
-      mode: this.mode,
-      mac: this.mac,
-    } as unknown as Record<string, PropertyValue>;
-  }
+export interface InstanceMount {
+  /**
+   * Absolute path on the host machine.
+   */
+  source: string;
+  /**
+   * Absolute path inside the guest VM.
+   */
+  target?: string;
 }
 
-
-// ==============================================================================
-// Compute
-// ==============================================================================
-
-// --- Instance ---
 /**
  * Props for {@link MltInstance}.
  *
@@ -173,13 +93,13 @@ export interface MultipassInstance {
    */
   timeout?: number;
   /**
-   * Network interfaces to attach. Each entry is a reference to an MltNetwork resource via resource.ref.
+   * Network interfaces to attach at launch time.
    */
-  networks?: IResolvable[];
+  networks?: InstanceNetwork[];
   /**
-   * Host-to-guest directory mounts. Each entry is a reference to an MltMount resource via resource.ref.
+   * Host-to-guest directory mounts.
    */
-  mounts?: IResolvable[];
+  mounts?: InstanceMount[];
   /**
    * Cloud-init user-data string passed to the instance at launch time.
    */
@@ -213,8 +133,8 @@ export class MltInstance extends ProviderResource {
   public disk?: string;
   public bridged?: boolean;
   public timeout?: number;
-  public networks?: IResolvable[];
-  public mounts?: IResolvable[];
+  public networks?: InstanceNetwork[];
+  public mounts?: InstanceMount[];
   public cloudInit?: string;
 
   constructor(scope: Construct, id: string, props: MultipassInstance) {

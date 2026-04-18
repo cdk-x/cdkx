@@ -5,6 +5,45 @@
   "typeName": "Multipass::Compute::Instance",
   "domain": "Compute",
   "additionalProperties": false,
+  "definitions": {
+    "InstanceNetwork": {
+      "type": "object",
+      "description": "A network interface to attach at launch time.",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the host network interface (e.g. 'en0', 'bridge0')."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["auto", "manual"],
+          "description": "Network mode."
+        },
+        "mac": {
+          "type": "string",
+          "description": "Optional MAC address override."
+        }
+      },
+      "required": ["name"]
+    },
+    "InstanceMount": {
+      "type": "object",
+      "description": "A host-to-guest directory mount.",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Absolute path on the host machine."
+        },
+        "target": {
+          "type": "string",
+          "description": "Absolute path inside the guest VM."
+        }
+      },
+      "required": ["source"]
+    }
+  },
   "properties": {
     "name": {
       "type": "string",
@@ -36,13 +75,13 @@
     },
     "networks": {
       "type": "array",
-      "items": { "type": "object" },
-      "description": "Network interfaces to attach. Each entry is a reference to an MltNetwork resource via resource.ref."
+      "description": "Network interfaces to attach at launch time.",
+      "items": { "$ref": "#/definitions/InstanceNetwork" }
     },
     "mounts": {
       "type": "array",
-      "items": { "type": "object" },
-      "description": "Host-to-guest directory mounts. Each entry is a reference to an MltMount resource via resource.ref."
+      "description": "Host-to-guest directory mounts.",
+      "items": { "$ref": "#/definitions/InstanceMount" }
     },
     "cloudInit": {
       "type": "string",
