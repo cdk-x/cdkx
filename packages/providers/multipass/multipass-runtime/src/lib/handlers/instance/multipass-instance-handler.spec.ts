@@ -105,6 +105,46 @@ describe('MultipassInstanceHandler.get()', () => {
 });
 
 // ---------------------------------------------------------------------------
+// networks and mounts forwarding
+// ---------------------------------------------------------------------------
+
+describe('MultipassInstanceHandler.create() with networks and mounts', () => {
+  it('forwards networks to sdk.launch()', async () => {
+    const sdk = stubSdk();
+    const ctx = new MultipassRuntimeContext(sdk, stubLogger());
+    const handler = new MultipassInstanceHandler();
+
+    await handler.create(ctx, {
+      ...baseProps,
+      networks: [{ name: 'en0', mode: 'auto' }],
+    });
+
+    expect(sdk.launch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        networks: [{ name: 'en0', mode: 'auto' }],
+      }),
+    );
+  });
+
+  it('forwards mounts to sdk.launch()', async () => {
+    const sdk = stubSdk();
+    const ctx = new MultipassRuntimeContext(sdk, stubLogger());
+    const handler = new MultipassInstanceHandler();
+
+    await handler.create(ctx, {
+      ...baseProps,
+      mounts: [{ source: '/host/data', target: '/data' }],
+    });
+
+    expect(sdk.launch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mounts: [{ source: '/host/data', target: '/data' }],
+      }),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // delete
 // ---------------------------------------------------------------------------
 

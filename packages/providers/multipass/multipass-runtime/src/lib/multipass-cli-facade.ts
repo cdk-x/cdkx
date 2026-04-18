@@ -1,7 +1,4 @@
-import {
-  MultipassCli,
-  MultipassCliDeps,
-} from '@cdk-x/multipass-sdk';
+import { MultipassCli, MultipassCliDeps } from '@cdk-x/multipass-sdk';
 
 /**
  * The SDK type used by all Multipass resource handlers.

@@ -2,6 +2,19 @@ import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
 import type { MultipassSdk } from '../../multipass-cli-facade';
 import type { MultipassLaunchOpts } from '@cdk-x/multipass-sdk';
 
+/** A network interface entry as it arrives from the resolved manifest. */
+export interface MultipassInstanceNetwork {
+  readonly name: string;
+  readonly mode?: 'auto' | 'manual';
+  readonly mac?: string;
+}
+
+/** A host-to-guest mount entry as it arrives from the resolved manifest. */
+export interface MultipassInstanceMount {
+  readonly source: string;
+  readonly target?: string;
+}
+
 /**
  * Props for a Multipass instance resource.
  * Keys match the MltInstance construct (camelCase).
@@ -14,8 +27,8 @@ export interface MultipassInstanceProps {
   readonly disk?: string;
   readonly bridged?: boolean;
   readonly timeout?: number;
-  readonly networks?: unknown[];
-  readonly mounts?: unknown[];
+  readonly networks?: MultipassInstanceNetwork[];
+  readonly mounts?: MultipassInstanceMount[];
   readonly cloudInit?: string;
 }
 
@@ -55,6 +68,8 @@ export class MultipassInstanceHandler extends ResourceHandler<
       bridged: props.bridged,
       timeout: props.timeout,
       cloudInit: props.cloudInit,
+      networks: props.networks,
+      mounts: props.mounts,
     };
 
     await ctx.sdk.launch(opts);

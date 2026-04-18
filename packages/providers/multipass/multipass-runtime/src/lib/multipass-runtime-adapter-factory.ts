@@ -92,7 +92,8 @@ export class MultipassRuntimeAdapterFactory implements ProviderAdapterFactory {
   }
 
   create(): ProviderAdapter {
-    const createCli = this.deps.createCli ?? (() => MultipassCliFactory.create());
+    const createCli =
+      this.deps.createCli ?? (() => MultipassCliFactory.create());
     const cli = createCli();
 
     const logger = this.deps.createLogger
