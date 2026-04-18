@@ -167,9 +167,7 @@ describe('YamlFile', () => {
 
       workspace.synth();
 
-      expect(
-        fs.existsSync(path.join(outputDir, 'multipass.yaml')),
-      ).toBe(true);
+      expect(fs.existsSync(path.join(outputDir, 'multipass.yaml'))).toBe(true);
     });
 
     it('YAML file contains resources from the Workspace tree', () => {

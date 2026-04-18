@@ -79,6 +79,10 @@ class WidgetHandler extends ResourceHandler<WidgetProps, WidgetState, StubSdk> {
   ): Promise<WidgetState> {
     return { id: 'w-1', name: props.name };
   }
+
+  buildCrn(_props: WidgetProps, state: WidgetState): string {
+    return `crn:cdkx:test:widgets:::widget/${state.id}`;
+  }
 }
 
 class TestRuntime extends ProviderRuntime<StubSdk> {
