@@ -37,18 +37,6 @@ export interface RuntimeResourceConfig {
  */
 export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
 
-  // Multipass::VM::Mount
-  'Multipass::VM::Mount': {
-    physicalIdKey: 'id',
-    createOnlyProps: new Set(),
-  },
-
-  // Multipass::VM::Network
-  'Multipass::VM::Network': {
-    physicalIdKey: 'id',
-    createOnlyProps: new Set(),
-  },
-
   // Multipass::Compute::Instance
   'Multipass::Compute::Instance': {
     physicalIdKey: 'name',
