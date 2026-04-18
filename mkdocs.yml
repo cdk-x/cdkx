@@ -143,9 +143,9 @@ nav:
   - Multipass:
       - Overview: providers/multipass/index.md
       - Instance: providers/multipass/instance.md
-      - Network: providers/multipass/network.md
-      - Mount: providers/multipass/mount.md
-      - CLI Reference: providers/multipass/cli.md
+      - InstanceNetwork: providers/multipass/network.md
+      - InstanceMount: providers/multipass/mount.md
+      - Prerequisites: providers/multipass/cli.md
   - API Reference: api/index.md
   - Contributing:
       - Add a Provider: contributing/add-provider.md

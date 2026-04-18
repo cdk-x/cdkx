@@ -20,7 +20,7 @@ cdkx providers bridge the gap between your TypeScript construct tree and a targe
 
     Provision and manage local Ubuntu VMs using Canonical Multipass. Ideal for local development environments. No cloud account required.
 
-    **Status:** Alpha &nbsp;·&nbsp; **Resources:** 3
+    **Status:** Alpha &nbsp;·&nbsp; **Resources:** 1
 
     [:octicons-arrow-right-24: Multipass](multipass/index.md)
 

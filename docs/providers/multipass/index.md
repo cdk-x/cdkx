@@ -1,40 +1,35 @@
 # Multipass
 
-The Multipass provider lets you define and manage local Ubuntu VMs using [Canonical Multipass](https://multipass.run). Instead of deploying to a cloud API, it synthesizes a `multipass.yaml` configuration file and provides CLI commands to launch, start, stop, and delete VMs.
+The Multipass provider lets you define and manage local Ubuntu VMs using [Canonical Multipass](https://multipass.run). It follows the standard cdkx two-phase workflow — synth and deploy — and wraps the `multipass` CLI under the hood.
 
 !!! note "Local-only provider"
-    Multipass runs on your machine. No cloud account or API token is required. You do need [Multipass installed](https://multipass.run/install) locally.
+    Multipass runs on your machine. No cloud account or API token is required. You do need [Multipass installed](https://multipass.run/install) locally and available in `PATH`.
 
 ## Installation
 
 ```bash
-npm install @cdk-x/multipass
+yarn add @cdk-x/multipass
 ```
 
 ## How it works
 
-The Multipass provider follows a two-step workflow:
-
-1. **Synth** — your `.cdkxrc.ts` app runs and writes a `multipass.yaml` file with the resolved VM configuration.
-2. **CLI** — `cdkx multipass <command>` reads `multipass.yaml` and calls the `multipass` binary with the correct arguments.
+1. **Synth** — your app runs and writes a cloud assembly (`cdkx.out/`).
+2. **Deploy** — `cdkx deploy` reads the assembly and calls `multipass launch` for each instance. `cdkx destroy` calls `multipass delete --purge`.
 
 ```
-.cdkxrc.ts  →  cdkx synth  →  multipass.yaml  →  cdkx multipass launch
+.cdkxrc.ts  →  cdkx synth  →  cdkx.out/  →  cdkx deploy  →  multipass launch …
 ```
 
 ## Quick example
 
 ```typescript title=".cdkxrc.ts" linenums="1"
-import { Workspace, YamlFile } from '@cdk-x/core';
-import { MltInstance, MltConfig } from '@cdk-x/multipass';
+import { App, Stack } from '@cdk-x/core';
+import { MltInstance, MltProvider } from '@cdk-x/multipass';
 
-const workspace = new Workspace();
+const app = new App();
+const stack = new Stack(app, 'DevVMs', { provider: new MltProvider() });
 
-const multipass = new YamlFile(workspace, 'DevVMs', {
-  fileName: 'multipass.yaml',
-});
-
-const dev = new MltInstance(multipass, 'Dev', {
+new MltInstance(stack, 'Dev', {
   name: 'dev',
   image: 'jammy',
   cpus: 4,
@@ -42,45 +37,62 @@ const dev = new MltInstance(multipass, 'Dev', {
   disk: '20G',
 });
 
-new MltConfig(multipass, 'Config', {
-  instances: [dev.ref],
-});
-
-workspace.synth();
+app.synth();
 ```
 
 Then run:
 
 ```bash
-cdkx synth                  # writes multipass.yaml
-cdkx multipass launch dev   # runs: multipass launch jammy --name dev --cpus 4 --memory 4G --disk 20G
+cdkx synth    # produces cdkx.out/
+cdkx deploy   # runs: multipass launch jammy --name dev --cpus 4 --memory 4G --disk 20G
+cdkx destroy  # runs: multipass delete dev --purge
+```
+
+## Example with network and cloud-init
+
+Networks and mounts are declared inline on `MltInstance` — no separate constructs needed:
+
+```typescript title=".cdkxrc.ts" linenums="1"
+import { App, Stack } from '@cdk-x/core';
+import { MltInstance, MltProvider } from '@cdk-x/multipass';
+
+const app = new App();
+const stack = new Stack(app, 'DevVMs', { provider: new MltProvider() });
+
+new MltInstance(stack, 'Dev', {
+  name: 'dev',
+  image: 'jammy',
+  cpus: 4,
+  memory: '4G',
+  disk: '20G',
+  networks: [{ name: 'bridge', mode: 'auto' }],
+  mounts: [{ source: '/Users/me/code', target: '/home/ubuntu/code' }],
+  cloudInit: '#cloud-config\npackages:\n  - git\n  - curl\n',
+});
+
+app.synth();
 ```
 
 ## Supported resources
 
 | Construct | Type string | Description |
 |-----------|-------------|-------------|
-| [`MltInstance`](instance.md) | `Multipass::Compute::Instance` | Declares a Ubuntu VM |
-| [`MltNetwork`](network.md) | `Multipass::VM::Network` | A host network interface to attach to a VM |
-| [`MltMount`](mount.md) | `Multipass::VM::Mount` | A host-to-guest directory mount |
+| [`MltInstance`](instance.md) | `Multipass::Compute::Instance` | A Ubuntu VM managed by Multipass |
 
-## Synthesized output
+!!! info "Networks and mounts are inline"
+    There are no separate `MltNetwork` or `MltMount` constructs. Network interfaces and directory mounts are declared as plain objects directly on `MltInstance.networks` and `MltInstance.mounts`. See [Instance](instance.md) for details.
 
-Running `cdkx synth` produces a `multipass.yaml` at the project root:
+## Resource lifecycle
 
-```yaml
-instances:
-  - name: dev
-    image: jammy
-    cpus: 4
-    memory: 4G
-    disk: 20G
-```
+All `MltInstance` props are **create-only**. Once a VM is launched its configuration cannot be updated — the engine will never call update. To change a VM, destroy it and redeploy.
 
-This file is intended to be committed to your repository — it is the source of truth that `cdkx multipass` commands read at runtime.
+| Operation | What happens |
+|-----------|-------------|
+| `cdkx deploy` | Calls `multipass launch` for each new instance |
+| `cdkx destroy` | Calls `multipass delete --purge` for each instance |
 
 ---
 
 !!! info "See also"
-    - [CLI Reference](cli.md) — all `cdkx multipass` commands
-    - [Workspace](../../concepts/app.md) — using `Workspace` instead of `App` for local config workflows
+    - [MltInstance](instance.md) — all props, attributes, and examples
+    - [CLI Reference](../../getting-started/cli-reference.md) — standard `cdkx synth`, `deploy`, and `destroy` commands
