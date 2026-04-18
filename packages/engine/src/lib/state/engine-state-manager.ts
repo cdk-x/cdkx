@@ -148,6 +148,9 @@ export class EngineStateManager {
       ...(options?.physicalId !== undefined && {
         physicalId: options.physicalId,
       }),
+      ...(options?.crn !== undefined && {
+        crn: options.crn,
+      }),
       ...(options?.properties !== undefined && {
         properties: options.properties,
       }),
