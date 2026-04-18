@@ -1,81 +1,61 @@
-# Mount
+# InstanceMount
 
-`MltMount` declares a host-to-guest directory mount. The host path is made available inside the VM at the specified target path. It is referenced by `MltInstance` via `mltMount.ref`.
+`InstanceMount` is an inline type used in `MltInstance.mounts`. It declares a host-to-guest directory mount. The host path is made available inside the VM at the specified target path. Each entry maps to a `--mount` argument passed to `multipass launch`.
 
-**Type:** `Multipass::VM::Mount`  
-**Import:** `@cdk-x/multipass`
+There is no separate `MltMount` construct — mounts are declared as plain objects directly on `MltInstance`:
 
-## Props
+```typescript
+new MltInstance(stack, 'Dev', {
+  name: 'dev',
+  mounts: [
+    { source: '/Users/me/code', target: '/home/ubuntu/code' },
+  ],
+});
+```
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `source` | `string` | ✅ | Absolute path on the host machine to mount into the VM. |
+## Shape
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `source` | `string` | ✅ | Absolute path on the host machine to mount into the VM. Must exist on the host. |
 | `target` | `string` | — | Absolute path inside the guest VM where the directory will be mounted. Defaults to the same path as `source` if omitted. |
 
 ## Example
 
 ```typescript title=".cdkxrc.ts" linenums="1"
-import { Workspace, YamlFile } from '@cdk-x/core';
-import { MltInstance, MltMount, MltConfig } from '@cdk-x/multipass';
+import { App, Stack } from '@cdk-x/core';
+import { MltInstance, MltProvider } from '@cdk-x/multipass';
 
-const workspace = new Workspace();
-const multipass = new YamlFile(workspace, 'DevVMs', { fileName: 'multipass.yaml' });
+const app = new App();
+const stack = new Stack(app, 'DevVMs', { provider: new MltProvider() });
 
-const codeMount = new MltMount(multipass, 'Code', {
-  source: '/Users/me/code',   // (1)!
-  target: '/home/ubuntu/code', // (2)!
-});
-
-const dev = new MltInstance(multipass, 'Dev', {
+new MltInstance(stack, 'Dev', {
   name: 'dev',
   image: 'jammy',
-  mounts: [codeMount.ref],
+  mounts: [
+    { source: '/Users/me/code', target: '/home/ubuntu/code' },
+    { source: '/Users/me/.ssh' }, // (1)!
+  ],
 });
 
-new MltConfig(multipass, 'Config', { instances: [dev.ref] });
-
-workspace.synth();
+app.synth();
 ```
 
-1. The host directory that will be shared with the VM. Must exist on the host.
-2. Where it will appear inside the VM. Created automatically by Multipass if it does not exist.
-
-Produces:
-
-```yaml
-instances:
-  - name: dev
-    image: jammy
-    mounts:
-      - source: /Users/me/code
-        target: /home/ubuntu/code
-```
+1. When `target` is omitted, Multipass uses the same path as `source` inside the VM.
 
 ## Sharing a mount across multiple VMs
 
-A single `MltMount` instance can be referenced by multiple VMs:
+Simply repeat the same mount object on each instance:
 
 ```typescript
-const sharedMount = new MltMount(multipass, 'Shared', {
-  source: '/Users/me/projects',
-  target: '/home/ubuntu/projects',
-});
+const sharedMount = { source: '/Users/me/projects', target: '/home/ubuntu/projects' };
 
-const vm1 = new MltInstance(multipass, 'VM1', {
-  name: 'vm1',
-  mounts: [sharedMount.ref],
-});
-
-const vm2 = new MltInstance(multipass, 'VM2', {
-  name: 'vm2',
-  mounts: [sharedMount.ref],
-});
+new MltInstance(stack, 'VM1', { name: 'vm1', mounts: [sharedMount] });
+new MltInstance(stack, 'VM2', { name: 'vm2', mounts: [sharedMount] });
 ```
-
-Both VMs will have the same host directory mounted at the same guest path.
 
 ---
 
 !!! info "See also"
-    - [MltInstance](instance.md) — attach the mount via `mounts: [codeMount.ref]`
-    - [MltNetwork](network.md) — attach host network interfaces to a VM
+    - [MltInstance](instance.md) — full props reference
+    - [InstanceNetwork](network.md) — attach host network interfaces to a VM
