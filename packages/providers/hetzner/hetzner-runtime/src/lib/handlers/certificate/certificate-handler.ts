@@ -1,4 +1,4 @@
-import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { ResourceHandler, RuntimeContext, Crn } from '@cdk-x/core';
 import { HetznerCertificate, CertificateType } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -165,5 +165,14 @@ export class HetznerCertificateHandler extends ResourceHandler<
       certificate: certificate.certificate ?? undefined,
       domainNames: certificate.domain_names,
     };
+  }
+
+  buildCrn(_props: HetznerCertificate, state: HetznerCertificateState): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'security',
+      resourceType: 'certificate',
+      resourceId: String(state.certificateId),
+    });
   }
 }

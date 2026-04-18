@@ -1,4 +1,4 @@
-import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { ResourceHandler, RuntimeContext, Crn } from '@cdk-x/core';
 import { HetznerFirewall } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -112,5 +112,14 @@ export class HetznerFirewallHandler extends ResourceHandler<
     return err && typeof err === 'object' && 'response' in err
       ? (err as { response?: { data?: unknown } }).response?.data
       : undefined;
+  }
+
+  buildCrn(_props: HetznerFirewall, state: HetznerFirewallState): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'security',
+      resourceType: 'firewall',
+      resourceId: String(state.firewallId),
+    });
   }
 }

@@ -1,8 +1,5 @@
 import { RuntimeLogger } from '@cdk-x/core';
-import {
-  FirewallRuleDirection,
-  FirewallRuleProtocol,
-} from '@cdk-x/hetzner';
+import { FirewallRuleDirection, FirewallRuleProtocol } from '@cdk-x/hetzner';
 import {
   HetznerFirewallRulesHandler,
   HetznerFirewallRulesState,
@@ -60,9 +57,7 @@ function stubSdk(
       ...firewallsOverrides,
     },
     firewallActions: {
-      setFirewallRules: jest
-        .fn()
-        .mockResolvedValue({ data: { actions: [] } }),
+      setFirewallRules: jest.fn().mockResolvedValue({ data: { actions: [] } }),
       ...firewallActionsOverrides,
     },
   } as unknown as HetznerSdk;
@@ -128,11 +123,9 @@ describe('HetznerFirewallRulesHandler', () => {
 
     it('polls each action returned by setFirewallRules', async () => {
       const sdk = stubSdk(undefined, {
-        setFirewallRules: jest
-          .fn()
-          .mockResolvedValue({
-            data: { actions: [fakeAction({ id: 55 }), fakeAction({ id: 56 })] },
-          }),
+        setFirewallRules: jest.fn().mockResolvedValue({
+          data: { actions: [fakeAction({ id: 55 }), fakeAction({ id: 56 })] },
+        }),
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
@@ -207,11 +200,7 @@ describe('HetznerFirewallRulesHandler', () => {
       const sdk = stubSdk();
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
-      const state = await handler.update(
-        ctx,
-        { firewallId: 100 },
-        baseState,
-      );
+      const state = await handler.update(ctx, { firewallId: 100 }, baseState);
 
       expect(state).toEqual({ firewallId: 100 });
     });

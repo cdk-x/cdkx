@@ -2,6 +2,7 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
+  Crn,
 } from '@cdk-x/core';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -200,5 +201,17 @@ export class HetznerVolumeAttachmentHandler extends ResourceHandler<
         reason: `Hetzner action ${actionId} ended with status '${status}'`,
       };
     }, ctx.stabilizeConfig);
+  }
+
+  buildCrn(
+    _props: HetznerVolumeAttachmentProps,
+    state: HetznerVolumeAttachmentState,
+  ): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'storage',
+      resourceType: 'volume-attachment',
+      resourceId: `${state.volumeId}/${state.serverId}`,
+    });
   }
 }

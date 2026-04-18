@@ -2,6 +2,7 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
+  Crn,
 } from '@cdk-x/core';
 import { FirewallRule, HetznerFirewallRules } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
@@ -154,5 +155,17 @@ export class HetznerFirewallRulesHandler extends ResourceHandler<
         reason: `Hetzner action ${actionId} ended with status '${status}'`,
       };
     }, ctx.stabilizeConfig);
+  }
+
+  buildCrn(
+    _props: HetznerFirewallRules,
+    state: HetznerFirewallRulesState,
+  ): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'security',
+      resourceType: 'firewall-rules',
+      resourceId: String(state.firewallId),
+    });
   }
 }

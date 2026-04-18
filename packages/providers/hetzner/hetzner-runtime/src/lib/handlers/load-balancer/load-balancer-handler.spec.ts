@@ -46,7 +46,9 @@ function stubSdk(
 ): HetznerSdk {
   return {
     actions: {
-      getAction: jest.fn().mockResolvedValue({ data: { action: fakeAction() } }),
+      getAction: jest
+        .fn()
+        .mockResolvedValue({ data: { action: fakeAction() } }),
       ...actionsOverrides,
     },
     loadBalancers: {
@@ -151,7 +153,10 @@ describe('HetznerLoadBalancerHandler', () => {
       const sdk = stubSdk();
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
-      await handler.create(ctx, { name: 'my-lb', loadBalancerType: LoadBalancerType.LB11 });
+      await handler.create(ctx, {
+        name: 'my-lb',
+        loadBalancerType: LoadBalancerType.LB11,
+      });
 
       expect(
         sdk.loadBalancerActions.attachLoadBalancerToNetwork,
@@ -162,7 +167,10 @@ describe('HetznerLoadBalancerHandler', () => {
       const sdk = stubSdk();
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
-      await handler.create(ctx, { name: 'my-lb', loadBalancerType: LoadBalancerType.LB11 });
+      await handler.create(ctx, {
+        name: 'my-lb',
+        loadBalancerType: LoadBalancerType.LB11,
+      });
 
       expect(logger.info).toHaveBeenCalledWith(
         'provider.handler.load-balancer.create',
@@ -262,7 +270,10 @@ describe('HetznerLoadBalancerHandler', () => {
       });
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
-      await handler.get(ctx, { name: 'my-lb', loadBalancerType: LoadBalancerType.LB11 });
+      await handler.get(ctx, {
+        name: 'my-lb',
+        loadBalancerType: LoadBalancerType.LB11,
+      });
 
       expect(sdk.loadBalancers.listLoadBalancers).toHaveBeenCalledWith(
         undefined,
@@ -295,7 +306,10 @@ describe('HetznerLoadBalancerHandler', () => {
       const ctx = new HetznerRuntimeContext(sdk, logger);
 
       await expect(
-        handler.get(ctx, { name: 'missing-lb', loadBalancerType: LoadBalancerType.LB11 }),
+        handler.get(ctx, {
+          name: 'missing-lb',
+          loadBalancerType: LoadBalancerType.LB11,
+        }),
       ).rejects.toThrow(/missing-lb/);
     });
   });
@@ -350,7 +364,11 @@ describe('HetznerLoadBalancerHandler', () => {
 
       await handler.update(
         ctx,
-        { name: 'renamed-lb', labels: { env: 'prod' }, loadBalancerType: LoadBalancerType.LB11 },
+        {
+          name: 'renamed-lb',
+          labels: { env: 'prod' },
+          loadBalancerType: LoadBalancerType.LB11,
+        },
         baseState,
       );
 
@@ -459,7 +477,11 @@ describe('HetznerLoadBalancerHandler', () => {
 
       await handler.update(
         ctx,
-        { name: 'my-lb', loadBalancerType: LoadBalancerType.LB11, publicInterface: true },
+        {
+          name: 'my-lb',
+          loadBalancerType: LoadBalancerType.LB11,
+          publicInterface: true,
+        },
         { ...baseState, publicInterface: false },
       );
 
@@ -477,7 +499,11 @@ describe('HetznerLoadBalancerHandler', () => {
 
       await handler.update(
         ctx,
-        { name: 'my-lb', loadBalancerType: LoadBalancerType.LB11, publicInterface: false },
+        {
+          name: 'my-lb',
+          loadBalancerType: LoadBalancerType.LB11,
+          publicInterface: false,
+        },
         { ...baseState, publicInterface: true },
       );
 
@@ -495,7 +521,11 @@ describe('HetznerLoadBalancerHandler', () => {
 
       await handler.update(
         ctx,
-        { name: 'my-lb', loadBalancerType: LoadBalancerType.LB11, networkId: 999 },
+        {
+          name: 'my-lb',
+          loadBalancerType: LoadBalancerType.LB11,
+          networkId: 999,
+        },
         baseState,
       );
 
@@ -510,7 +540,11 @@ describe('HetznerLoadBalancerHandler', () => {
 
       await handler.update(
         ctx,
-        { name: 'my-lb', loadBalancerType: LoadBalancerType.LB11, publicInterface: true },
+        {
+          name: 'my-lb',
+          loadBalancerType: LoadBalancerType.LB11,
+          publicInterface: true,
+        },
         { ...baseState, publicInterface: true },
       );
 

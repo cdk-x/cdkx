@@ -2,6 +2,7 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
+  Crn,
 } from '@cdk-x/core';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -199,5 +200,14 @@ export class HetznerRouteHandler extends ResourceHandler<
         reason: `Hetzner action ${actionId} ended with status '${status}'`,
       };
     }, ctx.stabilizeConfig);
+  }
+
+  buildCrn(_props: HetznerRouteProps, state: HetznerRouteState): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'networking',
+      resourceType: 'route',
+      resourceId: `network/${state.networkId}/${state.destination}`,
+    });
   }
 }

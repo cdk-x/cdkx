@@ -1,5 +1,8 @@
 import { RuntimeLogger } from '@cdk-x/core';
-import { HetznerFirewallHandler, HetznerFirewallState } from './firewall-handler';
+import {
+  HetznerFirewallHandler,
+  HetznerFirewallState,
+} from './firewall-handler';
 import { HetznerRuntimeContext } from '../../hetzner-runtime-context';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -42,7 +45,9 @@ function stubSdk(
       listFirewalls: jest.fn().mockResolvedValue({
         data: { firewalls: [fakeFirewall()] },
       }),
-      updateFirewall: jest.fn().mockResolvedValue({ data: { firewall: fakeFirewall() } }),
+      updateFirewall: jest
+        .fn()
+        .mockResolvedValue({ data: { firewall: fakeFirewall() } }),
       ...firewallsOverrides,
     },
   } as unknown as HetznerSdk;

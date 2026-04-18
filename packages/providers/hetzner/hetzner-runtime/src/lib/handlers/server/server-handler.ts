@@ -2,6 +2,7 @@ import {
   ResourceHandler,
   RuntimeContext,
   StabilizeStatus,
+  Crn,
 } from '@cdk-x/core';
 import { HetznerServer } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
@@ -233,5 +234,14 @@ export class HetznerServerHandler extends ResourceHandler<
       automount: props.automount,
       publicNet: props.publicNet,
     };
+  }
+
+  buildCrn(_props: HetznerServer, state: HetznerServerState): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'compute',
+      resourceType: 'server',
+      resourceId: String(state.serverId),
+    });
   }
 }

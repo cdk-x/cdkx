@@ -1,4 +1,9 @@
-import { ResourceHandler, RuntimeContext, StabilizeStatus } from '@cdk-x/core';
+import {
+  ResourceHandler,
+  RuntimeContext,
+  StabilizeStatus,
+  Crn,
+} from '@cdk-x/core';
 import { HetznerLoadBalancerTarget } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -74,9 +79,7 @@ export class HetznerLoadBalancerTargetHandler extends ResourceHandler<
       `Load Balancer with id '${loadBalancerId}' not found`,
     );
 
-    const found = (lb.targets ?? []).some((t) =>
-      this.matchesTarget(t, props),
-    );
+    const found = (lb.targets ?? []).some((t) => this.matchesTarget(t, props));
 
     if (!found) {
       const identity = this.targetIdentity(props);
@@ -167,7 +170,8 @@ export class HetznerLoadBalancerTargetHandler extends ResourceHandler<
     props: HetznerLoadBalancerTarget,
   ): HetznerLoadBalancerTargetState {
     const type = props.type as string;
-    const serverId = props.serverId != null ? (props.serverId as number) : undefined;
+    const serverId =
+      props.serverId != null ? (props.serverId as number) : undefined;
     const labelSelector = props.labelSelector;
     const ip = props.ip;
 
@@ -182,7 +186,12 @@ export class HetznerLoadBalancerTargetHandler extends ResourceHandler<
   }
 
   private matchesTarget(
-    target: { type: string; server?: { id: number } | null; label_selector?: { selector: string } | null; ip?: { ip: string } | null },
+    target: {
+      type: string;
+      server?: { id: number } | null;
+      label_selector?: { selector: string } | null;
+      ip?: { ip: string } | null;
+    },
     props: HetznerLoadBalancerTarget,
   ): boolean {
     const type = props.type as string;
@@ -242,5 +251,23 @@ export class HetznerLoadBalancerTargetHandler extends ResourceHandler<
     return err && typeof err === 'object' && 'response' in err
       ? (err as { response?: { data?: unknown } }).response?.data
       : undefined;
+  }
+
+  buildCrn(
+    _props: HetznerLoadBalancerTarget,
+    state: HetznerLoadBalancerTargetState,
+  ): string {
+    const targetId =
+      state.type === 'server'
+        ? state.serverId
+        : state.type === 'label_selector'
+          ? state.labelSelector
+          : state.ip;
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'compute',
+      resourceType: 'load-balancer-target',
+      resourceId: `${state.loadBalancerId}/${state.type}/${targetId}`,
+    });
   }
 }

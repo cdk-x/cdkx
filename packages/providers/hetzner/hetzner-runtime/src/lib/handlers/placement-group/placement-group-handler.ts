@@ -1,4 +1,4 @@
-import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { ResourceHandler, RuntimeContext, Crn } from '@cdk-x/core';
 import { HetznerPlacementGroup } from '@cdk-x/hetzner';
 import { HetznerSdk } from '../../hetzner-sdk-facade';
 
@@ -149,5 +149,17 @@ export class HetznerPlacementGroupHandler extends ResourceHandler<
       labels: pg.labels ?? {},
       serverIds: pg.servers ?? [],
     };
+  }
+
+  buildCrn(
+    _props: HetznerPlacementGroup,
+    state: HetznerPlacementGroupState,
+  ): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'compute',
+      resourceType: 'placement-group',
+      resourceId: String(state.placementGroupId),
+    });
   }
 }

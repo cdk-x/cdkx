@@ -1,4 +1,4 @@
-import { ResourceHandler, RuntimeContext } from '@cdk-x/core';
+import { ResourceHandler, RuntimeContext, Crn } from '@cdk-x/core';
 import {
   HetznerPrimaryIp,
   PrimaryIpAssigneeType,
@@ -153,5 +153,14 @@ export class HetznerPrimaryIpHandler extends ResourceHandler<
       autoDelete: ip.auto_delete,
       labels: ip.labels ?? {},
     };
+  }
+
+  buildCrn(_props: HetznerPrimaryIp, state: HetznerPrimaryIpState): string {
+    return Crn.format({
+      provider: 'hetzner',
+      domain: 'networking',
+      resourceType: 'primary-ip',
+      resourceId: String(state.primaryIpId),
+    });
   }
 }
