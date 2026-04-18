@@ -3832,7 +3832,10 @@ describe('DeploymentEngine', () => {
         },
       };
 
-      const persistence = makeSnapshotPersistence({ snapshotState, currentState });
+      const persistence = makeSnapshotPersistence({
+        snapshotState,
+        currentState,
+      });
 
       const createCalls: string[] = [];
       const fullAdapter: ProviderAdapter = {
@@ -3847,7 +3850,11 @@ describe('DeploymentEngine', () => {
       };
 
       const bus = new EventBus<EngineEvent>();
-      const stateManager = new EngineStateManager(bus, persistence, currentState);
+      const stateManager = new EngineStateManager(
+        bus,
+        persistence,
+        currentState,
+      );
       const engine = new DeploymentEngine({
         adapters: { test: fullAdapter },
         assemblyDir: '/fake/assembly',

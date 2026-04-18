@@ -75,6 +75,10 @@ class StubHandler extends ResourceHandler<TestProps, TestState, TestSdk> {
     this.getCalls.push({ props });
     return this.getResult;
   }
+
+  buildCrn(_props: TestProps, state: TestState): string {
+    return `crn:cdkx:test:networking:::network/${state.networkId}`;
+  }
 }
 
 class StubRuntime extends ProviderRuntime<TestSdk> {
