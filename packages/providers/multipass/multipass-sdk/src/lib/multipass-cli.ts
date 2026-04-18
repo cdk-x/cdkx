@@ -2,6 +2,19 @@ import { spawn as nodeSpawn } from 'child_process';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+/** A network interface to attach at launch time. */
+export interface MultipassNetworkOpt {
+  readonly name: string;
+  readonly mode?: 'auto' | 'manual';
+  readonly mac?: string;
+}
+
+/** A host-to-guest directory mount to attach at launch time. */
+export interface MultipassMountOpt {
+  readonly source: string;
+  readonly target?: string;
+}
+
 /** Options for launching a Multipass VM. 1:1 mapping of MltInstance props. */
 export interface MultipassLaunchOpts {
   readonly name: string;
@@ -12,6 +25,8 @@ export interface MultipassLaunchOpts {
   readonly bridged?: boolean;
   readonly timeout?: number;
   readonly cloudInit?: string;
+  readonly networks?: MultipassNetworkOpt[];
+  readonly mounts?: MultipassMountOpt[];
 }
 
 /** VM state returned by `multipass info`. */
@@ -92,8 +107,21 @@ export class MultipassCli {
     if (opts.memory) args.push('--memory', opts.memory);
     if (opts.disk) args.push('--disk', opts.disk);
     if (opts.bridged) args.push('--bridged');
-    if (opts.timeout !== undefined) args.push('--timeout', String(opts.timeout));
+    if (opts.timeout !== undefined)
+      args.push('--timeout', String(opts.timeout));
     if (opts.cloudInit) args.push('--cloud-init', opts.cloudInit);
+    for (const net of opts.networks ?? []) {
+      const parts = [`name=${net.name}`];
+      if (net.mode) parts.push(`mode=${net.mode}`);
+      if (net.mac) parts.push(`mac=${net.mac}`);
+      args.push('--network', parts.join(','));
+    }
+    for (const mount of opts.mounts ?? []) {
+      const mountArg = mount.target
+        ? `${mount.source}:${mount.target}`
+        : mount.source;
+      args.push('--mount', mountArg);
+    }
 
     const result = await this.spawn('multipass', args);
     if (result.code !== 0) {
@@ -120,10 +148,7 @@ export class MultipassCli {
     }
 
     const parsed = JSON.parse(result.stdout) as {
-      info: Record<
-        string,
-        { ipv4?: string[]; state?: string }
-      >;
+      info: Record<string, { ipv4?: string[]; state?: string }>;
     };
 
     const vmData = parsed.info[name];

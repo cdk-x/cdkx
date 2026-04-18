@@ -34,9 +34,11 @@ describe('MultipassCli.assertInstalled()', () => {
   });
 
   it('throws a clear error when multipass is not found', async () => {
-    const spawn = jest.fn().mockRejectedValue(
-      Object.assign(new Error('spawn multipass ENOENT'), { code: 'ENOENT' }),
-    );
+    const spawn = jest
+      .fn()
+      .mockRejectedValue(
+        Object.assign(new Error('spawn multipass ENOENT'), { code: 'ENOENT' }),
+      );
     const cli = new MultipassCli({ spawn });
 
     await expect(cli.assertInstalled()).rejects.toThrow(
@@ -67,7 +69,9 @@ describe('MultipassCli.launch()', () => {
   });
 
   it('includes all optional flags when provided', async () => {
-    const spawn = jest.fn().mockResolvedValue({ code: 0, stdout: '', stderr: '' });
+    const spawn = jest
+      .fn()
+      .mockResolvedValue({ code: 0, stdout: '', stderr: '' });
     const cli = new MultipassCli({ spawn });
 
     await cli.launch({
@@ -109,6 +113,73 @@ describe('MultipassCli.launch()', () => {
     await expect(cli.launch({ name: 'dev' })).rejects.toThrow(
       /multipass launch failed/i,
     );
+  });
+
+  it('adds --network name=<iface> for each network entry', async () => {
+    const spawn = jest
+      .fn()
+      .mockResolvedValue({ code: 0, stdout: '', stderr: '' });
+    const cli = new MultipassCli({ spawn });
+
+    await cli.launch({
+      name: 'dev',
+      networks: [{ name: 'en0' }, { name: 'bridge0', mode: 'auto' }],
+    });
+
+    expect(spawn).toHaveBeenCalledWith('multipass', [
+      'launch',
+      '--name',
+      'dev',
+      '--network',
+      'name=en0',
+      '--network',
+      'name=bridge0,mode=auto',
+    ]);
+  });
+
+  it('adds --mount source:target for each mount entry', async () => {
+    const spawn = jest
+      .fn()
+      .mockResolvedValue({ code: 0, stdout: '', stderr: '' });
+    const cli = new MultipassCli({ spawn });
+
+    await cli.launch({
+      name: 'dev',
+      mounts: [
+        { source: '/host/data', target: '/data' },
+        { source: '/host/logs' },
+      ],
+    });
+
+    expect(spawn).toHaveBeenCalledWith('multipass', [
+      'launch',
+      '--name',
+      'dev',
+      '--mount',
+      '/host/data:/data',
+      '--mount',
+      '/host/logs',
+    ]);
+  });
+
+  it('includes mac in --network arg when provided', async () => {
+    const spawn = jest
+      .fn()
+      .mockResolvedValue({ code: 0, stdout: '', stderr: '' });
+    const cli = new MultipassCli({ spawn });
+
+    await cli.launch({
+      name: 'dev',
+      networks: [{ name: 'en0', mode: 'manual', mac: '52:54:00:01:02:03' }],
+    });
+
+    expect(spawn).toHaveBeenCalledWith('multipass', [
+      'launch',
+      '--name',
+      'dev',
+      '--network',
+      'name=en0,mode=manual,mac=52:54:00:01:02:03',
+    ]);
   });
 });
 
