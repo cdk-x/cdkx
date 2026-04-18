@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { App, Stack, StackOutput } from '@cdk-x/core';
 import { MltInstance } from '@cdk-x/multipass';
 
@@ -10,6 +11,8 @@ const instance = new MltInstance(stack, 'Instance', {
   image: 'jammy',
   cpus: 1,
   memory: '1G',
+  networks: [{ name: 'en0', mode: 'auto' }],
+  mounts: [{ source: path.resolve(__dirname, '../cdkx.out'), target: '/cdkx.out' }],
 });
 
 new StackOutput(stack, 'InstanceName', {
