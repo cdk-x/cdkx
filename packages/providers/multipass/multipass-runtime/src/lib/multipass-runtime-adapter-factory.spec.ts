@@ -73,7 +73,8 @@ describe('MultipassRuntimeAdapterFactory', () => {
       });
 
       expect(
-        () => new MultipassRuntimeAdapterFactory(defaultDeps({ checkInstalled })),
+        () =>
+          new MultipassRuntimeAdapterFactory(defaultDeps({ checkInstalled })),
       ).toThrow(/multipass is not installed/i);
     });
   });
