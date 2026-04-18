@@ -65,6 +65,13 @@ export interface CreateResult {
    * Keys match the `attr` field of cross-resource reference tokens.
    */
   readonly outputs?: Record<string, unknown>;
+
+  /**
+   * Cloud Resource Name (CRN) for the newly created resource.
+   * Optional for backwards compatibility - adapters may omit this field.
+   * Format: crn:cdkx:<provider>:<domain>[:<region>][:<account>]:<resource-type>/<resource-id>
+   */
+  readonly crn?: string;
 }
 
 /**

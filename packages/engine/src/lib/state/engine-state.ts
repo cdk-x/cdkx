@@ -23,6 +23,13 @@ export interface ResourceState {
   readonly physicalId?: string;
 
   /**
+   * Cloud Resource Name (CRN) for this resource.
+   * Populated from `CreateResult.crn` after a successful CREATE_COMPLETE.
+   * Format: crn:cdkx:<provider>:<domain>[:<region>][:<account>]:<resource-type>/<resource-id>
+   */
+  readonly crn?: string;
+
+  /**
    * The resolved properties passed to the provider adapter.
    * After token substitution, all `{ ref, attr }` values have been replaced
    * with real provider outputs.
@@ -106,6 +113,12 @@ export interface TransitionResourceOptions {
    * Should be supplied when transitioning to CREATE_COMPLETE.
    */
   readonly physicalId?: string;
+
+  /**
+   * Cloud Resource Name (CRN) to record on the resource state.
+   * Should be supplied when transitioning to CREATE_COMPLETE.
+   */
+  readonly crn?: string;
 
   /** Human-readable reason for the transition (used in failure events). */
   readonly reason?: string;
