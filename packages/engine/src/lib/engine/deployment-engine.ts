@@ -1081,6 +1081,7 @@ export class DeploymentEngine {
         ResourceStatus.CREATE_COMPLETE,
         {
           physicalId: createResult.physicalId,
+          crn: createResult.crn,
           outputs: createResult.outputs,
           lastAppliedProperties: resolvedProperties,
         },
@@ -1602,6 +1603,7 @@ export class DeploymentEngine {
           ResourceStatus.CREATE_COMPLETE,
           {
             physicalId: createResult.physicalId,
+            crn: createResult.crn,
             ...(createResult.outputs !== undefined && {
               outputs: createResult.outputs,
             }),
