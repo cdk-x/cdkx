@@ -2,6 +2,9 @@
 export * from './lib/constants';
 export * from './lib/removal-policy';
 
+// CRN: Cloud Resource Name system for unique resource identifiers
+export * from './lib/crn';
+
 // Resolution system: tokens, lazy values, resolver pipeline
 export * from './lib/resolvables';
 
