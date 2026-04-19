@@ -1,3 +1,27 @@
+## 0.5.0 (2026-04-19)
+
+### 🚀 Features
+
+- **cdkx:** add multipass e2e app ([3564826](https://github.com/cdk-x/cdkx/commit/3564826))
+- **core:** add Crn class for cloud resource name handling ([0063bd6](https://github.com/cdk-x/cdkx/commit/0063bd6))
+- **core:** add attrCrn property to ProviderResource ([e8a7598](https://github.com/cdk-x/cdkx/commit/e8a7598))
+- **core:** add abstract buildCrn method to ResourceHandler ([8c2f628](https://github.com/cdk-x/cdkx/commit/8c2f628))
+- **core:** export Crn from public API ([125e56d](https://github.com/cdk-x/cdkx/commit/125e56d))
+- **engine:** register multipass provider in PluginManager ([43b7021](https://github.com/cdk-x/cdkx/commit/43b7021))
+- **engine:** add crn field to ResourceState and CreateResult ([5ef93b9](https://github.com/cdk-x/cdkx/commit/5ef93b9))
+- **engine:** persist crn in state transitions ([2ee7111](https://github.com/cdk-x/cdkx/commit/2ee7111))
+- **engine:** extract crn from handler in RuntimeAdapter ([8c693cb](https://github.com/cdk-x/cdkx/commit/8c693cb))
+- **engine:** pass crn to transitionResource in deployment ([9151091](https://github.com/cdk-x/cdkx/commit/9151091))
+- **hetzner-runtime:** implement buildCrn for all resource handlers ([f6c99b2](https://github.com/cdk-x/cdkx/commit/f6c99b2))
+- **multipass:** fix vm schema with readOnly attrs, remove servers resource ([ddcc021](https://github.com/cdk-x/cdkx/commit/ddcc021))
+- **multipass:** replace network/mount schemas with inline definitions in vm schema ([003e6b4](https://github.com/cdk-x/cdkx/commit/003e6b4))
+- **multipass:** add networks and mounts example to e2e ([cca5cce](https://github.com/cdk-x/cdkx/commit/cca5cce))
+- **multipass-runtime:** scaffold provider runtime with cli facade, context, instance handler, and adapter factory ([aff69bb](https://github.com/cdk-x/cdkx/commit/aff69bb))
+- **multipass-runtime:** forward networks and mounts from instance props to sdk.launch() ([6165e3e](https://github.com/cdk-x/cdkx/commit/6165e3e))
+- **multipass-runtime:** implement buildCrn for instance handler ([3be5279](https://github.com/cdk-x/cdkx/commit/3be5279))
+- **multipass-sdk:** scaffold MultipassCli with assertInstalled, launch, info, delete ([37fe167](https://github.com/cdk-x/cdkx/commit/37fe167))
+- **multipass-sdk:** add --network and --mount args to launch() ([889778e](https://github.com/cdk-x/cdkx/commit/889778e))
+
 ## 0.4.0 (2026-04-14)
 
 ### 🚀 Features
