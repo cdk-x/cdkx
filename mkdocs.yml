@@ -119,6 +119,7 @@ nav:
       - Construct: concepts/construct.md
       - Cloud Assembly: concepts/cloud-assembly.md
       - Tokens & Cross-stack References: concepts/tokens.md
+      - Cloud Resource Name (CRN): concepts/crn.md
       - Deployment Lifecycle: concepts/deployment-lifecycle.md
   - Providers: providers/index.md
   - Hetzner:
