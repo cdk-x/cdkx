@@ -1,3 +1,4 @@
+import * as chalk from 'chalk';
 import { Construct, IConstruct } from 'constructs';
 import { IResolver } from '../resolvables/resolvables';
 import { ResolverPipeline } from '../resolvables/resolver-pipeline';
@@ -10,6 +11,8 @@ import {
 import { ISynthesisSession } from '../synthesizer/synthesizer';
 import { CycleDetector, CycleError } from '../synthesizer/cycle-detector';
 import { Asset } from '../asset/asset';
+import { AnnotationCollector } from '../annotations/annotation-collector';
+import { AnnotationEntry } from '../annotations/annotation-types';
 
 export interface AppProps {
   /**
@@ -160,7 +163,53 @@ export class App extends Construct {
       stack.synthesizer.synthesize(session);
     }
 
-    return builder.buildAssembly();
+    // Collect and display annotations
+    const annotations = AnnotationCollector.collect(this);
+    this.displayAnnotations(annotations);
+
+    // Add annotations to assembly
+    for (const stack of stacks) {
+      const stackAnnotations = annotations.filter(
+        (a) =>
+          a.constructPath === stack.node.path ||
+          a.constructPath.startsWith(`${stack.node.path}/`),
+      );
+      if (stackAnnotations.length > 0) {
+        builder.addAnnotations(stack.artifactId, stackAnnotations);
+      }
+    }
+
+    const assembly = builder.buildAssembly();
+
+    // Throw if there are errors
+    const hasErrors = annotations.some((a) => a.level === 'error');
+    if (hasErrors) {
+      throw new Error(
+        'Synthesis failed: one or more error annotations were reported',
+      );
+    }
+
+    return assembly;
+  }
+
+  private displayAnnotations(annotations: AnnotationEntry[]): void {
+    for (const annotation of annotations) {
+      const level = annotation.level;
+      const prefix = `[${level.toUpperCase()}]`;
+      const fullMessage = `${prefix} ${annotation.constructPath}: ${annotation.message}`;
+
+      // Apply colors: info=blue, warning=yellow, error=red
+      let coloredMessage: string;
+      if (level === 'error') {
+        coloredMessage = chalk.red(fullMessage);
+      } else if (level === 'warning') {
+        coloredMessage = chalk.yellow(fullMessage);
+      } else {
+        coloredMessage = chalk.blue(fullMessage);
+      }
+
+      console.log(coloredMessage);
+    }
   }
 
   /**
