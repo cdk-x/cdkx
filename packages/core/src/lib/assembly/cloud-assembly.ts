@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { AnnotationEntry } from '../annotations/annotation-types';
 
 /** Schema version for the manifest file. Increment on breaking changes. */
 export const MANIFEST_VERSION = '1.0.0';
@@ -58,6 +59,12 @@ export interface StackArtifact {
    * deployment waves.
    */
   readonly dependencies?: string[];
+
+  /**
+   * Annotations (info, warnings, errors) attached to constructs in this stack.
+   * Used for auditing and reporting by external tools.
+   */
+  readonly annotations?: AnnotationEntry[];
 }
 
 /**
@@ -236,6 +243,29 @@ export class CloudAssemblyBuilder {
       },
     };
     this.artifacts[options.id] = artifact;
+  }
+
+  /**
+   * Adds annotations to a stack artifact.
+   * Called by App.synth() after collecting annotations from the construct tree.
+   */
+  public addAnnotations(
+    artifactId: string,
+    annotations: AnnotationEntry[],
+  ): void {
+    const artifact = this.artifacts[artifactId];
+    if (artifact === undefined) {
+      throw new Error(
+        `Cannot add annotations: artifact '${artifactId}' not found. ` +
+          `Make sure addArtifact() is called before addAnnotations().`,
+      );
+    }
+    // Use type assertion since we're modifying a readonly field during building
+    (
+      this.artifacts[artifactId] as unknown as {
+        annotations: AnnotationEntry[];
+      }
+    ).annotations = annotations;
   }
 
   /**
