@@ -1,3 +1,6 @@
+// Annotations: metadata annotations for constructs (info, warnings, errors)
+export * from './lib/annotations';
+
 // Constants and primitive types
 export * from './lib/constants';
 export * from './lib/removal-policy';
