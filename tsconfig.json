@@ -2,7 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
-  "include": [".cdkxrc.ts", ".cdkxrc/**/*.ts"],
+  "include": [],
   "references": [
     {
       "path": "./packages/core"

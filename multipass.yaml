@@ -1,6 +1,0 @@
-instances:
-  - name: dev
-    image: jammy
-    cpus: 4
-    memory: 4G
-    disk: 20G
