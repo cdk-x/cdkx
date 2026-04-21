@@ -30,14 +30,14 @@ function defaultSpawnApp(
   const result = cpSpawnSync(bin, args, {
     env,
     cwd,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['ignore', 'inherit', 'inherit'],
     encoding: 'utf-8',
     shell: true,
   });
   return {
     status: result.status,
-    stderr: result.stderr ?? '',
-    stdout: result.stdout ?? '',
+    stderr: '',
+    stdout: '',
   };
 }
 
