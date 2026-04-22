@@ -6,6 +6,7 @@ import { destroyCommand } from './commands/destroy/index.js';
 import { initCommand } from './commands/init/index.js';
 import { projectCommand } from './commands/project/index.js';
 import { multipassCommand } from './commands/multipass/index.js';
+import { acknowledgeCommand } from './commands/acknowledge/index.js';
 
 const { version } = require('../package.json') as { version: string };
 
@@ -39,5 +40,6 @@ program.addCommand(projectCommand);
 program.addCommand(deployCommand);
 program.addCommand(destroyCommand);
 program.addCommand(multipassCommand);
+program.addCommand(acknowledgeCommand);
 
 program.parse(process.argv);
