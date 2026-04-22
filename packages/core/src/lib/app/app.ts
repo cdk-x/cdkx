@@ -1,5 +1,10 @@
-import * as chalk from 'chalk';
+import chalk from 'chalk';
+import Table from 'cli-table3';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { Construct, IConstruct } from 'constructs';
+import { Acknowledgements } from '../acknowledgements/acknowledgements';
+import { Notices, FrameworkNotices } from '../notices/notices';
 import { IResolver } from '../resolvables/resolvables';
 import { ResolverPipeline } from '../resolvables/resolver-pipeline';
 import { Provider } from '../provider/provider';
@@ -29,6 +34,13 @@ export interface AppProps {
    * @default []
    */
   readonly resolvers?: IResolver[];
+
+  /**
+   * Set of acknowledged annotation IDs that should be filtered out during synthesis.
+   * These are typically loaded from cdkx.context.json by the CLI.
+   * @default new Set()
+   */
+  readonly acknowledgedIds?: Set<string>;
 }
 
 /**
@@ -82,6 +94,9 @@ export class App extends Construct {
   /** Cache of resolver pipelines keyed by provider identifier. */
   private readonly pipelineCache = new Map<string, ResolverPipeline>();
 
+  /** Path to cdkx.context.json for loading/cleaning acknowledgements. */
+  private readonly contextFilePath: string;
+
   constructor(props: AppProps = {}) {
     // App is the tree root: no scope, empty string id.
     // `constructs` requires a non-null scope for non-root nodes; passing `undefined` is
@@ -90,6 +105,69 @@ export class App extends Construct {
     super(undefined as any, '');
     this.outdir = props.outdir ?? 'cdkx.out';
     this.globalResolvers = props.resolvers ?? [];
+    this.contextFilePath = path.join(process.cwd(), 'cdkx.context.json');
+  }
+
+  /**
+   * Loads acknowledged IDs from cdkx.context.json into the Acknowledgements singleton.
+   * This allows `cdkx acknowledge <id>` to suppress notices during synthesis.
+   */
+  private loadAcknowledgementsFromContextFile(): void {
+    try {
+      if (!fs.existsSync(this.contextFilePath)) {
+        return;
+      }
+
+      const content = fs.readFileSync(this.contextFilePath, 'utf-8');
+      const data = JSON.parse(content) as {
+        'acknowledged-issue-numbers'?: number[];
+      };
+      const ids = data['acknowledged-issue-numbers'] ?? [];
+
+      // Register in Acknowledgements singleton
+      const acks = Acknowledgements.of(this);
+      for (const id of ids) {
+        acks.add(this, id.toString());
+      }
+    } catch {
+      // If file doesn't exist or is invalid, ignore
+    }
+  }
+
+  /**
+   * Cleans up orphaned acknowledged IDs from cdkx.context.json.
+   * Removes IDs that are no longer used in any annotations.
+   */
+  private cleanupOrphanedAcknowledgements(usedIds: Set<string>): void {
+    try {
+      if (!fs.existsSync(this.contextFilePath)) {
+        return;
+      }
+
+      const content = fs.readFileSync(this.contextFilePath, 'utf-8');
+      const data = JSON.parse(content) as {
+        'acknowledged-issue-numbers'?: number[];
+      };
+      const currentIds = data['acknowledged-issue-numbers'] ?? [];
+
+      // Filter to only keep IDs that are actually used
+      const cleanedIds = currentIds.filter((id) => usedIds.has(id.toString()));
+
+      // Only write if there are changes
+      if (cleanedIds.length !== currentIds.length) {
+        const updatedData =
+          cleanedIds.length > 0
+            ? { 'acknowledged-issue-numbers': cleanedIds }
+            : {};
+        fs.writeFileSync(
+          this.contextFilePath,
+          JSON.stringify(updatedData, null, 2),
+          'utf-8',
+        );
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
   }
 
   /**
@@ -128,6 +206,9 @@ export class App extends Construct {
    * @returns The immutable `CloudAssembly` describing the synthesis output.
    */
   public synth(): CloudAssembly {
+    // Load acknowledgements from cdkx.context.json before synthesis
+    this.loadAcknowledgementsFromContextFile();
+
     const stacks = this.node.findAll().filter(Stack.isStack);
 
     // Phase 1: Collect all stack dependency maps without writing any files.
@@ -163,9 +244,16 @@ export class App extends Construct {
       stack.synthesizer.synthesize(session);
     }
 
-    // Collect and display annotations
-    const annotations = AnnotationCollector.collect(this);
+    // Collect and display annotations (filtering out acknowledged ones)
+    const collectResult = AnnotationCollector.collect(this);
+    const annotations = collectResult.annotations;
     this.displayAnnotations(annotations);
+
+    // Cleanup orphaned acknowledgements
+    this.cleanupOrphanedAcknowledgements(collectResult.usedIds);
+
+    // Phase 4: Display framework notices
+    this.displayNotices();
 
     // Add annotations to assembly
     for (const stack of stacks) {
@@ -210,6 +298,57 @@ export class App extends Construct {
 
       console.log(coloredMessage);
     }
+  }
+
+  private displayNotices(): void {
+    const notices = Notices.of(this);
+
+    // Always add framework notices (they'll be filtered if acknowledged)
+    notices.add(this, FrameworkNotices.EXPERIMENTAL);
+
+    if (!notices.hasNotices()) {
+      return;
+    }
+
+    console.log('');
+
+    // Create table for notices with two columns
+    const table = new Table({
+      head: [chalk.bold('ID'), chalk.bold('NOTICES')],
+      colWidths: [10, 66],
+      wordWrap: true,
+      style: {
+        head: [],
+        border: ['gray'],
+      },
+    });
+
+    for (const notice of notices.list()) {
+      const severityColor =
+        notice.severity === 'critical'
+          ? chalk.red
+          : notice.severity === 'warning'
+            ? chalk.yellow
+            : chalk.blue;
+
+      // Build content column: title with severity + message + optional URL
+      // Using \n for line breaks within the cell (not new table rows)
+      let content = `${chalk.bold(notice.title)}  ${severityColor(`[${notice.severity.toUpperCase()}]`)}`;
+      content += '\n'; // Single line break (blank line)
+      content += '\n' + notice.message;
+      if (notice.url) {
+        content += '\n'; // Single line break (blank line)
+        content += '\n' + chalk.underline(notice.url);
+      }
+
+      // Two-column row: [ID, content]
+      table.push([chalk.cyan(notice.id), content]);
+    }
+
+    console.log(table.toString());
+    console.log('');
+    console.log(chalk.dim('Run: cdkx acknowledge <id> to silence a notice'));
+    console.log('');
   }
 
   /**
