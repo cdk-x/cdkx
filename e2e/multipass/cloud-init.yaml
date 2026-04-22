@@ -1,0 +1,8 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+  - curl
+  - htop
+runcmd:
+  - echo "cdkx multipass e2e asset provisioned $(date -u)" > /etc/cdkx-e2e.txt
