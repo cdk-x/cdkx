@@ -1,5 +1,5 @@
 import { CloudAssemblyReader } from './cloud-assembly-reader';
-import type { AssemblyStack } from './assembly-types';
+import type { AssemblyAsset, AssemblyStack } from './assembly-types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -439,6 +439,98 @@ describe('CloudAssemblyReader', () => {
           outputKey: 'NetworkId',
         });
       });
+    });
+  });
+
+  describe('readAssets()', () => {
+    it('returns an empty array when the manifest has no cdkx:asset artifacts', () => {
+      const manifest = {
+        version: MANIFEST_VERSION,
+        artifacts: {
+          MyStack: {
+            type: 'cdkx:stack',
+            properties: { templateFile: 'MyStack.json' },
+          },
+        },
+      };
+      const files: Record<string, string> = {
+        [`${OUTDIR}/manifest.json`]: JSON.stringify(manifest),
+        [`${OUTDIR}/MyStack.json`]: makeTemplate(),
+      };
+
+      const assets = new CloudAssemblyReader(
+        OUTDIR,
+        makeDeps(files),
+      ).readAssets();
+
+      expect(assets).toEqual([]);
+    });
+
+    it('returns AssemblyAsset entries for cdkx:asset artifacts with absolute paths', () => {
+      const manifest = {
+        version: MANIFEST_VERSION,
+        artifacts: {
+          'asset.abc123ef': {
+            type: 'cdkx:asset',
+            properties: {
+              hash: 'abc123ef',
+              path: 'assets/asset.abc123ef/cloud-init.yaml',
+              packaging: 'file',
+            },
+          },
+          MyStack: {
+            type: 'cdkx:stack',
+            properties: { templateFile: 'MyStack.json' },
+          },
+        },
+      };
+      const files: Record<string, string> = {
+        [`${OUTDIR}/manifest.json`]: JSON.stringify(manifest),
+        [`${OUTDIR}/MyStack.json`]: makeTemplate(),
+      };
+
+      const assets: AssemblyAsset[] = new CloudAssemblyReader(
+        OUTDIR,
+        makeDeps(files),
+      ).readAssets();
+
+      expect(assets).toHaveLength(1);
+      expect(assets[0]).toEqual({
+        id: 'asset.abc123ef',
+        hash: 'abc123ef',
+        absolutePath: `${OUTDIR}/assets/asset.abc123ef/cloud-init.yaml`,
+        packaging: 'file',
+      });
+    });
+  });
+
+  describe('read() with mixed asset + stack artifacts', () => {
+    it('ignores cdkx:asset artifacts — only returns stacks', () => {
+      const manifest = {
+        version: MANIFEST_VERSION,
+        artifacts: {
+          'asset.x': {
+            type: 'cdkx:asset',
+            properties: {
+              hash: 'x',
+              path: 'assets/asset.x/f.txt',
+              packaging: 'file',
+            },
+          },
+          MyStack: {
+            type: 'cdkx:stack',
+            properties: { templateFile: 'MyStack.json' },
+          },
+        },
+      };
+      const files: Record<string, string> = {
+        [`${OUTDIR}/manifest.json`]: JSON.stringify(manifest),
+        [`${OUTDIR}/MyStack.json`]: makeTemplate(),
+      };
+
+      const stacks = new CloudAssemblyReader(OUTDIR, makeDeps(files)).read();
+
+      expect(stacks.map((s) => s.id)).toEqual(['MyStack']);
     });
   });
 });
