@@ -118,6 +118,7 @@ nav:
       - Stack: concepts/stack.md
       - Construct: concepts/construct.md
       - Cloud Assembly: concepts/cloud-assembly.md
+      - Asset: concepts/asset.md
       - Tokens & Cross-stack References: concepts/tokens.md
       - Cloud Resource Name (CRN): concepts/crn.md
       - Deployment Lifecycle: concepts/deployment-lifecycle.md
