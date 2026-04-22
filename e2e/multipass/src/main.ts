@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { App, Asset, Stack, StackOutput } from '@cdk-x/core';
+import { Annotations, App, Asset, Stack, StackOutput } from '@cdk-x/core';
 import { MltInstance } from '@cdk-x/multipass';
 
 const app = new App();
@@ -28,6 +28,8 @@ const instance = new MltInstance(stack, 'Instance', {
   ],
   cloudInit: cloudInit.absolutePath,
 });
+
+Annotations.of(stack).addWarning('10003', 'This is a test warning for E2E');
 
 new StackOutput(stack, 'InstanceName', {
   value: instance.attrIpAddress,

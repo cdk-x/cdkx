@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "cdkx": "cdkx",
     "synth": "cdkx synth",
     "deploy": "cdkx deploy",
     "destroy": "cdkx destroy"
