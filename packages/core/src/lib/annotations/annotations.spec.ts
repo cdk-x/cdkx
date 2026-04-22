@@ -96,9 +96,41 @@ describe('Annotations', () => {
 
       const metadata = construct.node.metadata;
       const annotationEntries = metadata.filter(
-        (m) => m.type === 'warning' || m.type === 'info' || m.type === 'error',
+        (m) => m.type === 'warning' || m.type === 'info' || m.type === 'error'
       );
       expect(annotationEntries).toHaveLength(0);
+    });
+  });
+
+  describe('acknowledge()', () => {
+    it('acknowledges a warning ID for the scope', () => {
+      const app = new App();
+      const construct = new Construct(app, 'MyConstruct');
+
+      Annotations.of(construct).acknowledge('my-warning-id');
+
+      // Should be able to check if acknowledged
+      expect(Annotations.isAcknowledged(construct, 'my-warning-id')).toBe(true);
+    });
+
+    it('does not affect other IDs', () => {
+      const app = new App();
+      const construct = new Construct(app, 'MyConstruct');
+
+      Annotations.of(construct).acknowledge('warning-1');
+
+      expect(Annotations.isAcknowledged(construct, 'warning-2')).toBe(false);
+    });
+
+    it('parent acknowledgement applies to children', () => {
+      const app = new App();
+      const parent = new Construct(app, 'Parent');
+      const child = new Construct(parent, 'Child');
+
+      Annotations.of(parent).acknowledge('parent-warning');
+
+      // Child should inherit parent's acknowledgement
+      expect(Annotations.isAcknowledged(child, 'parent-warning')).toBe(true);
     });
   });
 });
