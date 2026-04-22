@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type {
+  AssemblyAsset,
   AssemblyOutput,
   AssemblyResource,
   AssemblyStack,
@@ -19,10 +20,22 @@ export interface CloudAssemblyReaderDeps {
 
 interface ManifestArtifact {
   type: string;
-  properties: { templateFile: string };
+  properties:
+    | { templateFile: string }
+    | { hash: string; path: string; packaging: 'file' | 'directory' };
   displayName?: string;
   outputKeys?: string[];
   dependencies?: string[];
+}
+
+interface ManifestAssetArtifactProps {
+  hash: string;
+  path: string;
+  packaging: 'file' | 'directory';
+}
+
+interface ManifestStackArtifactProps {
+  templateFile: string;
 }
 
 interface ManifestJson {
@@ -96,6 +109,30 @@ export class CloudAssemblyReader {
     return stacks;
   }
 
+  /**
+   * Read all `cdkx:asset` artifacts from `manifest.json`.
+   *
+   * Returns an empty array when the manifest has no asset artifacts.
+   * Each asset's `absolutePath` is resolved against the assembly outdir.
+   *
+   * @throws if `manifest.json` is not found or is malformed.
+   */
+  public readAssets(): AssemblyAsset[] {
+    const manifest = this.readManifest();
+    const assets: AssemblyAsset[] = [];
+    for (const [id, artifact] of Object.entries(manifest.artifacts)) {
+      if (artifact.type !== 'cdkx:asset') continue;
+      const props = artifact.properties as ManifestAssetArtifactProps;
+      assets.push({
+        id,
+        hash: props.hash,
+        absolutePath: path.join(this.outdir, props.path),
+        packaging: props.packaging,
+      });
+    }
+    return assets;
+  }
+
   // ─── Private helpers ───────────────────────────────────────────────────────
 
   private readManifest(): ManifestJson {
@@ -119,18 +156,18 @@ export class CloudAssemblyReader {
   }
 
   private readStacks(manifest: ManifestJson): AssemblyStack[] {
-    const stackIds = Object.keys(manifest.artifacts);
+    const stackIds = Object.keys(manifest.artifacts).filter(
+      (id) => manifest.artifacts[id].type !== 'cdkx:asset',
+    );
 
     return stackIds.map((stackId) => {
       const artifact = manifest.artifacts[stackId];
-      const templatePath = path.join(
-        this.outdir,
-        artifact.properties.templateFile,
-      );
+      const stackProps = artifact.properties as ManifestStackArtifactProps;
+      const templatePath = path.join(this.outdir, stackProps.templateFile);
 
       if (!this.fileExists(templatePath)) {
         throw new Error(
-          `Stack template '${artifact.properties.templateFile}' not found at '${templatePath}'.`,
+          `Stack template '${stackProps.templateFile}' not found at '${templatePath}'.`,
         );
       }
 
@@ -140,7 +177,7 @@ export class CloudAssemblyReader {
         template = JSON.parse(raw) as StackTemplate;
       } catch {
         throw new Error(
-          `Failed to parse stack template '${artifact.properties.templateFile}': invalid JSON.`,
+          `Failed to parse stack template '${stackProps.templateFile}': invalid JSON.`,
         );
       }
 
@@ -153,7 +190,7 @@ export class CloudAssemblyReader {
 
       const stack: AssemblyStack = {
         id: stackId,
-        templateFile: artifact.properties.templateFile,
+        templateFile: stackProps.templateFile,
         ...(artifact.displayName !== undefined
           ? { displayName: artifact.displayName }
           : {}),

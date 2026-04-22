@@ -1,4 +1,22 @@
 /**
+ * A staged asset read from the cloud assembly manifest.
+ *
+ * Produced by `CloudAssemblyReader.readAssets()`. The `absolutePath` is
+ * resolved against the assembly outdir so engine code can pass it straight
+ * to provider handlers.
+ */
+export interface AssemblyAsset {
+  /** Artifact ID (e.g. `'asset.<hash>'`). */
+  readonly id: string;
+  /** SHA-256 hex digest of the asset's content. */
+  readonly hash: string;
+  /** Absolute path to the staged file or directory on disk. */
+  readonly absolutePath: string;
+  /** How the asset is packaged on disk. */
+  readonly packaging: 'file' | 'directory';
+}
+
+/**
  * A resolved output value declared by a stack.
  * Corresponds to a `StackOutput` construct in the synthesized JSON.
  */
