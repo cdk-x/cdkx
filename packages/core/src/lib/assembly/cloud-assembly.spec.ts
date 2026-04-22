@@ -72,6 +72,71 @@ describe('CloudAssemblyBuilder', () => {
     });
   });
 
+  describe('addAssetArtifact()', () => {
+    it('registers a cdkx:asset artifact in the manifest', () => {
+      const outdir = tmpDir();
+      const builder = new CloudAssemblyBuilder(outdir);
+      builder.addAssetArtifact({
+        id: 'asset.abc123ef',
+        hash: 'abc123ef',
+        path: 'assets/asset.abc123ef/cloud-init.yaml',
+        packaging: 'file',
+      });
+      builder.buildAssembly();
+
+      const manifest = JSON.parse(
+        fs.readFileSync(path.join(outdir, 'manifest.json'), 'utf-8'),
+      );
+      expect(manifest.artifacts['asset.abc123ef']).toEqual({
+        type: 'cdkx:asset',
+        properties: {
+          hash: 'abc123ef',
+          path: 'assets/asset.abc123ef/cloud-init.yaml',
+          packaging: 'file',
+        },
+      });
+      fs.rmSync(outdir, { recursive: true });
+    });
+
+    it('throws on duplicate asset artifact ID', () => {
+      const builder = new CloudAssemblyBuilder(tmpDir());
+      builder.addAssetArtifact({
+        id: 'asset.dup',
+        hash: 'dup',
+        path: 'assets/asset.dup/f',
+        packaging: 'file',
+      });
+      expect(() =>
+        builder.addAssetArtifact({
+          id: 'asset.dup',
+          hash: 'dup',
+          path: 'assets/asset.dup/f',
+          packaging: 'file',
+        }),
+      ).toThrow("Duplicate artifact ID 'asset.dup'");
+    });
+
+    it('CloudAssembly.stacks excludes asset artifacts', () => {
+      const outdir = tmpDir();
+      const builder = new CloudAssemblyBuilder(outdir);
+      builder.addArtifact({ id: 'my-stack', templateFile: 'my-stack.json' });
+      builder.addAssetArtifact({
+        id: 'asset.x',
+        hash: 'x',
+        path: 'assets/asset.x/f',
+        packaging: 'file',
+      });
+      const assembly = builder.buildAssembly();
+
+      expect(assembly.stacks).toHaveLength(1);
+      expect(assembly.stacks[0].properties).toHaveProperty(
+        'templateFile',
+        'my-stack.json',
+      );
+      fs.rmSync(outdir, { recursive: true });
+    });
+  });
+
   describe('buildAssembly()', () => {
     it('writes manifest.json to disk', () => {
       const outdir = tmpDir();
