@@ -1,3 +1,6 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { DeploymentEngine } from './deployment-engine';
 import { DeploymentPlanner } from '../planner/deployment-planner';
 import { StackStatus } from '../states/stack-status';
@@ -619,6 +622,83 @@ describe('DeploymentEngine', () => {
       const stacks = [makeStack('S', [])];
       const plan = makePlan(['S'], { S: [] });
       const result = await engine.deploy(stacks, plan);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // ─── verifyAssets() pre-deploy check ─────────────────────────────────────────
+
+  describe('verifyAssets() pre-deploy check', () => {
+    function makeAssemblyDir(
+      assetEntries: Record<string, { hash: string; relPath: string }>,
+      stagedFiles: Record<string, string> = {},
+    ): string {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cdkx-verify-'));
+      const artifacts: Record<string, unknown> = {};
+      for (const [id, entry] of Object.entries(assetEntries)) {
+        artifacts[id] = {
+          type: 'cdkx:asset',
+          properties: {
+            hash: entry.hash,
+            path: entry.relPath,
+            packaging: 'file',
+          },
+        };
+      }
+      fs.writeFileSync(
+        path.join(dir, 'manifest.json'),
+        JSON.stringify({ version: '1.0.0', artifacts }),
+      );
+      for (const [relPath, contents] of Object.entries(stagedFiles)) {
+        const abs = path.join(dir, relPath);
+        fs.mkdirSync(path.dirname(abs), { recursive: true });
+        fs.writeFileSync(abs, contents);
+      }
+      return dir;
+    }
+
+    function makeEngineForAssemblyDir(assemblyDir: string): DeploymentEngine {
+      const bus = new EventBus<EngineEvent>();
+      const persistence = makeNullPersistence();
+      const stateManager = new EngineStateManager(bus, persistence);
+      return new DeploymentEngine({
+        adapters: { test: successAdapter('phys-1') as ProviderAdapter },
+        assemblyDir,
+        stateDir: '/fake/state',
+        stateManager,
+        persistence,
+        eventBus: bus,
+        deployLock: makeMockDeployLock(),
+      });
+    }
+
+    it('throws a clear error before any adapter call when a staged asset file is missing', async () => {
+      const assemblyDir = makeAssemblyDir({
+        'asset.deadbeef': {
+          hash: 'deadbeef',
+          relPath: 'assets/asset.deadbeef/cloud-init.yaml',
+        },
+      });
+      const engine = makeEngineForAssemblyDir(assemblyDir);
+
+      await expect(engine.deploy([], makePlan([], {}))).rejects.toThrow(
+        /asset.*missing|cloud-init\.yaml/i,
+      );
+    });
+
+    it('proceeds with deploy when every staged asset file exists on disk', async () => {
+      const assemblyDir = makeAssemblyDir(
+        {
+          'asset.cafebabe': {
+            hash: 'cafebabe',
+            relPath: 'assets/asset.cafebabe/cloud-init.yaml',
+          },
+        },
+        { 'assets/asset.cafebabe/cloud-init.yaml': '#cloud-config\n' },
+      );
+      const engine = makeEngineForAssemblyDir(assemblyDir);
+
+      const result = await engine.deploy([], makePlan([], {}));
       expect(result.success).toBe(true);
     });
   });
