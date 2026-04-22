@@ -14,6 +14,9 @@ export * from './lib/provider';
 // Assembly: CloudAssembly, CloudAssemblyBuilder, manifest types
 export * from './lib/assembly';
 
+// Asset: local-file assets staged into the cloud assembly
+export * from './lib/asset';
+
 // Synthesizer: ISynthesisSession, IStackSynthesizer, JsonSynthesizer
 export * from './lib/synthesizer';
 
