@@ -1,6 +1,10 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { Construct } from 'constructs';
 import { App } from './app';
 import { Stack } from '../stack/stack';
+import { Asset } from '../asset/asset';
 import {
   IStackSynthesizer,
   ISynthesisSession,
@@ -192,6 +196,191 @@ describe('App', () => {
       });
       app.synth();
       expect(capturedSessions[0].outdir).toBe('/tmp/test-outdir-app');
+    });
+
+    describe('asset synthesis (Phase 0)', () => {
+      function tmpFile(name: string, contents: string): string {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cdkx-app-asset-'));
+        const filePath = path.join(dir, name);
+        fs.writeFileSync(filePath, contents, 'utf-8');
+        return filePath;
+      }
+
+      it('stages assets and registers cdkx:asset artifacts before stack synthesis', () => {
+        const outdir = fs.mkdtempSync(
+          path.join(os.tmpdir(), 'cdkx-app-synth-'),
+        );
+        const app = new App({ outdir });
+        const stack = new Stack(app, 'S');
+        const sourcePath = tmpFile('cloud-init.yaml', 'users: []');
+        const asset = new Asset(stack, 'CloudInit', { path: sourcePath });
+
+        const assembly = app.synth();
+
+        const stagedFile = path.join(
+          outdir,
+          'assets',
+          `asset.${asset.assetHash}`,
+          'cloud-init.yaml',
+        );
+        expect(fs.existsSync(stagedFile)).toBe(true);
+
+        const artifactId = `asset.${asset.assetHash}`;
+        expect(assembly.manifest.artifacts[artifactId]).toEqual({
+          type: 'cdkx:asset',
+          properties: {
+            hash: asset.assetHash,
+            path: `assets/asset.${asset.assetHash}/cloud-init.yaml`,
+            packaging: 'file',
+          },
+        });
+      });
+
+      it('collects assets nested beneath a Stack, not only direct children', () => {
+        const outdir = fs.mkdtempSync(
+          path.join(os.tmpdir(), 'cdkx-app-nested-'),
+        );
+        const app = new App({ outdir });
+        const stack = new Stack(app, 'S');
+        const l1 = new Construct(stack, 'L1');
+        const sourcePath = tmpFile('data.txt', 'nested');
+        const asset = new Asset(l1, 'Nested', { path: sourcePath });
+
+        app.synth();
+
+        const stagedFile = path.join(
+          outdir,
+          'assets',
+          `asset.${asset.assetHash}`,
+          'data.txt',
+        );
+        expect(fs.existsSync(stagedFile)).toBe(true);
+      });
+
+      it('stages assets before stack synthesizers run (assets visible on disk during stack synth)', () => {
+        const outdir = fs.mkdtempSync(
+          path.join(os.tmpdir(), 'cdkx-app-order-'),
+        );
+        const app = new App({ outdir });
+        const sourcePath = tmpFile('f.yaml', 'x');
+        const asset = new Asset(new Stack(app, 'AssetStack'), 'A', {
+          path: sourcePath,
+        });
+
+        let stagedDuringStackSynth = false;
+        const observingSynth: IStackSynthesizer = {
+          bind: () => undefined,
+          synthesize: (session) => {
+            const expectedDir = path.join(
+              session.outdir,
+              'assets',
+              `asset.${asset.assetHash}`,
+            );
+            stagedDuringStackSynth = fs.existsSync(expectedDir);
+            session.assembly.addArtifact({
+              id: 'ObservingStack',
+              templateFile: 'ObservingStack.json',
+            });
+            session.assembly.writeFile('ObservingStack.json', '{}');
+          },
+        };
+        new Stack(app, 'ObservingStack', { synthesizer: observingSynth });
+
+        app.synth();
+
+        expect(stagedDuringStackSynth).toBe(true);
+      });
+
+      it('stages directory assets: mirrors the tree and registers packaging:"directory"', () => {
+        const outdir = fs.mkdtempSync(
+          path.join(os.tmpdir(), 'cdkx-app-dir-synth-'),
+        );
+        const app = new App({ outdir });
+        const stack = new Stack(app, 'S');
+
+        const sourceDir = fs.mkdtempSync(
+          path.join(os.tmpdir(), 'cdkx-app-dir-src-'),
+        );
+        fs.writeFileSync(path.join(sourceDir, 'top.txt'), 'top', 'utf-8');
+        fs.mkdirSync(path.join(sourceDir, 'inner'));
+        fs.writeFileSync(path.join(sourceDir, 'inner', 'x.txt'), 'x', 'utf-8');
+
+        const asset = new Asset(stack, 'Role', { directoryPath: sourceDir });
+
+        const assembly = app.synth();
+
+        const stagedDir = path.join(
+          outdir,
+          'assets',
+          `asset.${asset.assetHash}`,
+        );
+        expect(fs.readFileSync(path.join(stagedDir, 'top.txt'), 'utf-8')).toBe(
+          'top',
+        );
+        expect(
+          fs.readFileSync(path.join(stagedDir, 'inner', 'x.txt'), 'utf-8'),
+        ).toBe('x');
+
+        const artifactId = `asset.${asset.assetHash}`;
+        expect(assembly.manifest.artifacts[artifactId]).toEqual({
+          type: 'cdkx:asset',
+          properties: {
+            hash: asset.assetHash,
+            path: `assets/asset.${asset.assetHash}`,
+            packaging: 'directory',
+          },
+        });
+      });
+
+      it('deduplicates directory assets with identical content into a single artifact', () => {
+        const outdir = fs.mkdtempSync(
+          path.join(os.tmpdir(), 'cdkx-app-dir-dedup-'),
+        );
+        const app = new App({ outdir });
+        const stack = new Stack(app, 'S');
+
+        const sourceA = fs.mkdtempSync(
+          path.join(os.tmpdir(), 'cdkx-app-dir-a-'),
+        );
+        fs.writeFileSync(path.join(sourceA, 'same.txt'), 'payload', 'utf-8');
+        const sourceB = fs.mkdtempSync(
+          path.join(os.tmpdir(), 'cdkx-app-dir-b-'),
+        );
+        fs.writeFileSync(path.join(sourceB, 'same.txt'), 'payload', 'utf-8');
+
+        const assetA = new Asset(stack, 'A', { directoryPath: sourceA });
+        const assetB = new Asset(stack, 'B', { directoryPath: sourceB });
+
+        const assembly = app.synth();
+
+        expect(assetA.assetHash).toBe(assetB.assetHash);
+        const assetArtifactCount = Object.values(
+          assembly.manifest.artifacts,
+        ).filter((a) => a.type === 'cdkx:asset').length;
+        expect(assetArtifactCount).toBe(1);
+      });
+
+      it('deduplicates assets with the same hash into a single artifact', () => {
+        const outdir = fs.mkdtempSync(
+          path.join(os.tmpdir(), 'cdkx-app-dedup-'),
+        );
+        const app = new App({ outdir });
+        const stack = new Stack(app, 'S');
+        const sourceA = tmpFile('a.txt', 'same');
+        const sourceB = tmpFile('a.txt', 'same');
+        const assetA = new Asset(stack, 'A', { path: sourceA });
+        new Asset(stack, 'B', { path: sourceB });
+
+        const assembly = app.synth();
+
+        expect(assetA.assetHash).toBeDefined();
+        const artifactId = `asset.${assetA.assetHash}`;
+        expect(assembly.manifest.artifacts[artifactId]).toBeDefined();
+        const assetArtifactCount = Object.values(
+          assembly.manifest.artifacts,
+        ).filter((a) => a.type === 'cdkx:asset').length;
+        expect(assetArtifactCount).toBe(1);
+      });
     });
   });
 });
