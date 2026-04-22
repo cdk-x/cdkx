@@ -9,6 +9,7 @@ import {
 } from '../assembly/cloud-assembly';
 import { ISynthesisSession } from '../synthesizer/synthesizer';
 import { CycleDetector, CycleError } from '../synthesizer/cycle-detector';
+import { Asset } from '../asset/asset';
 
 export interface AppProps {
   /**
@@ -150,10 +151,32 @@ export class App extends Construct {
       assembly: builder,
     };
 
+    // Phase 0: collect and stage all assets before any stack is synthesized
+    // so that stack synthesizers can rely on asset artifacts being registered
+    // in the manifest builder.
+    this.synthesizeAssets(stacks, session);
+
     for (const stack of stacks) {
       stack.synthesizer.synthesize(session);
     }
 
     return builder.buildAssembly();
+  }
+
+  /**
+   * Walks every stack, collects descendant `Asset` instances, and stages each
+   * one exactly once (deduplicated by hash). Called at the start of `synth()`
+   * before any stack synthesizer runs.
+   */
+  private synthesizeAssets(stacks: Stack[], session: ISynthesisSession): void {
+    const seen = new Set<string>();
+    for (const stack of stacks) {
+      for (const node of stack.node.findAll()) {
+        if (!Asset.isAsset(node)) continue;
+        if (seen.has(node.assetHash)) continue;
+        seen.add(node.assetHash);
+        node.synthesizeAsset(session);
+      }
+    }
   }
 }
