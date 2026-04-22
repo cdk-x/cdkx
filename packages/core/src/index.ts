@@ -41,3 +41,12 @@ export * from './lib/runtime';
 
 // Config: CdkxConfig interface (shared between engine and CLI)
 export * from './lib/config';
+
+// Context: CdkxContext for persisting acknowledgements and context data
+export * from './lib/context';
+
+// Acknowledgements: singleton for tracking acknowledged annotation IDs
+export * from './lib/acknowledgements';
+
+// Notices: framework-level announcements displayed during synthesis
+export * from './lib/notices';
