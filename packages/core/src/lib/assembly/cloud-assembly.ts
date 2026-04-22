@@ -8,8 +8,12 @@ export const MANIFEST_VERSION = '1.0.0';
  * Artifact type discriminator.
  * - `'cdkx:stack'` — a cloud-deploy stack (JSON template, processed by the engine).
  * - `'cdkx:local-files'` — a file-rendering stack (YAML files written to the repo, not deployed).
+ * - `'cdkx:asset'` — a staged asset (file or directory) referenced by stack resources.
  */
-export type ArtifactType = 'cdkx:stack' | 'cdkx:local-files';
+export type ArtifactType = 'cdkx:stack' | 'cdkx:local-files' | 'cdkx:asset';
+
+/** How an asset is packaged on disk. */
+export type AssetPackaging = 'file' | 'directory';
 
 /**
  * Describes a single stack artifact in the synthesis output.
@@ -57,6 +61,42 @@ export interface StackArtifact {
 }
 
 /**
+ * A staged asset artifact entry in `manifest.json`.
+ *
+ * Shape (per artifact entry in `artifacts`):
+ * ```json
+ * {
+ *   "type": "cdkx:asset",
+ *   "properties": {
+ *     "hash": "abc123ef…",
+ *     "path": "assets/asset.abc123ef/cloud-init.yaml",
+ *     "packaging": "file"
+ *   }
+ * }
+ * ```
+ */
+export interface AssetArtifact {
+  /** Artifact type discriminator — always `'cdkx:asset'`. */
+  readonly type: 'cdkx:asset';
+
+  /** Asset-level properties used by the runtime engine. */
+  readonly properties: {
+    /** SHA-256 hex digest of the asset's content. */
+    readonly hash: string;
+    /** Path to the staged asset, relative to the assembly outdir. */
+    readonly path: string;
+    /** How the asset is packaged (`'file'` or `'directory'`). */
+    readonly packaging: AssetPackaging;
+  };
+}
+
+/**
+ * Any artifact entry in the assembly manifest.
+ * Discriminate on `type` to narrow to `StackArtifact` or `AssetArtifact`.
+ */
+export type ManifestArtifact = StackArtifact | AssetArtifact;
+
+/**
  * The full content of the `manifest.json` file written to `cdkx.out/`.
  */
 export interface CloudAssemblyManifest {
@@ -67,7 +107,7 @@ export interface CloudAssemblyManifest {
    * All artifacts in this assembly, keyed by their artifact ID.
    * The artifact ID is the stack's `artifactId` (derived from the construct node path).
    */
-  readonly artifacts: Record<string, StackArtifact>;
+  readonly artifacts: Record<string, ManifestArtifact>;
 }
 
 /**
@@ -106,6 +146,23 @@ export interface AddArtifactOptions {
 }
 
 /**
+ * Input shape for `CloudAssemblyBuilder.addAssetArtifact()`.
+ */
+export interface AddAssetArtifactOptions {
+  /** Unique artifact ID within the assembly (e.g. `'asset.<hash>'`). */
+  readonly id: string;
+
+  /** SHA-256 hex digest of the asset's content. */
+  readonly hash: string;
+
+  /** Path to the staged asset, relative to the assembly outdir. */
+  readonly path: string;
+
+  /** How the asset is packaged on disk. */
+  readonly packaging: AssetPackaging;
+}
+
+/**
  * Mutable builder for a `CloudAssembly`.
  *
  * Created by `App` at the start of synthesis. Synthesizers use it to:
@@ -116,7 +173,7 @@ export interface AddArtifactOptions {
  * writes `manifest.json` and returns the immutable `CloudAssembly`.
  */
 export class CloudAssemblyBuilder {
-  private readonly artifacts: Record<string, StackArtifact> = {};
+  private readonly artifacts: Record<string, ManifestArtifact> = {};
 
   constructor(
     /** Absolute path to the output directory (e.g. `/project/cdkx.out`). */
@@ -161,6 +218,27 @@ export class CloudAssemblyBuilder {
   }
 
   /**
+   * Registers an asset artifact.
+   * Called by `Asset.synthesizeAsset()` after staging the file on disk.
+   */
+  public addAssetArtifact(options: AddAssetArtifactOptions): void {
+    if (this.artifacts[options.id] !== undefined) {
+      throw new Error(
+        `Duplicate artifact ID '${options.id}'. Each artifact must have a unique ID.`,
+      );
+    }
+    const artifact: AssetArtifact = {
+      type: 'cdkx:asset',
+      properties: {
+        hash: options.hash,
+        path: options.path,
+        packaging: options.packaging,
+      },
+    };
+    this.artifacts[options.id] = artifact;
+  }
+
+  /**
    * Seals the assembly: writes `manifest.json` and returns the immutable `CloudAssembly`.
    * Should be called exactly once, at the end of `App.synth()`.
    */
@@ -192,16 +270,22 @@ export class CloudAssembly {
   ) {}
 
   /**
-   * Returns the artifact for a given stack ID, or `undefined` if not found.
+   * Returns the stack artifact for a given ID, or `undefined` if not found
+   * or if the ID refers to a non-stack artifact.
    */
   public getStack(id: string): StackArtifact | undefined {
-    return this.manifest.artifacts[id];
+    const artifact = this.manifest.artifacts[id];
+    return artifact !== undefined && artifact.type !== 'cdkx:asset'
+      ? (artifact as StackArtifact)
+      : undefined;
   }
 
   /**
-   * Returns all stack artifacts in this assembly as an array (convenience getter).
+   * Returns all stack artifacts in this assembly (asset artifacts are excluded).
    */
   public get stacks(): StackArtifact[] {
-    return Object.values(this.manifest.artifacts);
+    return Object.values(this.manifest.artifacts).filter(
+      (a): a is StackArtifact => a.type !== 'cdkx:asset',
+    );
   }
 }
