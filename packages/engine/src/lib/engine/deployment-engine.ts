@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import { StackStatus } from '../states/stack-status';
 import { ResourceStatus } from '../states/resource-status';
 import { EventBus } from '../events/event-bus';
@@ -304,6 +305,39 @@ export class DeploymentEngine {
   }
 
   /**
+   * Verifies that every `cdkx:asset` artifact declared in the manifest is
+   * staged on disk under `assemblyDir`. Throws a clear error listing the
+   * missing files when one or more are absent — fail fast before any
+   * adapter call mutates provider state.
+   */
+  private verifyAssets(): void {
+    let assets;
+    try {
+      const reader = new CloudAssemblyReader(this.options.assemblyDir);
+      assets = reader.readAssets();
+    } catch {
+      // No manifest / unreadable manifest: nothing to verify. The downstream
+      // `readAssembly()` call will surface the underlying error if relevant.
+      return;
+    }
+
+    const missing: string[] = [];
+    for (const asset of assets) {
+      if (!fs.existsSync(asset.absolutePath)) {
+        missing.push(asset.absolutePath);
+      }
+    }
+
+    if (missing.length > 0) {
+      throw new Error(
+        `Cannot deploy: ${missing.length} asset file(s) missing from the cloud assembly. ` +
+          `Run 'cdkx synth' to regenerate the assembly. Missing:\n  - ` +
+          missing.join('\n  - '),
+      );
+    }
+  }
+
+  /**
    * Subscribe to engine events emitted during deployment.
    * Returns an unsubscribe function.
    */
@@ -422,6 +456,9 @@ export class DeploymentEngine {
       const assemblyStacks = stacks ?? this.readAssembly();
       return await this.resumeRollback(assemblyStacks);
     }
+
+    // Pre-deploy: fail fast if any staged asset file is missing from disk.
+    this.verifyAssets();
 
     // If no stacks provided, read assembly and create plan internally
     const actualStacks = stacks ?? this.readAssembly();
@@ -940,7 +977,7 @@ export class DeploymentEngine {
       };
     }
 
-    // Resolve { ref, attr } and { stackRef, outputKey } tokens in properties.
+    // Resolve { ref, attr } and { stackRef, outputKey } tokens.
     const resolver = new DeployTimeResolver(
       this.stateManager.getState(),
       stack.id,
