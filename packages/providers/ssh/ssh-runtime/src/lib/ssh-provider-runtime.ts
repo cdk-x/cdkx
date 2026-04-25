@@ -1,7 +1,8 @@
 import { ProviderRuntime } from '@cdk-x/core';
 import type { SshSdk } from './ssh-sdk-facade';
-import { SshRunbookHandler } from './handlers/runbook/runbook-handler';
-import { SshPackageHandler } from './handlers/package/package-handler';
+import { SshShellScriptHandler } from './handlers/shell-script/shell-script-handler';
+import { SshDocumentHandler } from './handlers/document/document-handler';
+import { SshRunDocumentHandler } from './handlers/run-document/run-document-handler';
 
 /**
  * SSH provider runtime.
@@ -11,8 +12,9 @@ import { SshPackageHandler } from './handlers/package/package-handler';
 export class SshProviderRuntime extends ProviderRuntime<SshSdk> {
   constructor() {
     super();
-    this.register('SSH::Exec::Runbook', new SshRunbookHandler());
-    this.register('SSH::System::Package', new SshPackageHandler());
+    this.register('SSH::Exec::ShellScript', new SshShellScriptHandler());
+    this.register('SSH::Exec::Document', new SshDocumentHandler());
+    this.register('SSH::Exec::RunDocument', new SshRunDocumentHandler());
   }
 
   listResourceTypes(): string[] {

@@ -20,13 +20,13 @@
       "path": "../ssh/tsconfig.lib.json"
     },
     {
+      "path": "../../../engine/tsconfig.lib.json"
+    },
+    {
       "path": "../../../core/tsconfig.lib.json"
     },
     {
       "path": "../../../testing/tsconfig.lib.json"
-    },
-    {
-      "path": "../../../engine/tsconfig.lib.json"
     }
   ],
   "exclude": [
