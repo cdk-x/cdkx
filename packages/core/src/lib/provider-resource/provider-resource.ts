@@ -123,20 +123,26 @@ export class ProviderResource extends Construct {
   }
 
   /**
-   * Returns an `IResolvable` that resolves to a `{ ref, attr }` token
-   * referencing an output attribute of this resource.
+   * Returns a typed reference to an output attribute of this resource.
    *
-   * Used by L1 constructs to expose cross-resource reference attributes
-   * (e.g. `attrNetworkId`, `attrServerId`) that the engine resolves at
-   * deploy time by reading the named output from the created resource.
+   * At synthesis time the return value is actually an `IResolvable` that
+   * serialises to `{ ref: logicalId, attr }` in the manifest. The engine
+   * resolves it at deploy time by reading the named output from the
+   * deployed resource state. The type parameter `T` is a TypeScript-only
+   * annotation — the single `as unknown as T` cast lives here so that
+   * generated L1 code and user code stay free of casts.
+   *
+   * Defaults to `IResolvable` when no type argument is supplied, preserving
+   * backward compatibility with existing generated code.
    *
    * @param attr - The attribute name to reference (e.g. `'networkId'`).
    */
-  public getAtt(attr: string): IResolvable {
+  public getAtt<T = IResolvable>(attr: string): T {
     const logicalId = this.logicalId;
-    return {
+    const resolvable: IResolvable = {
       resolve: () => ({ ref: logicalId, attr }),
     };
+    return resolvable as unknown as T;
   }
 
   /**
