@@ -1,4 +1,4 @@
-import type { ResourceSchema, JsonSchema } from './schema-reader.js';
+import type { ResourceSchema, JsonSchema, JsonSchemaProperty } from './schema-reader.js';
 import { TypeMapper } from './type-mapper.js';
 
 // ---------------------------------------------------------------------------
@@ -68,8 +68,11 @@ export class CodeGenerator {
     // 1. Header
     CodeGenerator.emitHeader(lines, opts);
 
-    // 2. Imports
-    CodeGenerator.emitImports(lines);
+    // 2. Imports — include IResolvable only when at least one generated
+    // type reference requires it (e.g. attrs without a schema definition,
+    // or array-item / cross-ref-ID props whose mapped type includes it).
+    const needsIResolvable = CodeGenerator.usesIResolvable(resources);
+    CodeGenerator.emitImports(lines, needsIResolvable);
 
     // 3. ResourceType constant
     CodeGenerator.emitResourceTypeConst(lines, resources, opts);
@@ -133,11 +136,12 @@ export class CodeGenerator {
     );
   }
 
-  private static emitImports(lines: string[]): void {
+  private static emitImports(lines: string[], needsIResolvable: boolean): void {
     lines.push('');
-    lines.push(
-      "import { ProviderResource, IResolvable, PropertyValue } from '@cdk-x/core';",
-    );
+    const coreExports = needsIResolvable
+      ? 'ProviderResource, IResolvable, PropertyValue'
+      : 'ProviderResource, PropertyValue';
+    lines.push(`import { ${coreExports} } from '@cdk-x/core';`);
     lines.push("import { Construct } from 'constructs';");
   }
 
@@ -362,15 +366,23 @@ export class CodeGenerator {
       typeName,
       description,
       readOnlyProperties,
+      attrProperties,
       properties,
       required,
     } = resource;
     const className = `${opts.prefix}${resourceName}`;
     const propsInterface = `${opts.providerName}${resourceName}`;
 
-    // All properties in the map are writable by the user. readOnlyProperties
-    // that are NOT in properties (API-generated IDs) never appear here.
-    const writableProps = Object.entries(properties);
+    // Writable props: all properties EXCEPT those in readOnlyProperties
+    // (API-computed values never set by the user, e.g. server-assigned IDs).
+    // attrProperties items remain writable — they appear in renderProperties()
+    // AND get an attrXxx getter, but they are user-provided, not API-computed.
+    const writableProps = Object.entries(properties).filter(
+      ([name]) => !readOnlyProperties.includes(TypeMapper.toCamelCase(name)),
+    );
+
+    // Combined set of attrs = readOnlyProperties + attrProperties
+    const allAttrNames = [...readOnlyProperties, ...attrProperties];
 
     lines.push('/**');
     lines.push(
@@ -390,19 +402,29 @@ export class CodeGenerator {
     lines.push(`  public static readonly RESOURCE_TYPE_NAME = '${typeName}';`);
     lines.push('');
 
-    // attr* members for readOnlyProperties
-    for (const attrName of readOnlyProperties) {
+    // attr* members for all attrs (readOnlyProperties + attrProperties) —
+    // typed when the property definition is present in the schema, IResolvable otherwise.
+    for (const attrName of allAttrNames) {
       const pascal = TypeMapper.toAttrMemberName(attrName);
+      const propDef = properties[attrName];
+      const attrType = propDef
+        ? TypeMapper.mapAttrType(
+            propDef,
+            { resourceName },
+            attrName,
+            resource.definitions,
+          )
+        : 'IResolvable';
       lines.push(`  /**`);
       lines.push(`   * The \`${attrName}\` attribute of this resource.`);
       lines.push(
         `   * Resolves to \`{ ref: logicalId, attr: '${attrName}' }\` at synthesis time.`,
       );
       lines.push(`   */`);
-      lines.push(`  public readonly attr${pascal}: IResolvable;`);
+      lines.push(`  public readonly attr${pascal}: ${attrType};`);
     }
 
-    if (readOnlyProperties.length > 0) lines.push('');
+    if (allAttrNames.length > 0) lines.push('');
 
     // Public mutable members for each writable prop
     for (const [propName, prop] of writableProps) {
@@ -436,10 +458,22 @@ export class CodeGenerator {
     lines.push(`    });`);
     lines.push(`    this.node.defaultChild = this;`);
 
-    // Initialize attr* members
-    for (const attrName of readOnlyProperties) {
+    // Initialize attr* members — use typed getAtt<T> when the property type
+    // is known from the schema, plain getAtt() (returns IResolvable) otherwise.
+    for (const attrName of allAttrNames) {
       const pascal = TypeMapper.toAttrMemberName(attrName);
-      lines.push(`    this.attr${pascal} = this.getAtt('${attrName}');`);
+      const propDef = properties[attrName];
+      if (propDef) {
+        const attrType = TypeMapper.mapAttrType(
+          propDef,
+          { resourceName },
+          attrName,
+          resource.definitions,
+        );
+        lines.push(`    this.attr${pascal} = this.getAtt<${attrType}>('${attrName}');`);
+      } else {
+        lines.push(`    this.attr${pascal} = this.getAtt('${attrName}');`);
+      }
     }
 
     // Assign props to mutable members
@@ -481,6 +515,55 @@ export class CodeGenerator {
       map[r.domain].push(r);
     }
     return map;
+  }
+
+  /**
+   * Returns true when at least one generated type in the output file needs
+   * the `IResolvable` name to be in scope.  Two cases trigger this:
+   * 1. A readOnly attribute whose property is NOT defined in the schema
+   *    (falls back to `IResolvable`).
+   * 2. A writable property whose `TypeMapper.mapType()` result contains the
+   *    string `IResolvable` (e.g. cross-ref numeric IDs, array-item refs).
+   */
+  private static usesIResolvable(resources: ResourceSchema[]): boolean {
+    for (const resource of resources) {
+      // attrs without a schema definition fall back to IResolvable
+      for (const attrName of [
+        ...resource.readOnlyProperties,
+        ...resource.attrProperties,
+      ]) {
+        if (!resource.properties[attrName]) return true;
+      }
+      // Top-level resource properties
+      for (const [propName, prop] of Object.entries(resource.properties)) {
+        const camel = TypeMapper.toCamelCase(propName);
+        if (
+          TypeMapper.mapType(
+            prop,
+            { resourceName: resource.resourceName },
+            camel,
+            resource.definitions,
+          ).includes('IResolvable')
+        )
+          return true;
+      }
+      // Definition properties (interfaces / nested types)
+      for (const [defName, def] of Object.entries(resource.definitions ?? {})) {
+        for (const [propName, prop] of Object.entries(def.properties ?? {})) {
+          const camel = TypeMapper.toCamelCase(propName);
+          if (
+            TypeMapper.mapType(
+              prop as JsonSchemaProperty,
+              { resourceName: defName },
+              camel,
+              resource.definitions,
+            ).includes('IResolvable')
+          )
+            return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**

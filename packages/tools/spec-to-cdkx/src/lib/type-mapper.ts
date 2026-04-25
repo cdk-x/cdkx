@@ -105,6 +105,30 @@ export class TypeMapper {
     return TypeMapper.toPascalCase(attrName);
   }
 
+  /**
+   * Maps a JSON Schema property to the TypeScript type of its **resolved**
+   * value — the type an `attrXxx` getter should expose to callers.
+   *
+   * Differs from `mapType` in two ways:
+   * - Integer properties whose name ends in `Id`/`_id` are plain `number`
+   *   (not `number | IResolvable`), because an attr is an already-resolved
+   *   value, not a synthesis-time cross-reference.
+   * - Array items that are `string` or `number` are plain primitives
+   *   (not `string | IResolvable`), for the same reason.
+   */
+  public static mapAttrType(
+    prop: JsonSchemaProperty,
+    ctx: TypeContext,
+    propName: string,
+    localDefs?: Record<string, JsonSchema>,
+  ): string {
+    let base = TypeMapper.mapBase(prop, ctx, propName, localDefs, true);
+    if (prop.nullable) {
+      base = `${base} | null`;
+    }
+    return base;
+  }
+
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
@@ -114,6 +138,7 @@ export class TypeMapper {
     ctx: TypeContext,
     propName: string,
     localDefs?: Record<string, JsonSchema>,
+    forAttr = false,
   ): string {
     // Handle $ref — same-file (#/definitions/Foo) or already-inlined cross-file.
     if (prop.$ref) {
@@ -145,15 +170,15 @@ export class TypeMapper {
 
     // array
     if (prop.type === 'array') {
-      const itemType = TypeMapper.mapArrayItems(prop, ctx, propName, localDefs);
+      const itemType = TypeMapper.mapArrayItems(prop, ctx, propName, localDefs, forAttr);
       const needsParens = itemType.includes('|');
       return needsParens ? `(${itemType})[]` : `${itemType}[]`;
     }
 
-    // primitives — integer cross-ref IDs get `| IResolvable`
+    // primitives — integer cross-ref IDs get `| IResolvable` (except for attrs)
     if (prop.type) {
       const primitive = TypeMapper.mapPrimitive(prop.type);
-      if (primitive === 'number' && TypeMapper.isCrossRefId(propName)) {
+      if (!forAttr && primitive === 'number' && TypeMapper.isCrossRefId(propName)) {
         return 'number | IResolvable';
       }
       return primitive;
@@ -194,6 +219,7 @@ export class TypeMapper {
     ctx: TypeContext,
     propName: string,
     _localDefs?: Record<string, JsonSchema>,
+    forAttr = false,
   ): string {
     const items = prop.items;
     if (!items) return 'unknown';
@@ -208,7 +234,8 @@ export class TypeMapper {
         return 'IResolvable';
       }
       const primitive = TypeMapper.mapPrimitive(items.type);
-      if (primitive === 'number' || primitive === 'string') {
+      // Attr values are resolved — no IResolvable expansion for primitives
+      if (!forAttr && (primitive === 'number' || primitive === 'string')) {
         return `${primitive} | IResolvable`;
       }
       return primitive;

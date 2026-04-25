@@ -22,6 +22,7 @@ export interface JsonSchema {
   nullable?: boolean;
   $ref?: string;
   readOnlyProperties?: string[];
+  attrProperties?: string[];
   createOnlyProperties?: string[];
   primaryIdentifier?: string[];
 }
@@ -67,6 +68,13 @@ export interface ResourceSchema {
 
   /** Names of properties populated by the API (read-only). */
   readOnlyProperties: string[];
+
+  /**
+   * Names of user-settable properties that also expose an `attrXxx` getter.
+   * Unlike `readOnlyProperties`, these remain in `writableProps` and appear
+   * in `renderProperties()` — they are not API-computed.
+   */
+  attrProperties: string[];
 
   /**
    * Names of properties that are required (must be supplied by the caller).
@@ -238,6 +246,9 @@ export class SchemaReader {
         properties,
         readOnlyProperties: SchemaReader.extractPropNames(
           schema.readOnlyProperties ?? [],
+        ),
+        attrProperties: SchemaReader.extractPropNames(
+          schema.attrProperties ?? [],
         ),
         createOnlyProperties: SchemaReader.extractPropNames(
           schema.createOnlyProperties ?? [],
