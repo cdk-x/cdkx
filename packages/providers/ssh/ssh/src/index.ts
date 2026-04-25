@@ -1,9 +1,2 @@
-// @cdk-x/ssh public API
-export {
-  SshResourceType,
-  SshRunbook,
-  type SSHRunbook,
-  SshPackage,
-  type SSHPackage,
-  RUNTIME_CONFIGS,
-} from './lib/generated';
+export * from './lib/generated';
+export * from './lib/provider/index';

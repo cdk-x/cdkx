@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SshShellScript",
+  "description": "A named, reusable shell script definition. Referenced by SSH::Exec::Document mainSteps.",
+  "typeName": "SSH::Exec::ShellScript",
+  "domain": "Exec",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Script name. Referenced as scriptRef in Document mainSteps.",
+      "pattern": "^[a-zA-Z0-9_\\-\\.]{3,128}$"
+    },
+    "runCommand": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Shell commands to execute in sequence. Use {{ paramName }} for parameter references."
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Parameter definitions accepted by this script.",
+      "additionalProperties": { "$ref": "#/definitions/DocumentParameter" }
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this script does."
+    }
+  },
+  "definitions": {
+    "DocumentParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "enum": ["String", "Integer", "Boolean"] },
+        "default": { "type": "string" },
+        "description": { "type": "string" },
+        "allowedValues": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["type"]
+    }
+  },
+  "required": ["name", "runCommand"],
+  "primaryIdentifier": ["/properties/name"],
+  "createOnlyProperties": ["/properties/name"],
+  "attrProperties": ["/properties/name", "/properties/runCommand"]
+}

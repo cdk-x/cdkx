@@ -14,128 +14,191 @@ import { Construct } from 'constructs';
  * Use these constants when constructing L1 resources to avoid typos.
  */
 export const SshResourceType = {
-  /** System resources. */
-  System: {
-    /** `SSH::System::Package` */
-    Package: 'SSH::System::Package',
-  },
   /** Exec resources. */
   Exec: {
-    /** `SSH::Exec::Runbook` */
-    Runbook: 'SSH::Exec::Runbook',
+    /** `SSH::Exec::Document` */
+    Document: 'SSH::Exec::Document',
+    /** `SSH::Exec::RunDocument` */
+    RunDocument: 'SSH::Exec::RunDocument',
+    /** `SSH::Exec::ShellScript` */
+    ShellScript: 'SSH::Exec::ShellScript',
   }
 } as const;
-
-// ==============================================================================
-// System
-// ==============================================================================
-
-// --- Package ---
-/**
- * Props for {@link SshPackage}.
- *
- * Ensures an OS package is installed on the target host declared by the referenced Runbook.
- */
-export interface SSHPackage {
-  /**
-   * Name of the OS package to install (e.g. 'nginx').
-   */
-  packageName: string;
-  /**
-   * executionId of the SSH::Exec::Runbook that owns this task.
-   */
-  runbookId: string;
-  /**
-   * SSH host — resolved from Runbook via attrHost.
-   */
-  host: string;
-  /**
-   * SSH port — resolved from Runbook via attrPort.
-   */
-  port?: number;
-  /**
-   * SSH username — resolved from Runbook via attrUser.
-   */
-  user: string;
-  /**
-   * Private key path — resolved from Runbook via attrPrivateKeyPath.
-   */
-  privateKeyPath: string;
-  /**
-   * Unique identifier assigned by the runtime on create.
-   */
-  executionId?: string;
-}
-
-/**
- * L1 construct for a SSH Package resource.
- *
- * Ensures an OS package is installed on the target host declared by the referenced Runbook.
- */
-export class SshPackage extends ProviderResource {
-  /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'SSH::System::Package';
-
-  /**
-   * The `executionId` attribute of this resource.
-   * Resolves to `{ ref: logicalId, attr: 'executionId' }` at synthesis time.
-   */
-  public readonly attrExecutionId: IResolvable;
-
-  public packageName: string;
-  public runbookId: string;
-  public host: string;
-  public port?: number;
-  public user: string;
-  public privateKeyPath: string;
-  public executionId?: string;
-
-  constructor(scope: Construct, id: string, props: SSHPackage) {
-    super(scope, id, {
-      type: SshPackage.RESOURCE_TYPE_NAME,
-    });
-    this.node.defaultChild = this;
-    this.attrExecutionId = this.getAtt('executionId');
-    this.packageName = props.packageName;
-    this.runbookId = props.runbookId;
-    this.host = props.host;
-    this.port = props.port;
-    this.user = props.user;
-    this.privateKeyPath = props.privateKeyPath;
-    this.executionId = props.executionId;
-  }
-
-  protected override renderProperties(): Record<string, PropertyValue> {
-    return {
-      packageName: this.packageName,
-      runbookId: this.runbookId,
-      host: this.host,
-      port: this.port,
-      user: this.user,
-      privateKeyPath: this.privateKeyPath,
-      executionId: this.executionId,
-    } as unknown as Record<string, PropertyValue>;
-  }
-}
-
 
 // ==============================================================================
 // Exec
 // ==============================================================================
 
-// --- Runbook ---
+// --- Document ---
 /**
- * Props for {@link SshRunbook}.
- *
- * Declares an SSH target host. Validates connectivity on create and exposes connection attributes to dependent task resources.
+ * A named execution step within an Automation document.
  */
-export interface SSHRunbook {
+export interface DocumentStep {
   /**
-   * Unique identifier assigned by the runtime on create.
+   * Step identifier. Used in logs and state.
    */
-  runbookId: string;
+  name: string;
   /**
-   * Hostname or IP address of the remote machine.
+   * Action to perform. Only ssh:runShellScript is supported.
+   */
+  action: 'ssh:runShellScript';
+  /**
+   * Name of the SSH::Exec::ShellScript to execute. Populated via script.attrName token at synthesis — creates ordering dependency in the engine DAG.
+   */
+  scriptRef: string;
+  inputs: RunShellScriptInputs;
+}
+
+/**
+ * Inputs for ssh:runShellScript. runCommand is inlined from the ShellScript at synthesis time.
+ */
+export interface RunShellScriptInputs {
+  /**
+   * Shell commands to execute. Inlined from the referenced ShellScript's runCommand at synthesis time.
+   */
+  runCommand: (string | IResolvable)[];
+}
+
+export interface DocumentParameter {
+  type: 'String' | 'Integer' | 'Boolean';
+  default?: string;
+  description?: string;
+  allowedValues?: (string | IResolvable)[];
+}
+
+/**
+ * Props for {@link SshDocument}.
+ *
+ * Defines a reusable script or multi-step automation for remote SSH execution.
+ */
+export interface SSHDocument {
+  /**
+   * Document name. Referenced by SSH::Exec::RunDocument.
+   */
+  name: string;
+  /**
+   * Command: uses 'content'. Automation: uses 'mainSteps'.
+   */
+  documentType: 'Command' | 'Automation';
+  /**
+   * Script or command body for Command documents. Use {{ paramName }} for parameter references.
+   */
+  content?: string;
+  /**
+   * Named execution steps for Automation documents. Executed in order; stops on first failure.
+   */
+  mainSteps?: DocumentStep[];
+  /**
+   * Parameter definitions accepted by this document.
+   */
+  parameters?: Record<string, unknown>;
+  /**
+   * Human-readable description of what this document does.
+   */
+  description?: string;
+}
+
+/**
+ * L1 construct for a SSH Document resource.
+ *
+ * Defines a reusable script or multi-step automation for remote SSH execution.
+ */
+export class SshDocument extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'SSH::Exec::Document';
+
+  /**
+   * The `name` attribute of this resource.
+   * Resolves to `{ ref: logicalId, attr: 'name' }` at synthesis time.
+   */
+  public readonly attrName: string;
+  /**
+   * The `documentType` attribute of this resource.
+   * Resolves to `{ ref: logicalId, attr: 'documentType' }` at synthesis time.
+   */
+  public readonly attrDocumentType: 'Command' | 'Automation';
+  /**
+   * The `mainSteps` attribute of this resource.
+   * Resolves to `{ ref: logicalId, attr: 'mainSteps' }` at synthesis time.
+   */
+  public readonly attrMainSteps: DocumentStep[];
+
+  public name: string;
+  public documentType: 'Command' | 'Automation';
+  public content?: string;
+  public mainSteps?: DocumentStep[];
+  public parameters?: Record<string, unknown>;
+  public description?: string;
+
+  constructor(scope: Construct, id: string, props: SSHDocument) {
+    super(scope, id, {
+      type: SshDocument.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.attrName = this.getAtt<string>('name');
+    this.attrDocumentType = this.getAtt<'Command' | 'Automation'>('documentType');
+    this.attrMainSteps = this.getAtt<DocumentStep[]>('mainSteps');
+    this.name = props.name;
+    this.documentType = props.documentType;
+    this.content = props.content;
+    this.mainSteps = props.mainSteps;
+    this.parameters = props.parameters;
+    this.description = props.description;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      name: this.name,
+      documentType: this.documentType,
+      content: this.content,
+      mainSteps: this.mainSteps,
+      parameters: this.parameters,
+      description: this.description,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
+
+// --- RunDocument ---
+export interface RunDocumentStep {
+  name: string;
+  action: 'ssh:runShellScript';
+  scriptRef: string;
+  inputs: RunDocumentStepInputs;
+}
+
+export interface RunDocumentStepInputs {
+  runCommand: (string | IResolvable)[];
+}
+
+/**
+ * Props for {@link SshRunDocument}.
+ *
+ * Executes an SSH::Exec::Document against a specific SSH target.
+ */
+export interface SSHRunDocument {
+  /**
+   * Name of the SSH::Exec::Document to execute. Resolved via doc.attrName token.
+   */
+  documentName: string;
+  /**
+   * Resolved document type. Populated via doc.attrDocumentType token.
+   */
+  documentType: 'Command' | 'Automation';
+  /**
+   * Resolved script content (Command documents). Populated via doc.attrContent token.
+   */
+  content?: string;
+  /**
+   * Resolved step list (Automation documents). Populated via doc.attrMainSteps token.
+   */
+  mainSteps?: RunDocumentStep[];
+  /**
+   * Values to substitute for parameters declared in the document.
+   */
+  parameterValues?: Record<string, string>;
+  /**
+   * SSH target hostname or IP address.
    */
   host: string;
   /**
@@ -151,61 +214,145 @@ export interface SSHRunbook {
    */
   privateKeyPath: string;
   /**
-   * Unique identifier assigned by the runtime on create.
+   * Unique execution identifier, assigned by the runtime on create.
    */
   executionId?: string;
 }
 
 /**
- * L1 construct for a SSH Runbook resource.
+ * L1 construct for a SSH RunDocument resource.
  *
- * Declares an SSH target host. Validates connectivity on create and exposes connection attributes to dependent task resources.
+ * Executes an SSH::Exec::Document against a specific SSH target.
  */
-export class SshRunbook extends ProviderResource {
+export class SshRunDocument extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'SSH::Exec::Runbook';
+  public static readonly RESOURCE_TYPE_NAME = 'SSH::Exec::RunDocument';
 
   /**
    * The `executionId` attribute of this resource.
    * Resolves to `{ ref: logicalId, attr: 'executionId' }` at synthesis time.
    */
-  public readonly attrExecutionId: IResolvable;
-  /**
-   * The `privateKeyPath` attribute of this resource.
-   * Resolves to `{ ref: logicalId, attr: 'privateKeyPath' }` at synthesis time.
-   */
-  public readonly attrPrivateKeyPath: IResolvable;
+  public readonly attrExecutionId: string;
 
-  public runbookId: string;
+  public documentName: string;
+  public documentType: 'Command' | 'Automation';
+  public content?: string;
+  public mainSteps?: RunDocumentStep[];
+  public parameterValues?: Record<string, string>;
   public host: string;
   public port?: number;
   public user: string;
   public privateKeyPath: string;
-  public executionId?: string;
 
-  constructor(scope: Construct, id: string, props: SSHRunbook) {
+  constructor(scope: Construct, id: string, props: SSHRunDocument) {
     super(scope, id, {
-      type: SshRunbook.RESOURCE_TYPE_NAME,
+      type: SshRunDocument.RESOURCE_TYPE_NAME,
     });
     this.node.defaultChild = this;
-    this.attrExecutionId = this.getAtt('executionId');
-    this.attrPrivateKeyPath = this.getAtt('privateKeyPath');
-    this.runbookId = props.runbookId;
+    this.attrExecutionId = this.getAtt<string>('executionId');
+    this.documentName = props.documentName;
+    this.documentType = props.documentType;
+    this.content = props.content;
+    this.mainSteps = props.mainSteps;
+    this.parameterValues = props.parameterValues;
     this.host = props.host;
     this.port = props.port;
     this.user = props.user;
     this.privateKeyPath = props.privateKeyPath;
-    this.executionId = props.executionId;
   }
 
   protected override renderProperties(): Record<string, PropertyValue> {
     return {
-      runbookId: this.runbookId,
+      documentName: this.documentName,
+      documentType: this.documentType,
+      content: this.content,
+      mainSteps: this.mainSteps,
+      parameterValues: this.parameterValues,
       host: this.host,
       port: this.port,
       user: this.user,
       privateKeyPath: this.privateKeyPath,
-      executionId: this.executionId,
+    } as unknown as Record<string, PropertyValue>;
+  }
+}
+
+
+// --- ShellScript ---
+export interface DocumentParameter {
+  type: 'String' | 'Integer' | 'Boolean';
+  default?: string;
+  description?: string;
+  allowedValues?: (string | IResolvable)[];
+}
+
+/**
+ * Props for {@link SshShellScript}.
+ *
+ * A named, reusable shell script definition. Referenced by SSH::Exec::Document mainSteps.
+ */
+export interface SSHShellScript {
+  /**
+   * Script name. Referenced as scriptRef in Document mainSteps.
+   */
+  name: string;
+  /**
+   * Shell commands to execute in sequence. Use {{ paramName }} for parameter references.
+   */
+  runCommand: (string | IResolvable)[];
+  /**
+   * Parameter definitions accepted by this script.
+   */
+  parameters?: Record<string, unknown>;
+  /**
+   * Human-readable description of what this script does.
+   */
+  description?: string;
+}
+
+/**
+ * L1 construct for a SSH ShellScript resource.
+ *
+ * A named, reusable shell script definition. Referenced by SSH::Exec::Document mainSteps.
+ */
+export class SshShellScript extends ProviderResource {
+  /** The CloudFormation-style type name for this resource. */
+  public static readonly RESOURCE_TYPE_NAME = 'SSH::Exec::ShellScript';
+
+  /**
+   * The `name` attribute of this resource.
+   * Resolves to `{ ref: logicalId, attr: 'name' }` at synthesis time.
+   */
+  public readonly attrName: string;
+  /**
+   * The `runCommand` attribute of this resource.
+   * Resolves to `{ ref: logicalId, attr: 'runCommand' }` at synthesis time.
+   */
+  public readonly attrRunCommand: string[];
+
+  public name: string;
+  public runCommand: (string | IResolvable)[];
+  public parameters?: Record<string, unknown>;
+  public description?: string;
+
+  constructor(scope: Construct, id: string, props: SSHShellScript) {
+    super(scope, id, {
+      type: SshShellScript.RESOURCE_TYPE_NAME,
+    });
+    this.node.defaultChild = this;
+    this.attrName = this.getAtt<string>('name');
+    this.attrRunCommand = this.getAtt<string[]>('runCommand');
+    this.name = props.name;
+    this.runCommand = props.runCommand;
+    this.parameters = props.parameters;
+    this.description = props.description;
+  }
+
+  protected override renderProperties(): Record<string, PropertyValue> {
+    return {
+      name: this.name,
+      runCommand: this.runCommand,
+      parameters: this.parameters,
+      description: this.description,
     } as unknown as Record<string, PropertyValue>;
   }
 }

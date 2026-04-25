@@ -37,15 +37,21 @@ export interface RuntimeResourceConfig {
  */
 export const RUNTIME_CONFIGS: Record<string, RuntimeResourceConfig> = {
 
-  // SSH::System::Package
-  'SSH::System::Package': {
-    physicalIdKey: 'executionId',
-    createOnlyProps: new Set(),
+  // SSH::Exec::Document
+  'SSH::Exec::Document': {
+    physicalIdKey: 'name',
+    createOnlyProps: new Set(['name']),
   },
 
-  // SSH::Exec::Runbook
-  'SSH::Exec::Runbook': {
+  // SSH::Exec::RunDocument
+  'SSH::Exec::RunDocument': {
     physicalIdKey: 'executionId',
-    createOnlyProps: new Set(['runbookId', 'host', 'user', 'privateKeyPath']),
+    createOnlyProps: new Set(['host', 'user', 'privateKeyPath']),
+  },
+
+  // SSH::Exec::ShellScript
+  'SSH::Exec::ShellScript': {
+    physicalIdKey: 'name',
+    createOnlyProps: new Set(['name']),
   },
 };

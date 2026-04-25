@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SshDocument",
+  "description": "Defines a reusable script or multi-step automation for remote SSH execution.",
+  "typeName": "SSH::Exec::Document",
+  "domain": "Exec",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Document name. Referenced by SSH::Exec::RunDocument.",
+      "pattern": "^[a-zA-Z0-9_\\-\\.]{3,128}$"
+    },
+    "documentType": {
+      "type": "string",
+      "enum": ["Command", "Automation"],
+      "description": "Command: uses 'content'. Automation: uses 'mainSteps'."
+    },
+    "content": {
+      "type": "string",
+      "description": "Script or command body for Command documents. Use {{ paramName }} for parameter references."
+    },
+    "mainSteps": {
+      "type": "array",
+      "description": "Named execution steps for Automation documents. Executed in order; stops on first failure.",
+      "items": { "$ref": "#/definitions/DocumentStep" }
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Parameter definitions accepted by this document.",
+      "additionalProperties": { "$ref": "#/definitions/DocumentParameter" }
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this document does."
+    }
+  },
+  "definitions": {
+    "DocumentStep": {
+      "type": "object",
+      "description": "A named execution step within an Automation document.",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "description": "Step identifier. Used in logs and state." },
+        "action": {
+          "type": "string",
+          "enum": ["ssh:runShellScript"],
+          "description": "Action to perform. Only ssh:runShellScript is supported."
+        },
+        "scriptRef": {
+          "type": "string",
+          "description": "Name of the SSH::Exec::ShellScript to execute. Populated via script.attrName token at synthesis — creates ordering dependency in the engine DAG."
+        },
+        "inputs": { "$ref": "#/definitions/RunShellScriptInputs" }
+      },
+      "required": ["name", "action", "scriptRef", "inputs"]
+    },
+    "RunShellScriptInputs": {
+      "type": "object",
+      "description": "Inputs for ssh:runShellScript. runCommand is inlined from the ShellScript at synthesis time.",
+      "additionalProperties": false,
+      "properties": {
+        "runCommand": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Shell commands to execute. Inlined from the referenced ShellScript's runCommand at synthesis time."
+        }
+      },
+      "required": ["runCommand"]
+    },
+    "DocumentParameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "enum": ["String", "Integer", "Boolean"] },
+        "default": { "type": "string" },
+        "description": { "type": "string" },
+        "allowedValues": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["type"]
+    }
+  },
+  "required": ["name", "documentType"],
+  "primaryIdentifier": ["/properties/name"],
+  "createOnlyProperties": ["/properties/name"],
+  "attrProperties": ["/properties/name", "/properties/documentType", "/properties/mainSteps"]
+}

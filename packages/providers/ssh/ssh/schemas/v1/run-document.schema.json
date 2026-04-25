@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SshRunDocument",
+  "description": "Executes an SSH::Exec::Document against a specific SSH target.",
+  "typeName": "SSH::Exec::RunDocument",
+  "domain": "Exec",
+  "additionalProperties": false,
+  "properties": {
+    "documentName": {
+      "type": "string",
+      "description": "Name of the SSH::Exec::Document to execute. Resolved via doc.attrName token."
+    },
+    "documentType": {
+      "type": "string",
+      "enum": ["Command", "Automation"],
+      "description": "Resolved document type. Populated via doc.attrDocumentType token."
+    },
+    "content": {
+      "type": "string",
+      "description": "Resolved script content (Command documents). Populated via doc.attrContent token."
+    },
+    "mainSteps": {
+      "type": "array",
+      "description": "Resolved step list (Automation documents). Populated via doc.attrMainSteps token.",
+      "items": { "$ref": "#/definitions/RunDocumentStep" }
+    },
+    "parameterValues": {
+      "type": "object",
+      "description": "Values to substitute for parameters declared in the document.",
+      "additionalProperties": { "type": "string" }
+    },
+    "host": { "type": "string", "description": "SSH target hostname or IP address." },
+    "port": { "type": "integer", "description": "SSH port. Defaults to 22.", "default": 22 },
+    "user": { "type": "string", "description": "SSH username." },
+    "privateKeyPath": {
+      "type": "string",
+      "description": "Absolute path to the private key file on the machine running cdkx deploy."
+    },
+    "executionId": {
+      "type": "string",
+      "description": "Unique execution identifier, assigned by the runtime on create."
+    }
+  },
+  "definitions": {
+    "RunDocumentStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "action": { "type": "string", "enum": ["ssh:runShellScript"] },
+        "scriptRef": { "type": "string" },
+        "inputs": { "$ref": "#/definitions/RunDocumentStepInputs" }
+      },
+      "required": ["name", "action", "scriptRef", "inputs"]
+    },
+    "RunDocumentStepInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runCommand": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["runCommand"]
+    }
+  },
+  "required": ["documentName", "documentType", "host", "user", "privateKeyPath"],
+  "primaryIdentifier": ["/properties/executionId"],
+  "readOnlyProperties": ["/properties/executionId"],
+  "createOnlyProperties": ["/properties/host", "/properties/user", "/properties/privateKeyPath"]
+}
