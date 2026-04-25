@@ -1,3 +1,4 @@
+import * as net from 'node:net';
 import { spawn as nodeSpawn } from 'child_process';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -162,6 +163,70 @@ export class MultipassCli {
       sshUser: 'ubuntu',
       state: vmData.state ?? 'Unknown',
     };
+  }
+
+  /**
+   * Resolves when TCP port 22 on `host` accepts a connection.
+   * Returns immediately on success; rejects only if the socket errors
+   * (which the caller should treat as 'pending' and retry).
+   */
+  waitForSsh(host: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const socket = net.createConnection({ host, port: 22 });
+      socket.once('connect', () => {
+        socket.destroy();
+        resolve();
+      });
+      socket.once('error', (err) => {
+        socket.destroy();
+        reject(err);
+      });
+    });
+  }
+
+  /**
+   * Queries the cloud-init status inside a running VM.
+   *
+   * Runs `multipass exec <name> -- cloud-init status` and parses the output.
+   * Returns `'running'` on any exec failure (VM not yet reachable) so callers
+   * can treat it as a transient pending state and retry.
+   */
+  async cloudInitStatus(
+    name: string,
+  ): Promise<'running' | 'done' | 'error' | 'degraded'> {
+    const result = await this.spawn('multipass', [
+      'exec',
+      name,
+      '--',
+      'cloud-init',
+      'status',
+    ]);
+
+    if (result.code !== 0) return 'running';
+
+    const output = result.stdout.toLowerCase();
+    if (output.includes('done')) return 'done';
+    if (output.includes('error')) return 'error';
+    if (output.includes('degraded')) return 'degraded';
+    return 'running';
+  }
+
+  /**
+   * Reads the cloud-init output log from inside a running VM.
+   *
+   * Returns the full contents of `/var/log/cloud-init-output.log`, or an empty
+   * string if the file cannot be read (VM not yet reachable, file missing, etc.).
+   */
+  async cloudInitLog(name: string): Promise<string> {
+    const result = await this.spawn('multipass', [
+      'exec',
+      name,
+      '--',
+      'cat',
+      '/var/log/cloud-init-output.log',
+    ]);
+    if (result.code !== 0) return '';
+    return result.stdout;
   }
 
   /**
