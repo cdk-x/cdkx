@@ -210,6 +210,8 @@ export class DestroyCommand extends BaseCommand {
     // 6. Destroy all stacks.
     const result = await engine.destroy();
 
+    await logger.close?.();
+
     if (!result.success) {
       this.fail('Destroy failed — see above for details.');
     }

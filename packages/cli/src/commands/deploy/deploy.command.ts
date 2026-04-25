@@ -150,6 +150,8 @@ export class DeployCommand extends BaseCommand {
     // 5. Deploy.
     const result = await engine.deploy();
 
+    await logger.close?.();
+
     if (!result.success) {
       this.fail('Deployment failed — see above for details.');
     }
