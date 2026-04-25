@@ -171,6 +171,12 @@ export class RuntimeAdapter<TSdk> implements ProviderAdapter {
   async delete(resource: ManifestResource): Promise<void> {
     const handler = this.runtime.getHandler(resource.type);
 
+    // Skip the provider call entirely for non-deletable resources (definition-only
+    // or ephemeral resources that carry no provider-side state, e.g. SSH scripts).
+    if (!handler.deletable) {
+      return;
+    }
+
     // Reconstruct state from the stored properties.
     const state = await handler.get(this.context, resource.properties);
     await handler.delete(this.context, state);
