@@ -1,4 +1,11 @@
-import { ResourceHandler, RuntimeContext, Crn } from '@cdk-x/core';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  ResourceHandler,
+  RuntimeContext,
+  Crn,
+  StabilizeStatus,
+} from '@cdk-x/core';
 import type { MultipassSdk } from '../../multipass-cli-facade';
 import type { MultipassLaunchOpts } from '@cdk-x/multipass-sdk';
 
@@ -74,7 +81,48 @@ export class MultipassInstanceHandler extends ResourceHandler<
 
     await ctx.sdk.launch(opts);
 
-    return this.fetchState(ctx, props.name);
+    const state = await this.fetchState(ctx, props.name);
+
+    ctx.logger.info('provider.handler.instance.waiting-for-ssh', {
+      name: props.name,
+      host: state.ipAddress,
+    });
+
+    await this.waitUntilStabilized(async (): Promise<StabilizeStatus> => {
+      try {
+        await ctx.sdk.waitForSsh(state.ipAddress);
+        return { status: 'ready' };
+      } catch {
+        return { status: 'pending' };
+      }
+    }, ctx.stabilizeConfig);
+
+    ctx.logger.info('provider.handler.instance.waiting-for-cloud-init', {
+      name: props.name,
+    });
+
+    await this.waitUntilStabilized(async (): Promise<StabilizeStatus> => {
+      const status = await ctx.sdk.cloudInitStatus(props.name);
+      if (status === 'done') return { status: 'ready' };
+      if (status === 'error' || status === 'degraded') {
+        return {
+          status: 'failed',
+          reason: `cloud-init finished with status: ${status}`,
+        };
+      }
+      return { status: 'pending' };
+    }, ctx.stabilizeConfig);
+
+    const cloudInitLog = await ctx.sdk.cloudInitLog(props.name);
+    if (cloudInitLog.trim()) {
+      ctx.logger.info('provider.handler.instance.cloud-init-log', {
+        name: props.name,
+        log: cloudInitLog,
+      });
+      this.writeCloudInitLog(props.name, cloudInitLog);
+    }
+
+    return state;
   }
 
   async update(
@@ -126,5 +174,16 @@ export class MultipassInstanceHandler extends ResourceHandler<
       resourceType: 'instance',
       resourceId: state.name,
     });
+  }
+
+  private writeCloudInitLog(name: string, content: string): void {
+    try {
+      const dir = join(process.cwd(), '.cdkx', 'exec-logs');
+      mkdirSync(dir, { recursive: true });
+      const safe = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, '-');
+      writeFileSync(join(dir, `${safe(name)}-cloud-init.log`), content);
+    } catch {
+      // Non-fatal: file write failure must not break the deployment
+    }
   }
 }
