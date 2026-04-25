@@ -48,6 +48,12 @@ export class LoggerImpl implements Logger {
     return new LoggerImpl(this.winstonLogger, this.source, context);
   }
 
+  close(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.winstonLogger.end(resolve);
+    });
+  }
+
   /**
    * Internal log method that constructs the Winston log entry.
    */

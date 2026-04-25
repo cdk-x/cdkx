@@ -124,6 +124,12 @@ export interface Logger {
    * All events from the child automatically include the bound stackId/resourceId.
    */
   child(context: LogContext): Logger;
+
+  /**
+   * Close the logger and flush all pending writes.
+   * Must be called when the logger is no longer needed to release open file handles.
+   */
+  close?(): Promise<void>;
 }
 
 /**
