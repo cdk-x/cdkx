@@ -5,7 +5,7 @@
 // To regenerate: yarn nx run @cdk-x/multipass:codegen
 // ============================================================
 
-import { ProviderResource, IResolvable, PropertyValue } from '@cdk-x/core';
+import { ProviderResource, PropertyValue } from '@cdk-x/core';
 import { Construct } from 'constructs';
 
 /**
@@ -104,6 +104,14 @@ export interface MultipassInstance {
    * Cloud-init user-data string passed to the instance at launch time.
    */
   cloudInit?: string;
+  /**
+   * IP address assigned to the VM by Multipass.
+   */
+  ipAddress?: string;
+  /**
+   * SSH user for the VM (always 'ubuntu').
+   */
+  sshUser?: string;
 }
 
 /**
@@ -119,12 +127,12 @@ export class MltInstance extends ProviderResource {
    * The `ipAddress` attribute of this resource.
    * Resolves to `{ ref: logicalId, attr: 'ipAddress' }` at synthesis time.
    */
-  public readonly attrIpAddress: IResolvable;
+  public readonly attrIpAddress: string;
   /**
    * The `sshUser` attribute of this resource.
    * Resolves to `{ ref: logicalId, attr: 'sshUser' }` at synthesis time.
    */
-  public readonly attrSshUser: IResolvable;
+  public readonly attrSshUser: string;
 
   public name: string;
   public image?: string;
@@ -142,8 +150,8 @@ export class MltInstance extends ProviderResource {
       type: MltInstance.RESOURCE_TYPE_NAME,
     });
     this.node.defaultChild = this;
-    this.attrIpAddress = this.getAtt('ipAddress');
-    this.attrSshUser = this.getAtt('sshUser');
+    this.attrIpAddress = this.getAtt<string>('ipAddress');
+    this.attrSshUser = this.getAtt<string>('sshUser');
     this.name = props.name;
     this.image = props.image;
     this.cpus = props.cpus;

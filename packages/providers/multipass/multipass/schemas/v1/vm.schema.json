@@ -86,6 +86,14 @@
     "cloudInit": {
       "type": "string",
       "description": "Cloud-init user-data string passed to the instance at launch time."
+    },
+    "ipAddress": {
+      "type": "string",
+      "description": "IP address assigned to the VM by Multipass."
+    },
+    "sshUser": {
+      "type": "string",
+      "description": "SSH user for the VM (always 'ubuntu')."
     }
   },
   "required": ["name"],

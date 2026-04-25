@@ -1,4 +1,3 @@
-import { IResolvable } from '@cdk-x/core';
 import { TestApp, TestStack } from '@cdk-x/testing';
 import { MltInstance, MltProvider } from '../../index';
 
@@ -34,20 +33,18 @@ describe('MltInstance', () => {
       expect(vm.cloudInit).toBe('#cloud-config\npackages:\n  - git\n');
     });
 
-    it('exposes attrIpAddress as IResolvable', () => {
+    it('exposes attrIpAddress as a string token', () => {
       const app = new TestApp();
       const stack = new TestStack(app, 'S', {});
       const vm = new MltInstance(stack, 'Vm', { name: 'dev' });
       expect(vm.attrIpAddress).toBeDefined();
-      expect(typeof (vm.attrIpAddress as IResolvable).resolve).toBe('function');
     });
 
-    it('exposes attrSshUser as IResolvable', () => {
+    it('exposes attrSshUser as a string token', () => {
       const app = new TestApp();
       const stack = new TestStack(app, 'S', {});
       const vm = new MltInstance(stack, 'Vm', { name: 'dev' });
       expect(vm.attrSshUser).toBeDefined();
-      expect(typeof (vm.attrSshUser as IResolvable).resolve).toBe('function');
     });
 
     it('has the correct RESOURCE_TYPE_NAME', () => {
