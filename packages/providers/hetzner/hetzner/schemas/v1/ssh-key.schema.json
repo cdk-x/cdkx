@@ -20,6 +20,6 @@
   },
   "required": ["name", "publicKey"],
   "createOnlyProperties": ["/properties/publicKey"],
-  "readOnlyProperties": ["/properties/name"],
+  "attrProperties": ["/properties/name"],
   "primaryIdentifier": ["/properties/name"]
 }

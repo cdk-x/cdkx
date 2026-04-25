@@ -65,7 +65,7 @@ export const HetznerResourceType = {
     VolumeAttachment: 'Hetzner::Storage::VolumeAttachment',
     /** `Hetzner::Storage::Volume` */
     Volume: 'Hetzner::Storage::Volume',
-  }
+  },
 } as const;
 
 // ==============================================================================
@@ -112,7 +112,6 @@ export enum PrimaryIpAssigneeType {
   /** `server` */
   SERVER = 'server',
 }
-
 
 // ==============================================================================
 // Security
@@ -209,7 +208,6 @@ export class HtzCertificate extends ProviderResource {
   }
 }
 
-
 // --- FirewallAttachment ---
 /**
  * Props for {@link HtzFirewallAttachment}.
@@ -238,7 +236,8 @@ export interface HetznerFirewallAttachment {
  */
 export class HtzFirewallAttachment extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Security::FirewallAttachment';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Security::FirewallAttachment';
 
   public firewallId: number | IResolvable;
   public serverId?: number | IResolvable;
@@ -262,7 +261,6 @@ export class HtzFirewallAttachment extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- FirewallRules ---
 /**
@@ -344,7 +342,8 @@ export interface HetznerFirewallRules {
  */
 export class HtzFirewallRules extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Security::FirewallRules';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Security::FirewallRules';
 
   public firewallId: number | IResolvable;
   public rules?: FirewallRule[];
@@ -365,7 +364,6 @@ export class HtzFirewallRules extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- Firewall ---
 /**
@@ -420,7 +418,6 @@ export class HtzFirewall extends ProviderResource {
   }
 }
 
-
 // --- SshKey ---
 /**
  * Props for {@link HtzSshKey}.
@@ -455,7 +452,7 @@ export class HtzSshKey extends ProviderResource {
    * The `name` attribute of this resource.
    * Resolves to `{ ref: logicalId, attr: 'name' }` at synthesis time.
    */
-  public readonly attrName: IResolvable;
+  public readonly attrName: string;
 
   public name: string;
   public publicKey: string;
@@ -466,7 +463,7 @@ export class HtzSshKey extends ProviderResource {
       type: HtzSshKey.RESOURCE_TYPE_NAME,
     });
     this.node.defaultChild = this;
-    this.attrName = this.getAtt('name');
+    this.attrName = this.getAtt<string>('name');
     this.name = props.name;
     this.publicKey = props.publicKey;
     this.labels = props.labels;
@@ -480,7 +477,6 @@ export class HtzSshKey extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // ==============================================================================
 // Networking
@@ -510,12 +506,17 @@ export interface HetznerFloatingIpAssignment {
  */
 export class HtzFloatingIpAssignment extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Networking::FloatingIpAssignment';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Networking::FloatingIpAssignment';
 
   public floatingIpId: number | IResolvable;
   public serverId: number | IResolvable;
 
-  constructor(scope: Construct, id: string, props: HetznerFloatingIpAssignment) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: HetznerFloatingIpAssignment,
+  ) {
     super(scope, id, {
       type: HtzFloatingIpAssignment.RESOURCE_TYPE_NAME,
     });
@@ -531,7 +532,6 @@ export class HtzFloatingIpAssignment extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- FloatingIp ---
 /**
@@ -624,7 +624,6 @@ export class HtzFloatingIp extends ProviderResource {
   }
 }
 
-
 // --- Network ---
 /**
  * Props for {@link HtzNetwork}.
@@ -692,7 +691,6 @@ export class HtzNetwork extends ProviderResource {
   }
 }
 
-
 // --- PrimaryIpAssignment ---
 /**
  * Props for {@link HtzPrimaryIpAssignment}.
@@ -721,7 +719,8 @@ export interface HetznerPrimaryIpAssignment {
  */
 export class HtzPrimaryIpAssignment extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Networking::PrimaryIpAssignment';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Networking::PrimaryIpAssignment';
 
   public primaryIpId: number | IResolvable;
   public assigneeId: number | IResolvable;
@@ -745,7 +744,6 @@ export class HtzPrimaryIpAssignment extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- PrimaryIp ---
 /**
@@ -811,9 +809,8 @@ export class HtzPrimaryIp extends ProviderResource {
    * The `primaryIpId` attribute of this resource.
    * Resolves to `{ ref: logicalId, attr: 'primaryIpId' }` at synthesis time.
    */
-  public readonly attrPrimaryIpId: IResolvable;
+  public readonly attrPrimaryIpId: number;
 
-  public primaryIpId?: number | IResolvable;
   public name: string;
   public labels?: Record<string, string>;
   public resourceType: PrimaryIpType;
@@ -827,8 +824,7 @@ export class HtzPrimaryIp extends ProviderResource {
       type: HtzPrimaryIp.RESOURCE_TYPE_NAME,
     });
     this.node.defaultChild = this;
-    this.attrPrimaryIpId = this.getAtt('primaryIpId');
-    this.primaryIpId = props.primaryIpId;
+    this.attrPrimaryIpId = this.getAtt<number>('primaryIpId');
     this.name = props.name;
     this.labels = props.labels;
     this.resourceType = props.type;
@@ -840,7 +836,6 @@ export class HtzPrimaryIp extends ProviderResource {
 
   protected override renderProperties(): Record<string, PropertyValue> {
     return {
-      primaryIpId: this.primaryIpId,
       name: this.name,
       labels: this.labels,
       type: this.resourceType,
@@ -851,7 +846,6 @@ export class HtzPrimaryIp extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- Route ---
 /**
@@ -905,7 +899,6 @@ export class HtzRoute extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- Subnet ---
 /**
@@ -985,7 +978,6 @@ export class HtzSubnet extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // ==============================================================================
 // Compute
@@ -1139,7 +1131,8 @@ export interface HetznerLoadBalancerService {
  */
 export class HtzLoadBalancerService extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::LoadBalancerService';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Compute::LoadBalancerService';
 
   public loadBalancerId: number | IResolvable;
   public listenPort: number;
@@ -1175,7 +1168,6 @@ export class HtzLoadBalancerService extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- LoadBalancerTarget ---
 /**
@@ -1229,7 +1221,8 @@ export interface HetznerLoadBalancerTarget {
  */
 export class HtzLoadBalancerTarget extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::LoadBalancerTarget';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Compute::LoadBalancerTarget';
 
   public loadBalancerId: number | IResolvable;
   public resourceType: LoadBalancerTargetType;
@@ -1262,7 +1255,6 @@ export class HtzLoadBalancerTarget extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- LoadBalancer ---
 /**
@@ -1391,7 +1383,6 @@ export class HtzLoadBalancer extends ProviderResource {
   }
 }
 
-
 // --- NetworkAttachment ---
 /**
  * Props for {@link HtzNetworkAttachment}.
@@ -1428,7 +1419,8 @@ export interface HetznerNetworkAttachment {
  */
 export class HtzNetworkAttachment extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::NetworkAttachment';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Compute::NetworkAttachment';
 
   public serverId: number | IResolvable;
   public networkId: number | IResolvable;
@@ -1458,7 +1450,6 @@ export class HtzNetworkAttachment extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- PlacementGroup ---
 /**
@@ -1504,50 +1495,44 @@ export interface HetznerPlacementGroup {
  */
 export class HtzPlacementGroup extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Compute::PlacementGroup';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Compute::PlacementGroup';
 
   /**
    * The `placementGroupId` attribute of this resource.
    * Resolves to `{ ref: logicalId, attr: 'placementGroupId' }` at synthesis time.
    */
-  public readonly attrPlacementGroupId: IResolvable;
+  public readonly attrPlacementGroupId: number;
   /**
    * The `serverIds` attribute of this resource.
    * Resolves to `{ ref: logicalId, attr: 'serverIds' }` at synthesis time.
    */
-  public readonly attrServerIds: IResolvable;
+  public readonly attrServerIds: number[];
 
-  public placementGroupId?: number | IResolvable;
   public name: string;
   public labels?: Record<string, string>;
   public resourceType: PlacementGroupType;
-  public serverIds?: (number | IResolvable)[];
 
   constructor(scope: Construct, id: string, props: HetznerPlacementGroup) {
     super(scope, id, {
       type: HtzPlacementGroup.RESOURCE_TYPE_NAME,
     });
     this.node.defaultChild = this;
-    this.attrPlacementGroupId = this.getAtt('placementGroupId');
-    this.attrServerIds = this.getAtt('serverIds');
-    this.placementGroupId = props.placementGroupId;
+    this.attrPlacementGroupId = this.getAtt<number>('placementGroupId');
+    this.attrServerIds = this.getAtt<number[]>('serverIds');
     this.name = props.name;
     this.labels = props.labels;
     this.resourceType = props.type;
-    this.serverIds = props.serverIds;
   }
 
   protected override renderProperties(): Record<string, PropertyValue> {
     return {
-      placementGroupId: this.placementGroupId,
       name: this.name,
       labels: this.labels,
       type: this.resourceType,
-      serverIds: this.serverIds,
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- Server ---
 /**
@@ -1773,7 +1758,6 @@ export class HtzServer extends ProviderResource {
   }
 }
 
-
 // ==============================================================================
 // Storage
 // ==============================================================================
@@ -1806,7 +1790,8 @@ export interface HetznerVolumeAttachment {
  */
 export class HtzVolumeAttachment extends ProviderResource {
   /** The CloudFormation-style type name for this resource. */
-  public static readonly RESOURCE_TYPE_NAME = 'Hetzner::Storage::VolumeAttachment';
+  public static readonly RESOURCE_TYPE_NAME =
+    'Hetzner::Storage::VolumeAttachment';
 
   public volumeId: number | IResolvable;
   public serverId: number | IResolvable;
@@ -1830,7 +1815,6 @@ export class HtzVolumeAttachment extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
 
 // --- Volume ---
 /**
@@ -1905,4 +1889,3 @@ export class HtzVolume extends ProviderResource {
     } as unknown as Record<string, PropertyValue>;
   }
 }
-
