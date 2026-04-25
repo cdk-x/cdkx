@@ -13,6 +13,7 @@ function makeResource(overrides: Partial<ResourceSchema>): ResourceSchema {
     description: '',
     properties: {},
     readOnlyProperties: [],
+    attrProperties: [],
     createOnlyProperties: [],
     primaryIdentifier: [],
     required: [],

@@ -12,6 +12,7 @@ const STUB_RESOURCES: ResourceSchema[] = [
       name: { type: 'string', description: 'Name.' },
     },
     readOnlyProperties: ['serverId'],
+    attrProperties: [],
     createOnlyProperties: [],
     primaryIdentifier: ['serverId'],
     required: [],
