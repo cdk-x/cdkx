@@ -6,6 +6,14 @@ import {
 } from './stabilize';
 
 export abstract class ResourceHandler<TProps, TState, TSdk> {
+  /**
+   * Whether this resource has a physical counterpart to delete.
+   * Set to `false` for ephemeral or definition-only resources (e.g. SSH scripts,
+   * Ansible playbooks) that hold no provider-side state. When `false`, the
+   * engine transitions directly to DELETE_COMPLETE without calling `delete()`.
+   */
+  readonly deletable: boolean = true;
+
   abstract create(ctx: RuntimeContext<TSdk>, props: TProps): Promise<TState>;
   abstract update(
     ctx: RuntimeContext<TSdk>,
