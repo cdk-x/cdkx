@@ -46,6 +46,9 @@ test-output
 # cdkx local synthesis output (visual inspection)
 .cdkx.out
 
+# e2e generated files (machine-specific, created at synth time)
+e2e/**/cloud-init-generated.yaml
+
 # cdkx local state and lock files
 .cdkx/
 
