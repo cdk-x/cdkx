@@ -29,6 +29,9 @@ function stubSdk(overrides?: Partial<MultipassSdk>): MultipassSdk {
       sshUser: 'ubuntu',
       state: 'Running',
     }),
+    waitForSsh: jest.fn().mockResolvedValue(undefined),
+    cloudInitStatus: jest.fn().mockResolvedValue('done'),
+    cloudInitLog: jest.fn().mockResolvedValue(''),
     delete: jest.fn().mockResolvedValue(undefined),
     ...overrides,
   } as unknown as MultipassSdk;
@@ -140,6 +143,50 @@ describe('MultipassInstanceHandler.create() with networks and mounts', () => {
       expect.objectContaining({
         mounts: [{ source: '/host/data', target: '/data' }],
       }),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cloud-init wait
+// ---------------------------------------------------------------------------
+
+describe('MultipassInstanceHandler.create() cloud-init wait', () => {
+  it('calls sdk.cloudInitStatus() and resolves when it returns "done"', async () => {
+    const sdk = stubSdk();
+    const ctx = new MultipassRuntimeContext(sdk, stubLogger());
+    const handler = new MultipassInstanceHandler();
+
+    await handler.create(ctx, baseProps);
+
+    expect(sdk.cloudInitStatus).toHaveBeenCalledWith('dev');
+  });
+
+  it('retries until cloud-init is done', async () => {
+    const cloudInitStatus = jest
+      .fn()
+      .mockResolvedValueOnce('running')
+      .mockResolvedValueOnce('running')
+      .mockResolvedValueOnce('done');
+    const sdk = stubSdk({ cloudInitStatus });
+    const ctx = new MultipassRuntimeContext(sdk, stubLogger());
+    ctx.stabilizeConfig = { intervalMs: 0, timeoutMs: 10_000 };
+    const handler = new MultipassInstanceHandler();
+
+    await handler.create(ctx, baseProps);
+
+    expect(cloudInitStatus).toHaveBeenCalledTimes(3);
+  });
+
+  it('throws when cloud-init finishes with error status', async () => {
+    const sdk = stubSdk({
+      cloudInitStatus: jest.fn().mockResolvedValue('error'),
+    });
+    const ctx = new MultipassRuntimeContext(sdk, stubLogger());
+    const handler = new MultipassInstanceHandler();
+
+    await expect(handler.create(ctx, baseProps)).rejects.toThrow(
+      /cloud-init finished with status: error/i,
     );
   });
 });
