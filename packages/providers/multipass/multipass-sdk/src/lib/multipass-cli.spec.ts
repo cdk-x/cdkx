@@ -246,6 +246,61 @@ describe('MultipassCli.info()', () => {
 });
 
 // ---------------------------------------------------------------------------
+// cloudInitStatus
+// ---------------------------------------------------------------------------
+
+describe('MultipassCli.cloudInitStatus()', () => {
+  it('returns "done" when cloud-init output contains "done"', async () => {
+    const spawn = jest.fn().mockResolvedValue({
+      code: 0,
+      stdout: 'status: done\n',
+      stderr: '',
+    });
+    const cli = new MultipassCli({ spawn });
+
+    await expect(cli.cloudInitStatus('my-vm')).resolves.toBe('done');
+    expect(spawn).toHaveBeenCalledWith('multipass', [
+      'exec',
+      'my-vm',
+      '--',
+      'cloud-init',
+      'status',
+    ]);
+  });
+
+  it('returns "running" when cloud-init output contains "running"', async () => {
+    const spawn = jest.fn().mockResolvedValue({
+      code: 0,
+      stdout: 'status: running\n',
+      stderr: '',
+    });
+    const cli = new MultipassCli({ spawn });
+
+    await expect(cli.cloudInitStatus('my-vm')).resolves.toBe('running');
+  });
+
+  it('returns "error" when cloud-init output contains "error"', async () => {
+    const spawn = jest.fn().mockResolvedValue({
+      code: 0,
+      stdout: 'status: error\n',
+      stderr: '',
+    });
+    const cli = new MultipassCli({ spawn });
+
+    await expect(cli.cloudInitStatus('my-vm')).resolves.toBe('error');
+  });
+
+  it('returns "running" when exec fails (VM not yet reachable)', async () => {
+    const spawn = jest
+      .fn()
+      .mockResolvedValue({ code: 1, stdout: '', stderr: 'timed out' });
+    const cli = new MultipassCli({ spawn });
+
+    await expect(cli.cloudInitStatus('my-vm')).resolves.toBe('running');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // delete
 // ---------------------------------------------------------------------------
 
