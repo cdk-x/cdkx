@@ -12,6 +12,9 @@
   "exclude": ["node_modules", "dist"],
   "references": [
     {
+      "path": "../../packages/providers/ssh/ssh"
+    },
+    {
       "path": "../../packages/providers/multipass/multipass"
     },
     {

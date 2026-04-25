@@ -12,7 +12,7 @@
       "executor": "nx:run-commands",
       "dependsOn": [
         {
-          "projects": ["@cdk-x/cli", "@cdk-x/core", "@cdk-x/multipass"],
+          "projects": ["@cdk-x/cli", "@cdk-x/core", "@cdk-x/multipass", "@cdk-x/ssh"],
           "target": "build"
         }
       ],

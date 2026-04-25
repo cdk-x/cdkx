@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@cdk-x/core": "*",
-    "@cdk-x/multipass": "*"
+    "@cdk-x/multipass": "*",
+    "@cdk-x/ssh": "*"
   },
   "devDependencies": {
     "@cdk-x/cli": "*",
