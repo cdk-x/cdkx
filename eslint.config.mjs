@@ -37,6 +37,13 @@ export default [
       '**/*.mjs',
     ],
     // Override or add rules here
-    rules: {},
+    rules: {
+      // Static-only utility classes (Stack.of(), Resource.of(), Resolvable, ...)
+      // use an intentionally empty private constructor to prevent instantiation.
+      '@typescript-eslint/no-empty-function': [
+        'error',
+        { allow: ['private-constructors', 'protected-constructors'] },
+      ],
+    },
   },
 ];
