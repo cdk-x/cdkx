@@ -92,6 +92,9 @@ importers:
       '@swc/helpers':
         specifier: ~0.5.18
         version: 0.5.18
+      constructs:
+        specifier: ^10.8.0
+        version: 10.8.0
 
 packages:
 
@@ -2297,6 +2300,9 @@ packages:
 
   confusing-browser-globals@1.0.11:
     resolution: {integrity: sha512-JsPKdmh8ZkmnHxDk55FZ1TqVLvEQTvoByJZRN9jzI0UjxK/QgAmsphz7PGtqgPieQZ/CQcHWXCR7ATDNhGe+YA==}
+
+  constructs@10.8.0:
+    resolution: {integrity: sha512-pJHp2CxvTG0ttp52rZvQfkbspPLZzttWPooIRLBwlZK8rV7ZhkjIkyZWJhIfBDC4YdcwIDmXyUFr1ieJaqjBbg==}
 
   content-disposition@0.5.4:
     resolution: {integrity: sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==}
@@ -7332,6 +7338,8 @@ snapshots:
   concat-map@0.0.1: {}
 
   confusing-browser-globals@1.0.11: {}
+
+  constructs@10.8.0: {}
 
   content-disposition@0.5.4:
     dependencies:
