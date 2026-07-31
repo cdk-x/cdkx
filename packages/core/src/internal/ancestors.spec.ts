@@ -4,7 +4,8 @@ import { AncestorWalker } from './ancestors.js';
 class DummyMatch extends Construct {}
 class DummyOther extends Construct {}
 
-const isDummyMatch = (candidate: IConstruct): candidate is DummyMatch => candidate instanceof DummyMatch;
+const isDummyMatch = (candidate: IConstruct): candidate is DummyMatch =>
+  candidate instanceof DummyMatch;
 
 describe('AncestorWalker', () => {
   describe('findNearest', () => {
@@ -15,7 +16,11 @@ describe('AncestorWalker', () => {
       const c = new DummyOther(b, 'C');
       const target = new DummyOther(c, 'Target');
 
-      const result = AncestorWalker.findNearest(target, isDummyMatch, () => false);
+      const result = AncestorWalker.findNearest(
+        target,
+        isDummyMatch,
+        () => false,
+      );
 
       expect(result).toBe(b);
     });
@@ -25,7 +30,11 @@ describe('AncestorWalker', () => {
       const a = new DummyOther(root, 'A');
       const target = new DummyOther(a, 'Target');
 
-      const result = AncestorWalker.findNearest(target, isDummyMatch, () => false);
+      const result = AncestorWalker.findNearest(
+        target,
+        isDummyMatch,
+        () => false,
+      );
 
       expect(result).toBeUndefined();
     });
@@ -62,7 +71,11 @@ describe('AncestorWalker', () => {
     it('returns undefined when called on a construct that is already the root', () => {
       const root = new RootConstruct('Root');
 
-      const result = AncestorWalker.findNearest(root, isDummyMatch, () => false);
+      const result = AncestorWalker.findNearest(
+        root,
+        isDummyMatch,
+        () => false,
+      );
 
       expect(result).toBeUndefined();
     });
@@ -71,7 +84,11 @@ describe('AncestorWalker', () => {
       const root = new RootConstruct('Root');
       const target = new DummyMatch(root, 'Target');
 
-      const result = AncestorWalker.findNearest(target, isDummyMatch, () => false);
+      const result = AncestorWalker.findNearest(
+        target,
+        isDummyMatch,
+        () => false,
+      );
 
       expect(result).toBeUndefined();
     });

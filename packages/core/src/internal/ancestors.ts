@@ -44,7 +44,8 @@ export class AncestorWalker {
     isMatch: (candidate: IConstruct) => candidate is T,
     stopAt: (candidate: IConstruct) => boolean,
   ): T | undefined {
-    let current: IConstruct | undefined = construct.node.scope as IConstruct | undefined;
+    let current: IConstruct | undefined = construct.node.scope as
+      IConstruct | undefined;
 
     while (current) {
       if (stopAt(current)) {
