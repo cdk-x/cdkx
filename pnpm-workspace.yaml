@@ -4,3 +4,5 @@ allowBuilds:
   '@swc/core': true
   nx: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - constructs@10.8.0

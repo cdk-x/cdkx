@@ -19,6 +19,7 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
-    "@swc/helpers": "~0.5.18"
+    "@swc/helpers": "~0.5.18",
+    "constructs": "^10.8.0"
   }
 }
