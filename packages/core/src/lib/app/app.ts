@@ -1,4 +1,6 @@
 import { RootConstruct } from 'constructs';
+import type { Manifest } from '../synth/synth.js';
+import { Synthesizer } from '../synth/synth.js';
 
 /**
  * Configuration for an {@link App}.
@@ -44,10 +46,12 @@ export class App extends RootConstruct {
   }
 
   /**
-   * Synthesizes the construct tree into deployable output.
-   * Not implemented yet — lands once Stack/Resource/Component all exist.
+   * Synthesizes the construct tree into deployable output — one Manifest
+   * per Stack, keyed by Stack id.
+   *
+   * @returns the synthesized manifests, keyed by Stack id.
    */
-  public synth(): never {
-    throw new Error('App.synth() is not implemented yet.');
+  public synth(): Record<string, Manifest> {
+    return Synthesizer.synthesize(this);
   }
 }

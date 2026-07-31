@@ -138,4 +138,17 @@ export abstract class Resource extends Construct {
    * no opinion on this.
    */
   protected abstract toProperties(): Record<string, PropertyValue>;
+
+  /**
+   * Internal hook used by Synthesizer to read this Resource's raw
+   * properties during App.synth(). Not part of the public API surface.
+   * Once jsii tooling is added (planned), this tag will cause the member
+   * to be stripped from generated multi-language bindings. For now, it
+   * documents intent.
+   *
+   * @internal
+   */
+  public _toProperties(): Record<string, PropertyValue> {
+    return this.toProperties();
+  }
 }
