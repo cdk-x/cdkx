@@ -15,6 +15,70 @@
         "skipTypeCheck": true,
         "stripLeadingPaths": true
       }
+    },
+    "jsii-compile": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^jsii-compile"],
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/.jsii"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "jsii --generate-tsconfig tsconfig.jsii.json"
+      }
+    },
+    "jsii-package-npm": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-compile"],
+      "outputs": ["{projectRoot}/dist-jsii/js"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "jsii-pacmak -t js --outdir dist-jsii ."
+      }
+    },
+    "jsii-package-python": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-compile"],
+      "outputs": ["{projectRoot}/dist-jsii/python"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "jsii-pacmak -t python --outdir dist-jsii ."
+      }
+    },
+    "jsii-package-java": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-compile", "^jsii-package-java"],
+      "outputs": ["{projectRoot}/dist-jsii/java"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "jsii-pacmak -t java --outdir dist-jsii ."
+      }
+    },
+    "jsii-package-dotnet": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-compile", "^jsii-package-dotnet"],
+      "outputs": ["{projectRoot}/dist-jsii/dotnet"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "jsii-pacmak -t dotnet --outdir dist-jsii ."
+      }
+    },
+    "jsii-package-go": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-compile", "^jsii-package-go"],
+      "outputs": ["{projectRoot}/dist-jsii/go"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "jsii-pacmak -t go --outdir dist-jsii ."
+      }
+    },
+    "jsii-package-all": {
+      "executor": "nx:noop",
+      "dependsOn": [
+        "jsii-package-npm",
+        "jsii-package-python",
+        "jsii-package-java",
+        "jsii-package-dotnet",
+        "jsii-package-go"
+      ]
     }
   }
 }
