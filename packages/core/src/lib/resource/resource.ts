@@ -1,6 +1,6 @@
 import { Construct, IConstruct } from 'constructs';
 import { AncestorWalker } from '../../internal/ancestors.js';
-import type { IResolvable, PropertyValue } from '../resolvable/resolvable.js';
+import type { IResolvable } from '../resolvable/resolvable.js';
 import { Stack } from '../stack/stack.js';
 
 // Module-private placeholder returned by Resource.getAtt() — resolves to the
@@ -28,11 +28,9 @@ export abstract class Resource extends Construct {
    * @param x - the value to test.
    * @returns true if `x` is a Resource, narrowing its type.
    * @example
-   * ```ts
    * if (Resource.isResource(construct)) {
    *   // construct is now typed as Resource
    * }
-   * ```
    */
   public static isResource(x: unknown): x is Resource {
     return x instanceof Resource;
@@ -47,9 +45,7 @@ export abstract class Resource extends Construct {
    * @param construct - the construct to resolve the owning Resource for.
    * @returns the owning Resource.
    * @example
-   * ```ts
    * const resource = Resource.of(someComponent);
-   * ```
    */
   public static of(construct: IConstruct): Resource {
     if (Resource.isResource(construct)) return construct;
@@ -99,9 +95,7 @@ export abstract class Resource extends Construct {
    * @param attr - the attribute name.
    * @returns an IResolvable that resolves to the synthesized reference form.
    * @example
-   * ```ts
    * const arn = bucket.getAtt('arn');
-   * ```
    */
   public getAtt(attr: string): IResolvable {
     return new ResourceAttribute(this.node.path, attr);
@@ -136,19 +130,24 @@ export abstract class Resource extends Construct {
    * inline any Component descendants under whatever property key makes
    * sense for their output format (e.g. Steps under "steps") — core has
    * no opinion on this.
+   *
+   * Typed as `Record<string, any>` rather than a stricter JSON-tree union:
+   * jsii cannot represent a recursive union type across its target
+   * languages (Java/.NET/Go), so `any` is the jsii-compatible convention
+   * here, mirroring how aws-cdk-lib types arbitrary resource property
+   * trees.
    */
-  protected abstract toProperties(): Record<string, PropertyValue>;
+  protected abstract toProperties(): Record<string, any>;
 
   /**
    * Internal hook used by Synthesizer to read this Resource's raw
-   * properties during App.synth(). Not part of the public API surface.
-   * Once jsii tooling is added (planned), this tag will cause the member
-   * to be stripped from generated multi-language bindings. For now, it
-   * documents intent.
+   * properties during App.synth(). Not part of the public API surface —
+   * the `@internal` tag causes this member to be stripped from generated
+   * multi-language bindings.
    *
    * @internal
    */
-  public _toProperties(): Record<string, PropertyValue> {
+  public _toProperties(): Record<string, any> {
     return this.toProperties();
   }
 }

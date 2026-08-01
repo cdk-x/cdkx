@@ -1,5 +1,5 @@
 import { Resolvable } from './resolvable.js';
-import type { IResolvable, PropertyValue } from './resolvable.js';
+import type { IResolvable } from './resolvable.js';
 
 describe('Resolvable', () => {
   describe('isResolvable', () => {
@@ -44,10 +44,10 @@ describe('Resolvable', () => {
       expect(instance).toBeInstanceOf(Resolvable);
     });
 
-    it('accepts an IResolvable nested anywhere within a PropertyValue', () => {
+    it('accepts an IResolvable nested anywhere within an arbitrary properties tree', () => {
       const resolvable: IResolvable = { resolve: () => 'resolved' };
 
-      const value: PropertyValue = {
+      const value: any = {
         name: 'example',
         count: 1,
         enabled: true,

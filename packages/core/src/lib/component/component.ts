@@ -17,11 +17,9 @@ export abstract class Component extends Construct {
    * @param x - the value to test.
    * @returns true if `x` is a Component, narrowing its type.
    * @example
-   * ```ts
    * if (Component.isComponent(construct)) {
    *   // construct is now typed as Component
    * }
-   * ```
    */
   public static isComponent(x: unknown): x is Component {
     return x instanceof Component;
