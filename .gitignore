@@ -2,6 +2,9 @@
 
 # compiled output
 dist
+dist-jsii
+.jsii
+tsconfig.jsii.json
 tmp
 out-tsc
 

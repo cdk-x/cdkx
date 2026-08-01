@@ -23,6 +23,9 @@
     "jest": "~30.3.0",
     "jest-environment-node": "~30.3.0",
     "jest-util": "~30.3.0",
+    "jsii": "^6.0.7",
+    "jsii-pacmak": "^1.139.0",
+    "jsii-rosetta": "^6.0.7",
     "jsonc-eslint-parser": "^2.1.0",
     "nx": "23.1.0",
     "prettier": "^3.8.1",
@@ -33,7 +36,6 @@
     "typescript-eslint": "^8.58.0",
     "verdaccio": "^6.3.2"
   },
-  "dependencies": {},
   "nx": {
     "includedScripts": [],
     "targets": {
