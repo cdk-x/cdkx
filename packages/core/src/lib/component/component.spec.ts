@@ -1,6 +1,5 @@
 import { Construct } from 'constructs';
 import { App } from '../app/app.js';
-import type { PropertyValue } from '../resolvable/resolvable.js';
 import { Resource } from '../resource/resource.js';
 import { Stack } from '../stack/stack.js';
 import { Component } from './component.js';
@@ -10,7 +9,7 @@ class DummyComponent extends Component {}
 class DummyResource extends Resource {
   public readonly type = 'Dummy::Resource';
 
-  protected toProperties(): Record<string, PropertyValue> {
+  protected toProperties(): Record<string, any> {
     return {};
   }
 }

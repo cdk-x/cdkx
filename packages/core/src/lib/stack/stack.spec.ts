@@ -1,13 +1,12 @@
 import { Construct } from 'constructs';
 import { App } from '../app/app.js';
 import { Resource } from '../resource/resource.js';
-import type { PropertyValue } from '../resolvable/resolvable.js';
 import { Stack } from './stack.js';
 
 class DummyResource extends Resource {
   public readonly type = 'Dummy::Resource';
 
-  protected toProperties(): Record<string, PropertyValue> {
+  protected toProperties(): Record<string, any> {
     return {};
   }
 }
@@ -49,7 +48,7 @@ describe('Stack', () => {
     });
   });
 
-  describe('getResources', () => {
+  describe('resources', () => {
     it('returns all descendant Resources, including those nested under intermediate plain Constructs', () => {
       const app = new App();
       const stack = new Stack(app, 'Stack');
@@ -57,7 +56,7 @@ describe('Stack', () => {
       const organizational = new Construct(stack, 'Organizational');
       const nested = new DummyResource(organizational, 'Nested');
 
-      expect(stack.getResources()).toEqual(
+      expect(stack.resources()).toEqual(
         expect.arrayContaining([direct, nested]),
       );
     });
@@ -67,7 +66,7 @@ describe('Stack', () => {
       const stack = new Stack(app, 'Stack');
       new Construct(stack, 'Organizational');
 
-      expect(stack.getResources()).toEqual([]);
+      expect(stack.resources()).toEqual([]);
     });
   });
 });

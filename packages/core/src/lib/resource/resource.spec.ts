@@ -1,14 +1,13 @@
 import { Construct } from 'constructs';
 import { App } from '../app/app.js';
 import { Resolvable } from '../resolvable/resolvable.js';
-import type { PropertyValue } from '../resolvable/resolvable.js';
 import { Stack } from '../stack/stack.js';
 import { Resource } from './resource.js';
 
 class DummyResource extends Resource {
   public readonly type = 'Dummy::Resource';
 
-  protected toProperties(): Record<string, PropertyValue> {
+  protected toProperties(): Record<string, any> {
     return {};
   }
 }

@@ -1,5 +1,5 @@
 import { RootConstruct } from 'constructs';
-import type { Manifest } from '../synth/synth.js';
+import type { ManifestEntry } from '../synth/synth.js';
 import { Synthesizer } from '../synth/synth.js';
 
 /**
@@ -25,11 +25,9 @@ export class App extends RootConstruct {
    * @param x - the value to test.
    * @returns true if `x` is an App, narrowing its type.
    * @example
-   * ```ts
    * if (App.isApp(scope)) {
    *   // scope is now typed as App
    * }
-   * ```
    */
   public static isApp(x: unknown): x is App {
     return x instanceof App;
@@ -46,12 +44,12 @@ export class App extends RootConstruct {
   }
 
   /**
-   * Synthesizes the construct tree into deployable output — one Manifest
+   * Synthesizes the construct tree into deployable output — one manifest
    * per Stack, keyed by Stack id.
    *
    * @returns the synthesized manifests, keyed by Stack id.
    */
-  public synth(): Record<string, Manifest> {
+  public synth(): Record<string, Record<string, ManifestEntry>> {
     return Synthesizer.synthesize(this);
   }
 }

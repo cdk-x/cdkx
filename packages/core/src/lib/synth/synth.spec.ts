@@ -1,15 +1,14 @@
 import { App } from '../app/app.js';
 import { Component } from '../component/component.js';
-import type { PropertyValue } from '../resolvable/resolvable.js';
 import { Resource } from '../resource/resource.js';
 import { Stack } from '../stack/stack.js';
 import { CycleError, Synthesizer } from './synth.js';
 
 class DummyResource extends Resource {
   public readonly type = 'Dummy::Resource';
-  public properties: Record<string, PropertyValue> = {};
+  public properties: Record<string, any> = {};
 
-  protected toProperties(): Record<string, PropertyValue> {
+  protected toProperties(): Record<string, any> {
     return this.properties;
   }
 }

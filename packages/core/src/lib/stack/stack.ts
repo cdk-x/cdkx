@@ -14,11 +14,9 @@ export class Stack extends Construct {
    * @param x - the value to test.
    * @returns true if `x` is a Stack, narrowing its type.
    * @example
-   * ```ts
    * if (Stack.isStack(scope)) {
    *   // scope is now typed as Stack
    * }
-   * ```
    */
   public static isStack(x: unknown): x is Stack {
     return x instanceof Stack;
@@ -38,9 +36,7 @@ export class Stack extends Construct {
    * @param construct - the construct to resolve the owning Stack for.
    * @returns the owning Stack.
    * @example
-   * ```ts
    * const stack = Stack.of(someResource);
-   * ```
    */
   public static of(construct: IConstruct): Stack {
     if (Stack.isStack(construct)) return construct;
@@ -68,7 +64,7 @@ export class Stack extends Construct {
    * Returns all Resources descending from this Stack, including those
    * nested under intermediate organizational Constructs.
    */
-  public getResources(): Resource[] {
+  public resources(): Resource[] {
     return this.node.findAll().filter(Resource.isResource);
   }
 }

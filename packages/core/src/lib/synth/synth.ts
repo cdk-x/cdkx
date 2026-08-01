@@ -1,11 +1,21 @@
 import type { App } from '../app/app.js';
 import { Resolvable } from '../resolvable/resolvable.js';
-import type { PropertyValue } from '../resolvable/resolvable.js';
 import { Resource } from '../resource/resource.js';
 import { Stack } from '../stack/stack.js';
 
+// JSON-tree shape used only by this file's private serialization helpers —
+// a recursive union like this can't be represented across jsii's target
+// languages, so it stays internal and never appears in an exported type.
+type PropertyValue =
+  | string
+  | number
+  | boolean
+  | PropertyValue[]
+  | { [key: string]: PropertyValue };
+
 /**
- * A single Resource's synthesized entry within a Stack's {@link Manifest}.
+ * A single Resource's synthesized entry within a Stack's synthesized
+ * manifest (see {@link Synthesizer.synthesize}).
  */
 export interface ManifestEntry {
   /**
@@ -17,7 +27,7 @@ export interface ManifestEntry {
    * This Resource's serialized properties — any IResolvable values have
    * been replaced with their resolved (placeholder) form.
    */
-  readonly properties: Record<string, PropertyValue>;
+  readonly properties: Record<string, any>;
 
   /**
    * The logical ids (Resource.node.path) of every Resource this entry
@@ -27,23 +37,44 @@ export interface ManifestEntry {
   readonly dependsOn: string[];
 }
 
-/**
- * A Stack's synthesized output: every Resource it contains, keyed by
- * logical id (`Resource.node.path`).
- */
-export type Manifest = Record<string, ManifestEntry>;
+// A Stack's synthesized output: every Resource it contains, keyed by
+// logical id (`Resource.node.path`). Kept internal (not exported) — jsii
+// wants named interfaces for exported object shapes, not bare aliases, so
+// `Synthesizer.synthesize()` below inlines `Record<string, ManifestEntry>`
+// directly instead of exporting this alias.
+type Manifest = Record<string, ManifestEntry>;
+
+// jsii flags an exported class extending the built-in Error, regardless of
+// @internal — the check runs on the class's own heritage clause before
+// internal-filtering. aws-cdk-lib's ConstructError hits the same wall and
+// works around it the same way: the class that directly extends Error stays
+// module-private (never exported), so jsii's exported-declaration scan never
+// sees it; only the subclass — extending this private base, not Error itself
+// — is exported (as @internal below).
+abstract class BaseError extends Error {
+  protected constructor(message: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
 
 /**
  * Thrown by {@link Synthesizer.synthesize} when a Stack's Resources form a
- * dependency cycle.
+ * dependency cycle. Not part of the public API surface — see the
+ * {@link BaseError} note above for why. Other-language consumers still
+ * receive the error and its message when a cycle is detected, just not as a
+ * distinctly catchable, structurally-typed exception.
+ *
+ * @internal
  */
-export class CycleError extends Error {
+export class CycleError extends BaseError {
   /**
    * @param cycle - the logical ids forming the cycle, in traversal order,
    * with the first id repeated at the end to close the loop.
    */
   constructor(public readonly cycle: string[]) {
     super(`Dependency cycle detected: ${cycle.join(' -> ')}`);
+    Object.setPrototypeOf(this, CycleError.prototype);
   }
 }
 
@@ -63,11 +94,11 @@ export class Synthesizer {
    * @param app - the App to synthesize.
    * @returns a map of Stack id to that Stack's synthesized Manifest.
    * @example
-   * ```ts
    * const manifests = Synthesizer.synthesize(app);
-   * ```
    */
-  public static synthesize(app: App): Record<string, Manifest> {
+  public static synthesize(
+    app: App,
+  ): Record<string, Record<string, ManifestEntry>> {
     const stacks = app.node.children.filter(Stack.isStack);
     const resourcesByPath = new Map<string, Resource>(
       app.node
@@ -92,7 +123,7 @@ export class Synthesizer {
   ): Manifest {
     const manifest: Manifest = {};
 
-    for (const resource of stack.getResources()) {
+    for (const resource of stack.resources()) {
       const rawProps = resource._toProperties();
       manifest[resource.node.path] = {
         type: resource.type,

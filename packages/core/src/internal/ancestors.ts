@@ -31,13 +31,11 @@ export class AncestorWalker {
    * @returns the nearest matching ancestor, or `undefined` if none is
    * found before a `stopAt` boundary or the root.
    * @example
-   * ```ts
    * const nearestResource = AncestorWalker.findNearest(
    *   component,
    *   (c): c is Resource => c instanceof Resource,
    *   (c) => c instanceof Stack,
    * );
-   * ```
    */
   public static findNearest<T extends IConstruct>(
     construct: IConstruct,
