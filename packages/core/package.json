@@ -2,6 +2,7 @@
   "name": "@cdk-x/core",
   "version": "0.0.1",
   "type": "module",
+  "description": "Core constructs (App, Stack, Resource, Component) for the cdkx framework.",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,10 +17,65 @@
   },
   "files": [
     "dist",
+    ".jsii",
     "!**/*.tsbuildinfo"
   ],
+  "author": {
+    "name": "cdk-x",
+    "organization": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cdk-x/cdkx.git",
+    "directory": "packages/core"
+  },
+  "license": "MIT",
   "dependencies": {
     "@swc/helpers": "~0.5.18",
     "constructs": "^10.8.0"
+  },
+  "peerDependencies": {
+    "constructs": "^10.8.0"
+  },
+  "devDependencies": {
+    "constructs": "10.8.0"
+  },
+  "bundledDependencies": [
+    "@swc/helpers"
+  ],
+  "jsii": {
+    "outdir": "dist-jsii",
+    "excludeTypescript": [
+      "src/**/*.spec.ts",
+      "src/**/*.test.ts"
+    ],
+    "targets": {
+      "java": {
+        "package": "com.cdkx.core",
+        "maven": {
+          "groupId": "com.cdk-x",
+          "artifactId": "cdkx-core"
+        }
+      },
+      "python": {
+        "distName": "cdkx-core",
+        "module": "cdkx.core"
+      },
+      "dotnet": {
+        "namespace": "CdkX.Core",
+        "packageId": "CdkX.Core"
+      },
+      "go": {
+        "moduleName": "github.com/cdk-x/cdkx-go"
+      }
+    },
+    "tsc": {
+      "rootDir": "src",
+      "outDir": "dist",
+      "forceConsistentCasingInFileNames": true,
+      "types": [
+        "node"
+      ]
+    }
   }
 }
