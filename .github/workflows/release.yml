@@ -32,14 +32,14 @@ jobs:
       sha: ${{ steps.resolve-sha.outputs.sha }}
       projects: ${{ steps.affected.outputs.projects }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           filter: tree:0
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
@@ -105,23 +105,23 @@ jobs:
     outputs:
       projects: ${{ steps.list-projects.outputs.projects }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.version.outputs.sha }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.x'
 
@@ -136,7 +136,7 @@ jobs:
             pnpm nx run-many -t jsii-package-all -p "$projects"
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: jsii-dist
           path: packages/*/dist-jsii
@@ -161,20 +161,20 @@ jobs:
     env:
       PUBLIB_DRYRUN: ${{ inputs.dry_run }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.version.outputs.sha }}
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
 
       - run: pnpm install --frozen-lockfile
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: jsii-dist
           path: /tmp/jsii-dist
@@ -228,19 +228,19 @@ jobs:
       PUBLIB_DRYRUN: ${{ inputs.dry_run }}
       PYPI_TRUSTED_PUBLISHER: '1'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.version.outputs.sha }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: jsii-dist
           path: /tmp/jsii-dist
@@ -273,18 +273,18 @@ jobs:
       NPM_TOKEN: ${{ inputs.first_release && secrets.NPM_TOKEN || '' }}
       NPM_ACCESS_LEVEL: public
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.version.outputs.sha }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
       # npm Trusted Publisher requires npm CLI >= 11.5.1; the bundled npm may be older.
       - run: npm install -g npm@latest
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: jsii-dist
           path: /tmp/jsii-dist
@@ -306,19 +306,19 @@ jobs:
       NUGET_TRUSTED_PUBLISHER: '1'
       NUGET_USERNAME: ${{ secrets.NUGET_USERNAME }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.version.outputs.sha }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'pnpm'
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.x'
       - run: pnpm install --frozen-lockfile
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: jsii-dist
           path: /tmp/jsii-dist
