@@ -57,8 +57,15 @@
     }
   },
   "release": {
+    "projectsRelationship": "independent",
     "version": {
-      "preVersionCommand": "pnpm dlx nx run-many -t build"
+      "preVersionCommand": "pnpm dlx nx run-many -t build --exclude=tag:e2e",
+      "conventionalCommits": true,
+      "preserveMatchingDependencyRanges": false
+    },
+    "changelog": {
+      "workspaceChangelog": false,
+      "projectChangelogs": { "createRelease": false }
     }
   }
 }
