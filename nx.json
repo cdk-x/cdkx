@@ -59,6 +59,16 @@
   },
   "release": {
     "projectsRelationship": "independent",
+    "groups": {
+      "jsii": {
+        "projects": ["tag:jsii"],
+        "projectsRelationship": "independent"
+      },
+      "plain": {
+        "projects": ["tag:plain"],
+        "projectsRelationship": "independent"
+      }
+    },
     "version": {
       "preVersionCommand": "pnpm dlx nx run-many -t build --exclude=tag:e2e",
       "conventionalCommits": true,
@@ -66,7 +76,9 @@
     },
     "changelog": {
       "workspaceChangelog": false,
-      "projectChangelogs": { "createRelease": false }
+      "projectChangelogs": {
+        "createRelease": false
+      }
     }
   }
 }

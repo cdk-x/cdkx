@@ -31,6 +31,7 @@ jobs:
     outputs:
       sha: ${{ steps.resolve-sha.outputs.sha }}
       projects: ${{ steps.affected.outputs.projects }}
+      plain-projects: ${{ steps.list-plain-projects.outputs.projects }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -56,7 +57,7 @@ jobs:
 
       # `main` may only release "stable"-phase packages, `next` may only release
       # prerelease-phase (alpha/beta/rc) packages - each package's phase lives in
-      # its project.json under `release.phase`. See tools/validate-release-phase.mjs.
+      # its project.json as a "phase-<phase>" tag. See tools/validate-release-phase.mjs.
       - name: Validate release phase matches branch
         run: >
           node tools/validate-release-phase.mjs ${{ github.ref_name }}
@@ -98,6 +99,14 @@ jobs:
       - name: Resolve released sha
         id: resolve-sha
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # Publishable projects that are NOT jsii-enabled (e.g. @cdk-x/nx, a
+      # plain Nx plugin) - these skip the build-jsii/publish-* jobs below
+      # entirely (those are jsii-pacmak/publib-* specific) and instead get
+      # published via the publish-plain-npm job's standard `nx release publish`.
+      - name: List plain (non-jsii) release projects
+        id: list-plain-projects
+        run: echo "projects=$(node tools/list-plain-release-projects.mjs '${{ steps.affected.outputs.projects }}')" >> "$GITHUB_OUTPUT"
 
   build-jsii:
     needs: version
@@ -267,7 +276,7 @@ jobs:
       # A "stable" package publishes under npm's default "latest" tag. Anything
       # else (alpha/beta/rc) must publish under its own phase tag so it never
       # becomes what `npm install <pkg>` resolves to - see matrix.pkg.phase,
-      # sourced from each project's release.phase in project.json.
+      # sourced from each project's "phase-<phase>" tag in project.json.
       NPM_DIST_TAG: ${{ matrix.pkg.phase != 'stable' && matrix.pkg.phase || '' }}
       NPM_TRUSTED_PUBLISHER: ${{ !inputs.first_release && '1' || '' }}
       NPM_TOKEN: ${{ inputs.first_release && secrets.NPM_TOKEN || '' }}
@@ -334,3 +343,54 @@ jobs:
           for root in $(echo '${{ needs.build-jsii.outputs.projects }}' | jq -r '.[].root'); do
             pnpm exec publib-nuget "$root/dist-jsii/dotnet"
           done
+
+  # Publishable projects that are NOT jsii-enabled (e.g. @cdk-x/nx, a plain Nx
+  # plugin) skip the jsii compile/package pipeline above entirely and publish
+  # directly via the standard `nx release publish`, independent of build-jsii.
+  publish-plain-npm:
+    needs: version
+    if: ${{ needs.version.outputs.plain-projects != '[]' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg: ${{ fromJson(needs.version.outputs.plain-projects) }}
+    environment: npm-${{ matrix.pkg.name }}
+    env:
+      # A "stable" package publishes under npm's default "latest" tag. Anything
+      # else (alpha/beta/rc) must publish under its own phase tag so it never
+      # becomes what `npm install <pkg>` resolves to - see matrix.pkg.phase,
+      # sourced from each project's "phase-<phase>" tag in project.json.
+      NPM_DIST_TAG: ${{ matrix.pkg.phase != 'stable' && matrix.pkg.phase || 'latest' }}
+      NPM_TOKEN: ${{ inputs.first_release && secrets.NPM_TOKEN || '' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.sha }}
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'pnpm'
+      # npm Trusted Publisher requires npm CLI >= 11.5.1; the bundled npm may be older.
+      - run: npm install -g npm@latest
+      - run: pnpm install --frozen-lockfile
+      # Trusted Publisher (OIDC) is npm's default when id-token: write is
+      # granted and no explicit auth is configured - only the first-release
+      # case needs a classic token, since Trusted Publisher can't be set up
+      # on npm before the package exists.
+      - name: Configure classic npm token (first release only)
+        if: ${{ inputs.first_release }}
+        run: npm config set "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
+      - name: Build
+        run: pnpm nx build ${{ matrix.pkg.name }}
+      - name: Publish npm
+        # `nx release publish -p` needs the full project name (unlike `nx
+        # build`/`nx run`, it does not resolve unscoped short names).
+        run: >
+          pnpm nx release publish -p "${{ matrix.pkg.project }}"
+          --tag=${{ env.NPM_DIST_TAG }}
+          ${{ inputs.dry_run && '--dry-run' || '' }}
