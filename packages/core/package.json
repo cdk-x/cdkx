@@ -72,7 +72,7 @@
         "packageId": "CdkX.Core"
       },
       "go": {
-        "moduleName": "github.com/cdk-x/cdkx-go"
+        "moduleName": "github.com/cdk-x/cdkx-core-go"
       }
     },
     "tsc": {
