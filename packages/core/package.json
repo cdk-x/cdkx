@@ -30,6 +30,11 @@
     "directory": "packages/core"
   },
   "license": "MIT",
+  "keywords": [
+    "cdkx",
+    "cdk",
+    "constructs"
+  ],
   "dependencies": {
     "@swc/helpers": "~0.5.18",
     "constructs": "^10.8.0"
