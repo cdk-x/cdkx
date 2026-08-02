@@ -27,7 +27,7 @@ export interface ManifestEntry {
    * This Resource's serialized properties — any IResolvable values have
    * been replaced with their resolved (placeholder) form.
    */
-  readonly properties: Record<string, any>;
+  readonly properties: Record<string, unknown>;
 
   /**
    * The logical ids (Resource.node.path) of every Resource this entry
@@ -124,7 +124,15 @@ export class Synthesizer {
     const manifest: Manifest = {};
 
     for (const resource of stack.resources()) {
-      const rawProps = resource._toProperties();
+      // Trust boundary: toProperties() is typed Record<string, unknown> on
+      // the public (jsii-facing) side since a recursive union like
+      // PropertyValue can't cross jsii's language targets. Internally we
+      // still need that shape to walk/serialize it, so it's asserted once,
+      // here, rather than widened back to `any` throughout this file.
+      const rawProps = resource._toProperties() as Record<
+        string,
+        PropertyValue
+      >;
       manifest[resource.node.path] = {
         type: resource.type,
         properties: Synthesizer.serializeResolvables(rawProps),

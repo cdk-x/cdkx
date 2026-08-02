@@ -7,7 +7,7 @@ import { Resource } from './resource.js';
 class DummyResource extends Resource {
   public readonly type = 'Dummy::Resource';
 
-  protected toProperties(): Record<string, any> {
+  protected toProperties(): Record<string, unknown> {
     return {};
   }
 }

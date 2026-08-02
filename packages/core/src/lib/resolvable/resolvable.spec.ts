@@ -47,7 +47,7 @@ describe('Resolvable', () => {
     it('accepts an IResolvable nested anywhere within an arbitrary properties tree', () => {
       const resolvable: IResolvable = { resolve: () => 'resolved' };
 
-      const value: any = {
+      const value: Record<string, unknown> = {
         name: 'example',
         count: 1,
         enabled: true,
