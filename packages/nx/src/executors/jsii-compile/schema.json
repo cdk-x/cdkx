@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "JsiiCompile executor",
+  "description": "Compiles a jsii/TypeScript project via the jsii CLI.",
+  "type": "object",
+  "properties": {
+    "tsconfigFileName": {
+      "type": "string",
+      "default": "tsconfig.jsii.json",
+      "description": "Name of the derived tsconfig file jsii should generate/use (relative to the project root)."
+    }
+  },
+  "required": []
+}

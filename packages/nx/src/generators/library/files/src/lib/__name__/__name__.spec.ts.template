@@ -1,0 +1,7 @@
+import { <%= className %> } from './<%= fileName %>.js';
+
+describe('<%= className %>', () => {
+  it('should be defined', () => {
+    expect(new <%= className %>('test')).toBeDefined();
+  });
+});

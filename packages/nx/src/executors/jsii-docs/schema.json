@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "JsiiDocs executor",
+  "description": "Generates multi-language API docs via jsii-docgen.",
+  "type": "object",
+  "properties": {
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["typescript", "python", "java", "csharp", "go"]
+      },
+      "default": ["typescript", "python", "java", "csharp", "go"],
+      "description": "Languages to generate API docs for (jsii-docgen's own vocabulary - note \"csharp\", not \"dotnet\")."
+    },
+    "output": {
+      "type": "string",
+      "default": "dist-jsii/docs/API",
+      "description": "Output filename prefix passed to jsii-docgen's -o flag."
+    }
+  },
+  "required": []
+}

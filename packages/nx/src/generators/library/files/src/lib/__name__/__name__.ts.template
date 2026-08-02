@@ -1,0 +1,16 @@
+/**
+ * TODO: replace this placeholder with <%= className %>'s real API.
+ */
+export class <%= className %> {
+  /**
+   * TODO: describe this property.
+   */
+  public readonly name: string;
+
+  /**
+   * @param name - TODO: describe this parameter.
+   */
+  constructor(name: string) {
+    this.name = name;
+  }
+}

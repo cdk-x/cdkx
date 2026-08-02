@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "JsiiPublish executor",
+  "description": "Publishes packaged jsii bindings via the matching publib-* CLI.",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "enum": ["npm", "python", "java", "dotnet", "go"],
+      "description": "Which language's packaged bindings to publish."
+    },
+    "dir": {
+      "type": "string",
+      "description": "Directory containing the packaged artifacts to publish. Defaults to dist-jsii/<language subfolder>."
+    }
+  },
+  "required": ["target"]
+}
