@@ -5,9 +5,9 @@
 // Used by the release workflow to build dynamic matrices (per-package publish
 // jobs) without ever having to hardcode/update a package list in the YAML as
 // new libraries are added to the workspace. `phase` (from each project's
-// `release.phase` in project.json, default "stable") drives the npm dist-tag:
-// a "stable" package publishes under npm's default "latest" tag, anything else
-// must publish under its own phase tag (NPM_DIST_TAG=<phase>) so a prerelease
+// "phase-<phase>" tag, default "stable") drives the npm dist-tag: a "stable"
+// package publishes under npm's default "latest" tag, anything else must
+// publish under its own phase tag (NPM_DIST_TAG=<phase>) so a prerelease
 // never becomes what `npm install <pkg>` resolves to.
 //
 // Optional first arg: comma/space-separated Nx project names (e.g. "core") to
@@ -15,6 +15,7 @@
 // first-release run can target just the new library instead of every project
 // with a jsii-publish-npm target.
 import { nxJson } from './nx-json.mjs';
+import { phaseOf } from './release-phases.mjs';
 
 const filter = (process.argv[2] ?? '')
   .split(/[\s,]+/)
@@ -33,7 +34,7 @@ const result = projects.map((project) => {
   return {
     name: config.root.split('/').pop(),
     root: config.root,
-    phase: config.release?.phase ?? 'stable',
+    phase: phaseOf(config),
   };
 });
 

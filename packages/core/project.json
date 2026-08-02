@@ -3,8 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/core/src",
   "projectType": "library",
-  "tags": [],
-  "release": { "phase": "alpha" },
+  "tags": ["jsii", "phase-alpha"],
   "targets": {
     "build": {
       "executor": "@nx/js:swc",
