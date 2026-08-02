@@ -4,6 +4,7 @@
   "sourceRoot": "packages/core/src",
   "projectType": "library",
   "tags": [],
+  "release": { "phase": "alpha" },
   "targets": {
     "build": {
       "executor": "@nx/js:swc",
@@ -23,6 +24,15 @@
       "options": {
         "cwd": "packages/core",
         "command": "jsii --generate-tsconfig tsconfig.jsii.json"
+      }
+    },
+    "jsii-docs": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-compile"],
+      "outputs": ["{projectRoot}/dist-jsii/docs"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "jsii-docgen -l typescript -l python -l java -l csharp -l go -o dist-jsii/docs/API"
       }
     },
     "jsii-package-npm": {
@@ -73,12 +83,53 @@
     "jsii-package-all": {
       "executor": "nx:noop",
       "dependsOn": [
+        "jsii-docs",
         "jsii-package-npm",
         "jsii-package-python",
         "jsii-package-java",
         "jsii-package-dotnet",
         "jsii-package-go"
       ]
+    },
+    "jsii-publish-npm": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-package-npm"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "publib-npm dist-jsii/js"
+      }
+    },
+    "jsii-publish-python": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-package-python"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "publib-pypi dist-jsii/python"
+      }
+    },
+    "jsii-publish-java": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-package-java"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "publib-maven dist-jsii/java"
+      }
+    },
+    "jsii-publish-dotnet": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-package-dotnet"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "publib-nuget dist-jsii/dotnet"
+      }
+    },
+    "jsii-publish-go": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["jsii-package-go"],
+      "options": {
+        "cwd": "packages/core",
+        "command": "publib-golang dist-jsii/go"
+      }
     }
   }
 }
