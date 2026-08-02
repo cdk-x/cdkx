@@ -1,0 +1,32 @@
+{
+  "name": "@cdk-x/nx",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/nx/src",
+  "projectType": "library",
+  "tags": ["plain", "phase-alpha"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/nx/dist",
+        "main": "packages/nx/src/index.ts",
+        "tsConfig": "packages/nx/tsconfig.lib.json",
+        "skipTypeCheck": true,
+        "stripLeadingPaths": true,
+        "assets": [
+          {
+            "input": "./packages/nx/src",
+            "glob": "**/!(*.ts)",
+            "output": "."
+          },
+          {
+            "input": "./packages/nx/src",
+            "glob": "**/*.d.ts",
+            "output": "."
+          }
+        ]
+      }
+    }
+  }
+}

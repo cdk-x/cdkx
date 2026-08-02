@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "JsiiPackage executor",
+  "description": "Packages jsii bindings for a target language via jsii-pacmak.",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "enum": ["npm", "python", "java", "dotnet", "go"],
+      "description": "Which language's bindings to package."
+    },
+    "outdir": {
+      "type": "string",
+      "default": "dist-jsii",
+      "description": "Directory jsii-pacmak writes packaged artifacts into (each language gets its own subfolder)."
+    }
+  },
+  "required": ["target"]
+}

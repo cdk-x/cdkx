@@ -1,0 +1,24 @@
+{
+  "executors": {
+    "jsii-compile": {
+      "implementation": "./dist/executors/jsii-compile/executor",
+      "schema": "./dist/executors/jsii-compile/schema.json",
+      "description": "Compiles a jsii/TypeScript project via the jsii CLI."
+    },
+    "jsii-docs": {
+      "implementation": "./dist/executors/jsii-docs/executor",
+      "schema": "./dist/executors/jsii-docs/schema.json",
+      "description": "Generates multi-language API docs via jsii-docgen."
+    },
+    "jsii-package": {
+      "implementation": "./dist/executors/jsii-package/executor",
+      "schema": "./dist/executors/jsii-package/schema.json",
+      "description": "Packages jsii bindings for a target language via jsii-pacmak."
+    },
+    "jsii-publish": {
+      "implementation": "./dist/executors/jsii-publish/executor",
+      "schema": "./dist/executors/jsii-publish/schema.json",
+      "description": "Publishes packaged jsii bindings via the matching publib-* CLI."
+    }
+  }
+}

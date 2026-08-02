@@ -40,7 +40,8 @@
       "options": {
         "targetName": "test"
       }
-    }
+    },
+    "@cdk-x/nx"
   ],
   "analytics": false,
   "tui": {

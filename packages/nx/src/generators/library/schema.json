@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "CdkxNxLibrary",
+  "title": "CDK-X Library",
+  "description": "Scaffold a new @cdk-x/<name> jsii-enabled TypeScript library.",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "description": "Short kebab-case library name (e.g. \"widget\"). Used for the packages/<name> directory and the @cdk-x/<name> npm package.",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "What is the short (kebab-case) name of the library?"
+    },
+    "description": {
+      "type": "string",
+      "description": "One-line npm package description."
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["python", "java", "dotnet", "go"]
+      },
+      "uniqueItems": true,
+      "default": ["python", "java", "dotnet", "go"],
+      "description": "Additional jsii target languages to generate bindings for, beyond npm (always implicit).",
+      "x-prompt": {
+        "message": "Which additional jsii target languages should this library ship?",
+        "type": "list",
+        "multiselect": true,
+        "items": [
+          { "value": "python", "label": "Python" },
+          { "value": "java", "label": "Java" },
+          { "value": "dotnet", "label": ".NET" },
+          { "value": "go", "label": "Go" }
+        ]
+      }
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["alpha", "beta", "rc", "stable"],
+      "default": "alpha",
+      "description": "Release phase recorded in project.json (drives the version pre-id via tools/release-version.mjs).",
+      "x-prompt": {
+        "message": "What release phase should this library start in?",
+        "type": "list",
+        "items": [
+          { "value": "alpha", "label": "alpha" },
+          { "value": "beta", "label": "beta" },
+          { "value": "rc", "label": "rc" },
+          { "value": "stable", "label": "stable" }
+        ]
+      }
+    }
+  },
+  "required": ["name"]
+}
