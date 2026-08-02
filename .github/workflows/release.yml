@@ -301,6 +301,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    environment: nuget
     env:
       PUBLIB_DRYRUN: ${{ inputs.dry_run }}
       NUGET_TRUSTED_PUBLISHER: '1'
