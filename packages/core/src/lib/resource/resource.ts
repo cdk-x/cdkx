@@ -131,13 +131,16 @@ export abstract class Resource extends Construct {
    * sense for their output format (e.g. Steps under "steps") — core has
    * no opinion on this.
    *
-   * Typed as `Record<string, any>` rather than a stricter JSON-tree union:
-   * jsii cannot represent a recursive union type across its target
-   * languages (Java/.NET/Go), so `any` is the jsii-compatible convention
-   * here, mirroring how aws-cdk-lib types arbitrary resource property
-   * trees.
+   * Typed as `Record<string, unknown>` rather than a stricter JSON-tree union:
+   * jsii cannot represent a recursive union type across its target languages
+   * (Java/.NET/Go) — `unknown` is what jsii falls back to for an untyped
+   * value (it compiles to the same `any`-equivalent per language as `any`
+   * would), but keeps callers within this TS codebase honest, since they
+   * still have to narrow before reading through it (see
+   * Synthesizer.synthesizeStack's cast to the internal PropertyValue tree
+   * for where that trust boundary is).
    */
-  protected abstract toProperties(): Record<string, any>;
+  protected abstract toProperties(): Record<string, unknown>;
 
   /**
    * Internal hook used by Synthesizer to read this Resource's raw
@@ -147,7 +150,7 @@ export abstract class Resource extends Construct {
    *
    * @internal
    */
-  public _toProperties(): Record<string, any> {
+  public _toProperties(): Record<string, unknown> {
     return this.toProperties();
   }
 }

@@ -6,9 +6,9 @@ import { CycleError, Synthesizer } from './synth.js';
 
 class DummyResource extends Resource {
   public readonly type = 'Dummy::Resource';
-  public properties: Record<string, any> = {};
+  public properties: Record<string, unknown> = {};
 
-  protected toProperties(): Record<string, any> {
+  protected toProperties(): Record<string, unknown> {
     return this.properties;
   }
 }
