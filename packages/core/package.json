@@ -1,6 +1,7 @@
 {
   "name": "@cdk-x/core",
-  "version": "0.0.1",
+  "version": "1.0.0-alpha.0",
+  "stability": "experimental",
   "type": "module",
   "description": "Core constructs (App, Stack, Resource, Component) for the cdkx framework.",
   "main": "./dist/index.js",
