@@ -10,6 +10,8 @@
 import { execFileSync } from 'node:child_process';
 
 export function nxJson(args) {
-  const stdout = execFileSync('pnpm', ['--silent', 'nx', ...args, '--json'], { encoding: 'utf-8' });
+  const stdout = execFileSync('pnpm', ['--silent', 'nx', ...args, '--json'], {
+    encoding: 'utf-8',
+  });
   return JSON.parse(stdout);
 }

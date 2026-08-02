@@ -31,17 +31,31 @@ const filter = projectsArg
   : [];
 const extraArgs = rawArgs.filter((arg) => arg !== projectsArg);
 
-const projects = nxJson(['show', 'projects', '--with-target', 'nx-release-publish']).filter(
-  (project) => filter.length === 0 || filter.includes(project),
-);
+const projects = nxJson([
+  'show',
+  'projects',
+  '--with-target',
+  'nx-release-publish',
+]).filter((project) => filter.length === 0 || filter.includes(project));
 
 for (const project of projects) {
   const { root } = nxJson(['show', 'project', project]);
-  const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf-8'));
+  const { version } = JSON.parse(
+    readFileSync(join(root, 'package.json'), 'utf-8'),
+  );
 
   execFileSync(
     'pnpm',
-    ['nx', 'release', 'changelog', version, '-p', project, '--git-push=false', ...extraArgs],
+    [
+      'nx',
+      'release',
+      'changelog',
+      version,
+      '-p',
+      project,
+      '--git-push=false',
+      ...extraArgs,
+    ],
     { stdio: 'inherit' },
   );
 }

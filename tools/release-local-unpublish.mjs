@@ -13,21 +13,33 @@ import { join } from 'node:path';
 const REGISTRY = 'http://localhost:4873';
 
 const projects = JSON.parse(
-  execFileSync('pnpm', ['nx', 'show', 'projects', '--json', '--with-target', 'nx-release-publish'], {
-    encoding: 'utf-8',
-  }),
+  execFileSync(
+    'pnpm',
+    ['nx', 'show', 'projects', '--json', '--with-target', 'nx-release-publish'],
+    {
+      encoding: 'utf-8',
+    },
+  ),
 );
 
 for (const project of projects) {
   const { root } = JSON.parse(
-    execFileSync('pnpm', ['nx', 'show', 'project', project, '--json'], { encoding: 'utf-8' }),
+    execFileSync('pnpm', ['nx', 'show', 'project', project, '--json'], {
+      encoding: 'utf-8',
+    }),
   );
-  const { name, version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf-8'));
+  const { name, version } = JSON.parse(
+    readFileSync(join(root, 'package.json'), 'utf-8'),
+  );
 
   try {
-    execFileSync('npm', ['unpublish', `${name}@${version}`, '--registry', REGISTRY, '--force'], {
-      stdio: 'inherit',
-    });
+    execFileSync(
+      'npm',
+      ['unpublish', `${name}@${version}`, '--registry', REGISTRY, '--force'],
+      {
+        stdio: 'inherit',
+      },
+    );
   } catch {
     // Nothing published at this version yet on the local registry - fine, continue.
   }

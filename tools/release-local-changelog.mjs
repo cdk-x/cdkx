@@ -13,16 +13,24 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const projects = JSON.parse(
-  execFileSync('pnpm', ['nx', 'show', 'projects', '--json', '--with-target', 'nx-release-publish'], {
-    encoding: 'utf-8',
-  }),
+  execFileSync(
+    'pnpm',
+    ['nx', 'show', 'projects', '--json', '--with-target', 'nx-release-publish'],
+    {
+      encoding: 'utf-8',
+    },
+  ),
 );
 
 for (const project of projects) {
   const { root } = JSON.parse(
-    execFileSync('pnpm', ['nx', 'show', 'project', project, '--json'], { encoding: 'utf-8' }),
+    execFileSync('pnpm', ['nx', 'show', 'project', project, '--json'], {
+      encoding: 'utf-8',
+    }),
   );
-  const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf-8'));
+  const { version } = JSON.parse(
+    readFileSync(join(root, 'package.json'), 'utf-8'),
+  );
 
   execFileSync(
     'pnpm',

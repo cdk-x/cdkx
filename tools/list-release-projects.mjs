@@ -21,9 +21,12 @@ const filter = (process.argv[2] ?? '')
   .map((name) => name.trim())
   .filter(Boolean);
 
-const projects = nxJson(['show', 'projects', '--with-target', 'jsii-publish-npm']).filter(
-  (project) => filter.length === 0 || filter.includes(project),
-);
+const projects = nxJson([
+  'show',
+  'projects',
+  '--with-target',
+  'jsii-publish-npm',
+]).filter((project) => filter.length === 0 || filter.includes(project));
 
 const result = projects.map((project) => {
   const config = nxJson(['show', 'project', project]);

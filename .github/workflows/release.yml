@@ -4,15 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       projects:
-        description: "Comma/space-separated project names to release (e.g. core). Empty = all projects with pending changes."
+        description: 'Comma/space-separated project names to release (e.g. core). Empty = all projects with pending changes.'
         type: string
-        default: ""
+        default: ''
       first_release:
         description: "First release for the selected project(s): forces an explicit 1.0.0 (or 1.0.0-<phase>.0) version instead of a conventional-commits bump, and switches npm publish to a classic NPM_TOKEN instead of OIDC Trusted Publisher (which can't be configured on npm before the package exists)"
         type: boolean
         default: false
       dry_run:
-        description: "Dry run: no git push, no real publish (PUBLIB_DRYRUN=true)"
+        description: 'Dry run: no git push, no real publish (PUBLIB_DRYRUN=true)'
         type: boolean
         default: false
 
@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - run: pnpm install --frozen-lockfile
 
@@ -114,16 +114,16 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.x"
+          dotnet-version: '8.x'
 
       - run: pnpm install --frozen-lockfile
 
@@ -170,7 +170,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - run: pnpm install --frozen-lockfile
 
@@ -226,7 +226,7 @@ jobs:
     environment: pypi-${{ matrix.pkg.name }}
     env:
       PUBLIB_DRYRUN: ${{ inputs.dry_run }}
-      PYPI_TRUSTED_PUBLISHER: "1"
+      PYPI_TRUSTED_PUBLISHER: '1'
     steps:
       - uses: actions/checkout@v5
         with:
@@ -235,10 +235,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: "pnpm"
+          cache: 'pnpm'
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: '3.x'
       - run: pnpm install --frozen-lockfile
       - uses: actions/download-artifact@v4
         with:
@@ -280,7 +280,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: "pnpm"
+          cache: 'pnpm'
       # npm Trusted Publisher requires npm CLI >= 11.5.1; the bundled npm may be older.
       - run: npm install -g npm@latest
       - run: pnpm install --frozen-lockfile
@@ -304,7 +304,7 @@ jobs:
     environment: nuget
     env:
       PUBLIB_DRYRUN: ${{ inputs.dry_run }}
-      NUGET_TRUSTED_PUBLISHER: "1"
+      NUGET_TRUSTED_PUBLISHER: '1'
       NUGET_USERNAME: ${{ secrets.NUGET_USERNAME }}
     steps:
       - uses: actions/checkout@v5
@@ -314,10 +314,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          cache: "pnpm"
+          cache: 'pnpm'
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.x"
+          dotnet-version: '8.x'
       - run: pnpm install --frozen-lockfile
       - uses: actions/download-artifact@v4
         with:
