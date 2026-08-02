@@ -42,9 +42,12 @@ const filter = projectsArg
 const extraArgs = rawArgs.filter((arg) => arg !== projectsArg);
 const firstRelease = extraArgs.includes('--first-release');
 
-const projects = nxJson(['show', 'projects', '--with-target', 'nx-release-publish']).filter(
-  (project) => filter.length === 0 || filter.includes(project),
-);
+const projects = nxJson([
+  'show',
+  'projects',
+  '--with-target',
+  'nx-release-publish',
+]).filter((project) => filter.length === 0 || filter.includes(project));
 
 for (const project of projects) {
   const config = nxJson(['show', 'project', project]);

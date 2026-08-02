@@ -19,7 +19,9 @@ import { join } from 'node:path';
 
 function existsInHead(path) {
   try {
-    execFileSync('git', ['cat-file', '-e', `HEAD:${path}`], { stdio: 'ignore' });
+    execFileSync('git', ['cat-file', '-e', `HEAD:${path}`], {
+      stdio: 'ignore',
+    });
     return true;
   } catch {
     return false;
@@ -33,7 +35,9 @@ function restore(path) {
   }
   // Never committed: drop it from the index (if staged) and delete it.
   try {
-    execFileSync('git', ['reset', '-q', 'HEAD', '--', path], { stdio: 'ignore' });
+    execFileSync('git', ['reset', '-q', 'HEAD', '--', path], {
+      stdio: 'ignore',
+    });
   } catch {
     // Not in the index either - nothing to unstage.
   }
@@ -43,14 +47,20 @@ function restore(path) {
 }
 
 const projects = JSON.parse(
-  execFileSync('pnpm', ['nx', 'show', 'projects', '--json', '--with-target', 'nx-release-publish'], {
-    encoding: 'utf-8',
-  }),
+  execFileSync(
+    'pnpm',
+    ['nx', 'show', 'projects', '--json', '--with-target', 'nx-release-publish'],
+    {
+      encoding: 'utf-8',
+    },
+  ),
 );
 
 for (const project of projects) {
   const { root } = JSON.parse(
-    execFileSync('pnpm', ['nx', 'show', 'project', project, '--json'], { encoding: 'utf-8' }),
+    execFileSync('pnpm', ['nx', 'show', 'project', project, '--json'], {
+      encoding: 'utf-8',
+    }),
   );
   restore(join(root, 'package.json'));
   restore(join(root, 'CHANGELOG.md'));
