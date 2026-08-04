@@ -94,7 +94,13 @@ function parseArgs(rawArgs) {
 }
 
 export function matchesFilter(project, projectsFilter) {
-  return projectsFilter.length === 0 || projectsFilter.includes(project);
+  if (projectsFilter.length === 0) return true;
+  // Accepts either the full nx project name (e.g. "@cdk-x/core") or its short
+  // form (e.g. "core", the last path segment - what the workflow_dispatch
+  // `projects` input's description asks for, and what `list()` below already
+  // derives as `name`) - a bare "--projects=core" must match "@cdk-x/core".
+  const shortName = project.split('/').pop();
+  return projectsFilter.includes(project) || projectsFilter.includes(shortName);
 }
 
 // ---- modes ----

@@ -24,7 +24,7 @@
 // Exits non-zero with a clear message if any targeted project violates the rule.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { nxJson, PHASES } from './release.mjs';
+import { matchesFilter, nxJson, PHASES } from './release.mjs';
 
 const PRERELEASE_TAGS = PHASES.filter((phase) => phase !== 'stable')
   .map((phase) => `tag:${phase}`)
@@ -54,7 +54,7 @@ function projectsTagged(tagPattern) {
     '--with-target',
     'nx-release-publish',
     `--projects=${tagPattern}`,
-  ]).filter((project) => filter.length === 0 || filter.includes(project));
+  ]).filter((project) => matchesFilter(project, filter));
 }
 
 const allProjects = nxJson([
@@ -62,7 +62,7 @@ const allProjects = nxJson([
   'projects',
   '--with-target',
   'nx-release-publish',
-]).filter((project) => filter.length === 0 || filter.includes(project));
+]).filter((project) => matchesFilter(project, filter));
 
 const prereleaseProjects = new Set(projectsTagged(PRERELEASE_TAGS));
 // A project with no phase tag at all defaults to "stable", same as the
