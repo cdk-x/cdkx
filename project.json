@@ -5,19 +5,7 @@
     "release-local": {
       "executor": "nx:run-commands",
       "options": {
-        "parallel": false,
-        "env": {
-          "NPM_REGISTRY": "localhost:4873",
-          "DISABLE_HTTPS": "true",
-          "NPM_TOKEN": "local-verdaccio-fake-token"
-        },
-        "commands": [
-          "node tools/release.mjs version --first-release",
-          "node tools/release-local-unpublish.mjs",
-          "nx run-many -t jsii-publish-npm",
-          "nx run-many -t build -p tag:ts",
-          "node tools/release.mjs publish-ts --registry=http://localhost:4873 --tag=latest --first-release"
-        ]
+        "command": "node tools/release-local.mjs"
       }
     },
     "local-registry": {

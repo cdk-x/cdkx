@@ -93,7 +93,7 @@ function parseArgs(rawArgs) {
   };
 }
 
-function matchesFilter(project, projectsFilter) {
+export function matchesFilter(project, projectsFilter) {
   return projectsFilter.length === 0 || projectsFilter.includes(project);
 }
 
