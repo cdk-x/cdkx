@@ -42,7 +42,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Verify branch is releasable
-        run: pnpm nx run-many -t lint test build typecheck
+        run: >
+          pnpm nx run-many -t lint test build typecheck
+          ${{ inputs.projects && format('-p {0}', inputs.projects) || '' }}
 
       # `main` releases every package according to its own current phase tag
       # (alpha/beta/rc/stable, independently per package), with a guardrail
