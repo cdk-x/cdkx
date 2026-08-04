@@ -37,7 +37,6 @@
     "constructs"
   ],
   "dependencies": {
-    "@swc/helpers": "~0.5.18",
     "constructs": "^10.8.0"
   },
   "peerDependencies": {
@@ -46,9 +45,6 @@
   "devDependencies": {
     "constructs": "10.8.0"
   },
-  "bundledDependencies": [
-    "@swc/helpers"
-  ],
   "jsii": {
     "outdir": "dist-jsii",
     "excludeTypescript": [

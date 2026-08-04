@@ -114,9 +114,6 @@ importers:
 
   packages/core:
     dependencies:
-      '@swc/helpers':
-        specifier: ~0.5.18
-        version: 0.5.18
       constructs:
         specifier: ^10.8.0
         version: 10.8.0
@@ -2490,6 +2487,7 @@ packages:
 
   constructs@10.8.0:
     resolution: {integrity: sha512-pJHp2CxvTG0ttp52rZvQfkbspPLZzttWPooIRLBwlZK8rV7ZhkjIkyZWJhIfBDC4YdcwIDmXyUFr1ieJaqjBbg==}
+    deprecated: This version has a bug that breaks downstream jsii consumers
 
   content-disposition@0.5.4:
     resolution: {integrity: sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==}
