@@ -62,10 +62,7 @@
     "groups": {
       "jsii": {
         "projects": ["tag:jsii"],
-        "projectsRelationship": "independent",
-        "version": {
-          "groupPreVersionCommand": "pnpm dlx nx run-many -t build -p tag:jsii"
-        }
+        "projectsRelationship": "independent"
       },
       "ts": {
         "projects": ["tag:ts"],

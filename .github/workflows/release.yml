@@ -80,12 +80,9 @@ jobs:
           node-version: 24
           cache: 'pnpm'
 
-      # Needed here, not in a separate build job: the jsii release group's
-      # groupPreVersionCommand (nx.json) runs `nx run-many -t build -p tag:jsii`
-      # as part of the version step below, which cascades into jsii-package-all
-      # (packages/nx's build->jsii-package-all dependsOn) - so every jsii
-      # language gets fully packaged right here, before these toolchains would
-      # otherwise be needed again downstream.
+      # Java/.NET toolchains are set up here (not in a separate build job)
+      # because the jsii packaging step below runs in this same job, right
+      # after the version bump.
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -144,11 +141,21 @@ jobs:
         id: list-ts-projects
         run: echo "projects=$(node tools/release.mjs list --group=ts --projects='${{ steps.version.outputs.projects }}')" >> "$GITHUB_OUTPUT"
 
-      # Every jsii package's dist-jsii/* is already fully packaged at this
-      # point (groupPreVersionCommand cascaded build -> jsii-package-all above)
-      # - built once, here, and shared with every publish-* job below via this
-      # single artifact, instead of each job re-running the (Java/.NET-
-      # toolchain-dependent) packaging itself.
+      # Packages jsii artifacts for every language *after* the version bump
+      # above has already written the new version to package.json on disk -
+      # packaging any earlier (e.g. from a groupPreVersionCommand hook, as
+      # this used to do) would embed the previous version into every
+      # published artifact, since Nx's version pipeline only flushes the new
+      # version to disk after all pre-version commands have already run.
+      # Built once, here, and shared with every publish-* job below via the
+      # single artifact uploaded next, instead of each job re-running the
+      # (Java/.NET-toolchain-dependent) packaging itself.
+      - name: Package jsii artifacts for every language
+        if: ${{ steps.list-jsii-projects.outputs.projects != '[]' }}
+        run: |
+          projects=$(echo '${{ steps.list-jsii-projects.outputs.projects }}' | jq -r '[.[].project] | join(",")')
+          pnpm nx run-many -t jsii-package-all -p "$projects"
+
       - uses: actions/upload-artifact@v7
         with:
           name: jsii-dist
