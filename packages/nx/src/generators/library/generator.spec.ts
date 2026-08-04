@@ -115,13 +115,30 @@ describe('library generator', () => {
   it('tags the project with its release phase, defaulting to alpha', async () => {
     await libraryGenerator(tree, { name: 'widget' });
     expect(readJson(tree, 'packages/widget/project.json').tags).toContain(
-      'phase-alpha',
+      'alpha',
     );
 
     await libraryGenerator(tree, { name: 'stable-widget', phase: 'stable' });
     expect(
       readJson(tree, 'packages/stable-widget/project.json').tags,
-    ).toContain('phase-stable');
+    ).toContain('stable');
+  });
+
+  it('sets package.json stability from the release phase: stable stays stable, everything else is experimental', async () => {
+    await libraryGenerator(tree, { name: 'widget' });
+    expect(readJson(tree, 'packages/widget/package.json').stability).toBe(
+      'experimental',
+    );
+
+    await libraryGenerator(tree, { name: 'beta-widget', phase: 'beta' });
+    expect(readJson(tree, 'packages/beta-widget/package.json').stability).toBe(
+      'experimental',
+    );
+
+    await libraryGenerator(tree, { name: 'stable-widget', phase: 'stable' });
+    expect(
+      readJson(tree, 'packages/stable-widget/package.json').stability,
+    ).toBe('stable');
   });
 
   it('rejects non-kebab-case names', async () => {

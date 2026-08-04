@@ -108,6 +108,11 @@ export async function libraryGenerator(
     };
     json.license = 'MIT';
     json.keywords = ['cdkx', 'cdk', 'constructs'];
+    // jsii's own stability marker (surfaced in generated docs/bindings),
+    // mapped from the release phase: "stable" is the only phase that means
+    // jsii's "stable" too - alpha/beta/rc all mean "not backward-compat
+    // guaranteed yet", which is exactly jsii's "experimental".
+    json.stability = phase === 'stable' ? 'stable' : 'experimental';
     json.jsii = {
       outdir: 'dist-jsii',
       excludeTypescript: ['src/**/*.spec.ts', 'src/**/*.test.ts'],
@@ -126,11 +131,11 @@ export async function libraryGenerator(
   // infers them from the `jsii` block above once registered in nx.json. The
   // "jsii" tag (not an auto-derived "npm:*" one) is what nx.json's
   // release.groups uses to route this project to the jsii publish pipeline
-  // vs the plain `nx release publish` one. The "phase-<phase>" tag is what
-  // tools/release-version.mjs/validate-release-phase.mjs use to batch/gate
-  // by release phase without a per-project field.
+  // vs the "ts" group's plain `nx release publish` one. The phase tag is
+  // what tools/release.mjs/validate-release-phase.mjs use to batch/gate by
+  // release phase without a per-project field.
   updateJson(tree, path.join(projectRoot, 'project.json'), (json) => {
-    json.tags = [...(json.tags ?? []), 'jsii', `phase-${phase}`];
+    json.tags = [...(json.tags ?? []), 'jsii', phase];
     return json;
   });
 
