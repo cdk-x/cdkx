@@ -1,3 +1,7 @@
+## 1.0.0-alpha.1 (2026-08-04)
+
+This was a version bump only for @cdk-x/nx to align it with other projects, there were no code changes.
+
 ## 1.0.0-alpha.0 (2026-08-04)
 
 ### 🚀 Features

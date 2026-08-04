@@ -1,3 +1,13 @@
+## 1.0.0-alpha.2 (2026-08-04)
+
+### 🩹 Fixes
+
+- **core:** rename Resource.type to resourceType for Go compat ([7eeffcd](https://github.com/cdk-x/cdkx/commit/7eeffcd))
+
+### ❤️ Thank You
+
+- Antonio Márquez Pérez
+
 ## 1.0.0-alpha.1 (2026-08-04)
 
 ### 🩹 Fixes
