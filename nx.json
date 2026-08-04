@@ -62,15 +62,20 @@
     "groups": {
       "jsii": {
         "projects": ["tag:jsii"],
-        "projectsRelationship": "independent"
+        "projectsRelationship": "independent",
+        "version": {
+          "groupPreVersionCommand": "pnpm dlx nx run-many -t build -p tag:jsii"
+        }
       },
-      "plain": {
-        "projects": ["tag:plain"],
-        "projectsRelationship": "independent"
+      "ts": {
+        "projects": ["tag:ts"],
+        "projectsRelationship": "independent",
+        "version": {
+          "groupPreVersionCommand": "pnpm dlx nx run-many -t build -p tag:ts"
+        }
       }
     },
     "version": {
-      "preVersionCommand": "pnpm dlx nx run-many -t build --exclude=tag:e2e",
       "conventionalCommits": true,
       "preserveMatchingDependencyRanges": false
     },

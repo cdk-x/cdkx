@@ -12,13 +12,11 @@
           "NPM_TOKEN": "local-verdaccio-fake-token"
         },
         "commands": [
-          "node tools/release-version.mjs --git-commit=false --git-tag=false --git-push=false --first-release",
-          "node tools/release-local-changelog.mjs",
+          "node tools/release.mjs version --first-release",
           "node tools/release-local-unpublish.mjs",
           "nx run-many -t jsii-publish-npm",
-          "nx run-many -t build -p tag:plain",
-          "nx release publish -g plain --registry=http://localhost:4873 --tag=latest --first-release",
-          "node tools/release-local-cleanup.mjs"
+          "nx run-many -t build -p tag:ts",
+          "node tools/release.mjs publish-ts --registry=http://localhost:4873 --tag=latest --first-release"
         ]
       }
     },

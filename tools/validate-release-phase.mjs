@@ -1,8 +1,8 @@
 // Guards against releasing the wrong kind of version from the wrong branch:
-//   - `main` may only release projects tagged "phase-stable" (or with no
-//     phase-* tag at all, which defaults to "stable").
+//   - `main` may only release projects tagged "stable" (or with no phase tag
+//     at all, which defaults to "stable").
 //   - `next` may only release projects tagged with a prerelease phase
-//     ("phase-alpha"/"phase-beta"/"phase-rc").
+//     ("alpha"/"beta"/"rc").
 //
 // Any other branch is allowed to release anything (e.g. manual workflow_dispatch
 // runs from a feature branch for testing) - only `main`/`next` are gated, since
@@ -14,11 +14,10 @@
 //
 // Usage: node tools/validate-release-phase.mjs <branch> [--projects=<comma/space-separated names>]
 // Exits non-zero with a clear message if any targeted project violates the rule.
-import { nxJson } from './nx-json.mjs';
-import { PHASES } from './release-phases.mjs';
+import { nxJson, PHASES } from './release.mjs';
 
 const PRERELEASE_TAGS = PHASES.filter((phase) => phase !== 'stable')
-  .map((phase) => `tag:phase-${phase}`)
+  .map((phase) => `tag:${phase}`)
   .join(',');
 
 const [branch, ...rest] = process.argv.slice(2);
@@ -56,9 +55,9 @@ const allProjects = nxJson([
 ]).filter((project) => filter.length === 0 || filter.includes(project));
 
 const prereleaseProjects = new Set(projectsTagged(PRERELEASE_TAGS));
-// A project with no phase-* tag at all defaults to "stable", same as the
-// phase-tag-reading helper in release-phases.mjs - so "stable" here is
-// simply "not tagged as any prerelease phase".
+// A project with no phase tag at all defaults to "stable", same as the
+// phase-tag-reading helper in release.mjs - so "stable" here is simply "not
+// tagged as any prerelease phase".
 
 let violatingProjects = [];
 let violationReason = '';
