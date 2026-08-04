@@ -1,12 +1,13 @@
 {
-  "name": "core",
+  "name": "@cdk-x/core",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/core/src",
   "projectType": "library",
-  "tags": ["jsii", "phase-alpha"],
+  "tags": ["jsii", "alpha"],
   "targets": {
     "build": {
       "executor": "@nx/js:swc",
+      "dependsOn": ["^build", "jsii-package-all"],
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "packages/core/dist",
