@@ -1,3 +1,13 @@
+## 1.0.0-alpha.1 (2026-08-04)
+
+### 🩹 Fixes
+
+- **core:** drop @swc/helpers bundling to fix npm publish ([0915a76](https://github.com/cdk-x/cdkx/commit/0915a76))
+
+### ❤️ Thank You
+
+- Antonio Márquez Pérez
+
 ## 1.0.0-alpha.0 (2026-08-04)
 
 ### 🚀 Features

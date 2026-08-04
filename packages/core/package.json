@@ -1,6 +1,6 @@
 {
   "name": "@cdk-x/core",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.1",
   "stability": "experimental",
   "type": "module",
   "description": "Core constructs (App, Stack, Resource, Component) for the cdkx framework.",
