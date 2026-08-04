@@ -44,9 +44,13 @@ jobs:
       - name: Verify branch is releasable
         run: pnpm nx run-many -t lint test build typecheck
 
-      # `main` may only release "stable"-phase packages, `next` may only release
-      # prerelease-phase (alpha/beta/rc) packages - each package's phase lives in
-      # its project.json as a phase tag. See tools/validate-release-phase.mjs.
+      # `main` releases every package according to its own current phase tag
+      # (alpha/beta/rc/stable, independently per package), with a guardrail
+      # that anything released as "stable" must also have package.json's jsii
+      # `stability` field set to "stable". `next` is for occasional,
+      # coordinated multi-package work and may reach at most "rc" - stable
+      # graduation only happens on main. This workflow must only ever be
+      # dispatched from main or next - see tools/validate-release-phase.mjs.
       - name: Validate release phase matches branch
         run: >
           node tools/validate-release-phase.mjs ${{ github.ref_name }}
