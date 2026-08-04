@@ -68,6 +68,7 @@ describe('createNodesV2 (jsii)', () => {
     const targetNames = targetNamesFor(result, 'packages/widget').sort();
     expect(targetNames).toEqual(
       [
+        'build',
         'jsii-compile',
         'jsii-docs',
         'jsii-package-all',
