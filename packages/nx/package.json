@@ -1,6 +1,6 @@
 {
   "name": "@cdk-x/nx",
-  "version": "1.0.0-alpha.1",
+  "version": "0.0.1",
   "type": "commonjs",
   "description": "Nx plugin to scaffold and build jsii-enabled TypeScript libraries for the cdk-x family.",
   "main": "./dist/index.js",
