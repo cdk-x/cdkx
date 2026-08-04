@@ -44,7 +44,7 @@
       "type": "string",
       "enum": ["alpha", "beta", "rc", "stable"],
       "default": "alpha",
-      "description": "Release phase recorded in project.json (drives the version pre-id via tools/release-version.mjs).",
+      "description": "Release phase recorded as a project.json tag (drives the version pre-id via tools/release.mjs), and mapped to package.json's jsii `stability` field: \"stable\" stays \"stable\", everything else becomes \"experimental\".",
       "x-prompt": {
         "message": "What release phase should this library start in?",
         "type": "list",
