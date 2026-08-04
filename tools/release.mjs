@@ -203,13 +203,26 @@ export async function publishTs({
     return;
   }
 
-  await releasePublish({
+  // releasePublish's programmatic API (unlike its CLI wrapper) never throws
+  // or sets a nonzero exit code on a per-project publish failure - it just
+  // returns a { [project]: { code } } result map and leaves the caller to
+  // check it. Left unchecked, a real publish failure (e.g. npm rejecting an
+  // unauthenticated/nonexistent package) silently exits 0, so CI reports the
+  // job green.
+  const results = await releasePublish({
     projects: tsProjects,
     tag,
     registry,
     firstRelease,
     dryRun,
   });
+
+  const failedProjects = Object.entries(results)
+    .filter(([, result]) => result.code !== 0)
+    .map(([project]) => project);
+  if (failedProjects.length > 0) {
+    throw new Error(`Publish failed for: ${failedProjects.join(', ')}`);
+  }
 }
 
 // Lists every publishable project in the given release group (name, root,
