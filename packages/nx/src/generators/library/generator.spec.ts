@@ -124,6 +124,9 @@ describe('library generator', () => {
     ).toContain('stable');
   });
 
+  // Three full libraryGenerator runs in one test - occasionally exceeds
+  // Jest's default 5000ms under CI load, unlike its single/double-run
+  // neighbors in this file, hence the explicit longer timeout below.
   it('sets package.json stability from the release phase: stable stays stable, everything else is experimental', async () => {
     await libraryGenerator(tree, { name: 'widget' });
     expect(readJson(tree, 'packages/widget/package.json').stability).toBe(
@@ -139,7 +142,7 @@ describe('library generator', () => {
     expect(
       readJson(tree, 'packages/stable-widget/package.json').stability,
     ).toBe('stable');
-  });
+  }, 15000);
 
   it('rejects non-kebab-case names', async () => {
     await expect(libraryGenerator(tree, { name: 'MyWidget' })).rejects.toThrow(
