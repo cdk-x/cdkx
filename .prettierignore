@@ -6,3 +6,4 @@
 .nx/self-healing
 pnpm-lock.yaml
 **/*.swcrc
+CHANGELOG.md
