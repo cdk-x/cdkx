@@ -7,7 +7,7 @@ import { Component } from './component.js';
 class DummyComponent extends Component {}
 
 class DummyResource extends Resource {
-  public readonly type = 'Dummy::Resource';
+  public readonly resourceType = 'Dummy::Resource';
 
   protected toProperties(): Record<string, unknown> {
     return {};

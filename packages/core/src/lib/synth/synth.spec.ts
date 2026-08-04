@@ -5,7 +5,7 @@ import { Stack } from '../stack/stack.js';
 import { CycleError, Synthesizer } from './synth.js';
 
 class DummyResource extends Resource {
-  public readonly type = 'Dummy::Resource';
+  public readonly resourceType = 'Dummy::Resource';
   public properties: Record<string, unknown> = {};
 
   protected toProperties(): Record<string, unknown> {

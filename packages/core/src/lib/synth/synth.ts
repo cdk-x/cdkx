@@ -19,9 +19,9 @@ type PropertyValue =
  */
 export interface ManifestEntry {
   /**
-   * The resource type identifier, as declared by `Resource.type`.
+   * The resource type identifier, as declared by `Resource.resourceType`.
    */
-  readonly type: string;
+  readonly resourceType: string;
 
   /**
    * This Resource's serialized properties — any IResolvable values have
@@ -134,7 +134,7 @@ export class Synthesizer {
         PropertyValue
       >;
       manifest[resource.node.path] = {
-        type: resource.type,
+        resourceType: resource.resourceType,
         properties: Synthesizer.serializeResolvables(rawProps),
         dependsOn: Synthesizer.composeDependsOn(
           resource,

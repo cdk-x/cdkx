@@ -5,7 +5,7 @@ import { Stack } from '../stack/stack.js';
 import { Resource } from './resource.js';
 
 class DummyResource extends Resource {
-  public readonly type = 'Dummy::Resource';
+  public readonly resourceType = 'Dummy::Resource';
 
   protected toProperties(): Record<string, unknown> {
     return {};

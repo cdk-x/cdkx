@@ -66,7 +66,7 @@ export abstract class Resource extends Construct {
   /**
    * The resource type identifier, e.g. a CloudFormation-style type name.
    */
-  public abstract readonly type: string;
+  public abstract readonly resourceType: string;
 
   /**
    * @param scope - the construct this Resource is defined within.
