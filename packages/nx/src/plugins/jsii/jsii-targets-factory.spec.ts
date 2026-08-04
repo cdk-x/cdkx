@@ -33,8 +33,12 @@ describe('JsiiTargetsFactory', () => {
     expect(targets['nx-release-publish']).toEqual({
       dependsOn: ['^nx-release-publish', 'jsii-compile'],
     });
+    expect(targets['build']).toEqual({
+      dependsOn: ['^build', 'jsii-package-all'],
+    });
     expect(Object.keys(targets).sort()).toEqual(
       [
+        'build',
         'jsii-compile',
         'jsii-docs',
         'jsii-package-all',

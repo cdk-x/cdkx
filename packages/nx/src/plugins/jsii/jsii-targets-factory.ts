@@ -84,6 +84,24 @@ export class JsiiTargetsFactory {
       dependsOn: ['^nx-release-publish', 'jsii-compile'],
     };
 
+    // Augmentation-only (no executor key), which lets this merge with a
+    // `build` target inferred by another plugin (e.g. @nx/js/typescript, for
+    // any @cdk-x/nx:library-generated project - confirmed empirically, no
+    // project.json to conflict with). It does NOT reach a project whose
+    // project.json hand-writes its own `build` target - an explicit
+    // project.json target fully replaces a same-named inferred one rather
+    // than merging with it (confirmed empirically: adding this alone left
+    // packages/core's build.dependsOn unchanged). packages/core hand-writes
+    // `build`, so its project.json declares this same `dependsOn` directly.
+    //
+    // Re-declares '^build' explicitly because array-valued keys like
+    // dependsOn fully REPLACE across merge layers rather than concatenating -
+    // dropping it here would silently lose the '^build' dependency nx.json's
+    // targetDefaults for "@nx/js:swc" already establishes.
+    targets['build'] = {
+      dependsOn: ['^build', 'jsii-package-all'],
+    };
+
     return targets;
   }
 }
