@@ -24,6 +24,11 @@ export interface ManifestEntry {
   readonly resourceType: string;
 
   /**
+   * The API group and version, as declared by `Resource.apiVersion`.
+   */
+  readonly apiVersion: string;
+
+  /**
    * This Resource's serialized properties — any IResolvable values have
    * been replaced with their resolved (placeholder) form.
    */
@@ -135,6 +140,7 @@ export class Synthesizer {
       >;
       manifest[resource.node.path] = {
         resourceType: resource.resourceType,
+        apiVersion: resource.apiVersion,
         properties: Synthesizer.serializeResolvables(rawProps),
         dependsOn: Synthesizer.composeDependsOn(
           resource,

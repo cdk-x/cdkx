@@ -8,7 +8,9 @@ import { Stack } from '../stack/stack.js';
  * (e.g. a Step inside a Job, a Task inside an Ansible Play). A Component
  * has no lifecycle of its own and never gets its own manifest entry — it
  * must always descend, directly or indirectly, from a Resource before
- * reaching a Stack.
+ * reaching a Stack. An owning Resource (or an intermediate Component)
+ * inlines its Component descendants by walking `node.children`, filtering
+ * with `Component.isComponent()`, and calling `_toProperties()` on each.
  */
 export abstract class Component extends Construct {
   /**
@@ -46,5 +48,26 @@ export abstract class Component extends Construct {
           `A Component can never hang directly off a Stack.`,
       );
     }
+  }
+
+  /**
+   * Returns this Component's own properties, serialized. Mirrors
+   * `Resource.toProperties()` — subclasses are responsible for walking
+   * their own `node.children` to collect and inline any further Component
+   * descendants under whatever property key makes sense for their output
+   * format; core has no opinion on this.
+   */
+  protected abstract toProperties(): Record<string, unknown>;
+
+  /**
+   * Internal hook used by an owning Resource or Component to read this
+   * Component's raw properties while inlining it. Not part of the public
+   * API surface — the `@internal` tag causes this member to be stripped
+   * from generated multi-language bindings.
+   *
+   * @internal
+   */
+  public _toProperties(): Record<string, unknown> {
+    return this.toProperties();
   }
 }
