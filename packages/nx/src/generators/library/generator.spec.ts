@@ -112,6 +112,9 @@ describe('library generator', () => {
     );
   });
 
+  // Two full libraryGenerator runs - occasionally exceeds Jest's default
+  // 5000ms under CI load, same as its three-run neighbor below, hence the
+  // explicit longer timeout.
   it('tags the project with its release phase, defaulting to alpha', async () => {
     await libraryGenerator(tree, { name: 'widget' });
     expect(readJson(tree, 'packages/widget/project.json').tags).toContain(
@@ -122,7 +125,7 @@ describe('library generator', () => {
     expect(
       readJson(tree, 'packages/stable-widget/project.json').tags,
     ).toContain('stable');
-  });
+  }, 15000);
 
   // Three full libraryGenerator runs in one test - occasionally exceeds
   // Jest's default 5000ms under CI load, unlike its single/double-run
