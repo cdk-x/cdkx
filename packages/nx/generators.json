@@ -4,6 +4,11 @@
       "factory": "./dist/generators/library/generator",
       "schema": "./dist/generators/library/schema.json",
       "description": "Scaffold a new jsii-enabled TypeScript library for the cdk-x family."
+    },
+    "provider": {
+      "factory": "./dist/generators/provider/generator",
+      "schema": "./dist/generators/provider/schema.json",
+      "description": "Scaffold a new provider library: a jsii-enabled library plus a schemas/ directory and a pre-wired generate-l1 target."
     }
   }
 }
