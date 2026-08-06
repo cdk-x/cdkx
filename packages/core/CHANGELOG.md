@@ -1,3 +1,13 @@
+## 1.0.0-alpha.3 (2026-08-06)
+
+### 🚀 Features
+
+- **core:** add apiVersion to Resource, toProperties() to Component ([39b3c62](https://github.com/cdk-x/cdkx/commit/39b3c62))
+
+### ❤️ Thank You
+
+- Antonio Márquez Pérez
+
 ## 1.0.0-alpha.2 (2026-08-04)
 
 ### 🩹 Fixes

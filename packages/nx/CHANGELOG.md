@@ -1,3 +1,21 @@
+## 1.0.0-alpha.1 (2026-08-06)
+
+### 🚀 Features
+
+- **nx:** add generate-l1 executor and provider generator ([e67b30b](https://github.com/cdk-x/cdkx/commit/e67b30b))
+
+### 🩹 Fixes
+
+- **nx:** raise timeout on a flaky two-run generator test ([54f3f62](https://github.com/cdk-x/cdkx/commit/54f3f62))
+
+### 🧱 Updated Dependencies
+
+- Updated @cdk-x/generator-toolkit to 1.0.0-alpha.1
+
+### ❤️ Thank You
+
+- Antonio Márquez Pérez
+
 ## 1.0.0-alpha.0 (2026-08-04)
 
 ### 🚀 Features
