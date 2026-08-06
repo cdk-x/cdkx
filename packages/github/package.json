@@ -1,0 +1,80 @@
+{
+  "name": "@cdk-x/github",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@cdk-x/cdkx": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    ".jsii",
+    "!**/*.tsbuildinfo"
+  ],
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "description": "GitHub L1 constructs, generated from its JSON Schema.",
+  "bundledDependencies": [
+    "tslib"
+  ],
+  "author": {
+    "name": "cdk-x",
+    "organization": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cdk-x/cdkx.git",
+    "directory": "packages/github"
+  },
+  "license": "MIT",
+  "keywords": [
+    "cdkx",
+    "cdk",
+    "constructs"
+  ],
+  "stability": "experimental",
+  "jsii": {
+    "outdir": "dist-jsii",
+    "excludeTypescript": [
+      "src/**/*.spec.ts",
+      "src/**/*.test.ts"
+    ],
+    "targets": {
+      "python": {
+        "distName": "cdkx-github",
+        "module": "cdkx.github"
+      },
+      "java": {
+        "package": "com.cdkx.github",
+        "maven": {
+          "groupId": "com.cdk-x",
+          "artifactId": "cdkx-github"
+        }
+      },
+      "dotnet": {
+        "namespace": "CdkX.Github",
+        "packageId": "CdkX.Github"
+      },
+      "go": {
+        "moduleName": "github.com/cdk-x/cdkx-github-go"
+      }
+    },
+    "tsc": {
+      "rootDir": "src",
+      "outDir": "dist",
+      "forceConsistentCasingInFileNames": true,
+      "types": [
+        "node"
+      ]
+    }
+  }
+}

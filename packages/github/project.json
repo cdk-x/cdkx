@@ -1,0 +1,20 @@
+{
+  "name": "@cdk-x/github",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/github/src",
+  "projectType": "library",
+  "tags": ["jsii", "alpha"],
+  "// targets": "to see all targets run: nx show project @cdk-x/github --web",
+  "targets": {
+    "generate-l1": {
+      "executor": "@cdk-x/nx:generate-l1",
+      "inputs": ["{projectRoot}/schemas/**/*"],
+      "outputs": ["{projectRoot}/src/lib/generated"],
+      "cache": true,
+      "options": {
+        "apiVersion": "github.cdk-x.com/v1",
+        "schemas": []
+      }
+    }
+  }
+}
