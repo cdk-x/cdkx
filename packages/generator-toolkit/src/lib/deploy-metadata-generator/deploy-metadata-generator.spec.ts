@@ -4,7 +4,7 @@ import { DeployMetadataGenerator } from './deploy-metadata-generator.js';
 const resource: IrResourceNode = {
   resourceType: 'Workflow',
   apiVersion: 'github.cdk-x.com/v1',
-  deploy: 'render',
+  mode: 'synth-only',
   properties: [],
 };
 
@@ -13,16 +13,16 @@ describe('DeployMetadataGenerator', () => {
     const source = DeployMetadataGenerator.generate(resource);
 
     expect(source).toContain(
-      "'github.cdk-x.com/v1/Workflow': { deploy: 'render' },",
+      "'github.cdk-x.com/v1/Workflow': { mode: 'synth-only' },",
     );
   });
 
   it('emits the declared deploy mode', () => {
     const source = DeployMetadataGenerator.generate({
       ...resource,
-      deploy: 'api',
+      mode: 'deploy',
     });
 
-    expect(source).toContain("{ deploy: 'api' }");
+    expect(source).toContain("{ mode: 'deploy' }");
   });
 });

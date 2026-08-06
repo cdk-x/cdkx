@@ -5,7 +5,7 @@ const DRAFT_07 = 'http://json-schema.org/draft-07/schema#';
 const options = {
   resourceType: 'Workflow',
   apiVersion: 'github.cdk-x.com/v1',
-  deploy: 'render' as const,
+  mode: 'synth-only' as const,
 };
 
 describe('JsonSchemaAdapter', () => {
@@ -47,7 +47,7 @@ describe('JsonSchemaAdapter', () => {
       expect(resource).toEqual({
         resourceType: 'Workflow',
         apiVersion: 'github.cdk-x.com/v1',
-        deploy: 'render',
+        mode: 'synth-only',
         description: 'A GitHub Actions workflow.',
         properties: [
           {
