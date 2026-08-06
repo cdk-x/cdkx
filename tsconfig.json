@@ -8,6 +8,9 @@
     },
     {
       "path": "./packages/nx"
+    },
+    {
+      "path": "./packages/generator-toolkit"
     }
   ],
   "compilerOptions": {}

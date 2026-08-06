@@ -1,0 +1,43 @@
+{
+  "name": "@cdk-x/generator-toolkit",
+  "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "description": "Toolkit for generating cdk-x L1 Resource/Component TypeScript from vendored provider JSON Schemas.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@cdk-x/cdkx": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!**/*.tsbuildinfo"
+  ],
+  "author": {
+    "name": "cdk-x",
+    "organization": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cdk-x/cdkx.git",
+    "directory": "packages/generator-toolkit"
+  },
+  "license": "MIT",
+  "keywords": [
+    "cdkx",
+    "cdk",
+    "codegen"
+  ],
+  "dependencies": {
+    "@swc/helpers": "~0.5.18"
+  }
+}

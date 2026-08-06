@@ -118,6 +118,12 @@ importers:
         specifier: ^10.8.0
         version: 10.8.0
 
+  packages/generator-toolkit:
+    dependencies:
+      '@swc/helpers':
+        specifier: ~0.5.18
+        version: 0.5.18
+
   packages/nx:
     dependencies:
       '@nx/devkit':

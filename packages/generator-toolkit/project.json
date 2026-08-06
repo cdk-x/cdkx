@@ -1,0 +1,20 @@
+{
+  "name": "@cdk-x/generator-toolkit",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/generator-toolkit/src",
+  "projectType": "library",
+  "tags": ["ts", "alpha"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "packages/generator-toolkit/dist",
+        "main": "packages/generator-toolkit/src/index.ts",
+        "tsConfig": "packages/generator-toolkit/tsconfig.lib.json",
+        "skipTypeCheck": true,
+        "stripLeadingPaths": true
+      }
+    }
+  }
+}
