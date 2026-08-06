@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GitHub Actions Workflow (pruned)",
+  "description": "A GitHub Actions workflow definition.",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The name of the workflow."
+    },
+    "on": {
+      "type": "object",
+      "description": "The event that triggers the workflow. Deliberately untyped in this pruned schema."
+    },
+    "jobs": {
+      "type": "object",
+      "description": "A map of job id to job definition.",
+      "additionalProperties": {
+        "$ref": "#/definitions/job"
+      }
+    }
+  },
+  "required": ["jobs"],
+  "definitions": {
+    "job": {
+      "type": "object",
+      "description": "A single job within a workflow.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the job."
+        },
+        "steps": {
+          "type": "array",
+          "description": "A sequence of tasks to run as part of the job.",
+          "items": {
+            "$ref": "#/definitions/step"
+          }
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "description": "A single task within a job.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "A unique identifier for the step."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the step."
+        },
+        "uses": {
+          "type": "string",
+          "description": "The action to run."
+        },
+        "run": {
+          "type": "string",
+          "description": "A command to run using the shell."
+        },
+        "with": {
+          "type": "object",
+          "description": "Input parameters for an action.",
+          "additionalProperties": { "type": "string" }
+        },
+        "env": {
+          "type": "object",
+          "description": "Environment variables for the step.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    }
+  }
+}
