@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "GenerateL1 executor",
+  "description": "Generates L1 Resource/Component TypeScript source from vendored provider JSON Schema files, in-process via @cdk-x/generator-toolkit.",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "description": "The cdkx-owned API group and version shared by every Resource this executor generates, e.g. \"github.cdk-x.com/v1\"."
+    },
+    "outputDir": {
+      "type": "string",
+      "default": "src/lib/generated",
+      "description": "Directory generated *.generated.ts / *.deploy.generated.ts files are written to, relative to the project root."
+    },
+    "schemas": {
+      "type": "array",
+      "default": [],
+      "description": "One entry per vendored JSON Schema file to generate L1 output from.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "Path to the vendored schema file, relative to the project root."
+          },
+          "resourceType": {
+            "type": "string",
+            "description": "PascalCase resource type name for this schema's root, e.g. \"Workflow\"."
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["synth-only", "deploy"],
+            "description": "\"synth-only\" for a Resource whose synthesized properties become a file with no live API call; \"deploy\" for one created via a provider API call."
+          }
+        },
+        "required": ["file", "resourceType", "mode"]
+      }
+    }
+  },
+  "required": ["apiVersion"]
+}

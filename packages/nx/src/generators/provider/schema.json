@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "CdkxNxProvider",
+  "title": "CDK-X Provider",
+  "description": "Scaffold a new @cdk-x/<name> provider library: a jsii-enabled library (via @cdk-x/nx:library) plus a plain schemas/ directory and a pre-wired, initially-empty generate-l1 target.",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "description": "Short kebab-case provider name (e.g. \"github\"). Used for the packages/<name> directory and the @cdk-x/<name> npm package.",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "What is the short (kebab-case) name of the provider?"
+    },
+    "providerName": {
+      "type": "string",
+      "description": "Human-readable provider name (e.g. \"GitHub\"), used in the default library description.",
+      "x-prompt": "What is the human-readable name of the provider (e.g. \"GitHub\")?"
+    },
+    "apiVersion": {
+      "type": "string",
+      "description": "The cdkx-owned API group and version every Resource in this library shares, e.g. \"github.cdk-x.com/v1\". Pre-filled into the generate-l1 target's options.",
+      "x-prompt": "What apiVersion should this provider's Resources share (e.g. \"github.cdk-x.com/v1\")?"
+    },
+    "description": {
+      "type": "string",
+      "description": "One-line npm package description."
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["python", "java", "dotnet", "go"]
+      },
+      "uniqueItems": true,
+      "default": ["python", "java", "dotnet", "go"],
+      "description": "Additional jsii target languages to generate bindings for, beyond npm (always implicit).",
+      "x-prompt": {
+        "message": "Which additional jsii target languages should this provider ship?",
+        "type": "list",
+        "multiselect": true,
+        "items": [
+          { "value": "python", "label": "Python" },
+          { "value": "java", "label": "Java" },
+          { "value": "dotnet", "label": ".NET" },
+          { "value": "go", "label": "Go" }
+        ]
+      }
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["alpha", "beta", "rc", "stable"],
+      "default": "alpha",
+      "description": "Release phase recorded as a project.json tag.",
+      "x-prompt": {
+        "message": "What release phase should this provider start in?",
+        "type": "list",
+        "items": [
+          { "value": "alpha", "label": "alpha" },
+          { "value": "beta", "label": "beta" },
+          { "value": "rc", "label": "rc" },
+          { "value": "stable", "label": "stable" }
+        ]
+      }
+    }
+  },
+  "required": ["name", "providerName", "apiVersion"]
+}
