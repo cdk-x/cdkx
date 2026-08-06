@@ -2,10 +2,10 @@ import type { IrResourceNode } from '../ir/ir.js';
 
 /**
  * Generates the small, separate source file carrying a Resource's deploy
- * mode (`"render"` vs `"api"`) as metadata — deliberately kept out of the
- * Resource's own generated class (see {@link CodeGenerator}), since deploy
- * mode never affects the generated shape, only what a not-yet-built deploy
- * engine does with it afterwards.
+ * mode (`"synth-only"` vs `"deploy"`) as metadata — deliberately kept out
+ * of the Resource's own generated class (see {@link CodeGenerator}), since
+ * deploy mode never affects the generated shape, only what a not-yet-built
+ * deploy engine does with it afterwards.
  */
 export class DeployMetadataGenerator {
   private constructor() {} // no instances — static-only class
@@ -25,11 +25,11 @@ export class DeployMetadataGenerator {
       "// Regenerate via the owning library's `generate-l1` Nx target.",
       '',
       'export interface DeployConfig {',
-      "  readonly deploy: 'render' | 'api';",
+      "  readonly mode: 'synth-only' | 'deploy';",
       '}',
       '',
       'export const DEPLOY_CONFIGS: Record<string, DeployConfig> = {',
-      `  '${key}': { deploy: '${resource.deploy}' },`,
+      `  '${key}': { mode: '${resource.mode}' },`,
       '};',
       '',
     ].join('\n');

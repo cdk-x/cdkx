@@ -7,6 +7,7 @@ import type {
 } from '../ir/ir.js';
 
 type ComponentRefType = Extract<IrPropertyType, { shape: 'component-ref' }>;
+type EnumType = Extract<IrPropertyType, { shape: 'enum' }>;
 
 /**
  * Turns IR into generated TypeScript source: one `Resource` subclass for
@@ -22,6 +23,14 @@ type ComponentRefType = Extract<IrPropertyType, { shape: 'component-ref' }>;
  * more specific than that; a Resource/Component with more than one
  * component-ref property isn't supported yet (see
  * {@link CodeGenerator.generate}).
+ *
+ * Enum-typed properties (`shape: 'enum'`) are emitted as real `export enum`
+ * declarations, deduplicated by name across the whole file, and referenced
+ * by name wherever used — never inlined as a string-literal union type.
+ * jsii doesn't support string-literal unions as a public property type
+ * (only interfaces/classes/enums/primitives cross its language targets),
+ * so a literal union would fail `jsii-compile` for any jsii-enabled
+ * consumer of the generated code.
  */
 export class CodeGenerator {
   private constructor() {} // no instances — static-only class
@@ -46,13 +55,81 @@ export class CodeGenerator {
       '',
       "import { Component, Resource } from '@cdk-x/core';",
       "import { Construct } from 'constructs';",
-      '',
-      ...CodeGenerator.resourceClass(resource),
     ];
+    for (const enumType of CodeGenerator.collectEnums([
+      resource,
+      ...components,
+    ])) {
+      lines.push('', ...CodeGenerator.enumDeclaration(enumType));
+    }
+    lines.push('', ...CodeGenerator.resourceClass(resource));
     for (const component of components) {
       lines.push('', ...CodeGenerator.componentClass(component));
     }
     return lines.join('\n') + '\n';
+  }
+
+  // jsii doesn't support TypeScript string-literal unions as a public
+  // property type (only real interfaces/classes/enums/primitives cross its
+  // language targets) — every distinct enum shape gets a single, real
+  // `export enum` declaration, deduplicated by name, and every property
+  // referencing it points at that declaration by name rather than inlining
+  // the union.
+  private static collectEnums(
+    nodes: readonly { properties: readonly IrProperty[] }[],
+  ): EnumType[] {
+    const found = new Map<string, EnumType>();
+    const visit = (type: IrPropertyType): void => {
+      switch (type.shape) {
+        case 'enum': {
+          const existing = found.get(type.name);
+          if (
+            existing &&
+            !CodeGenerator.sameValues(existing.values, type.values)
+          ) {
+            throw new Error(
+              `Two different enums are both named "${type.name}" ` +
+                `(${existing.values.join(', ')} vs ${type.values.join(', ')}) — ` +
+                `enum names must be unique across a generated file.`,
+            );
+          }
+          found.set(type.name, type);
+          return;
+        }
+        case 'array':
+          return visit(type.items);
+        case 'record':
+          return visit(type.valueType);
+        case 'inline-shape':
+          for (const property of type.properties) visit(property.type);
+          return;
+        default:
+          return;
+      }
+    };
+    for (const node of nodes) {
+      for (const property of node.properties) visit(property.type);
+    }
+    return [...found.values()];
+  }
+
+  private static sameValues(
+    a: readonly string[],
+    b: readonly string[],
+  ): boolean {
+    return (
+      a.length === b.length && a.every((value, index) => value === b[index])
+    );
+  }
+
+  private static enumDeclaration(type: EnumType): string[] {
+    return [
+      `export enum ${type.name} {`,
+      ...type.values.map(
+        (value) => `  ${Naming.toPascalCase(value)} = '${value}',`,
+      ),
+      '}',
+    ];
   }
 
   private static resourceClass(resource: IrResourceNode): string[] {
@@ -244,7 +321,7 @@ export class CodeGenerator {
       case 'record':
         return `Record<string, ${CodeGenerator.typeToTs(type.valueType)}>`;
       case 'enum':
-        return type.values.map((value) => `'${value}'`).join(' | ');
+        return type.name;
       case 'component-ref':
         // Never reached: component-ref properties are filtered out of
         // dataProperties() before typeToTs() is ever called on them.

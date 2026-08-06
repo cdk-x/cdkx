@@ -1,12 +1,13 @@
 /**
- * How a Resource is meant to be deployed: `"render"` for a Resource whose
- * synthesized properties are turned into a file (e.g. a GitHub Actions
- * workflow YAML file, no live API call), `"api"` for one that's created via
- * a provider API call. Pure metadata — never affects the generated class
- * shape (see {@link IrResourceNode}), only what a not-yet-built deploy
- * engine does with it afterwards.
+ * How a Resource is meant to be deployed: `"synth-only"` for a Resource
+ * whose synthesized properties are turned into a file (e.g. a GitHub
+ * Actions workflow YAML file, no live API call — its lifecycle stops at
+ * synth), `"deploy"` for one that's created via a provider API call. Pure
+ * metadata — never affects the generated class shape (see
+ * {@link IrResourceNode}), only what a not-yet-built deploy engine does
+ * with it afterwards.
  */
-export type DeployMode = 'render' | 'api';
+export type DeployMode = 'synth-only' | 'deploy';
 
 /**
  * How a `"component-ref"` {@link IrPropertyType}'s Component children are
@@ -79,7 +80,7 @@ export interface IrComponentNode {
 export interface IrResourceNode {
   readonly resourceType: string;
   readonly apiVersion: string;
-  readonly deploy: DeployMode;
+  readonly mode: DeployMode;
   readonly description?: string;
   readonly properties: readonly IrProperty[];
 }

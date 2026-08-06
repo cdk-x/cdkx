@@ -48,7 +48,7 @@ export interface JsonSchemaAdapterOptions {
   readonly resourceType: string;
   /** e.g. `"github.cdk-x.com/v1"` — becomes `Resource.apiVersion`. */
   readonly apiVersion: string;
-  readonly deploy: DeployMode;
+  readonly mode: DeployMode;
 }
 
 export interface JsonSchemaAdapterResult {
@@ -97,7 +97,7 @@ export class JsonSchemaAdapter {
    * const { resource, components } = JsonSchemaAdapter.toIr(schema, {
    *   resourceType: 'Workflow',
    *   apiVersion: 'github.cdk-x.com/v1',
-   *   deploy: 'render',
+   *   mode: 'synth-only',
    * });
    */
   public static toIr(
@@ -149,7 +149,7 @@ export class JsonSchemaAdapter {
     const resource: IrResourceNode = {
       resourceType: options.resourceType,
       apiVersion: options.apiVersion,
-      deploy: options.deploy,
+      mode: options.mode,
       description: schema.description,
       properties,
     };

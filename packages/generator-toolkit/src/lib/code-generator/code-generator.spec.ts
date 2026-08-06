@@ -4,7 +4,7 @@ import { CodeGenerator } from './code-generator.js';
 const baseResource: IrResourceNode = {
   resourceType: 'Workflow',
   apiVersion: 'github.cdk-x.com/v1',
-  deploy: 'render',
+  mode: 'synth-only',
   properties: [
     {
       name: 'name',
@@ -224,7 +224,75 @@ describe('CodeGenerator', () => {
 
     expect(source).toContain('readonly tags?: string[];');
     expect(source).toContain('readonly env?: Record<string, string>;');
-    expect(source).toContain("readonly kind?: 'a' | 'b';");
+    expect(source).toContain('readonly kind?: Kind;');
     expect(source).toContain('readonly contact?: { readonly email: string; };');
+  });
+
+  it('generates a real TypeScript enum declaration for an enum property, not a string-literal union', () => {
+    const resource: IrResourceNode = {
+      ...baseResource,
+      properties: [
+        {
+          name: 'kind',
+          type: {
+            shape: 'enum',
+            name: 'Kind',
+            values: ['uploaded', 'managed'],
+          },
+          required: false,
+        },
+      ],
+    };
+
+    const source = CodeGenerator.generate(resource, []);
+
+    expect(source).toContain('export enum Kind {');
+    expect(source).toContain("  Uploaded = 'uploaded',");
+    expect(source).toContain("  Managed = 'managed',");
+    expect(source).not.toMatch(/'uploaded' \| 'managed'/);
+  });
+
+  it('deduplicates an identically-named, identically-valued enum used by more than one property', () => {
+    const resource: IrResourceNode = {
+      ...baseResource,
+      properties: [
+        {
+          name: 'primaryKind',
+          type: { shape: 'enum', name: 'Kind', values: ['a', 'b'] },
+          required: false,
+        },
+        {
+          name: 'secondaryKind',
+          type: { shape: 'enum', name: 'Kind', values: ['a', 'b'] },
+          required: false,
+        },
+      ],
+    };
+
+    const source = CodeGenerator.generate(resource, []);
+
+    expect(source.match(/export enum Kind \{/g)).toHaveLength(1);
+  });
+
+  it('throws when two different enums share a name but not their values', () => {
+    const resource: IrResourceNode = {
+      ...baseResource,
+      properties: [
+        {
+          name: 'primaryKind',
+          type: { shape: 'enum', name: 'Kind', values: ['a', 'b'] },
+          required: false,
+        },
+        {
+          name: 'secondaryKind',
+          type: { shape: 'enum', name: 'Kind', values: ['c', 'd'] },
+          required: false,
+        },
+      ],
+    };
+
+    expect(() => CodeGenerator.generate(resource, [])).toThrow(
+      /Two different enums are both named "Kind"/,
+    );
   });
 });
