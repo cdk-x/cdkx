@@ -4,10 +4,15 @@ import { Resource } from '../resource/resource.js';
 import { Stack } from '../stack/stack.js';
 import { Component } from './component.js';
 
-class DummyComponent extends Component {}
+class DummyComponent extends Component {
+  protected toProperties(): Record<string, unknown> {
+    return {};
+  }
+}
 
 class DummyResource extends Resource {
-  public readonly resourceType = 'Dummy::Resource';
+  public readonly resourceType = 'Dummy';
+  public readonly apiVersion = 'dummy.cdk-x.com/v1';
 
   protected toProperties(): Record<string, unknown> {
     return {};

@@ -4,7 +4,8 @@ import { Resource } from '../resource/resource.js';
 import { Stack } from './stack.js';
 
 class DummyResource extends Resource {
-  public readonly resourceType = 'Dummy::Resource';
+  public readonly resourceType = 'Dummy';
+  public readonly apiVersion = 'dummy.cdk-x.com/v1';
 
   protected toProperties(): Record<string, unknown> {
     return {};

@@ -64,9 +64,21 @@ export abstract class Resource extends Construct {
   }
 
   /**
-   * The resource type identifier, e.g. a CloudFormation-style type name.
+   * The PascalCase resource type identifier, e.g. `"Workflow"`. Combined
+   * with `apiVersion`, forms this Resource's stable (group, version, type)
+   * identifier — analogous to a Kubernetes GroupVersionKind.
    */
   public abstract readonly resourceType: string;
+
+  /**
+   * The cdkx-owned API group and version this Resource's generated shape
+   * belongs to, formatted as `<provider>.cdk-x.com/v<N>` (e.g.
+   * `"github.cdk-x.com/v1"`) — Kubernetes-CRD-style. The version is owned
+   * by cdkx's generator, not the upstream provider's own API/schema
+   * version: it increments only when the *generated shape* changes in a
+   * breaking way.
+   */
+  public abstract readonly apiVersion: string;
 
   /**
    * @param scope - the construct this Resource is defined within.

@@ -1,3 +1,4 @@
+import { Construct } from 'constructs';
 import { App } from '../app/app.js';
 import { Component } from '../component/component.js';
 import { Resource } from '../resource/resource.js';
@@ -5,7 +6,8 @@ import { Stack } from '../stack/stack.js';
 import { CycleError, Synthesizer } from './synth.js';
 
 class DummyResource extends Resource {
-  public readonly resourceType = 'Dummy::Resource';
+  public readonly resourceType = 'Dummy';
+  public readonly apiVersion = 'dummy.cdk-x.com/v1';
   public properties: Record<string, unknown> = {};
 
   protected toProperties(): Record<string, unknown> {
@@ -13,7 +15,41 @@ class DummyResource extends Resource {
   }
 }
 
-class DummyComponent extends Component {}
+class DummyComponent extends Component {
+  protected toProperties(): Record<string, unknown> {
+    return {};
+  }
+}
+
+// Proves the generated-code pattern every real L1 Resource/Component relies
+// on: an owning Resource walks node.children, filters with
+// Component.isComponent(), and inlines each match via _toProperties() — at
+// any nesting depth, with no per-concrete-class instanceof discrimination.
+class InliningResource extends Resource {
+  public readonly resourceType = 'Inlining';
+  public readonly apiVersion = 'dummy.cdk-x.com/v1';
+
+  protected toProperties(): Record<string, unknown> {
+    const children = this.node.children
+      .filter(Component.isComponent)
+      .map((child) => child._toProperties());
+    return { children };
+  }
+}
+
+class NamedComponent extends Component {
+  constructor(
+    scope: Construct,
+    id: string,
+    private readonly name: string,
+  ) {
+    super(scope, id);
+  }
+
+  protected toProperties(): Record<string, unknown> {
+    return { name: this.name };
+  }
+}
 
 describe('Synthesizer', () => {
   it('produces empty dependsOn for two unrelated Resources', () => {
@@ -134,6 +170,20 @@ describe('Synthesizer', () => {
     const manifest = Synthesizer.synthesize(app)['Stack'];
 
     expect(Object.keys(manifest)).toEqual([resource.node.path]);
+  });
+
+  it('inlines Component children into the owning Resource via the isComponent()/_toProperties() walk', () => {
+    const app = new App();
+    const stack = new Stack(app, 'Stack');
+    const resource = new InliningResource(stack, 'Resource');
+    new NamedComponent(resource, 'First', 'first');
+    new NamedComponent(resource, 'Second', 'second');
+
+    const manifest = Synthesizer.synthesize(app)['Stack'];
+
+    expect(manifest[resource.node.path].properties).toEqual({
+      children: [{ name: 'first' }, { name: 'second' }],
+    });
   });
 
   it('produces independent manifests per Stack without cross-contamination', () => {
