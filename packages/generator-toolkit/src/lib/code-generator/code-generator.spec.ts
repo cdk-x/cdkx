@@ -110,6 +110,29 @@ describe('CodeGenerator', () => {
     expect(source).toContain("'runs-on': this.runsOn,");
   });
 
+  it('renames a class member that collides with an inherited Construct/Resource/Component name, keeping the original key everywhere else', () => {
+    const resource: IrResourceNode = {
+      ...baseResource,
+      properties: [
+        {
+          name: 'with',
+          type: {
+            shape: 'record',
+            valueType: { shape: 'primitive', primitive: 'string' },
+          },
+          required: false,
+        },
+      ],
+    };
+
+    const source = CodeGenerator.generate(resource, []);
+
+    expect(source).toContain('readonly with?: Record<string, string>;');
+    expect(source).toContain('public withValue?: Record<string, string>;');
+    expect(source).toContain('this.withValue = props.with;');
+    expect(source).toContain('with: this.withValue,');
+  });
+
   it('assembles an array-collection component-ref via a Component.isComponent() filter, with no per-class instanceof', () => {
     const resource: IrResourceNode = {
       ...baseResource,

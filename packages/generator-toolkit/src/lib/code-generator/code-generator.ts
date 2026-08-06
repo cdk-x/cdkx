@@ -31,6 +31,13 @@ type EnumType = Extract<IrPropertyType, { shape: 'enum' }>;
  * (only interfaces/classes/enums/primitives cross its language targets),
  * so a literal union would fail `jsii-compile` for any jsii-enabled
  * consumer of the generated code.
+ *
+ * A property whose name collides with an inherited `constructs.Construct`
+ * or `@cdk-x/core` `Resource`/`Component` member (e.g. a GitHub Actions
+ * step's `with` property colliding with `Construct`'s own `with(...mixins)`
+ * method) gets its *class member* renamed with a `Value` suffix — the props
+ * interface key and the `toProperties()` output key always keep the
+ * original schema name.
  */
 export class CodeGenerator {
   private constructor() {} // no instances — static-only class
@@ -344,10 +351,32 @@ export class CodeGenerator {
       : `'${property.name}'`;
   }
 
+  // Names already used by constructs.Construct or @cdk-x/core's
+  // Resource/Component that a generated class member would otherwise
+  // collide with (e.g. constructs.Construct's own `with(...mixins)` method
+  // — confirmed by a real TS2416 compile error on a GitHub Actions step's
+  // `with` property, not a hypothetical). The class member gets a `Value`
+  // suffix when it collides; the props interface key and the
+  // toProperties() output key always keep the original schema name.
+  private static readonly RESERVED_MEMBER_NAMES = new Set([
+    'node',
+    'toString',
+    'with',
+    'resourceType',
+    'apiVersion',
+    'getAtt',
+    'addDependency',
+    'toProperties',
+    '_toProperties',
+  ]);
+
   private static memberName(property: IrProperty): string {
-    return Naming.isValidIdentifier(property.name)
+    const name = Naming.isValidIdentifier(property.name)
       ? property.name
       : Naming.toCamelCase(property.name);
+    return CodeGenerator.RESERVED_MEMBER_NAMES.has(name)
+      ? `${name}Value`
+      : name;
   }
 
   private static propertyAccessor(property: IrProperty): string {
