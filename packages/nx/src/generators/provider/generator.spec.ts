@@ -82,6 +82,21 @@ describe('provider generator', () => {
     expect(target.cache).toBe(true);
   });
 
+  it('adds @cdk-x/core and constructs as dependencies, since every generated L1 class needs them', async () => {
+    await providerGenerator(tree, {
+      name: 'github',
+      providerName: 'GitHub',
+      apiVersion: 'github.cdk-x.com/v1',
+    });
+
+    const packageJson = readJson(tree, 'packages/github/package.json');
+    expect(packageJson.dependencies['@cdk-x/core']).toBe('^1.0.0-alpha.3');
+    expect(packageJson.dependencies.constructs).toBe('^10.8.0');
+    expect(packageJson.peerDependencies['@cdk-x/core']).toBe('^1.0.0-alpha.3');
+    expect(packageJson.peerDependencies.constructs).toBe('^10.8.0');
+    expect(packageJson.devDependencies.constructs).toBe('10.8.0');
+  });
+
   it("does not wire generate-l1 into build's dependsOn", async () => {
     await providerGenerator(tree, {
       name: 'github',
