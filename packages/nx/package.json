@@ -43,7 +43,6 @@
   "generators": "./generators.json",
   "executors": "./executors.json",
   "dependencies": {
-    "@cdk-x/generator-toolkit": "workspace:*",
     "@nx/devkit": "23.1.0",
     "@nx/js": "23.1.0",
     "@swc/helpers": "~0.5.18"
