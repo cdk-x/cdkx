@@ -13,13 +13,7 @@
       "cache": true,
       "options": {
         "apiVersion": "github.cdk-x.com/v1",
-        "schemas": [
-          {
-            "file": "schemas/workflow.schema.json",
-            "resourceType": "Workflow",
-            "mode": "synth-only"
-          }
-        ]
+        "schemas": []
       }
     }
   }

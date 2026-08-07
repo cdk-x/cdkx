@@ -1,6 +1,6 @@
 {
   "name": "@cdk-x/github",
-  "version": "1.0.0-alpha.0",
+  "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,16 +20,7 @@
     "!**/*.tsbuildinfo"
   ],
   "dependencies": {
-    "@cdk-x/core": "^1.0.0-alpha.3",
-    "constructs": "^10.8.0",
     "tslib": "^2.3.0"
-  },
-  "peerDependencies": {
-    "@cdk-x/core": "^1.0.0-alpha.3",
-    "constructs": "^10.8.0"
-  },
-  "devDependencies": {
-    "constructs": "10.8.0"
   },
   "description": "GitHub L1 constructs, generated from its JSON Schema.",
   "bundledDependencies": [
