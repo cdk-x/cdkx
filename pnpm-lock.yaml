@@ -126,21 +126,12 @@ importers:
 
   packages/github:
     dependencies:
-      '@cdk-x/core':
-        specifier: ^1.0.0-alpha.3
-        version: link:../core
-      constructs:
-        specifier: ^10.8.0
-        version: 10.8.0
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
 
   packages/nx:
     dependencies:
-      '@cdk-x/generator-toolkit':
-        specifier: workspace:*
-        version: link:../generator-toolkit
       '@nx/devkit':
         specifier: 23.1.0
         version: 23.1.0(nx@23.1.0(@swc-node/register@1.11.1(@swc/core@1.15.8(@swc/helpers@0.5.18))(@swc/types@0.1.27)(typescript@6.0.3))(@swc/core@1.15.8(@swc/helpers@0.5.18)))
