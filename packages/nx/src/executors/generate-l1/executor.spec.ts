@@ -98,6 +98,67 @@ describe('generate-l1 executor', () => {
     );
   });
 
+  it('applies a configured 3-letter prefix to the Resource class only — never resourceType, Props, or the serializer', async () => {
+    await executor(
+      {
+        apiVersion: 'github.cdk-x.com/v1',
+        schemas: [
+          {
+            file: 'schemas/github-workflow.json',
+            resourceType: 'Workflow',
+            mode: 'synth-only',
+            prefix: 'Ghb',
+          },
+        ],
+      },
+      makeContext(),
+    );
+
+    const call = jest
+      .mocked(fs.writeFileSync)
+      .mock.calls.find(([target]) =>
+        String(target).includes('github-workflow.generated.ts'),
+      );
+    expect(call).toBeDefined();
+    const [, generatedSource] = call ?? [];
+
+    expect(generatedSource).toContain(
+      'export class GhbWorkflow extends Resource {',
+    );
+    expect(generatedSource).toContain(
+      "public readonly resourceType = 'Workflow';",
+    );
+    // Props, the serializer, and every nested type stay unprefixed.
+    expect(generatedSource).toContain('export interface WorkflowProps');
+    expect(generatedSource).not.toContain('GhbWorkflowProps');
+    expect(generatedSource).toContain(
+      'WorkflowSerializer.toJsonWorkflowProps(this.props)',
+    );
+    expect(generatedSource).not.toContain('GhbWorkflowSerializer');
+  });
+
+  it('returns a failure result for an invalid prefix (not 3 letters, not PascalCase)', async () => {
+    const result = await executor(
+      {
+        apiVersion: 'github.cdk-x.com/v1',
+        schemas: [
+          {
+            file: 'schemas/github-workflow.json',
+            resourceType: 'Workflow',
+            mode: 'synth-only',
+            prefix: 'GITHUB',
+          },
+        ],
+      },
+      makeContext(),
+    );
+
+    expect(result).toEqual({
+      success: false,
+      message: expect.stringContaining('Invalid prefix'),
+    });
+  });
+
   it('auto-detects and auto-resolves a real structural-variant union with no config at all', async () => {
     await executor(
       {
