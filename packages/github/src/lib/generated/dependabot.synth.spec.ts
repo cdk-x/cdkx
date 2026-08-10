@@ -1,9 +1,16 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { App, Stack } from '@cdk-x/core';
 import { GhbDependabot, ScheduleInterval } from './dependabot.generated.js';
 
+function tmpOutdir(): string {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'cdkx-test-'));
+}
+
 describe('GhbDependabot synth', () => {
   it('round-trips real dependabot.yml keywords through synth, including kebab-case property names', () => {
-    const app = new App();
+    const app = new App({ outdir: tmpOutdir() });
     const stack = new Stack(app, 'GithubStack');
 
     new GhbDependabot(stack, 'Config', {
@@ -37,7 +44,7 @@ describe('GhbDependabot synth', () => {
   });
 
   it('omits undefined optional properties from the synthesized output', () => {
-    const app = new App();
+    const app = new App({ outdir: tmpOutdir() });
     const stack = new Stack(app, 'GithubStack');
 
     new GhbDependabot(stack, 'Config', {
