@@ -5,6 +5,10 @@ import {
   type Tree,
 } from '@nx/devkit';
 import * as path from 'node:path';
+import {
+  CDK_X_CORE_DEV_VERSION,
+  CDK_X_CORE_VERSION,
+} from '../../internal/cdk-x-core-version';
 import { libraryGenerator } from '../library/generator';
 import type { ProviderGeneratorSchema } from './schema';
 
@@ -15,27 +19,13 @@ import type { ProviderGeneratorSchema } from './schema';
 // scaffold, not left for each provider to add by hand.
 const CONSTRUCTS_VERSION = '^10.8.0';
 const CONSTRUCTS_DEV_VERSION = '10.8.0';
-// A real, jsii-parseable semver range on purpose - NOT the pnpm `workspace:`
-// protocol used elsewhere in this repo. jsii's own dependency resolver reads
-// package.json's `dependencies` directly and throws on anything starting
-// with "workspace:" ("Invalid comparator"), so a real range is required for
-// jsii-compile to succeed. For the TypeScript/npm side this still resolves
-// to local packages/core source at install time via pnpm-workspace.yaml's
-// `linkWorkspacePackages: true` - no registry fetch. But unlike npm, NuGet/
-// PyPI/Maven/Go have no local-workspace-linking equivalent: a provider's
-// jsii-package-{dotnet,python,java,go} targets always resolve this range
-// against the real registries, so it must match an actually-published
-// @cdk-x/core version, not an arbitrary floor - an old-but-technically-
-// matching version (e.g. the very first alpha) would resolve to genuinely
-// stale bindings and fail to compile against freshly generated L1 code.
-// Bump this to core's current published version when scaffolding a new
-// provider; nx.json's `preserveMatchingDependencyRanges: false` keeps it in
-// sync automatically on every subsequent coordinated release.
-const CDK_X_CORE_VERSION = '^1.0.0-alpha.3';
-// jsii's own linter (JSII6) additionally wants an exact-pinned devDependency
-// matching whatever a peerDependency declares, mirroring constructs' own dev
-// pin above - without it, jsii-compile succeeds but warns on every build.
-const CDK_X_CORE_DEV_VERSION = '1.0.0-alpha.3';
+// Unlike npm, NuGet/PyPI/Maven/Go have no local-workspace-linking
+// equivalent: a provider's jsii-package-{dotnet,python,java,go} targets
+// always resolve CDK_X_CORE_VERSION against the real registries, so it must
+// match an actually-published @cdk-x/core version, not an arbitrary floor -
+// an old-but-technically-matching version (e.g. the very first alpha) would
+// resolve to genuinely stale bindings and fail to compile against freshly
+// generated L1 code.
 
 /**
  * Scaffolds a new `@cdk-x/<name>` provider library: a jsii-enabled library
