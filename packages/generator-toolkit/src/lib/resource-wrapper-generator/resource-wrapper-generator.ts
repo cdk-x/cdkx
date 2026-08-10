@@ -1,6 +1,22 @@
 export interface ResourceWrapperOptions {
-  /** The PascalCase `resourceType` (also the emitted class name). */
+  /**
+   * The PascalCase `resourceType` — the Resource's semantic identity
+   * (matches `DeployMetadataGenerator`'s `DEPLOY_CONFIGS` key and the
+   * synthesized manifest's `resourceType` field). Deliberately independent
+   * of {@link className}: a provider prefix changes how the class is
+   * *named* in code, never what the Resource *is* at runtime.
+   */
   readonly resourceType: string;
+
+  /**
+   * The emitted TypeScript class name, e.g. `"GhbWorkflow"` — usually
+   * `resourceType` with a provider prefix applied (mirroring AWS CDK's
+   * `Cfn` convention for marking a construct as auto-generated L1), or
+   * just `resourceType` unchanged when the provider has no prefix
+   * configured. The caller (the `generate-l1` executor) decides this; this
+   * generator has no opinion on prefixing.
+   */
+  readonly className: string;
 
   /** The `<provider>.cdk-x.com/v<N>` apiVersion this Resource carries. */
   readonly apiVersion: string;
@@ -47,23 +63,29 @@ export class ResourceWrapperGenerator {
   /**
    * Generates the `Resource` subclass declaration for one Resource root.
    *
-   * @param options - the Resource's identity, its `json2jsii`-generated
-   * props type name, and its serializer class name.
+   * @param options - the Resource's identity, its emitted class name, its
+   * `json2jsii`-generated props type name, and its serializer class name.
    * @returns the generated class declaration source, ending in a trailing
    * newline.
    * @example
    * const source = ResourceWrapperGenerator.generate({
    *   resourceType: 'Workflow',
+   *   className: 'GhbWorkflow',
    *   apiVersion: 'github.cdk-x.com/v1',
-   *   propsTypeName: 'WorkflowProps',
-   *   serializerClassName: 'WorkflowSerializer',
+   *   propsTypeName: 'GhbWorkflowProps',
+   *   serializerClassName: 'GhbWorkflowSerializer',
    * });
    */
   public static generate(options: ResourceWrapperOptions): string {
-    const { resourceType, apiVersion, propsTypeName, serializerClassName } =
-      options;
+    const {
+      resourceType,
+      className,
+      apiVersion,
+      propsTypeName,
+      serializerClassName,
+    } = options;
     return [
-      `export class ${resourceType} extends Resource {`,
+      `export class ${className} extends Resource {`,
       `  public readonly resourceType = '${resourceType}';`,
       `  public readonly apiVersion = '${apiVersion}';`,
       '',
