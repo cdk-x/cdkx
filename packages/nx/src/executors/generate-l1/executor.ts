@@ -21,6 +21,33 @@ import type {
   GenerateL1UnionOverride,
 } from './schema';
 
+// Mirrors AWS CDK's "Cfn" convention for marking an L1 construct as
+// auto-generated: exactly 3 letters, PascalCase (e.g. "Cfn", "Ghb").
+const PREFIX_PATTERN = /^[A-Z][a-z]{2}$/;
+
+/**
+ * Computes the emitted class name for a Resource, applying `prefix` (if
+ * given) to `resourceType`. `resourceType` itself — the Resource's runtime
+ * identity — is never touched; only the TypeScript class name changes.
+ *
+ * @throws if `prefix` is set but isn't exactly 3 letters, PascalCase.
+ */
+function buildClassName(
+  resourceType: string,
+  prefix: string | undefined,
+): string {
+  if (!prefix) {
+    return resourceType;
+  }
+  if (!PREFIX_PATTERN.test(prefix)) {
+    throw new Error(
+      `Invalid prefix "${prefix}": must be exactly 3 letters, PascalCase ` +
+        '(e.g. "Cfn", "Ghb").',
+    );
+  }
+  return `${prefix}${resourceType}`;
+}
+
 /**
  * Generates one Resource's combined `.generated.ts` file: the header,
  * `json2jsii`'s rendered types (interfaces/enums only — see
@@ -47,6 +74,13 @@ function generateResourceFileSource(
     normalizedSchema,
     toUnionOverrides(entry.unionOverrides),
   );
+
+  // The prefix affects only the emitted Resource class name — never
+  // root.resourceType itself (the Resource's semantic identity), and never
+  // Props/serializer/nested type names, which stay exactly what
+  // Json2jsiiAdapter/PropsSerializerGenerator would name them with no
+  // prefix configured at all.
+  const className = buildClassName(root.resourceType, entry.prefix);
   const serializerClassName = `${root.resourceType}Serializer`;
 
   const { propsTypeName, source: typesSource } = Json2jsiiAdapter.generate(
@@ -62,6 +96,7 @@ function generateResourceFileSource(
   );
   const wrapperSource = ResourceWrapperGenerator.generate({
     resourceType: root.resourceType,
+    className,
     apiVersion,
     propsTypeName,
     serializerClassName,

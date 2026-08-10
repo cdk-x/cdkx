@@ -34,6 +34,11 @@
             "enum": ["synth-only", "deploy"],
             "description": "\"synth-only\" for a Resource whose synthesized properties become a file with no live API call; \"deploy\" for one created via a provider API call."
           },
+          "prefix": {
+            "type": "string",
+            "pattern": "^[A-Z][a-z]{2}$",
+            "description": "A 3-letter, PascalCase provider prefix applied to the generated Resource class's name only, e.g. \"Ghb\" turns Workflow into GhbWorkflow - mirrors AWS CDK's Cfn convention for marking an L1 construct as auto-generated. Does not affect resourceType itself, the Props interface, the serializer class, or any nested type. Omit to leave the class name unprefixed."
+          },
           "unionOverrides": {
             "type": "array",
             "description": "Escape hatch, rarely needed: real structural-variant oneOf/anyOf unions are auto-detected and auto-resolved by @cdk-x/generator-toolkit's UnionDetector (each variant's own uniquely-required field becomes its discriminant). Only specify an entry here if UnionDetector throws because a union is genuinely ambiguous (no variant has a uniquely-required field).",
