@@ -18,7 +18,7 @@ function targetNamesFor(
   return Object.keys(project.targets);
 }
 
-describe('createNodesV2 (jsii)', () => {
+describe('createNodesV2 (cdkx)', () => {
   let workspaceRoot: string;
 
   beforeEach(() => {
@@ -112,5 +112,49 @@ describe('createNodesV2 (jsii)', () => {
     const result = await createNodesFunction([path], undefined, context());
 
     expect(result).toEqual([[path, {}]]);
+  });
+
+  it('infers a synth target for a project with a src/main.ts entry file', async () => {
+    const path = writePackageJson('packages/my-app', { name: '@cdk-x/my-app' });
+    mkdirSync(join(workspaceRoot, 'packages/my-app/src'), { recursive: true });
+    writeFileSync(join(workspaceRoot, 'packages/my-app/src/main.ts'), '');
+
+    const [, result] = (
+      await createNodesFunction([path], undefined, context())
+    )[0];
+
+    const project = result.projects?.['packages/my-app'];
+    expect(project?.targets?.synth).toEqual({
+      executor: '@cdk-x/nx:synth',
+      dependsOn: ['^build'],
+      outputs: ['{projectRoot}/cdkx.out'],
+      cache: true,
+    });
+  });
+
+  it('does not infer a synth target when there is no src/main.ts', async () => {
+    const path = writePackageJson('packages/plain', { name: 'plain' });
+
+    const result = await createNodesFunction([path], undefined, context());
+
+    expect(result).toEqual([[path, {}]]);
+  });
+
+  it('infers both jsii-* and synth targets when a project has both', async () => {
+    const path = writePackageJson('packages/hybrid', {
+      name: '@cdk-x/hybrid',
+      jsii: { targets: {} },
+    });
+    mkdirSync(join(workspaceRoot, 'packages/hybrid/src'), { recursive: true });
+    writeFileSync(join(workspaceRoot, 'packages/hybrid/src/main.ts'), '');
+
+    const [, result] = (
+      await createNodesFunction([path], undefined, context())
+    )[0];
+
+    const targetNames = targetNamesFor(result, 'packages/hybrid');
+    expect(targetNames).toEqual(
+      expect.arrayContaining(['jsii-compile', 'synth']),
+    );
   });
 });
