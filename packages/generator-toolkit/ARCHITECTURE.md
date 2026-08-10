@@ -1,121 +1,113 @@
 # @cdk-x/generator-toolkit — architecture guide
 
-This package turns one vendored provider JSON Schema file into cdk-x L1 `Resource`/`Component` TypeScript source, fully automatically — no manifest, no human classification step. This document explains what each file does, how they fit together, and how far the current implementation actually generalizes beyond the GitHub Actions schema used to build it.
+This package turns one vendored provider JSON Schema file into cdk-x L1 `Resource` TypeScript source, fully automatically — no manifest, no human classification step. This document explains what each file does, how they fit together, and how far the current implementation generalizes beyond the two GitHub schemas (`github-workflow.json`, `dependabot.json`) used to build it.
+
+**Supersedes an earlier design** (root = Resource, every `$ref`-reachable `definitions` entry = a nested `Component` construct) that was abandoned after real-schema testing exposed it as unworkable — object-shaped value types (`concurrency`, `jobContainer`) wrongly became full constructs, and a node needing two independent child collections at once (a `Job`'s `steps` and `services`) broke the codegen outright. See the L1 codegen project memory for the full history.
 
 ## Pipeline overview
 
 ```
-vendored schema file (draft-07 JSON Schema)
+vendored schema file (JSON Schema)
         │
         ▼
-JsonSchemaAdapter.toIr(schema, { resourceType, apiVersion, mode })
+SchemaNormalizer.normalize(schema)                 ← rewrites what json2jsii can't represent
         │
         ▼
-{ resource: IrResourceNode, components: IrComponentNode[] }   ← the IR
+SingleRootClassifier.classify(schema, { resourceType })   ← identifies the Resource root(s)
         │
-        ├──────────────────────────────┐
-        ▼                              ▼
-CodeGenerator.generate()      DeployMetadataGenerator.generate()
-        │                              │
-        ▼                              ▼
-*.generated.ts                *.deploy.generated.ts
-(Resource + Component         (DEPLOY_CONFIGS map,
- classes extending             keyed by apiVersion +
- @cdk-x/core)                  resourceType)
+        ├─────────────────────────────┬─────────────────────────────┐
+        ▼                             ▼                             ▼
+Json2jsiiAdapter.generate()   PropsSerializerGenerator     ResourceWrapperGenerator
+        │                       .generate()                  .generate()
+        ▼                             ▼                             ▼
+ interfaces + enums          static toJson<Type>()        `class X extends Resource`
+ (+ real union types            methods, one class            wrapping the props type
+  for union overrides)          per Resource file
+        │                             │                             │
+        └─────────────────────────────┴─────────────────────────────┘
+                                       │
+                                       ▼
+                          <baseName>.generated.ts   (one file, all three pieces)
+                                       +
+                     DeployMetadataGenerator.generate()
+                                       ▼
+                        <baseName>.deploy.generated.ts
 ```
 
-## The classification rule (why there's no manifest)
+All five pieces are combined into the final file by the `@cdk-x/nx` `generate-l1` executor, not by this package — `generator-toolkit` only produces source-code fragments; file assembly and disk I/O live in the executor.
 
-1. **The schema file's own root is the Resource.** This holds for providers like GitHub, where each vendored schema file already represents exactly one resource type. It is **not** a universal law — it does not hold for a provider like Kubernetes, whose OpenAPI schema bundles many Kinds into a single file, each self-identified via `x-kubernetes-group-version-kind`. Supporting that shape would need a way to designate multiple roots within one file — a real extension point, deliberately not built yet (see Recommendation below).
-2. **Every named `definitions` entry reachable via `$ref` from a Resource root is a Component.**
-3. **Every property, of every kind — enums, `additionalProperties` maps, scalars, arrays, anonymous nested objects — is mapped into real generated TypeScript.** "Classification" (Resource vs. Component) only decides whether a shape gets its _own construct class_; it is not a filter on what gets represented at all. A shape that isn't classified as a Resource or Component still becomes a proper type: an inline object becomes a nested `interface` (`shape: 'inline-shape'`), a fixed set of string values becomes a real, dedicated `export enum` (`shape: 'enum'`) — not an inlined string-literal union, since jsii doesn't support those as a public property type — and so on. Nothing is silently dropped or left untyped; only Resources/Components additionally get their own class and (for Resources) an identity.
+## The core reframing: Resources only, never nested constructs
 
-This is fully deterministic: re-running the generator against an unchanged schema produces unchanged output; adding a field to the vendored schema adds it to the next generated output; removing one removes it. No staged/pending state to keep in sync.
+**L1 auto-generation produces exactly one construct class per Resource root — never a nested `Component` construct.** Everything below a Resource root, no matter how deeply nested or what its cardinality (array, map, singular), becomes a plain TypeScript interface or enum. `Component` in `@cdk-x/core` is untouched and still available, but purely for **manual, hand-written L2 authoring** — this package never references it.
+
+This mirrors how `cdk8s-cli` actually solves the equivalent problem for Kubernetes: only OpenAPI definitions carrying `x-kubernetes-group-version-kind` become `ApiObject` construct classes; everything else, regardless of nesting, becomes a plain interface via `json2jsii`'s `TypeGenerator`. Adopting `json2jsii` directly (rather than a hand-rolled equivalent) eliminates the entire classification/cardinality problem that made the earlier design fragile.
+
+**Classification is pluggable per schema format**, via `SchemaClassifier` (`src/lib/schema-classifier/`): `SingleRootClassifier` — the only implementation that exists today — treats a single-file schema document's own root as the one Resource, full stop. A future Kubernetes-style provider needing many Resources per document (one per `x-kubernetes-group-version-kind`-marked OpenAPI definition) would plug in a different classifier; `ClassifiedSchema.roots` is already `readonly ResourceRootDescriptor[]` (0..N) for exactly this reason, even though only the 1-root case is exercised today.
 
 ## File-by-file
 
-### `src/lib/ir/ir.ts` — the intermediate representation
+### `src/lib/schema-classifier/schema-classifier.ts` — the pluggable seam
 
-Pure types, no logic. This is the contract between "reading a schema" and "generating code," and it's deliberately format-agnostic — nothing in this file knows JSON Schema syntax exists.
+Pure types + the `SchemaClassifier` contract (`classify(schema, options?) → ClassifiedSchema`). No logic.
 
-| Type              | Meaning                                                                                                                          |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `IrResourceNode`  | `resourceType`, `apiVersion`, `mode` (`"synth-only" \| "deploy"`), `properties` — the one deployable unit per schema file        |
-| `IrComponentNode` | `name`, `properties` — no identifier fields at all; Components aren't independently addressable                                  |
-| `IrProperty`      | `name` (original schema key, never renamed here), `type`, `required`, `description`                                              |
-| `IrPropertyType`  | a discriminated union on `shape`: `primitive` \| `unknown` \| `array` \| `record` \| `enum` \| `component-ref` \| `inline-shape` |
+### `src/lib/single-root-classifier/single-root-classifier.ts` — `SingleRootClassifier`
 
-### `src/internal/naming.ts` — `Naming`
+The only classifier wired in today. Always returns one root at JSON Pointer `"#"` with the caller-supplied `resourceType` — a single-file schema has no reliable self-describing name to derive one from.
 
-Casing helpers (`toPascalCase`, `toCamelCase`, `isValidIdentifier`), not part of the public API. Used by the adapter to turn a definition key like `normalJob` into a class name (`NormalJob`), and by the generator to turn a non-identifier JSON key like `runs-on` into a valid class member (`runsOn`) while keeping the original string as the props-interface key and the `toProperties()` output key.
+### `src/lib/schema-normalizer/schema-normalizer.ts` — `SchemaNormalizer`
 
-### `src/lib/json-schema-adapter/json-schema-adapter.ts` — `JsonSchemaAdapter`
+The one genuinely hard, new piece: a pure `JSONSchema4 → JSONSchema4` tree transform, run once before anything reaches `json2jsii`. `json2jsii` already ignores most JSON Schema composition/validation keywords it can't represent (`if`/`then`/`else`, mixed-type `oneOf`/`anyOf`, `allOf` composition) by silently falling back to a permissive type — confirmed against its source, not just its docs. This normalizer only intervenes where that silent fallback is either **wrong** (real data loss, not just imprecision) or **worth documenting** rather than left unobvious:
 
-**The only format-specific file in the package.** Converts one parsed draft-07 schema into IR:
+- **`patternProperties` rewrite** — `json2jsii` has zero support for it at all, not even a safe fallback; a pattern coexisting with `additionalProperties` silently _drops_ the pattern-matched fields from the emitted interface with no error. Always rewritten, via three sub-cases (a real `additionalProperties` already present → pattern dropped; `properties` present, pattern is a literal alternation like `^branches(-ignore)?$` → expanded into named optional properties; neither → the pattern's subschema becomes `additionalProperties`).
+- **Trivial single-`$ref` `allOf`** (`allOf: [{ $ref: X }]`) — collapsed straight to `$ref: X` when that's the node's _only_ content; when the node also declares its own shape (real composition, e.g. GitHub's `on.<event>` trigger objects extending the essentially-content-free `eventObject`), the wrapper is dropped and the node's own local shape kept.
+- **Constraint-only `oneOf`/`anyOf`** (every branch is bare `{ required: [...] }`, e.g. `step`'s `uses`/`run`/`wait`/… mutual exclusivity) — dropped, exclusivity noted in `description` instead of silently vanishing.
+- **`#/definitions/configuration`'s self-reference** (`github-workflow.json`, used by `env`/`matrix`) — resolves safely to a permissive type on its own; documented via a `@remarks` note rather than left an unexplained `any`. One specific definition, not a generic recursive-`$ref` detector.
+- **`if`/`then`/`else`** — left structurally untouched (already ignored by `json2jsii`), just annotated.
+- **Inline union branch names** — for a real structural-variant union where a branch is an inline object instead of a `$ref`, synthesizes a name and hoists it into `definitions`. Not exercised by either real GitHub schema today (every real variant union there is already `$ref`-only); implemented and tested against synthetic fixtures.
 
-1. `detectDialect()` checks `$schema`; throws on anything that isn't draft-07.
-2. `toIr()` walks `schema.properties`. For every `$ref` it finds — directly on a property, inside an `array.items`, or inside `additionalProperties` — it resolves the target `#/definitions/<name>` and recursively converts it into an `IrComponentNode`, memoized by definition name (so a definition referenced twice is only processed once, and a self-referencing definition can't recurse forever).
-3. The _shape_ of the reference (`single` / `array` / `map`) is derived purely from how the `$ref` is used in the schema — not from any naming convention.
+### `src/lib/union-override/union-override.ts` — `UnionOverride`, `UnionOverrideMatcher`
 
-Nothing in this file mentions "workflow," "job," or "step." Every name in the generated output comes from either the schema's own `definitions` keys (PascalCased) or the `resourceType`/`apiVersion`/`mode` values the _caller_ supplies.
+Shared types + matcher for the one class of problem `SchemaNormalizer` deliberately does **not** paper over: a real structural-variant union (branches `$ref` different named object definitions, e.g. `jobs`: `normalJob` | `reusableWorkflowCallJob`) where `json2jsii`'s default behavior — silently fall back to `any` — is wrong enough that an entire flagship type (`NormalJob`, `Step`, `ServiceContainer`, everything reachable only through `jobs`) would never get generated at all. `UnionOverrideMatcher.matches()` is the single source of truth both `Json2jsiiAdapter` and `PropsSerializerGenerator` use to recognize the same occurrence, so they can never disagree about where a union override applies.
 
-### `src/lib/code-generator/code-generator.ts` — `CodeGenerator`
+### `src/lib/type-naming/type-naming.ts` — `TypeNaming`
 
-Also format-agnostic — consumes only IR, never touches the schema. Pure static string-builder (no template engine).
+Definition-name → PascalCase-type-name derivation (`TypeGenerator.normalizeTypeName()` composed with `json2jsii`'s own dot-segment-pascalCase-join rule), and `$ref` → definition-name extraction. Shared by `PropsSerializerGenerator` and `UnionDetector` so both always compute the exact same type name `json2jsii` would for a given `$ref`.
 
-- One `export interface <X>Props` + one `export class <X> extends Resource|Component` per IR node.
-- `component-ref` properties **never** appear in a props interface or constructor. A `Job` isn't data passed into `Workflow`'s constructor — it's a real child construct: `new Job(workflow, 'build', {...})`.
-- `toProperties()` inlines Component children back in by walking `this.node.children`, filtered with `Component.isComponent()` — nothing more specific. **This is why at most one `component-ref` property per Resource/Component is supported today**: with no per-subclass discrimination (`instanceof Job` etc. was deliberately ruled out), there'd be no way to tell two different collections' children apart. `CodeGenerator` throws a clear error rather than guessing if it ever sees two.
-- `enum`-typed properties are collected across the whole file, deduplicated by name, and emitted once each as a real `export enum <Name> { Member = 'value', ... }` declaration up top — every referencing property points at the enum by name. This isn't a style choice: jsii doesn't support TypeScript string-literal unions as a public property type (only interfaces/classes/enums/primitives translate into its other language targets), so inlining `'a' | 'b'` would fail `jsii-compile` for any jsii-enabled consumer.
+### `src/lib/property-naming/property-naming.ts` — `PropertyNaming`
+
+Schema-key → camelCase-TS-property-name derivation, copied verbatim from `json2jsii`'s own `emitProperty` (strip a leading `$`, replace `/` with `_`, `camelcase()`, suffix `_` on a jsii-reserved name). Shared by `PropsSerializerGenerator` (for `obj.<name>` accessors) and `UnionDetector` (for discriminant checks — see below; a real bug was caught here: a discriminant check runs against the _TypeScript_ value at serialization time, still camelCased, not the original schema key, so it must go through this same conversion).
+
+### `src/lib/union-detector/union-detector.ts` — `UnionDetector`
+
+Auto-detects every real structural-variant union in a schema (a `oneOf`/`anyOf` where all branches are pure `{ $ref }`) and auto-resolves each into a `UnionOverride`, so a provider's `project.json` never needs to hand-enumerate them — doesn't scale to a large schema, and previously meant a schema update introducing a new union degraded silently to `any` with no error. A field is a usable discriminant only if it's `required` by exactly one variant _and_ isn't even a declared property (required or not) on any other — checked against `TypeNaming`-resolved `$ref` targets, not just branch shape, after two real false-positive bugs (a bare-primitive branch, and a `$ref` to a primitive-typed definition, both wrongly treated as "object-shaped" by an earlier, looser check in `SchemaNormalizer`'s inline-union-hoisting). More than one variant lacking a discriminant is genuinely ambiguous and **throws** rather than guessing — a caller-supplied `UnionOverride` (matched by variant definition names) always wins over auto-resolution and is the escape hatch for that case. The union's own name is the longest common PascalCase-word suffix of the variants' type names, falling back to joining them with `Or`.
+
+### `src/lib/json2jsii-adapter/json2jsii-adapter.ts` — `Json2jsiiAdapter`
+
+Thin wrapper around `json2jsii`'s `TypeGenerator`, run with **`toJson: false`** — `json2jsii`'s own serialization-function generation (`export function toJson_X(...)`) is a standalone top-level function, which conflicts with this workspace's OOP-only rule (CLAUDE.md: no loose exported functions, only static methods on classes). Types/enums only; serialization is generated independently by `PropsSerializerGenerator`.
+
+Handles the one real engineering wrinkle in adopting `json2jsii`: making a `UnionOverride`'s real union type actually get emitted and referenced correctly. `TypeGenerator`'s `$ref` resolution only ever returns an already-fully-_rendered_ type, never a merely-_registered_ one (rendering is lazy, via a FIFO queue) — so a naive `emitCustomType()` call is never actually found by the property that should use it. The fix is controlling emission **order**: this adapter builds its own `TypeGenerator` (not `TypeGenerator.forStruct()`, which always emits the root struct first) and explicitly emits every union override's variant types, then the union type itself, _before_ emitting the root struct. A second wrinkle — a real union is often written _inline_ at its use site with no intermediate named `$ref` (this is `jobs`'s actual shape) — is handled by rewriting every matching inline occurrence into a `$ref` first, turning it into the already-solved named-`$ref` case.
+
+### `src/lib/props-serializer-generator/props-serializer-generator.ts` — `PropsSerializerGenerator`
+
+Generates the `toProperties()` serialization logic `Json2jsiiAdapter` deliberately no longer generates: walks the _same_ normalized schema independently and emits one static-only class per Resource file (e.g. `WorkflowSerializer`), with one `toJson<Type>` method per reachable struct type — satisfying the OOP-only rule without post-processing `json2jsii`'s rendered text (which was considered and rejected: fragile against future `json2jsii` rendering-format changes, since nothing pins its exact output shape).
+
+Property names (kebab-case → camelCase) and nested type names are derived using `json2jsii`'s _own_ naming primitives — the `camelcase` npm package, pinned to the exact version `json2jsii` itself depends on, and `TypeGenerator.normalizeTypeName()`, a public static method re-exported directly from `json2jsii` — rather than a reimplementation of them, so the two generators' outputs can't independently drift apart. Method names use `toJson<Type>` (no underscore) specifically because jsii's compiler rejects non-camelCase member names (`JSII8002`) — caught by running real `jsii-compile` against the generated output, not by inspection.
+
+### `src/lib/resource-wrapper-generator/resource-wrapper-generator.ts` — `ResourceWrapperGenerator`
+
+Generates the `Resource` subclass itself: `resourceType`, `apiVersion`, a constructor taking a single `props` bag (not flattened individual members — `json2jsii` already owns every naming/casing decision for the props type; re-deriving them a second time here would risk drift), and `toProperties()` delegating to the serializer class. Standing regression test: the generated class source must never contain the string `Component`.
 
 ### `src/lib/deploy-metadata-generator/deploy-metadata-generator.ts` — `DeployMetadataGenerator`
 
-Also IR-only. Emits a tiny second file per Resource — `DEPLOY_CONFIGS['<apiVersion>/<resourceType>'] = { mode: 'synth-only' | 'deploy' }` — kept separate from the Resource's own class because deploy mode is metadata for a not-yet-built deploy engine and never changes the generated shape.
+Unchanged by this redesign — orthogonal concern. Emits a small, separate `*.deploy.generated.ts` file carrying a Resource's `mode` (`"synth-only"` vs `"deploy"`) as metadata for a not-yet-built deploy engine; never affects the generated class shape.
 
-### `src/index.ts`
+### `src/internal/naming.ts` — `Naming`
 
-Public barrel: `JsonSchemaAdapter`, `CodeGenerator`, `DeployMetadataGenerator`, and every IR type. This is what the (not yet built) `@cdk-x/nx:generate-l1` executor will import and call in-process.
+Casing helpers, kept from the earlier design, still used where a value needs casing logic independent of `json2jsii`'s own (not the `PropsSerializerGenerator`'s property/type naming, which deliberately uses `json2jsii`'s primitives directly instead — see above).
 
-## Worked example: GitHub Actions Workflow (pruned)
+## Known limitations (v1 scope)
 
-```mermaid
-flowchart LR
-    subgraph schema ["workflow.schema.json"]
-        root["root"]
-        job["#/definitions/normalJob"]
-        step["#/definitions/step"]
-        root -->|"jobs: additionalProperties $ref"| job
-        job -->|"steps: items $ref"| step
-    end
-
-    root --> WR["IrResourceNode<br/>resourceType: Workflow<br/>apiVersion: github.cdk-x.com/v1<br/>mode: synth-only"]
-    job --> JC["IrComponentNode<br/>name: Job"]
-    step --> SC["IrComponentNode<br/>name: Step"]
-
-    WR --> GEN["CodeGenerator.generate()"]
-    JC --> GEN
-    SC --> GEN
-    GEN --> OUT["workflow.generated.ts<br/>class Workflow extends Resource<br/>class Job extends Component<br/>class Step extends Component"]
-```
-
-## Is this generic beyond GitHub, or GitHub-specific?
-
-| Layer                          | Generic?                                                                                                                                                                                                                                                                                                                                         |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ir.ts`                        | Yes — zero format-specific code                                                                                                                                                                                                                                                                                                                  |
-| `naming.ts`                    | Yes — plain string casing                                                                                                                                                                                                                                                                                                                        |
-| `code-generator.ts`            | Yes — consumes IR only                                                                                                                                                                                                                                                                                                                           |
-| `deploy-metadata-generator.ts` | Yes — consumes IR only                                                                                                                                                                                                                                                                                                                           |
-| `json-schema-adapter.ts`       | Generic to **any draft-07 JSON Schema** shaped as "root object + `$ref`'d definitions" — not GitHub-specific, but _is_ draft-07-specific. An OpenAPI-based provider, or a schema on a different JSON Schema dialect (2020-12, etc.), would need a **new adapter**, not changes to this one — that's exactly the seam the IR was designed around. |
-
-**Known, deliberate limitations today** (not bugs — things not built because nothing real needs them yet):
-
-1. **One Resource per vendored schema file** — the file's root is the only Resource. Fine for GitHub; wrong for a schema like Kubernetes' that bundles many Kinds into one file. Supporting that needs a way to designate multiple roots within one file, not yet designed.
-2. Only local `#/definitions/<name>` refs are resolved — no cross-file `$ref` (a schema split across multiple files needs to be pre-merged, or a future adapter enhancement).
-3. At most one `component-ref` property per node — `CodeGenerator` throws instead of guessing if a schema ever has two.
-4. No `readOnly`/`createOnly`-style metadata — dropped from the IR since nothing consumes it yet.
-5. No `oneOf`/`anyOf`/`allOf`/conditional schema support — only the "plain object with properties" subset of draft-07.
-
-## Recommendation
-
-Validate end-to-end against the real GitHub Actions schema first (the Phase 3 PoC). Don't generalize `JsonSchemaAdapter` further based on guesses about what a hypothetical second provider might need — extend it only once a second real schema actually hits one of the limitations above, informed by what specifically broke.
+- **One schema document → one Resource root.** `SingleRootClassifier` never returns more than one root; a Kubernetes-style multi-Kind-per-file OpenAPI document would need a different classifier (interface already supports it — `ClassifiedSchema.roots` is 0..N — but no implementation exists).
+- **No cross-file `$ref`.** Every provider schema so far is a single, self-contained file; `@apidevtools/json-schema-ref-parser` (or similar) was deliberately left out of scope until a real provider needs it.
+- **Auto-resolution needs a uniquely-required discriminant field.** `UnionDetector` throws for a real structural-variant union where two or more variants share no exclusively-required property — a genuinely ambiguous shape needs a hand-written `UnionOverride` (the `project.json` `unionOverrides` escape hatch), which is rare but not eliminated.
+- **Recursion depth.** `SchemaNormalizer.documentRecursiveSelfRef` handles exactly one known real occurrence (`#/definitions/configuration`); a different provider's recursive type would need either the same treatment or a generic detector, not yet built.

@@ -1,11 +1,10 @@
-import type { IrResourceNode } from '../ir/ir.js';
+import type { ResourceDeployMetadata } from './deploy-metadata-generator.js';
 import { DeployMetadataGenerator } from './deploy-metadata-generator.js';
 
-const resource: IrResourceNode = {
+const resource: ResourceDeployMetadata = {
   resourceType: 'Workflow',
   apiVersion: 'github.cdk-x.com/v1',
   mode: 'synth-only',
-  properties: [],
 };
 
 describe('DeployMetadataGenerator', () => {
