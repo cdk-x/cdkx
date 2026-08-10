@@ -802,7 +802,7 @@ class WorkflowSerializer {
   }
 }
 
-export class Workflow extends Resource {
+export class GhbWorkflow extends Resource {
   public readonly resourceType = 'Workflow';
   public readonly apiVersion = 'github.cdk-x.com/v1';
 

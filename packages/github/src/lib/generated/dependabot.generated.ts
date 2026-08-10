@@ -2292,7 +2292,7 @@ class DependabotSerializer {
   }
 }
 
-export class Dependabot extends Resource {
+export class GhbDependabot extends Resource {
   public readonly resourceType = 'Dependabot';
   public readonly apiVersion = 'github.cdk-x.com/v1';
 
