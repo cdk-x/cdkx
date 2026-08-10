@@ -46,6 +46,10 @@
     "@cdk-x/generator-toolkit": "workspace:*",
     "@nx/devkit": "23.1.0",
     "@nx/js": "23.1.0",
-    "@swc/helpers": "~0.5.18"
+    "@swc/helpers": "~0.5.18",
+    "json-schema": "^0.4.0"
+  },
+  "devDependencies": {
+    "@types/json-schema": "^7.0.15"
   }
 }
