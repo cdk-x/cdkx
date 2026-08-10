@@ -1,4 +1,5 @@
 export * from './lib/app/app.js';
+export * from './lib/assembly/resource-assembly.js';
 export * from './lib/component/component.js';
 export * from './lib/resolvable/resolvable.js';
 export * from './lib/resource/resource.js';

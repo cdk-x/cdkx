@@ -1,4 +1,5 @@
 import { RootConstruct } from 'constructs';
+import { ResourceAssemblyWriter } from '../assembly/resource-assembly.js';
 import type { ManifestEntry } from '../synth/synth.js';
 import { Synthesizer } from '../synth/synth.js';
 
@@ -45,11 +46,16 @@ export class App extends RootConstruct {
 
   /**
    * Synthesizes the construct tree into deployable output — one manifest
-   * per Stack, keyed by Stack id.
+   * per Stack, keyed by Stack id — and writes it to {@link outdir} as a
+   * resource assembly (one `<StackId>.json` file per Stack plus a
+   * `manifest.json` index), the same way `cdk synth` always produces a
+   * cloud assembly on disk.
    *
    * @returns the synthesized manifests, keyed by Stack id.
    */
   public synth(): Record<string, Record<string, ManifestEntry>> {
-    return Synthesizer.synthesize(this);
+    const manifests = Synthesizer.synthesize(this);
+    ResourceAssemblyWriter.write(this.outdir, manifests);
+    return manifests;
   }
 }
