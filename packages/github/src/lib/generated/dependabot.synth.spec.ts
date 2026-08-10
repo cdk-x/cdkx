@@ -1,12 +1,12 @@
 import { App, Stack } from '@cdk-x/core';
-import { Dependabot, ScheduleInterval } from './dependabot.generated.js';
+import { GhbDependabot, ScheduleInterval } from './dependabot.generated.js';
 
-describe('Dependabot synth', () => {
+describe('GhbDependabot synth', () => {
   it('round-trips real dependabot.yml keywords through synth, including kebab-case property names', () => {
     const app = new App();
     const stack = new Stack(app, 'GithubStack');
 
-    new Dependabot(stack, 'Config', {
+    new GhbDependabot(stack, 'Config', {
       version: 2,
       enableBetaEcosystems: true,
       updates: [
@@ -40,7 +40,7 @@ describe('Dependabot synth', () => {
     const app = new App();
     const stack = new Stack(app, 'GithubStack');
 
-    new Dependabot(stack, 'Config', {
+    new GhbDependabot(stack, 'Config', {
       version: 2,
       updates: [{ packageEcosystem: 'pip', directory: '/' }],
     });

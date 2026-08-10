@@ -1,12 +1,12 @@
 import { App, Stack } from '@cdk-x/core';
-import { Workflow } from './github-workflow.generated.js';
+import { GhbWorkflow } from './github-workflow.generated.js';
 
-describe('Workflow synth', () => {
+describe('GhbWorkflow synth', () => {
   it('round-trips real GitHub Actions keywords through synth, including kebab-case property names', () => {
     const app = new App();
     const stack = new Stack(app, 'GithubStack');
 
-    new Workflow(stack, 'Ci', {
+    new GhbWorkflow(stack, 'Ci', {
       name: 'CI',
       on: 'push',
       runName: 'CI run for ${{ github.sha }}',
@@ -46,7 +46,7 @@ describe('Workflow synth', () => {
     const app = new App();
     const stack = new Stack(app, 'GithubStack');
 
-    new Workflow(stack, 'Ci', {
+    new GhbWorkflow(stack, 'Ci', {
       on: 'push',
       jobs: {
         build: {
@@ -78,7 +78,7 @@ describe('Workflow synth', () => {
     const app = new App();
     const stack = new Stack(app, 'GithubStack');
 
-    new Workflow(stack, 'Ci', {
+    new GhbWorkflow(stack, 'Ci', {
       on: 'push',
       jobs: { build: { runsOn: 'ubuntu-latest' } },
     });
