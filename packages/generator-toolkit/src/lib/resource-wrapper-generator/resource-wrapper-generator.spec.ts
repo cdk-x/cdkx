@@ -3,6 +3,7 @@ import { ResourceWrapperGenerator } from './resource-wrapper-generator.js';
 describe('ResourceWrapperGenerator.generate', () => {
   const options = {
     resourceType: 'Workflow',
+    className: 'Workflow',
     apiVersion: 'github.cdk-x.com/v1',
     propsTypeName: 'WorkflowProps',
     serializerClassName: 'WorkflowSerializer',
@@ -41,5 +42,24 @@ describe('ResourceWrapperGenerator.generate', () => {
     const source = ResourceWrapperGenerator.generate(options);
 
     expect(source).not.toContain('Component');
+  });
+
+  it('uses className for the class declaration but resourceType for the field value, when they differ', () => {
+    const source = ResourceWrapperGenerator.generate({
+      resourceType: 'Workflow',
+      className: 'GhbWorkflow',
+      apiVersion: 'github.cdk-x.com/v1',
+      propsTypeName: 'GhbWorkflowProps',
+      serializerClassName: 'GhbWorkflowSerializer',
+    });
+
+    expect(source).toContain('export class GhbWorkflow extends Resource {');
+    expect(source).toContain("public readonly resourceType = 'Workflow';");
+    expect(source).toContain(
+      'constructor(scope: Construct, id: string, public readonly props: GhbWorkflowProps) {',
+    );
+    expect(source).toContain(
+      'return GhbWorkflowSerializer.toJsonGhbWorkflowProps(this.props) ?? {};',
+    );
   });
 });
