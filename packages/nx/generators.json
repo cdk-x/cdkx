@@ -9,6 +9,11 @@
       "factory": "./dist/generators/provider/generator",
       "schema": "./dist/generators/provider/schema.json",
       "description": "Scaffold a new provider library: a jsii-enabled library plus a schemas/ directory and a pre-wired generate-l1 target."
+    },
+    "app": {
+      "factory": "./dist/generators/app/generator",
+      "schema": "./dist/generators/app/schema.json",
+      "description": "Scaffold a new cdkx app: an App/Stack entry point ready to synth, at a directory you choose."
     }
   }
 }

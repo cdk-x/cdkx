@@ -1,0 +1,8 @@
+import { App, Stack } from '@cdk-x/core';
+
+const app = new App();
+
+// Example stack — replace with real resources.
+new Stack(app, '<%= className %>Stack');
+
+app.synth();

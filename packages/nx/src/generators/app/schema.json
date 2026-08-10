@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "CdkxNxApp",
+  "title": "CDK-X App",
+  "description": "Scaffold a new cdkx app: an App/Stack entry point ready to synth.",
+  "type": "object",
+  "properties": {
+    "directory": {
+      "type": "string",
+      "description": "Directory to scaffold the app into, relative to the workspace root (e.g. \"packages/my-app\", \"infra/my-infra\", \"cdkx\"). Unlike the library/provider generators, this is not fixed to packages/<name>.",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "Which directory should the app be scaffolded into?"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "description": "Short kebab-case app name, used for the @cdk-x/<name> npm package and the example Stack's id. Defaults to the last path segment of directory."
+    },
+    "description": {
+      "type": "string",
+      "description": "One-line npm package description."
+    }
+  },
+  "required": ["directory"]
+}
