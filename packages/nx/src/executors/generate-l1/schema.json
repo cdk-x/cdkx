@@ -33,6 +33,29 @@
             "type": "string",
             "enum": ["synth-only", "deploy"],
             "description": "\"synth-only\" for a Resource whose synthesized properties become a file with no live API call; \"deploy\" for one created via a provider API call."
+          },
+          "unionOverrides": {
+            "type": "array",
+            "description": "Escape hatch, rarely needed: real structural-variant oneOf/anyOf unions are auto-detected and auto-resolved by @cdk-x/generator-toolkit's UnionDetector (each variant's own uniquely-required field becomes its discriminant). Only specify an entry here if UnionDetector throws because a union is genuinely ambiguous (no variant has a uniquely-required field).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "unionTypeName": { "type": "string" },
+                "variants": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "definitionName": { "type": "string" },
+                      "typeName": { "type": "string" },
+                      "discriminantProperty": { "type": "string" }
+                    },
+                    "required": ["definitionName", "typeName"]
+                  }
+                }
+              },
+              "required": ["unionTypeName", "variants"]
+            }
           }
         },
         "required": ["file", "resourceType", "mode"]

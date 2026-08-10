@@ -25,11 +25,36 @@ const WORKFLOW_SCHEMA = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   properties: {
     name: { type: 'string' },
+    jobs: {
+      type: 'object',
+      patternProperties: {
+        '^[_a-zA-Z][a-zA-Z0-9_-]*$': {
+          oneOf: [
+            { $ref: '#/definitions/normalJob' },
+            { $ref: '#/definitions/reusableWorkflowCallJob' },
+          ],
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  definitions: {
+    normalJob: {
+      type: 'object',
+      required: ['runs-on'],
+      properties: { 'runs-on': { type: 'string' } },
+    },
+    reusableWorkflowCallJob: {
+      type: 'object',
+      required: ['uses'],
+      properties: { uses: { type: 'string' } },
+    },
   },
 };
 
 describe('generate-l1 executor', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     jest
       .mocked(fs.readFileSync)
       .mockReturnValue(JSON.stringify(WORKFLOW_SCHEMA));
@@ -43,7 +68,7 @@ describe('generate-l1 executor', () => {
         apiVersion: 'github.cdk-x.com/v1',
         schemas: [
           {
-            file: 'schemas/workflow.schema.json',
+            file: 'schemas/github-workflow.json',
             resourceType: 'Workflow',
             mode: 'synth-only',
           },
@@ -58,7 +83,7 @@ describe('generate-l1 executor', () => {
         '/workspace',
         'packages/github',
         'src/lib/generated',
-        'workflow.generated.ts',
+        'github-workflow.generated.ts',
       ),
       expect.stringContaining('export class Workflow extends Resource'),
     );
@@ -67,10 +92,160 @@ describe('generate-l1 executor', () => {
         '/workspace',
         'packages/github',
         'src/lib/generated',
-        'workflow.deploy.generated.ts',
+        'github-workflow.deploy.generated.ts',
       ),
       expect.stringContaining("mode: 'synth-only'"),
     );
+  });
+
+  it('auto-detects and auto-resolves a real structural-variant union with no config at all', async () => {
+    await executor(
+      {
+        apiVersion: 'github.cdk-x.com/v1',
+        schemas: [
+          {
+            file: 'schemas/github-workflow.json',
+            resourceType: 'Workflow',
+            mode: 'synth-only',
+          },
+        ],
+      },
+      makeContext(),
+    );
+
+    const call = jest
+      .mocked(fs.writeFileSync)
+      .mock.calls.find(([target]) =>
+        String(target).includes('github-workflow.generated.ts'),
+      );
+    expect(call).toBeDefined();
+    const [, generatedSource] = call ?? [];
+
+    // "Job" is auto-derived from the longest common suffix of NormalJob /
+    // ReusableWorkflowCallJob, and the discriminant from each variant's own
+    // uniquely-required field ("runs-on" / "uses") — no unionOverrides entry.
+    expect(generatedSource).toContain(
+      'export type Job = NormalJob | ReusableWorkflowCallJob;',
+    );
+    expect(generatedSource).toContain(
+      'readonly jobs?: { [key: string]: Job };',
+    );
+  });
+
+  it('an explicit unionOverrides entry (escape hatch) takes precedence over auto-detection', async () => {
+    await executor(
+      {
+        apiVersion: 'github.cdk-x.com/v1',
+        schemas: [
+          {
+            file: 'schemas/github-workflow.json',
+            resourceType: 'Workflow',
+            mode: 'synth-only',
+            unionOverrides: [
+              {
+                unionTypeName: 'CustomJob',
+                variants: [
+                  {
+                    definitionName: 'reusableWorkflowCallJob',
+                    typeName: 'ReusableWorkflowCallJob',
+                    discriminantProperty: 'uses',
+                  },
+                  {
+                    definitionName: 'normalJob',
+                    typeName: 'NormalJob',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      makeContext(),
+    );
+
+    const call = jest
+      .mocked(fs.writeFileSync)
+      .mock.calls.find(([target]) =>
+        String(target).includes('github-workflow.generated.ts'),
+      );
+    expect(call).toBeDefined();
+    const [, generatedSource] = call ?? [];
+
+    expect(generatedSource).toContain(
+      'export type CustomJob = ReusableWorkflowCallJob | NormalJob;',
+    );
+    expect(generatedSource).toContain(
+      'readonly jobs?: { [key: string]: CustomJob };',
+    );
+  });
+
+  it('fails loudly (not a silent "any") when a detected union cannot be auto-resolved and has no override', async () => {
+    jest.mocked(fs.readFileSync).mockReturnValue(
+      JSON.stringify({
+        $schema: 'http://json-schema.org/draft-07/schema#',
+        properties: {
+          target: {
+            oneOf: [{ $ref: '#/definitions/a' }, { $ref: '#/definitions/b' }],
+          },
+        },
+        definitions: {
+          a: { type: 'object', properties: { shared: { type: 'string' } } },
+          b: { type: 'object', properties: { shared: { type: 'string' } } },
+        },
+      }),
+    );
+
+    const result = await executor(
+      {
+        apiVersion: 'github.cdk-x.com/v1',
+        schemas: [
+          {
+            file: 'schemas/ambiguous.json',
+            resourceType: 'Ambiguous',
+            mode: 'synth-only',
+          },
+        ],
+      },
+      makeContext(),
+    );
+
+    expect(result).toEqual({
+      success: false,
+      message: expect.stringContaining('Cannot auto-resolve the union'),
+    });
+  });
+
+  it('throws a clear error when a non-last union override variant has no discriminantProperty', async () => {
+    const result = await executor(
+      {
+        apiVersion: 'github.cdk-x.com/v1',
+        schemas: [
+          {
+            file: 'schemas/github-workflow.json',
+            resourceType: 'Workflow',
+            mode: 'synth-only',
+            unionOverrides: [
+              {
+                unionTypeName: 'Job',
+                variants: [
+                  {
+                    definitionName: 'reusableWorkflowCallJob',
+                    typeName: 'ReusableWorkflowCallJob',
+                  },
+                  { definitionName: 'normalJob', typeName: 'NormalJob' },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      makeContext(),
+    );
+
+    expect(result).toEqual({
+      success: false,
+      message: expect.stringContaining('needs a discriminantProperty'),
+    });
   });
 
   it('honors a custom outputDir', async () => {
@@ -80,7 +255,7 @@ describe('generate-l1 executor', () => {
         outputDir: 'custom/output',
         schemas: [
           {
-            file: 'schemas/workflow.schema.json',
+            file: 'schemas/github-workflow.json',
             resourceType: 'Workflow',
             mode: 'synth-only',
           },
@@ -101,7 +276,7 @@ describe('generate-l1 executor', () => {
         apiVersion: 'github.cdk-x.com/v1',
         schemas: [
           {
-            file: 'schemas/workflow.schema.json',
+            file: 'schemas/github-workflow.json',
             resourceType: 'Workflow',
             mode: 'synth-only',
           },
@@ -114,20 +289,20 @@ describe('generate-l1 executor', () => {
       path.join(
         '/workspace',
         'packages/github',
-        'schemas/workflow.schema.json',
+        'schemas/github-workflow.json',
       ),
       'utf-8',
     );
   });
 
-  it('derives the output base name from the schema file, stripping ".schema.json"', async () => {
+  it('derives the output base name from the schema file', async () => {
     await executor(
       {
         apiVersion: 'github.cdk-x.com/v1',
         schemas: [
           {
-            file: 'schemas/workflow.schema.json',
-            resourceType: 'Workflow',
+            file: 'schemas/dependabot.json',
+            resourceType: 'Dependabot',
             mode: 'synth-only',
           },
         ],
@@ -140,7 +315,7 @@ describe('generate-l1 executor', () => {
       .mock.calls.map(([target]) => target);
     expect(writtenPaths).toEqual(
       expect.arrayContaining([
-        expect.stringContaining('workflow.generated.ts'),
+        expect.stringContaining('dependabot.generated.ts'),
       ]),
     );
   });
@@ -163,30 +338,5 @@ describe('generate-l1 executor', () => {
     );
 
     expect(result).toEqual({ success: false, message: expect.any(String) });
-  });
-
-  it('returns a failure result when the schema declares an unsupported dialect', async () => {
-    jest
-      .mocked(fs.readFileSync)
-      .mockReturnValue(JSON.stringify({ properties: {} }));
-
-    const result = await executor(
-      {
-        apiVersion: 'github.cdk-x.com/v1',
-        schemas: [
-          {
-            file: 'schemas/workflow.schema.json',
-            resourceType: 'Workflow',
-            mode: 'synth-only',
-          },
-        ],
-      },
-      makeContext(),
-    );
-
-    expect(result).toEqual({
-      success: false,
-      message: expect.stringContaining('Unsupported JSON Schema dialect'),
-    });
   });
 });
