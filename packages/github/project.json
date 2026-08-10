@@ -17,12 +17,14 @@
           {
             "file": "schemas/github-workflow.json",
             "resourceType": "Workflow",
-            "mode": "synth-only"
+            "mode": "synth-only",
+            "prefix": "Ghb"
           },
           {
             "file": "schemas/dependabot.json",
             "resourceType": "Dependabot",
-            "mode": "synth-only"
+            "mode": "synth-only",
+            "prefix": "Ghb"
           }
         ]
       }
