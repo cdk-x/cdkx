@@ -1,5 +1,6 @@
 packages:
   - 'packages/*'
+  - 'cdkx'
 linkWorkspacePackages: true
 allowBuilds:
   '@swc/core': true
