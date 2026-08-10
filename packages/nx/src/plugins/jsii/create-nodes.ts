@@ -4,7 +4,9 @@ import {
   type CreateNodesContext,
   type CreateNodesResult,
   type CreateNodesV2,
+  type TargetConfiguration,
 } from '@nx/devkit';
+import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import type { JsiiTargetLanguage } from '../../internal/jsii-languages';
@@ -13,25 +15,30 @@ import { JsiiTargetsFactory } from './jsii-targets-factory';
 const packageJsonGlob = '**/package.json';
 
 /**
- * Infers `jsii-*` Nx targets for every project whose `package.json` has a
- * top-level `jsii` block, computed dynamically from that block's
- * `jsii.targets` languages rather than written statically by
- * `@cdk-x/nx:library` at generation time - so changing a project's target
- * languages by hand takes effect immediately, with no need to re-run the
- * generator. Register in `nx.json`'s `"plugins"` array as `"@cdk-x/nx"`.
+ * Infers this workspace's cdkx-specific Nx targets for every project,
+ * computed dynamically from what's actually on disk rather than written
+ * statically by a generator at scaffold time - so changing a project's
+ * setup by hand takes effect immediately, with no need to re-run any
+ * generator:
+ *  - `jsii-*` targets for every project whose `package.json` has a
+ *    top-level `jsii` block, driven by that block's `jsii.targets`
+ *    languages (see `@cdk-x/nx:library`).
+ *  - a `synth` target for every project with a `src/main.ts` entry file
+ *    (see `@cdk-x/nx:app`).
+ * Register in `nx.json`'s `"plugins"` array as `"@cdk-x/nx"`.
  */
 export const createNodesV2: CreateNodesV2 = [
   packageJsonGlob,
   (packageJsonPaths, options, context) =>
     createNodesFromFiles(
-      createJsiiProjectNode,
+      createCdkxProjectNode,
       packageJsonPaths,
       options,
       context,
     ),
 ];
 
-function createJsiiProjectNode(
+function createCdkxProjectNode(
   packageJsonPath: string,
   _options: unknown,
   context: CreateNodesContext,
@@ -40,22 +47,36 @@ function createJsiiProjectNode(
     return {};
   }
 
+  const projectRoot = dirname(packageJsonPath);
   const packageJson = readJsonFile(
     join(context.workspaceRoot, packageJsonPath),
   );
-  if (!packageJson.jsii) {
+
+  const targets: Record<string, TargetConfiguration> = {};
+
+  if (packageJson.jsii) {
+    const additionalLanguages = Object.keys(
+      packageJson.jsii.targets ?? {},
+    ) as JsiiTargetLanguage[];
+    Object.assign(targets, JsiiTargetsFactory.build(additionalLanguages));
+  }
+
+  if (existsSync(join(context.workspaceRoot, projectRoot, 'src/main.ts'))) {
+    targets.synth = {
+      executor: '@cdk-x/nx:synth',
+      dependsOn: ['^build'],
+      outputs: ['{projectRoot}/cdkx.out'],
+      cache: true,
+    };
+  }
+
+  if (Object.keys(targets).length === 0) {
     return {};
   }
 
-  const additionalLanguages = Object.keys(
-    packageJson.jsii.targets ?? {},
-  ) as JsiiTargetLanguage[];
-
   return {
     projects: {
-      [dirname(packageJsonPath)]: {
-        targets: JsiiTargetsFactory.build(additionalLanguages),
-      },
+      [projectRoot]: { targets },
     },
   };
 }

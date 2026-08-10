@@ -24,6 +24,11 @@
       "implementation": "./dist/executors/generate-l1/executor",
       "schema": "./dist/executors/generate-l1/schema.json",
       "description": "Generates L1 Resource/Component TypeScript source from vendored provider JSON Schema files."
+    },
+    "synth": {
+      "implementation": "./dist/executors/synth/executor",
+      "schema": "./dist/executors/synth/schema.json",
+      "description": "Runs a cdkx app's entry file via ts-node, producing its resource assembly."
     }
   }
 }

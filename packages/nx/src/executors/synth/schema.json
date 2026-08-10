@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "version": 2,
+  "title": "Synth executor",
+  "description": "Runs a cdkx app's entry file via ts-node, producing its resource assembly.",
+  "type": "object",
+  "properties": {
+    "main": {
+      "type": "string",
+      "default": "src/main.ts",
+      "description": "Path to the app's entry file, relative to the project root."
+    }
+  },
+  "required": []
+}
